@@ -5,9 +5,9 @@ export default function Home()
   const content: React.ReactElement =
   (
     <main>
-      <h1>
+      <div>
         Gold: {gold}
-      </h1>
+      </div>
     </main>
   );
 
