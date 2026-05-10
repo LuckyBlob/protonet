@@ -25,6 +25,7 @@ export const NullPlayerRow: PlayerRow =
   id: 0,
   gold: 0,
   production_rate: 0,
+  upgrade_level: 0,
   last_updated: 0
 };
 

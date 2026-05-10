@@ -17,9 +17,15 @@ export async function fetchAndSetPlayerState(psController: MainPageTypes.PSContr
 	psController[1](playerState);
 }
 
-export async function incrementPlayerGoldProduction(psController: MainPageTypes.PSController): Promise<void>
+export async function tryBuyUpgrade(psController: MainPageTypes.PSController): Promise<void>
 {
-	const response: Response = await fetch("/api/click", { method: "POST" });
+	const response: Response = await fetch("/api/buyUpgrade", { method: "POST" });
+
+	if (response.ok === false)
+	{
+		return;
+	}
+
 	const updatedPlayerRow: PlayerRow = await response.json();
 
 	const playerState: MainPageTypes.PlayerState =
@@ -28,6 +34,5 @@ export async function incrementPlayerGoldProduction(psController: MainPageTypes.
 		lastFetchTimestamp: Date.now(),
 		currentPredictedValues: { gold: updatedPlayerRow.gold },
 	};
-
 	psController[1](playerState);
 }
