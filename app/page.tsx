@@ -1,9 +1,15 @@
-export default function Home() {
-  const gold = 0;
+export default function Home()
+{
+  const gold: number = 0;
 
-  return (
+  const content: React.ReactElement =
+  (
     <main>
-      <h1>Gold: {gold}</h1>
+      <h1>
+        Gold: {gold}
+      </h1>
     </main>
   );
+
+  return content;
 }
