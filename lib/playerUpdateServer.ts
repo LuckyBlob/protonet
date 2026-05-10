@@ -3,60 +3,44 @@ import { PlayerRow } from "@/lib/dbTypes";
 
 import Database from "better-sqlite3";
 
-export function setPlayerGoldProduction(playerId: number, newGoldProduction: number): void
+function readPlayerRow(playerId: number): PlayerRow
 {
-	const updateStatement: Database.Statement = databaseConnection.prepare("UPDATE player SET production_rate = ? WHERE id = ?");
-	updateStatement.run(newGoldProduction, playerId);
+	const selectStatement: Database.Statement = databaseConnection.prepare("SELECT * FROM player WHERE id = ?");
+	const playerRow: PlayerRow = selectStatement.get(playerId) as PlayerRow;
+	return playerRow;
 }
 
-function initPlayerLastUpdated(playerId: number): void
+export function updatePlayerColumns(playerId: number, columnUpdates: Partial<PlayerRow>): PlayerRow
 {
-	const currentTimestamp: number = Date.now();
-	const updateStatement: Database.Statement = databaseConnection.prepare("UPDATE player SET last_updated = ? WHERE id = ?");
-	updateStatement.run(currentTimestamp, playerId);
+	const columnNames: string[] = Object.keys(columnUpdates);
+	const columnValues: unknown[] = Object.values(columnUpdates);
+	const setClause: string = columnNames.map((columnName) => `${columnName} = ?`).join(", ");
+
+	const updateStatement: Database.Statement = databaseConnection.prepare(`UPDATE player SET ${setClause} WHERE id = ?`);
+	updateStatement.run(...columnValues, playerId);
+
+	return readPlayerRow(playerId);
 }
 
 export function applyPlayerUpdate(playerId: number): PlayerRow
 {
-	const selectStatement: Database.Statement = databaseConnection.prepare("SELECT id, gold, production_rate, last_updated FROM player WHERE id = ?");
-	const playerRow: PlayerRow = selectStatement.get(playerId) as PlayerRow;
-
+	const playerRow: PlayerRow = readPlayerRow(playerId);
 	const currentTimestamp: number = Date.now();
-	const lastUpdated: number = playerRow.last_updated;
-	if (lastUpdated === 0)
-	{
-		initPlayerLastUpdated(playerId);
-    const initializedPlayerRow: PlayerRow =
-    {
-      id: playerRow.id,
-      gold: playerRow.gold,
-      production_rate: playerRow.production_rate,
-      last_updated: currentTimestamp,
-    };
 
-    return initializedPlayerRow;
+  if (playerRow.last_updated === 0)
+	{
+		return updatePlayerColumns(playerId, { last_updated: currentTimestamp });
 	}
 
-	const elapsedMilliseconds: number = currentTimestamp - lastUpdated;
+	const elapsedMilliseconds: number = currentTimestamp - playerRow.last_updated;
 	if (elapsedMilliseconds <= 0)
 	{
 		return playerRow;
 	}
 
-	const elapsedSeconds: number = elapsedMilliseconds / 1000;
+  const elapsedSeconds: number = elapsedMilliseconds / 1000;
 	const goldGained: number = playerRow.production_rate * elapsedSeconds;
 	const updatedGold: number = playerRow.gold + goldGained;
 
-	const updateStatement: Database.Statement = databaseConnection.prepare("UPDATE player SET gold = ?, last_updated = ? WHERE id = ?");
-	updateStatement.run(updatedGold, currentTimestamp, playerId);
-
-	const updatedPlayerRow: PlayerRow =
-	{
-		id: playerRow.id,
-		gold: updatedGold,
-		production_rate: playerRow.production_rate,
-		last_updated: currentTimestamp,
-	};
-
-	return updatedPlayerRow;
+	return updatePlayerColumns(playerId, { gold: updatedGold, last_updated: currentTimestamp });
 }
