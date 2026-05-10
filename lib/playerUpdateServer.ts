@@ -19,21 +19,22 @@ function initPlayerLastUpdated(playerId: number): void
 export function applyPlayerUpdate(playerId: number): PlayerRow
 {
 	const selectStatement: Database.Statement = databaseConnection.prepare("SELECT id, gold, production_rate, last_updated FROM player WHERE id = ?");
-	let playerRow: PlayerRow = selectStatement.get(playerId) as PlayerRow;
+	const playerRow: PlayerRow = selectStatement.get(playerId) as PlayerRow;
 
 	const currentTimestamp: number = Date.now();
 	const lastUpdated: number = playerRow.last_updated;
 	if (lastUpdated === 0)
 	{
 		initPlayerLastUpdated(playerId);
-		playerRow =
-		{
-			id: playerRow.id,
-			gold: playerRow.gold,
-			production_rate: playerRow.production_rate,
-			last_updated: currentTimestamp,
-		};
-		return playerRow;
+    const initializedPlayerRow: PlayerRow =
+    {
+      id: playerRow.id,
+      gold: playerRow.gold,
+      production_rate: playerRow.production_rate,
+      last_updated: currentTimestamp,
+    };
+
+    return initializedPlayerRow;
 	}
 
 	const elapsedMilliseconds: number = currentTimestamp - lastUpdated;
