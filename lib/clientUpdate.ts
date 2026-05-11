@@ -1,11 +1,12 @@
 import * as MainPageTypes from "@/lib/mainPageTypes";
+import * as UpgradeCost from "@/lib/upgradeCost";
 
 const tickIntervalMilliseconds: number = 1000;
 
 function clientUpdatePredictedGold(psController: MainPageTypes.PSController, elapsedSeconds: number): void
 {
-    const predictedGold: number = psController[0].dbData.gold + (psController[0].dbData.production_rate * elapsedSeconds);
-    
+    const predictedGold: number = psController[0].dbData.gold + (UpgradeCost.getProductionRate(psController[0].dbData) * elapsedSeconds);
+
     const updatedPlayerState: MainPageTypes.PlayerState =
     {
         ...psController[0],

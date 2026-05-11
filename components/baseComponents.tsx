@@ -1,10 +1,14 @@
+import { BackgroundElement } from "@/components/persistentComponents";
+
 export function LoadingElement(): React.ReactElement
 {
 	const loadingElement: React.ReactElement =
 	(
-		<main>
-			Loading...
-		</main>
+		<BackgroundElement>
+			<main>
+				Loading...
+			</main>
+		</BackgroundElement>
 	);
 
 	return loadingElement;

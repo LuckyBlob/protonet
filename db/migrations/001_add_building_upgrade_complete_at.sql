@@ -1,0 +1,1 @@
+ALTER TABLE player ADD COLUMN building_upgrade_completes_at INTEGER NOT NULL DEFAULT 0;

@@ -1,9 +1,9 @@
+import { databaseConnection } from "@/lib/db";
+import { SessionRow, UserRow } from "@/lib/dbTypes";
 import bcrypt from "bcrypt";
+import Database from "better-sqlite3";
 import crypto from "crypto";
 import { cookies } from "next/headers";
-import { databaseConnection } from "@/lib/db";
-import { UserRow, SessionRow } from "@/lib/dbTypes";
-import Database from "better-sqlite3";
 
 export const sessionCookieName: string = "session_token";
 export const sessionDurationSeconds: number = 60 * 60 * 24 * 30;

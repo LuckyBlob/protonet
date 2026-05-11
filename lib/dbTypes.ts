@@ -3,8 +3,8 @@ export type PlayerRow =
 	id: number;
 	user_id: number;
 	gold: number;
-	production_rate: number;
 	upgrade_level: number;
+	building_upgrade_completes_at: number;
 	last_updated: number;
 };
 
