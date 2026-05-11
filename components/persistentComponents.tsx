@@ -84,8 +84,8 @@ export function TopBarElement(props: TopBarProps): React.ReactElement
 	(
 		<div className="h-[70px] bg-black/50 text-white pt-5 px-4 flex justify-center items-start">
 			<div className="flex gap-8">
-				<div>Gold: {props.gold}</div>
-				<div>Rate: {props.productionRate}/h{buildHintText}</div>
+				<div>💰Gold: {props.gold}</div>
+				<div>⚡Rate: {props.productionRate}/h{buildHintText}</div>
 			</div>
 		</div>
 	);
