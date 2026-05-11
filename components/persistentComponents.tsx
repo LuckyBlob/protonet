@@ -18,7 +18,7 @@ export function BackgroundElement(props: ChildrenProps): React.ReactElement
         className="min-h-screen flex flex-col bg-center bg-repeat"
         style=
         {{
-            backgroundImage: "url('/Background.png')",
+            backgroundImage: "url('/background.png')",
             backgroundSize: "600px 600px",
         }}>
             {props.children}
