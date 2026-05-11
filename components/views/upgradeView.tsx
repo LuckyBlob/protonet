@@ -34,7 +34,7 @@ export function UpgradeView(props: UpgradeViewProps): React.ReactElement
 				disabled={canAffordUpgrade === false}
 				className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
 			>
-				Buy upgrade (cost: {nextUpgradeCost})
+				Buy upgrade (cost: {nextUpgradeCost} / time: {formatRemainingTimeMs(UpgradeCost.computeUpgradeBuildDurationSeconds(currentUpgradeLevel) * 1000)})
 			</button>
 		);
 
