@@ -1,10 +1,22 @@
 import { NextResponse } from "next/server";
-import { databaseConnection } from "@/lib/db";
-import { PlayerRow } from "@/lib/dbTypes";
-import { applyPlayerUpdate } from "@/lib/playerUpdateServer";
+import { PlayerRow, UserRow } from "@/lib/dbTypes";
+import * as Auth from "@/lib/auth";
+import * as PlayerUpdateServer from "@/lib/playerUpdateServer";
 
 export async function GET(): Promise<NextResponse>
 {
-	const playerRow: PlayerRow = applyPlayerUpdate(1);
+	const user: UserRow | null = await Auth.getCurrentUser();
+	if (user === null)
+	{
+		return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+	}
+
+	const player: PlayerRow | null = PlayerUpdateServer.findPlayerByUserId(user.id);
+	if (player === null)
+	{
+		return NextResponse.json({ error: "Player not found" }, { status: 404 });
+	}
+
+	const playerRow: PlayerRow = PlayerUpdateServer.applyPlayerUpdate(player.id);
 	return NextResponse.json(playerRow);
 }

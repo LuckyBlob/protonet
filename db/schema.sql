@@ -1,10 +1,28 @@
-CREATE TABLE IF NOT EXISTS player
+CREATE TABLE IF NOT EXISTS users
 (
-  id INTEGER PRIMARY KEY,
-  gold REAL NOT NULL DEFAULT 0,
-  production_rate REAL NOT NULL DEFAULT 0.0083,
-  upgrade_level INTEGER NOT NULL DEFAULT 0,
-  last_updated INTEGER NOT NULL DEFAULT 0
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at INTEGER NOT NULL
 );
 
-INSERT OR IGNORE INTO player (id, gold, production_rate, upgrade_level, last_updated) VALUES (1, 100, 1, 0, 0);
+CREATE TABLE IF NOT EXISTS sessions
+(
+  token TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+
+CREATE TABLE IF NOT EXISTS player
+(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL UNIQUE,
+  gold REAL NOT NULL DEFAULT 100,
+  production_rate REAL NOT NULL DEFAULT 1,
+  upgrade_level INTEGER NOT NULL DEFAULT 0,
+  last_updated INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

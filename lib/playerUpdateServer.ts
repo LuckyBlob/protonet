@@ -86,3 +86,12 @@ export function tryBuyUpgrade(playerId: number): BuyUpgradeResult
 	};
 	return successResult;
 }
+
+export function findPlayerByUserId(userId: number): PlayerRow | null
+{
+	const selectStatement: Database.Statement = databaseConnection.prepare(
+		"SELECT * FROM player WHERE user_id = ?"
+	);
+	const playerRow: PlayerRow | undefined = selectStatement.get(userId) as PlayerRow | undefined;
+	return playerRow ?? null;
+}

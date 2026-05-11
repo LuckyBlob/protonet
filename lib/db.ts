@@ -4,3 +4,4 @@ import { join } from "path";
 const databaseFilePath: string = join(process.cwd(), "data", "game.db");
 
 export const databaseConnection: Database.Database = new Database(databaseFilePath);
+databaseConnection.pragma("foreign_keys = ON");
