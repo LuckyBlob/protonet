@@ -40,7 +40,7 @@ export async function POST(request: Request): Promise<NextResponse>
 	cookieStore.set(sessionCookieName, session.token,
 	{
 		httpOnly: true,
-		secure: false,
+		secure: true,
 		sameSite: "lax",
 		maxAge: sessionDurationSeconds,
 		path: "/",
