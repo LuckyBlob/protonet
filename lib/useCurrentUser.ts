@@ -2,15 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-export type CurrentUser =
-{
-	username: string;
-};
+import { UserRow } from "./dbTypes";
 
 export type UseCurrentUserResult =
 {
-	user: CurrentUser | null;
+	user: UserRow | null;
 	isLoading: boolean;
 };
 
@@ -18,8 +14,8 @@ export function useCurrentUser(): UseCurrentUserResult
 {
 	const router = useRouter();
 
-	const userState: [CurrentUser | null, (value: CurrentUser | null) => void] = useState<CurrentUser | null>(null);
-	const setUser: (value: CurrentUser | null) => void = userState[1];
+	const userState: [UserRow | null, (value: UserRow | null) => void] = useState<UserRow | null>(null);
+	const setUser: (value: UserRow | null) => void = userState[1];
 
 	const isLoadingState: [boolean, (value: boolean) => void] = useState<boolean>(true);
 	const setIsLoading: (value: boolean) => void = isLoadingState[1];
@@ -29,7 +25,7 @@ export function useCurrentUser(): UseCurrentUserResult
 		const fetchCurrentUser: () => Promise<void> = async () =>
 		{
 			const response: Response = await fetch("/api/me");
-			const data: { user: CurrentUser | null } = await response.json();
+			const data: { user: UserRow | null } = await response.json();
 
 			if (data.user === null)
 			{

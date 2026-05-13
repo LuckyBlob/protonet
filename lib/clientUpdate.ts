@@ -3,9 +3,9 @@ import * as UpgradeCost from "@/lib/upgradeCost";
 
 const tickIntervalMilliseconds: number = 1000;
 
-function clientUpdatePredictedGold(psController: MainPageTypes.PSController, elapsedSeconds: number): void
+function clientUpdatePredictedGold(psController: MainPageTypes.PSController, sdsController: MainPageTypes.SDSController, elapsedSeconds: number): void
 {
-    const predictedGold: number = psController[0].dbData.gold + (UpgradeCost.getProductionRate(psController[0].dbData) * elapsedSeconds);
+    const predictedGold: number = psController[0].dbData.gold + (UpgradeCost.getProductionRate(psController[0].dbData, sdsController[0]) * elapsedSeconds);
 
     const updatedPlayerState: MainPageTypes.PlayerState =
     {
@@ -20,24 +20,24 @@ function clientUpdatePredictedGold(psController: MainPageTypes.PSController, ela
     psController[1](updatedPlayerState);
 }
 
-function clientUpdatePredictedValues(psController: MainPageTypes.PSController, elapsedSeconds: number): void
+function clientUpdatePredictedValues(psController: MainPageTypes.PSController, sdsController: MainPageTypes.SDSController, elapsedSeconds: number): void
 {
-    clientUpdatePredictedGold(psController, elapsedSeconds);
+    clientUpdatePredictedGold(psController, sdsController, elapsedSeconds);
 }
 
-function clientTick(psController: MainPageTypes.PSController): void
+function clientTick(psController: MainPageTypes.PSController, sdsController: MainPageTypes.SDSController): void
 {
     const currentTimestamp: number = Date.now();
     const elapsedSeconds: number = (currentTimestamp - psController[0].lastFetchTimestamp) / 1000;
 
-    clientUpdatePredictedValues(psController, elapsedSeconds);
+    clientUpdatePredictedValues(psController, sdsController, elapsedSeconds);
 }
 
-export function addAnimationTimer(psController: MainPageTypes.PSController): () => void
+export function addAnimationTimer(psController: MainPageTypes.PSController, sdsController: MainPageTypes.SDSController): () => void
 {
     const intervalId: NodeJS.Timeout = setInterval(() =>
     {
-      clientTick(psController);
+      clientTick(psController, sdsController);
     }, tickIntervalMilliseconds);
 
     const cleanupFunction: () => void = () =>

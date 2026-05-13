@@ -1,5 +1,5 @@
 import { PlayerRow } from "@/lib/dbTypes";
-
+import * as ServerDataTypes from "@/lib/serverDataTypes";
 
 export type CurrentPredictedValues =
 {
@@ -14,6 +14,7 @@ export type PlayerState =
 };
 
 export type PSController  = [PlayerState, (value: PlayerState) => void];
+export type SDSController  = [ServerDataTypes.ServerData, (value: ServerDataTypes.ServerData) => void];
 
 export const NullPredictedValues: CurrentPredictedValues =
 {

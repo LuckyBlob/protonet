@@ -32,13 +32,27 @@ type SideBarProps =
 {
 	username: string;
 	currentView: string;
+    admin_level: number | null;
 	onSelectView: (viewName: string) => void;
 	onLogout: () => void;
+    onRefreshServerData: () => void;
 };
 
 export function SideBarElement(props: SideBarProps): React.ReactElement
 {
     const navButtonClass: string = "px-4 py-1 text-center hover:bg-white/10 rounded transition-colors";
+
+	const adminSection: React.ReactElement | null = props.admin_level === 0
+		?
+		(
+			<button
+				onClick={props.onRefreshServerData}
+				className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded w-full mb-2"
+			>
+				Refresh Server Data
+			</button>
+		)
+		: null;
 
 	const sideBarElement: React.ReactElement =
 	(
@@ -54,6 +68,8 @@ export function SideBarElement(props: SideBarProps): React.ReactElement
             </div>
 
 			<div className="flex-1" />
+
+            {adminSection}
 
 			<button
 				onClick={props.onLogout}
@@ -97,6 +113,7 @@ type MainWindowProps =
 {
 	currentView: string;
 	psController: MainPageTypes.PSController;
+	sdsController: MainPageTypes.SDSController;
 };
 
 export function MainWindowElement(props: MainWindowProps): React.ReactElement
@@ -108,7 +125,7 @@ export function MainWindowElement(props: MainWindowProps): React.ReactElement
 
 	if (props.currentView === "upgrades")
 	{
-		return <UpgradeView psController={props.psController} />;
+		return <UpgradeView psController={props.psController} sdsController={props.sdsController} />;
 	}
 
 	if (props.currentView === "stats")

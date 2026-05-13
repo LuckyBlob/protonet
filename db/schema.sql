@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
+  is_admin INTEGER NOT NULL,
   created_at INTEGER NOT NULL
 );
 
@@ -26,3 +27,11 @@ CREATE TABLE IF NOT EXISTS player
   building_upgrade_completes_at INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS server_config
+(
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  time_multiplier REAL NOT NULL DEFAULT 1
+);
+
+INSERT OR IGNORE INTO server_config (id, time_multiplier) VALUES (1, 1);

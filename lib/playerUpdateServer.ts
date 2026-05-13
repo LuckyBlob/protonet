@@ -2,6 +2,8 @@ import { databaseConnection } from "@/lib/db";
 import { PlayerRow } from "@/lib/dbTypes";
 import Database from "better-sqlite3";
 import * as UpgradeCost from "@/lib/upgradeCost";
+import * as ServerDataTypes from "@/lib/serverDataTypes";
+import * as ServerData from "@/lib/serverData";
 
 export type BuyUpgradeResult =
 {
@@ -32,6 +34,7 @@ export function updatePlayerColumns(playerId: number, columnUpdates: Partial<Pla
 export function applyPlayerUpdate(playerId: number): PlayerRow
 {
 	const playerRow: PlayerRow = readPlayerRow(playerId);
+	const serverData: ServerDataTypes.ServerData = ServerData.getServerData();
 	const currentTimestamp: number = Date.now();
 
   	if (playerRow.last_updated === 0)
@@ -52,7 +55,7 @@ export function applyPlayerUpdate(playerId: number): PlayerRow
 
 	if (buildWasActive === false || buildHasFinished === false)
 	{
-		const goldGained: number = UpgradeCost.getProductionRate(playerRow) * elapsedSeconds;
+		const goldGained: number = UpgradeCost.getProductionRate(playerRow, serverData) * elapsedSeconds;
 		const updatedGold: number = playerRow.gold + goldGained;
 
 		return updatePlayerColumns(playerId, { gold: updatedGold, last_updated: currentTimestamp });
@@ -61,8 +64,8 @@ export function applyPlayerUpdate(playerId: number): PlayerRow
 	const secondsBeforeBuildEnd: number = (buildCompletesAt - playerRow.last_updated) / 1000;
 	const secondsAfterBuildEnd: number = (currentTimestamp - buildCompletesAt) / 1000;
 
-	const oldProductionRate: number = UpgradeCost.getProductionRate(playerRow);
-	const newProductionRate: number = UpgradeCost.getNextProductionRate(playerRow);
+	const oldProductionRate: number = UpgradeCost.getProductionRate(playerRow, serverData);
+	const newProductionRate: number = UpgradeCost.getNextProductionRate(playerRow, serverData);
 	const newUpgradeLevel: number = playerRow.upgrade_level + 1;
 
 	const goldGainedPreCompletion: number = oldProductionRate * secondsBeforeBuildEnd;
@@ -78,7 +81,7 @@ export function applyPlayerUpdate(playerId: number): PlayerRow
 	});
 }
 
-export function tryBuyUpgrade(playerId: number): BuyUpgradeResult
+export function tryBuyUpgrade(playerId: number, serverData: ServerDataTypes.ServerData): BuyUpgradeResult
 {
 	const playerRow: PlayerRow = applyPlayerUpdate(playerId);
 
@@ -106,7 +109,7 @@ export function tryBuyUpgrade(playerId: number): BuyUpgradeResult
 		return failureResult;
 	}
 
-	const buildDurationSeconds: number = UpgradeCost.computeUpgradeBuildDurationSeconds(playerRow.upgrade_level);
+	const buildDurationSeconds: number = UpgradeCost.computeUpgradeBuildDurationSeconds(playerRow.upgrade_level, serverData);
 	const buildCompletesAt: number = Date.now() + buildDurationSeconds * 1000;
 	const newGold: number = playerRow.gold - upgradeCost;
 
@@ -132,4 +135,51 @@ export function findPlayerByUserId(userId: number): PlayerRow | null
 	);
 	const playerRow: PlayerRow | undefined = selectStatement.get(userId) as PlayerRow | undefined;
 	return playerRow ?? null;
+}
+
+export function refreshServerDataAndBankAllPlayers(): void
+{
+	const transaction: Database.Transaction = databaseConnection.transaction(() =>
+	{
+		const oldServerData: ServerDataTypes.ServerData = ServerData.getServerData();
+
+		const selectStatement: Database.Statement = databaseConnection.prepare(
+			"SELECT id FROM player"
+		);
+		const playerRows: { id: number }[] = selectStatement.all() as { id: number }[];
+
+		for (const playerRow of playerRows)
+		{
+			applyPlayerUpdate(playerRow.id);
+		}
+		
+		ServerData.reloadServerData();
+		const newServerData: ServerDataTypes.ServerData = ServerData.getServerData();
+
+		const newMultiplier: number = newServerData.config.time_multiplier;
+		const oldMultiplier: number = oldServerData.config.time_multiplier;
+
+		if (newMultiplier <= 0)
+		{
+			throw new Error(`Invalid time_multiplier: ${newMultiplier}`);
+		}
+
+		const selectActiveBuildsStatement: Database.Statement = databaseConnection.prepare(
+			"SELECT id, building_upgrade_completes_at FROM player WHERE building_upgrade_completes_at != 0"
+		);
+		const activeBuildRows: { id: number; building_upgrade_completes_at: number }[] = selectActiveBuildsStatement.all() as { id: number; building_upgrade_completes_at: number }[];
+
+		const now: number = Date.now();
+
+		for (const buildRow of activeBuildRows)
+		{
+			const realMsRemaining: number = buildRow.building_upgrade_completes_at - now;
+			const newRealMsRemaining: number = realMsRemaining * (oldMultiplier / newMultiplier);
+			const newCompletesAt: number = now + newRealMsRemaining;
+
+			updatePlayerColumns(buildRow.id, { building_upgrade_completes_at: newCompletesAt });
+		}
+	});
+
+	transaction();
 }

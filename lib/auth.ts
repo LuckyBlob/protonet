@@ -113,3 +113,15 @@ export async function getCurrentUser(): Promise<UserRow | null>
 	const userRow: UserRow | undefined = selectStatement.get(sessionRow.user_id) as UserRow | undefined;
 	return userRow ?? null;
 }
+
+export async function getCurrentAdminLevel(): Promise<number | null>
+{
+	const user: UserRow | null = await getCurrentUser();
+
+	if (user === null)
+	{
+		return null;
+	}
+
+	return user.admin_level;
+}

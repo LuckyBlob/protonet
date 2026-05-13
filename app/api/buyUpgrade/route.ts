@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { PlayerRow, UserRow } from "@/lib/dbTypes";
 import * as Auth from "@/lib/auth";
 import * as PlayerUpdateServer from "@/lib/playerUpdateServer";
+import * as ServerDataTypes from "@/lib/serverDataTypes";
+import * as ServerData from "@/lib/serverData";
 
 export async function POST(): Promise<NextResponse>
 {
@@ -17,7 +19,9 @@ export async function POST(): Promise<NextResponse>
 		return NextResponse.json({ error: "Player not found" }, { status: 404 });
 	}
 
-    const result: PlayerUpdateServer.BuyUpgradeResult = PlayerUpdateServer.tryBuyUpgrade(player.id);
+	const serverData: ServerDataTypes.ServerData = ServerData.getServerData();
+
+    const result: PlayerUpdateServer.BuyUpgradeResult = PlayerUpdateServer.tryBuyUpgrade(player.id, serverData);
 
 	if (result.success === false)
 	{

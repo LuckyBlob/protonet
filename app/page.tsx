@@ -11,24 +11,26 @@ import {
 import * as BaseComponents from "@/components/baseComponents";
 import * as UpgradeCost from "@/lib/upgradeCost";
 import * as AuthClient from "@/lib/authClient";
+import * as PlayerUpdateClient from "@/lib/playerUpdateClient";
+
 import { useCurrentUser } from "@/lib/useCurrentUser";
-import { usePlayerStateLoad } from "@/lib/usePlayerStateLoad";
+import { useClientDataLoad } from "@/lib/useClientDataLoad";
 
 export default function Home()
 {
 	const router = useRouter();
-	const currentUser = useCurrentUser();
-	const playerState = usePlayerStateLoad(currentUser.user !== null);
+	const useCurrentUserResult = useCurrentUser();
+	const useClientDataResult = useClientDataLoad(useCurrentUserResult.user !== null);
 
 	const currentViewState: [string, (value: string) => void] = useState<string>("game");
 	const setCurrentView: (value: string) => void = currentViewState[1];
 
-	if (currentUser.isLoading === true || playerState.isLoading === true)
+	if (useCurrentUserResult.isLoading === true || useClientDataResult.isLoading === true)
 	{
 		return <BaseComponents.LoadingElement />;
 	}
 
-	if (currentUser.user === null)
+	if (useCurrentUserResult.user === null)
 	{
 		return <BaseComponents.LoadingElement />;
 	}
@@ -39,28 +41,40 @@ export default function Home()
 		router.push("/login");
 	};
 
+	const handleRefreshServerData: () => Promise<void> = async () =>
+	{
+		await PlayerUpdateClient.tryRefreshServerData
+		(
+			useClientDataResult.psController,
+			useClientDataResult.sdsController,
+		);
+	};
+
 	const pageComponent: React.ReactElement =
 	(
 		<GameLayoutElement
 			sideBar={
 				<SideBarElement
-					username={currentUser.user.username}
+					username={useCurrentUserResult.user.username}
 					currentView={currentViewState[0]}
+					admin_level={useCurrentUserResult.user.admin_level}
 					onSelectView={setCurrentView}
 					onLogout={handleLogout}
+					onRefreshServerData={handleRefreshServerData}
 				/>
 			}
 			topBar={
 				<TopBarElement
-					gold={Math.floor(playerState.psController[0].currentPredictedValues.gold)}
-					productionRate={Math.floor(UpgradeCost.getProductionRate(playerState.psController[0].dbData) * 3600)}
-					buildCompletesAt={playerState.psController[0].dbData.building_upgrade_completes_at}
+					gold={Math.floor(useClientDataResult.psController[0].currentPredictedValues.gold)}
+					productionRate={Math.floor(UpgradeCost.getProductionRate(useClientDataResult.psController[0].dbData, useClientDataResult.sdsController[0]) * 3600)}
+					buildCompletesAt={useClientDataResult.psController[0].dbData.building_upgrade_completes_at}
 				/>
 			}
 			mainWindow={
 				<MainWindowElement
 					currentView={currentViewState[0]}
-					psController={playerState.psController}
+					psController={useClientDataResult.psController}
+					sdsController={useClientDataResult.sdsController}
 				/>
 			}
 		/>

@@ -13,6 +13,7 @@ export type UserRow =
 	id: number;
 	username: string;
 	password_hash: string;
+	admin_level: number;
 	created_at: number;
 };
 
@@ -21,4 +22,10 @@ export type SessionRow =
 	token: string;
 	user_id: number;
 	expires_at: number;
+};
+
+export type ServerConfigRow =
+{
+	id: number;
+	time_multiplier: number;
 };

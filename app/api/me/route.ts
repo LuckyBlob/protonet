@@ -11,5 +11,7 @@ export async function GET(): Promise<NextResponse>
 		return NextResponse.json({ user: null }, { status: 200 });
 	}
 
-	return NextResponse.json({ user: { username: user.username } });
+	const safeUser: UserRow = { ...user, password_hash: "" }; // Don't send password hash to client
+
+	return NextResponse.json({ user:safeUser });
 }
