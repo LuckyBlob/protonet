@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS users
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
-  is_admin INTEGER NOT NULL,
+  admin_level INTEGER NOT NULL DEFAULT 1,
   created_at INTEGER NOT NULL
 );
 
@@ -34,4 +34,4 @@ CREATE TABLE IF NOT EXISTS server_config
   time_multiplier REAL NOT NULL DEFAULT 1
 );
 
-INSERT OR IGNORE INTO server_config (id, time_multiplier) VALUES (1, 1);
+INSERT INTO server_config (id, time_multiplier) VALUES (1, 1);
