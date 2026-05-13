@@ -14,15 +14,15 @@ type UpgradeViewProps =
 
 export function UpgradeView(props: UpgradeViewProps): React.ReactElement
 {
-	const currentUpgradeLevel: number = props.psController[0].dbData.upgrade_level;
-    const buildCompletesAt: number = props.psController[0].dbData.building_upgrade_completes_at;
+	const currentUpgradeLevel: number = props.psController[0].predictedDBData.upgrade_level;
+    const buildCompletesAt: number = props.psController[0].predictedDBData.building_upgrade_completes_at;
 	const isBuilding: boolean = buildCompletesAt !== 0;
 
     const currentTimestamp: number = Date.now();
 	const remainingMs: number = buildCompletesAt - currentTimestamp;
 
     const nextUpgradeCost: number = UpgradeCost.computeUpgradeCost(currentUpgradeLevel);
-	const canAffordUpgrade: boolean = props.psController[0].currentPredictedValues.gold >= nextUpgradeCost;
+	const canAffordUpgrade: boolean = props.psController[0].predictedDBData.gold >= nextUpgradeCost;
 
 	const buttonElement: React.ReactElement = isBuilding === true
 		? (

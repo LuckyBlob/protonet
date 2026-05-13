@@ -65,9 +65,9 @@ export default function Home()
 			}
 			topBar={
 				<TopBarElement
-					gold={Math.floor(useClientDataResult.psController[0].currentPredictedValues.gold)}
-					productionRate={Math.floor(UpgradeCost.getProductionRate(useClientDataResult.psController[0].dbData, useClientDataResult.sdsController[0]) * 3600)}
-					buildCompletesAt={useClientDataResult.psController[0].dbData.building_upgrade_completes_at}
+					gold={Math.floor(useClientDataResult.psController[0].predictedDBData.gold)}
+					productionRate={Math.floor(UpgradeCost.getProductionRate(useClientDataResult.psController[0].predictedDBData, useClientDataResult.sdsController[0]) * 3600)}
+					buildCompletesAt={useClientDataResult.psController[0].predictedDBData.building_upgrade_completes_at}
 				/>
 			}
 			mainWindow={

@@ -30,7 +30,7 @@ export function useClientDataLoad(enabled: boolean): UseClientDataStateResult
 
 		const loadInitial: () => Promise<void> = async () =>
 		{
-			await PlayerUpdateClient.fetchAndSetPlayerState(psController, 1);
+			await PlayerUpdateClient.fetchAndSetPlayerState(psController);
 			await PlayerUpdateClient.fetchAndSetServerData(sdsController);
 			setIsLoading(false);
 		};

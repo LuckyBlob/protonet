@@ -23,6 +23,7 @@ Workflow:
    - When verifying formulas, fetch the relevant page from https://ogame.fandom.com/wiki/ to confirm the intended equation before judging the code's implementation.
     a. Assume for the moment we only have gold, which is metal, and no other ressources or upgrades.
    Show your work. Then check what the code computes against what you computed.
+   -  When checking a formula against a reference source (e.g. the OGame wiki), list every additive and multiplicative term in the code separately, then map each one to a term in the reference. Flag any code term that has no counterpart in the reference (possible spurious addition) and any reference term that maps to more than one code term (possible double-counting). Do not treat "it produces a reasonable number" as proof of correctness — check structural correspondence term-by-term.
 
 4. Hunt for desyncs between server truth and client prediction. The server is authoritative; the client predicts. Anywhere the client computes something the server also computes — including production rate, upgrade duration, time remaining, ressource delta — verify both sides use the same formula with the same multiplier source. A common-class bug: server reads multiplier from server_state cache, client reads from a separate fetched copy, and they don't agree because the client copy is stale or never updated.
 

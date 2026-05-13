@@ -4,6 +4,7 @@ import Database from "better-sqlite3";
 import * as UpgradeCost from "@/lib/upgradeCost";
 import * as ServerDataTypes from "@/lib/serverDataTypes";
 import * as ServerData from "@/lib/serverData";
+import { canAffordUpgrade } from "@/lib/upgradeCost";
 
 export type BuyUpgradeResult =
 {
@@ -31,10 +32,10 @@ export function updatePlayerColumns(playerId: number, columnUpdates: Partial<Pla
 	return readPlayerRow(playerId);
 }
 
-export function applyPlayerUpdate(playerId: number): PlayerRow
+function applyPlayerUpdateInner(playerId: number, preFetchedServerData?: ServerDataTypes.ServerData): PlayerRow
 {
 	const playerRow: PlayerRow = readPlayerRow(playerId);
-	const serverData: ServerDataTypes.ServerData = ServerData.getServerData();
+	const serverData: ServerDataTypes.ServerData = preFetchedServerData ?? ServerData.getServerData();
 	const currentTimestamp: number = Date.now();
 
   	if (playerRow.last_updated === 0)
@@ -61,8 +62,10 @@ export function applyPlayerUpdate(playerId: number): PlayerRow
 		return updatePlayerColumns(playerId, { gold: updatedGold, last_updated: currentTimestamp });
 	}
 
-	const secondsBeforeBuildEnd: number = (buildCompletesAt - playerRow.last_updated) / 1000;
-	const secondsAfterBuildEnd: number = (currentTimestamp - buildCompletesAt) / 1000;
+	const rawSecondsBeforeBuildEnd: number = (buildCompletesAt - playerRow.last_updated) / 1000;
+	const secondsBeforeBuildEnd: number = rawSecondsBeforeBuildEnd < 0 ? 0 : rawSecondsBeforeBuildEnd;
+	const rawSecondsAfterBuildEnd: number = (currentTimestamp - buildCompletesAt) / 1000;
+	const secondsAfterBuildEnd: number = rawSecondsAfterBuildEnd < 0 ? 0 : rawSecondsAfterBuildEnd;
 
 	const oldProductionRate: number = UpgradeCost.getProductionRate(playerRow, serverData);
 	const newProductionRate: number = UpgradeCost.getNextProductionRate(playerRow, serverData);
@@ -81,9 +84,21 @@ export function applyPlayerUpdate(playerId: number): PlayerRow
 	});
 }
 
+export function applyPlayerUpdate(playerId: number, preFetchedServerData?: ServerDataTypes.ServerData): PlayerRow
+{
+	// inTransaction means "Already in one" which could come from refreshServerDataAndBankAllPlayers. We dont need to gate if so.
+	if (databaseConnection.inTransaction)
+	{
+		return applyPlayerUpdateInner(playerId, preFetchedServerData);
+	}
+
+	// If not in a transaction, we start one to ensure the player update is atomic 2 different calls to applyPlayerUpdate don't interleave and cause incorrect player state.
+	return databaseConnection.transaction(() => applyPlayerUpdateInner(playerId, preFetchedServerData))();
+}
+
 export function tryBuyUpgrade(playerId: number, serverData: ServerDataTypes.ServerData): BuyUpgradeResult
 {
-	const playerRow: PlayerRow = applyPlayerUpdate(playerId);
+	const playerRow: PlayerRow = applyPlayerUpdate(playerId, serverData);
 
 	if (playerRow.building_upgrade_completes_at !== 0)
 	{
@@ -96,9 +111,7 @@ export function tryBuyUpgrade(playerId: number, serverData: ServerDataTypes.Serv
 		return failureResult;
 	}
 
-	const upgradeCost: number = UpgradeCost.computeUpgradeCost(playerRow.upgrade_level);
-
-	if (playerRow.gold < upgradeCost)
+	if (!canAffordUpgrade(playerRow))
 	{
 		const failureResult: BuyUpgradeResult =
 		{
@@ -111,7 +124,7 @@ export function tryBuyUpgrade(playerId: number, serverData: ServerDataTypes.Serv
 
 	const buildDurationSeconds: number = UpgradeCost.computeUpgradeBuildDurationSeconds(playerRow.upgrade_level, serverData);
 	const buildCompletesAt: number = Date.now() + buildDurationSeconds * 1000;
-	const newGold: number = playerRow.gold - upgradeCost;
+	const newGold: number = playerRow.gold - UpgradeCost.computeUpgradeCost(playerRow.upgrade_level);
 
 	const updatedPlayerRow: PlayerRow = updatePlayerColumns(playerId,
 	{
@@ -150,7 +163,7 @@ export function refreshServerDataAndBankAllPlayers(): void
 
 		for (const playerRow of playerRows)
 		{
-			applyPlayerUpdate(playerRow.id);
+			applyPlayerUpdate(playerRow.id, oldServerData);
 		}
 		
 		ServerData.reloadServerData();
@@ -174,7 +187,7 @@ export function refreshServerDataAndBankAllPlayers(): void
 		for (const buildRow of activeBuildRows)
 		{
 			const realMsRemaining: number = buildRow.building_upgrade_completes_at - now;
-			const newRealMsRemaining: number = realMsRemaining * (oldMultiplier / newMultiplier);
+			const newRealMsRemaining: number = Math.floor(realMsRemaining * (oldMultiplier / newMultiplier));
 			const newCompletesAt: number = now + newRealMsRemaining;
 
 			updatePlayerColumns(buildRow.id, { building_upgrade_completes_at: newCompletesAt });

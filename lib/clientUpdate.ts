@@ -5,15 +5,36 @@ const tickIntervalMilliseconds: number = 1000;
 
 function clientUpdatePredictedGold(psController: MainPageTypes.PSController, sdsController: MainPageTypes.SDSController, elapsedSeconds: number): void
 {
-    const predictedGold: number = psController[0].dbData.gold + (UpgradeCost.getProductionRate(psController[0].dbData, sdsController[0]) * elapsedSeconds);
+    const predictedGold: number = psController[0].dbData.gold + (UpgradeCost.getProductionRate(psController[0].predictedDBData, sdsController[0]) * elapsedSeconds);
 
     const updatedPlayerState: MainPageTypes.PlayerState =
     {
         ...psController[0],
-        currentPredictedValues:
+        predictedDBData:
         {
-            ...psController[0].currentPredictedValues,
+            ...psController[0].predictedDBData,
             gold: predictedGold,
+        },
+    };
+
+    psController[1](updatedPlayerState);
+}
+
+function clientUpdatePredictedUpgradeLevel(psController: MainPageTypes.PSController, sdsController: MainPageTypes.SDSController, elapsedSeconds: number): void
+{
+    if (psController[0].predictedDBData.building_upgrade_completes_at === 0 || psController[0].predictedDBData.building_upgrade_completes_at > Date.now())
+    {
+        return;
+    }
+
+    const updatedPlayerState: MainPageTypes.PlayerState =
+    {
+        ...psController[0],
+        predictedDBData:
+        {
+            ...psController[0].predictedDBData,
+            building_upgrade_completes_at: 0,
+            upgrade_level: psController[0].predictedDBData.upgrade_level + 1,
         },
     };
 
@@ -23,6 +44,7 @@ function clientUpdatePredictedGold(psController: MainPageTypes.PSController, sds
 function clientUpdatePredictedValues(psController: MainPageTypes.PSController, sdsController: MainPageTypes.SDSController, elapsedSeconds: number): void
 {
     clientUpdatePredictedGold(psController, sdsController, elapsedSeconds);
+    clientUpdatePredictedUpgradeLevel(psController, sdsController, elapsedSeconds);
 }
 
 function clientTick(psController: MainPageTypes.PSController, sdsController: MainPageTypes.SDSController): void

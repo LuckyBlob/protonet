@@ -3,7 +3,7 @@ import { PlayerRow } from "@/lib/dbTypes";
 import * as MainPageTypes from "@/lib/mainPageTypes";
 import * as ServerDataTypes from "@/lib/serverDataTypes";
 
-export async function fetchAndSetPlayerState(psController: MainPageTypes.PSController, playerId: number): Promise<void>
+export async function fetchAndSetPlayerState(psController: MainPageTypes.PSController): Promise<void>
 {
 	const response: Response = await fetch("/api/playerState");
 	const playerRow: PlayerRow = await response.json();
@@ -12,7 +12,7 @@ export async function fetchAndSetPlayerState(psController: MainPageTypes.PSContr
 	{
 		dbData: playerRow,
 		lastFetchTimestamp: Date.now(),
-		currentPredictedValues: { gold: playerRow.gold },
+		predictedDBData: playerRow
 	};
 
 	psController[1](playerState);
@@ -41,7 +41,7 @@ export async function tryBuyUpgrade(psController: MainPageTypes.PSController): P
 	{
 		dbData: updatedPlayerRow,
 		lastFetchTimestamp: Date.now(),
-		currentPredictedValues: { gold: updatedPlayerRow.gold },
+		predictedDBData: updatedPlayerRow
 	};
 	psController[1](playerState);
 }
@@ -55,6 +55,6 @@ export async function tryRefreshServerData(psController: MainPageTypes.PSControl
 		return;
 	}
 
-	await fetchAndSetPlayerState(psController, 1);
+	await fetchAndSetPlayerState(psController);
 	await fetchAndSetServerData(sdsController);
 }

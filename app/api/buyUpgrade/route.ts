@@ -10,13 +10,13 @@ export async function POST(): Promise<NextResponse>
     const user: UserRow | null = await Auth.getCurrentUser();
 	if (user === null)
 	{
-		return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+		return NextResponse.json({ error: "Not logged in." }, { status: 401 });
 	}
 
 	const player: PlayerRow | null = PlayerUpdateServer.findPlayerByUserId(user.id);
 	if (player === null)
 	{
-		return NextResponse.json({ error: "Player not found" }, { status: 404 });
+		return NextResponse.json({ error: "Player not found." }, { status: 404 });
 	}
 
 	const serverData: ServerDataTypes.ServerData = ServerData.getServerData();
@@ -26,7 +26,7 @@ export async function POST(): Promise<NextResponse>
 	if (result.success === false)
 	{
 		const errorResponse: NextResponse = NextResponse.json(
-			{ error: "Not enough gold", playerRow: result.playerRow },
+			{ error: { message: result.failureReason }, playerRow: result.playerRow },
 			{ status: 400 }
 		);
 		return errorResponse;

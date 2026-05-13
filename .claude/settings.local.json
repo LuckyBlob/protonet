@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git *)"
+      "Bash(git *)",
+      "WebFetch(domain:ogame.fandom.com)",
+      "WebFetch(domain:ogame-wiki.net)",
+      "WebFetch(domain:www.ogame.in)",
+      "WebFetch(domain:board.ogame.gameforge.com)",
+      "WebFetch(domain:en.m.wikipedia.org)"
     ]
   }
 }

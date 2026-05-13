@@ -18,8 +18,9 @@ export function getProductionRate(playerRow: PlayerRow, serverData: ServerDataTy
 function getRawProductionRate(upgradeLevel: number, serverData: ServerDataTypes.ServerData): number
 {
     const perSecondBaseProductionRate: number = baseProductionRateHour / 3600;
-    const upgradeRelevantProductionRate: number = perSecondBaseProductionRate * upgradeLevel * Math.pow(1.1, upgradeLevel);
-    return upgradeRelevantProductionRate * serverData.config.time_multiplier;
+    
+    const productionRate: number = upgradeLevel == 0 ? perSecondBaseProductionRate : perSecondBaseProductionRate * upgradeLevel * Math.pow(1.1, upgradeLevel);
+    return productionRate * serverData.config.time_multiplier;
 }
 
 export function computeUpgradeCost(currentUpgradeLevel: number): number
@@ -29,11 +30,11 @@ export function computeUpgradeCost(currentUpgradeLevel: number): number
 	return Math.floor(baseCost * Math.pow(growthFactor, currentUpgradeLevel));
 }
 
-export function canAffordUpgrade(psController: MainPageTypes.PSController): boolean
+export function canAffordUpgrade(playerRow: PlayerRow): boolean
 {
-    const currentUpgradeLevel: number = psController[0].dbData.upgrade_level;
+    const currentUpgradeLevel: number = playerRow.upgrade_level;
     const nextUpgradeCost: number = computeUpgradeCost(currentUpgradeLevel);
-    return psController[0].currentPredictedValues.gold >= nextUpgradeCost;
+    return playerRow.gold >= nextUpgradeCost;
 }
 
 export function computeUpgradeBuildDurationSeconds(currentUpgradeLevel: number, serverData: ServerDataTypes.ServerData): number
