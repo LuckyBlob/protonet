@@ -19,7 +19,7 @@ function getRawProductionRate(upgradeLevel: number, serverData: ServerDataTypes.
 {
     const perSecondBaseProductionRate: number = baseProductionRateHour / 3600;
     const upgradeRelevantProductionRate: number = perSecondBaseProductionRate * upgradeLevel * Math.pow(1.1, upgradeLevel);
-    return (perSecondBaseProductionRate + upgradeRelevantProductionRate) * serverData.config.time_multiplier;
+    return upgradeRelevantProductionRate * serverData.config.time_multiplier;
 }
 
 export function computeUpgradeCost(currentUpgradeLevel: number): number
