@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import * as Auth from "@/lib/auth";
 import { databaseConnection } from "@/lib/db";
-import { UserRow, SessionRow } from "@/lib/dbTypes";
+import { UserRow, SessionRow, PlayerRow } from "@/lib/dbTypes";
+import Database from "better-sqlite3";
 
 import { sessionCookieName, sessionDurationSeconds } from "@/lib/auth";
+import * as PlanetServer from "@/lib/planetServer";
 
 export async function POST(request: Request): Promise<NextResponse>
 {
@@ -32,7 +34,7 @@ export async function POST(request: Request): Promise<NextResponse>
 	const passwordHash: string = await Auth.hashPassword(password);
 	const newUser: UserRow = Auth.createUser(username, passwordHash);
 
-	databaseConnection.prepare("INSERT INTO player (user_id) VALUES (?)").run(newUser.id);
+	createPlayer(newUser.id);
 
 	const session: SessionRow = Auth.createSession(newUser.id);
 
@@ -47,4 +49,19 @@ export async function POST(request: Request): Promise<NextResponse>
 	});
 
 	return NextResponse.json({ username: newUser.username });
+}
+
+function createPlayer(userId: number): void
+{
+	const transaction: Database.Transaction = databaseConnection.transaction(() =>
+	{
+		const insertPlayerStatement: Database.Statement = databaseConnection.prepare(
+			"INSERT INTO player (user_id) VALUES (?) RETURNING *"
+		);
+		const playerRow: PlayerRow = insertPlayerStatement.get(userId) as PlayerRow;
+		
+		PlanetServer.assignStartingPlanets(playerRow);
+	});
+
+	transaction();
 }

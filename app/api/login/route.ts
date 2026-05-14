@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import * as Auth from "@/lib/auth";
-import { UserRow, SessionRow } from "@/lib/dbTypes";
+import { UserRow, SessionRow, PlanetRow } from "@/lib/dbTypes";
 
 import { sessionCookieName, sessionDurationSeconds } from "@/lib/auth";
 
