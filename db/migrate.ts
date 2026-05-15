@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import { readFileSync, readdirSync } from "fs";
 import { join } from "path";
+import { copyFileSync, existsSync } from "fs";
 
 const databaseFilePath: string = join(process.cwd(), "data", "game.db");
 const migrationsDirectoryPath: string = join(process.cwd(), "db", "migrations");
@@ -35,6 +36,18 @@ if (pendingMigrationFilenames.length === 0)
 	databaseConnection.close();
 	process.exit(0);
 }
+
+const dataDirectoryPath: string = join(process.cwd(), "data");
+let backupIndex: number = 1;
+
+while (existsSync(join(dataDirectoryPath, `game.db.backup.${backupIndex}`)) === true)
+{
+	backupIndex = backupIndex + 1;
+}
+
+const backupFilePath: string = join(dataDirectoryPath, `game.db.backup.${backupIndex}`);
+copyFileSync(databaseFilePath, backupFilePath);
+console.log(`Backed up DB to: ${backupFilePath}`);
 
 const recordMigrationStatement: Database.Statement = databaseConnection.prepare(
 	"INSERT INTO applied_migrations (filename, applied_at) VALUES (?, ?)"
