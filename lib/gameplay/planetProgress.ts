@@ -1,7 +1,9 @@
 import * as DBTypes from "@/lib/db/dbTypes";
-import * as Production from "@/lib/gameplay/production";
+
 import * as Association from "@/lib/gameplay/associations";
 import * as GameType from "@/lib/gameplay/gameTypes";
+import * as Production from "@/lib/gameplay/production";
+
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 
 export function applyPlanetProgress(planetRow: DBTypes.PlanetRow, serverData: ServerDataType.ServerData, now: number, applyOnlyIfBuildDoneOnly: boolean = false): DBTypes.PlanetRow
@@ -16,7 +18,6 @@ export function applyPlanetProgress(planetRow: DBTypes.PlanetRow, serverData: Se
 
 		return anchoredRow;
 	}
-	console.log("1");
 
 	const elapsedMilliseconds: number = now - planetRow.last_updated;
 
@@ -24,7 +25,6 @@ export function applyPlanetProgress(planetRow: DBTypes.PlanetRow, serverData: Se
 	{
 		return planetRow;
 	}
-	console.log("2");
 
 	const elapsedSeconds: number = elapsedMilliseconds / 1000;
 
@@ -32,19 +32,15 @@ export function applyPlanetProgress(planetRow: DBTypes.PlanetRow, serverData: Se
 	const buildWasActive: boolean = buildCompletesAt !== 0;
 	const buildHasFinished: boolean = (buildWasActive === true) && (now >= buildCompletesAt);
 
-    const currentRessourceQuantity : number | null = Association.getRessourceQuantityForRessourceType(planetRow, GameType.RESSOURCE_1);
-    
-    if (currentRessourceQuantity === null)
-    {
-        return planetRow;
-    }
-	console.log("3");
+	const currentRessourceQuantity: number | null = Association.getRessourceQuantityForRessourceType(planetRow, GameType.RESSOURCE_1);
 
-    console.log({ buildCompletesAt, now, buildWasActive, buildHasFinished, diff: buildCompletesAt - now });
+	if (currentRessourceQuantity === null)
+	{
+		return planetRow;
+	}
+
 	if ((buildWasActive === false) || (buildHasFinished === false))
 	{
-		// Client tick path: nothing to commit when no event has occurred. The
-		// display layer derives the live ressource value from last_updated.
 		if (applyOnlyIfBuildDoneOnly)
 		{
 			return planetRow;
@@ -64,7 +60,6 @@ export function applyPlanetProgress(planetRow: DBTypes.PlanetRow, serverData: Se
 
 		return advancedRow;
 	}
-	console.log("4");
 
 	const rawSecondsBeforeBuildEnd: number = (buildCompletesAt - planetRow.last_updated) / 1000;
 	const secondsBeforeBuildEnd: number = rawSecondsBeforeBuildEnd < 0 ? 0 : rawSecondsBeforeBuildEnd;
@@ -77,7 +72,6 @@ export function applyPlanetProgress(planetRow: DBTypes.PlanetRow, serverData: Se
 	{
 		return planetRow;
 	}
-	console.log("5");
 
 	const oldProductionRate: number = Production.getPlanetProductionRatePerSecond(planetRow, GameType.RESSOURCE_1, serverData);
 	const newProductionRate: number = Production.getNextPlanetProductionRatePerSecond(planetRow, GameType.RESSOURCE_1, serverData);

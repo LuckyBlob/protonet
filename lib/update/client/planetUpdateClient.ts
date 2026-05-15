@@ -1,11 +1,16 @@
 "use client";
 
-import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
+import * as DBType from "@/lib/db/dbTypes";
+
 import * as PlanetProgress from "@/lib/gameplay/planetProgress";
-import * as ClientUpdate from "@/lib/update/client/clientUpdate";
+
+import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
+
+import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+
 import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes"
-import * as DBType from "@/lib/db/dbTypes"
+
+import * as ClientUpdate from "@/lib/update/client/clientUpdate";
 
 export function updatePlanetPredictedData(clientDataStateResult: UseLoadClientDataState.ClientDataStateResult): void
 {
@@ -15,21 +20,11 @@ export function updatePlanetPredictedData(clientDataStateResult: UseLoadClientDa
 	const now: number = Date.now();
 	const advancedPlanetRow: DBType.PlanetRow = PlanetProgress.applyPlanetProgress(selectedPlanet, clientDataStateResult.sdsController[0], now, true);
 
-	console.log("updatePlanetPredictedData", {
-    last_updated: selectedPlanet.last_updated,
-    buildCompletesAt: selectedPlanet.building_upgrade_completes_at,
-    now,
-    sameRef: advancedPlanetRow === selectedPlanet,
-});
-
-	// applyPlanetProgress returns the same reference when nothing changed
-	// (elapsed <= 0). Return prev unchanged so React skips the update.
 	if (advancedPlanetRow === selectedPlanet)
 	{
 		return;
 	}
 
-	console.log("applied!");
 	const updatedPlanetRows: DBType.PlanetRow[] = ClientUpdate.replacePlanetRowInArrayByUpdatedPlanetRow(playerState.predictedDBData.planetRows, advancedPlanetRow);
 
 	const updatedPlayerState: PlayerDataType.PlayerState =
@@ -41,6 +36,6 @@ export function updatePlanetPredictedData(clientDataStateResult: UseLoadClientDa
 			planetRows: updatedPlanetRows,
 		},
 	};
-	
+
 	clientDataStateResult.psController[1](updatedPlayerState);
 }

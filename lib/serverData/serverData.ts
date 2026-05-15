@@ -1,15 +1,15 @@
-import { databaseConnection } from "@/lib/db/db";
 import Database from "better-sqlite3";
 
-import * as ServerDataTypes from "@/lib/serverData/serverDataTypes";
+import * as DB from "@/lib/db/db";
 import * as DBTypes from "@/lib/db/dbTypes";
-import { DefaultServerData } from "@/lib/serverData/serverDataTypes";
+
+import * as ServerDataTypes from "@/lib/serverData/serverDataTypes";
 
 let cachedServerData: ServerDataTypes.ServerData | null = null;
 
 function loadServerConfigFromDatabase(): DBTypes.ServerConfigRow
 {
-	const selectStatement: Database.Statement = databaseConnection.prepare(
+	const selectStatement: Database.Statement = DB.databaseConnection.prepare(
 		"SELECT * FROM server_config WHERE id = 1"
 	);
 	const serverConfigRow: DBTypes.ServerConfigRow | undefined = selectStatement.get() as DBTypes.ServerConfigRow | undefined;
@@ -29,7 +29,7 @@ function loadServerStateFromDatabase(): ServerDataTypes.ServerData
 	const serverData: ServerDataTypes.ServerData =
 	{
 		config: serverConfigRow,
-	};	
+	};
 	return serverData;
 }
 

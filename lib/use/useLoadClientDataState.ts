@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
+
 import * as MainPageType from "@/lib/mainPageTypes";
+
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+
+import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
 
 export type ClientDataStateResult =
 {

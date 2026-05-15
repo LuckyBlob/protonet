@@ -1,10 +1,16 @@
 import * as MainPageType from "@/lib/mainPageTypes";
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+
 import * as GameType from "@/lib/gameplay/gameTypes";
-import * as BuyRequest from "@/lib/networkCommunicationTypes/buyRequests";
+
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
+
+import * as BuyRequest from "@/lib/networkCommunicationTypes/buyRequests";
+
+import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+
+import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+
 import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes"
 
 export async function fetchAndSetPlayerState(psController: MainPageType.PSController): Promise<void>
 {
@@ -19,7 +25,7 @@ export async function fetchAndSetPlayerState(psController: MainPageType.PSContro
 
 	const storedId: number | null = SelectedPlanet.readStoredSelectedPlanetId();
 	const resolvedId: number | null = SelectedPlanet.resolveSelectedPlanetId(playerData.planetRows, storedId);
-	
+
 	if (resolvedId === null)
 	{
 		return;
@@ -47,7 +53,6 @@ export async function fetchAndSetServerData(sdsController: MainPageType.SDSContr
 	}
 
 	const serverData: ServerDataType.ServerData = await response.json();
-console.log("fetched server data", serverData);
 	sdsController[1](serverData);
 }
 

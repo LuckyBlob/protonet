@@ -1,8 +1,11 @@
-import * as Production from "@/lib/gameplay/production";
+import * as DBType from "@/lib/db/dbTypes";
+
 import * as Association from "@/lib/gameplay/associations";
 import * as GameType from "@/lib/gameplay/gameTypes";
+import * as Production from "@/lib/gameplay/production";
+
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-import * as DBType from "@/lib/db/dbTypes";
+
 import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
 
 export type SelectedPlanetDisplayValues =
@@ -28,7 +31,7 @@ export function getSelectedPlanetDisplayValues(clientDataStateResult: UseLoadCli
 	const ressource: number = Math.floor(storedRessourceQuantity + accruedSinceAnchor);
 
 	const productionRatePerHour: number = Math.floor(productionRatePerSecond * 3600);
-	
+
 	const buildCompletesAt: number = selectedPlanet.building_upgrade_completes_at;
 
 	const displayValues: SelectedPlanetDisplayValues =

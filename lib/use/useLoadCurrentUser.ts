@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import * as MainPageType from "@/lib/mainPageTypes";
 
 import * as DBType from "@/lib/db/dbTypes";
-import * as MainPageType from "@/lib/mainPageTypes";
 
 export type CurrentUserResult =
 {
@@ -36,7 +37,7 @@ export function useLoadCurrentUser(): MainPageType.CUController
 				router.push("/login");
 				return;
 			}
-			
+
 			const currentUserResult: CurrentUserResult =
 			{
 				user: data.user,

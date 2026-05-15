@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { UserRow } from "@/lib/db/dbTypes";
+
 import * as Auth from "@/lib/authentication/auth";
+
 import * as PlayerUpdateServer from "@/lib/update/server/playerUpdateServer";
 
 export async function POST(): Promise<NextResponse>
@@ -12,7 +13,7 @@ export async function POST(): Promise<NextResponse>
 		return NextResponse.json({ error: "No user." }, { status: 401 });
 	}
 
-    if (admin_level !== 0)
+	if (admin_level !== 0)
 	{
 		return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 	}

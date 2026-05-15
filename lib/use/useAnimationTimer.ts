@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import * as ClientUpdate from "@/lib/update/client/clientUpdate";
+import { useEffect, useRef, useState } from "react";
+
 import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+
+import * as ClientUpdate from "@/lib/update/client/clientUpdate";
 
 const tickIntervalMilliseconds: number = 1000;
 
@@ -16,7 +18,6 @@ export function useAnimationTimer(clientDataStateResult: UseLoadClientDataState.
 
 	useEffect(() =>
 	{
-		console.log("isLoading:", clientDataStateResult.lsController[0].isLoading);
 		if (clientDataStateResult.lsController[0].isLoading)
 		{
 			return;
@@ -28,7 +29,6 @@ export function useAnimationTimer(clientDataStateResult: UseLoadClientDataState.
 			{
 				return prev + 1;
 			});
-console.log("tick");
 			ClientUpdate.runClientTick(stateRef.current);
 		}, tickIntervalMilliseconds);
 

@@ -1,14 +1,18 @@
 "use client";
 
-import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
+import * as DBType from "@/lib/db/dbTypes";
+
 import * as Cost from "@/lib/gameplay/cost";
 import * as Duration from "@/lib/gameplay/duration";
 import * as GameType from "@/lib/gameplay/gameTypes";
-import * as DBType from "@/lib/db/dbTypes";
+
+import * as TimeFormat from "@/lib/helper/timeFormat";
+
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
+
 import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
 
-import { formatRemainingTimeMs } from "@/lib/helper/timeFormat";
+import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
 
 type UpgradeViewProps =
 {
@@ -45,7 +49,7 @@ export function UpgradeView(props: UpgradeViewProps): React.ReactElement
 	const buttonElement: React.ReactElement = isBuilding === true
 		? (
 			<div className="px-4 py-2 bg-yellow-600 text-white rounded">
-				Building: {formatRemainingTimeMs(remainingMs)}
+				Building: {TimeFormat.formatRemainingTimeMs(remainingMs)}
 			</div>
 		)
 		: (
@@ -54,7 +58,7 @@ export function UpgradeView(props: UpgradeViewProps): React.ReactElement
 				disabled={canAffordUpgrade === false}
 				className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
 			>
-				Buy upgrade (cost: {nextUpgradeCost} / time: {formatRemainingTimeMs(buildDurationSeconds * 1000)})
+				Buy upgrade (cost: {nextUpgradeCost} / time: {TimeFormat.formatRemainingTimeMs(buildDurationSeconds * 1000)})
 			</button>
 		);
 

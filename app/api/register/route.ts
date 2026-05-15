@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import * as Auth from "@/lib/authentication/auth";
-import { databaseConnection } from "@/lib/db/db";
-import { UserRow, SessionRow, PlayerRow } from "@/lib/db/dbTypes";
 import Database from "better-sqlite3";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
-import { sessionCookieName, sessionDurationSeconds } from "@/lib/authentication/auth";
+import * as Auth from "@/lib/authentication/auth";
+
+import * as DB from "@/lib/db/db";
+import * as DBTypes from "@/lib/db/dbTypes";
+
 import * as PlanetServer from "@/lib/update/server/planetUpdateServer";
 
 export async function POST(request: Request): Promise<NextResponse>
@@ -22,7 +23,7 @@ export async function POST(request: Request): Promise<NextResponse>
 		);
 	}
 
-	const existingUser: UserRow | null = Auth.findUserByUsername(username);
+	const existingUser: DBTypes.UserRow | null = Auth.findUserByUsername(username);
 	if (existingUser !== null)
 	{
 		return NextResponse.json(
@@ -32,7 +33,7 @@ export async function POST(request: Request): Promise<NextResponse>
 	}
 
 	const passwordHash: string = await Auth.hashPassword(password);
-	const newUser: UserRow = Auth.createUser(username, passwordHash);
+	const newUser: DBTypes.UserRow = Auth.createUser(username, passwordHash);
 
 	const playerCreated: boolean = createPlayer(newUser.id);
 	if (!playerCreated)
@@ -44,15 +45,15 @@ export async function POST(request: Request): Promise<NextResponse>
 		);
 	}
 
-	const session: SessionRow = Auth.createSession(newUser.id);
+	const session: DBTypes.SessionRow = Auth.createSession(newUser.id);
 
 	const cookieStore = await cookies();
-	cookieStore.set(sessionCookieName, session.token,
+	cookieStore.set(Auth.sessionCookieName, session.token,
 	{
 		httpOnly: true,
 		secure: true,
 		sameSite: "lax",
-		maxAge: sessionDurationSeconds,
+		maxAge: Auth.sessionDurationSeconds,
 		path: "/",
 	});
 
@@ -61,13 +62,13 @@ export async function POST(request: Request): Promise<NextResponse>
 
 function createPlayer(userId: number): boolean
 {
-	const transaction: Database.Transaction = databaseConnection.transaction(() =>
+	const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
 	{
-		const insertPlayerStatement: Database.Statement = databaseConnection.prepare(
+		const insertPlayerStatement: Database.Statement = DB.databaseConnection.prepare(
 			"INSERT INTO player (user_id) VALUES (?) RETURNING *"
 		);
-		const playerRow: PlayerRow = insertPlayerStatement.get(userId) as PlayerRow;
-		
+		const playerRow: DBTypes.PlayerRow = insertPlayerStatement.get(userId) as DBTypes.PlayerRow;
+
 		PlanetServer.assignStartingPlanets(playerRow);
 	});
 
@@ -76,7 +77,7 @@ function createPlayer(userId: number): boolean
 		transaction();
 		return true;
 	}
-	catch (error : unknown)
+	catch (error: unknown)
 	{
 		const errorMessage: string = error instanceof Error ? error.message : String(error);
 		console.error(`createPlayer failed for user ${userId}: ${errorMessage}`);

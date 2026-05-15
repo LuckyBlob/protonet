@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 import * as AuthClient from "@/lib/authentication/authClient";
 
 export default function LoginPage()

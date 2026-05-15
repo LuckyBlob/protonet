@@ -1,5 +1,5 @@
 export type BuildingUpgradeRequest =
 {
-    buildingType: number;
-    planetId: number;
+	buildingType: number;
+	planetId: number;
 };

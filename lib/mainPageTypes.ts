@@ -1,5 +1,7 @@
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+
+import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+
 import * as UseLoadCurrentUser from "@/lib/use/useLoadCurrentUser";
 
 // consumers must check lsController[0].isLoading before reading

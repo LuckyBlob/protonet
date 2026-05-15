@@ -1,11 +1,11 @@
-import { ServerConfigRow } from "@/lib/db/dbTypes";
+import * as DBTypes from "@/lib/db/dbTypes";
 
 export type ServerData =
 {
-	config: ServerConfigRow;
+	config: DBTypes.ServerConfigRow;
 };
 
-export const DefaultServerConfigRow: ServerConfigRow =
+export const DefaultServerConfigRow: DBTypes.ServerConfigRow =
 {
 	id: 1,
 	time_multiplier: 1,

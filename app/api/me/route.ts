@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
-import { UserRow } from "@/lib/db/dbTypes";
+
 import * as Auth from "@/lib/authentication/auth";
+
+import * as DBTypes from "@/lib/db/dbTypes";
 
 export async function GET(): Promise<NextResponse>
 {
-	const user: UserRow | null = await Auth.getCurrentUser();
+	const user: DBTypes.UserRow | null = await Auth.getCurrentUser();
 
 	if (user === null)
 	{
 		return NextResponse.json({ user: null }, { status: 200 });
 	}
 
-	const safeUser: UserRow = { ...user, password_hash: "" }; // Don't send password hash to client
+	const safeUser: DBTypes.UserRow = { ...user, password_hash: "" }; // Don't send password hash to client
 
-	return NextResponse.json({ user:safeUser });
+	return NextResponse.json({ user: safeUser });
 }

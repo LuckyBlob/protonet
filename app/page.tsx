@@ -1,22 +1,26 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { GameLayoutElement} from "@/components/mainPageElements/gameLayoutElement";
-import { SideBarElement} from "@/components/mainPageElements/sideBarElement";
-import { TopBarElement} from "@/components/mainPageElements/topBarElement";
-import { MainWindowElement} from "@/components/mainPageElements/mainWindowElement";
-import { LoadingElement } from "@/components/mainPageElements/loadingElement";
+
+import * as MainPageType from "@/lib/mainPageTypes";
+
+import * as GameLayoutElement from "@/components/mainPageElements/gameLayoutElement";
+import * as LoadingElement from "@/components/mainPageElements/loadingElement";
+import * as MainWindowElement from "@/components/mainPageElements/mainWindowElement";
+import * as PlanetSelector from "@/components/mainPageElements/planetSelector";
+import * as SideBarElement from "@/components/mainPageElements/sideBarElement";
+import * as TopBarElement from "@/components/mainPageElements/topBarElement";
+
 import * as AuthClient from "@/lib/authentication/authClient";
+
+import * as UseAnimationTimer from "@/lib/use/useAnimationTimer";
+import * as UseCurrentView from "@/lib/use/useCurrentView";
+import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseLoadCurrentUser from "@/lib/use/useLoadCurrentUser";
+import * as UseSelectedPlanetApplyUpdate from "@/lib/use/useSelectedPlanetApplyUpdate";
+
 import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
 import * as SelectedPlanetDisplay from "@/lib/update/client/selectedPlanetDisplay";
-import { PlanetSelector } from "@/components/mainPageElements/planetSelector";
-
-import * as UseLoadCurrentUser from "@/lib/use/useLoadCurrentUser";
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
-import * as UseAnimationTimer from "@/lib/use/useAnimationTimer";
-import * as UseCurrentView from "@/lib/use/useCurrentView"
-import * as UseSelectedPlanetApplyUpdate from "@/lib/use/useSelectedPlanetApplyUpdate"
-import * as MainPageType from "@/lib/mainPageTypes";
 
 export default function Home()
 {
@@ -30,15 +34,15 @@ export default function Home()
 
 	if (shouldShowLoading(cuController, clientDataStateResult))
 	{
-		return <LoadingElement />;
+		return <LoadingElement.LoadingElement />;
 	}
 	const displayValues: SelectedPlanetDisplay.SelectedPlanetDisplayValues = SelectedPlanetDisplay.getSelectedPlanetDisplayValues(clientDataStateResult);
 
 	const pageComponent: React.ReactElement =
 	(
-		<GameLayoutElement
+		<GameLayoutElement.GameLayoutElement
 			sideBar={
-				<SideBarElement
+				<SideBarElement.SideBarElement
 					cuController={cuController}
 					cvController={cvController}
 					clientDataStateResult={clientDataStateResult}
@@ -48,15 +52,15 @@ export default function Home()
 				/>
 			}
 			topBar={
-				<TopBarElement
+				<TopBarElement.TopBarElement
 					clientDataStateResult={clientDataStateResult}
 					planetSelector={
-						<PlanetSelector clientDataStateResult={clientDataStateResult}/>
+						<PlanetSelector.PlanetSelector clientDataStateResult={clientDataStateResult}/>
 					}
 				/>
 			}
 			mainWindow={
-				<MainWindowElement
+				<MainWindowElement.MainWindowElement
 					cvController={cvController}
 					clientDataStateResult={clientDataStateResult}
 				/>
@@ -92,4 +96,3 @@ async function handleRefreshServerData(clientDataStateResult: UseLoadClientDataS
 {
 	await PlayerUpdateClient.tryRefreshServerData(clientDataStateResult);
 };
-

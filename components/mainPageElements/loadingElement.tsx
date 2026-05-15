@@ -1,14 +1,14 @@
-import { BackgroundElement } from "@/components/mainPageElements/backgroundElement";
+import * as BackgroundElement from "@/components/mainPageElements/backgroundElement";
 
 export function LoadingElement(): React.ReactElement
 {
 	const loadingElement: React.ReactElement =
 	(
-		<BackgroundElement>
+		<BackgroundElement.BackgroundElement>
 			<main>
 				Loading...
 			</main>
-		</BackgroundElement>
+		</BackgroundElement.BackgroundElement>
 	);
 
 	return loadingElement;

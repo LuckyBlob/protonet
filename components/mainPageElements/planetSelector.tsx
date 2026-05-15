@@ -1,9 +1,12 @@
 import { useState } from "react";
+
 import * as MainPageType from "@/lib/mainPageTypes";
 
 import * as DBType from "@/lib/db/dbTypes";
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
+
+import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
 
 type PlanetSelectorProps =
 {
@@ -16,7 +19,7 @@ export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
 	const isOpen: boolean = isOpenState[0];
 	const setIsOpen: (value: boolean) => void = isOpenState[1];
 
-    const dropdownClass: string = isOpen === true ? "block" : "hidden";
+	const dropdownClass: string = isOpen === true ? "block" : "hidden";
 
 	const planetsWithDisplayName: { planet: DBType.PlanetRow; displayName: string }[] = props.clientDataStateResult.psController[0].dbData.planetRows.map((planet: DBType.PlanetRow) =>
 	{

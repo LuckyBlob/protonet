@@ -1,4 +1,4 @@
-import { BackgroundElement } from "@/components/mainPageElements/backgroundElement";
+import * as BackgroundElement from "@/components/mainPageElements/backgroundElement";
 
 type GameLayoutProps =
 {
@@ -11,7 +11,7 @@ export function GameLayoutElement(props: GameLayoutProps): React.ReactElement
 {
 	const layoutElement: React.ReactElement =
 	(
-		<BackgroundElement>
+		<BackgroundElement.BackgroundElement>
 			<div className="min-h-screen flex">
 				{props.sideBar}
 				<div className="flex-1 flex flex-col">
@@ -21,7 +21,7 @@ export function GameLayoutElement(props: GameLayoutProps): React.ReactElement
 					</main>
 				</div>
 			</div>
-		</BackgroundElement>
+		</BackgroundElement.BackgroundElement>
 	);
 
 	return layoutElement;
