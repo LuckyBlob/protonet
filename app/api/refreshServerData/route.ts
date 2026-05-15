@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { UserRow } from "@/lib/dbTypes";
-import * as Auth from "@/lib/auth";
-import * as PlayerUpdateServer from "@/lib/playerUpdateServer";
+import { UserRow } from "@/lib/db/dbTypes";
+import * as Auth from "@/lib/authentication/auth";
+import * as PlayerUpdateServer from "@/lib/update/server/playerUpdateServer";
 
 export async function POST(): Promise<NextResponse>
 {

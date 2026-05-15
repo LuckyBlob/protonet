@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import * as Auth from "@/lib/auth";
-import { UserRow, SessionRow, PlanetRow } from "@/lib/dbTypes";
+import * as Auth from "@/lib/authentication/auth";
+import { UserRow, SessionRow, PlanetRow } from "@/lib/db/dbTypes";
 
-import { sessionCookieName, sessionDurationSeconds } from "@/lib/auth";
+import { sessionCookieName, sessionDurationSeconds } from "@/lib/authentication/auth";
 
 export async function POST(request: Request): Promise<NextResponse>
 {

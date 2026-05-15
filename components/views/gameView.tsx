@@ -1,10 +1,10 @@
 "use client";
 
-import * as MainPageTypes from "@/lib/mainPageTypes";
+import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
 
 type GameViewProps =
 {
-	psController: MainPageTypes.PSController;
+	clientDataStateResult: UseLoadClientDataState.ClientDataStateResult;
 };
 
 export function GameView(props: GameViewProps): React.ReactElement
@@ -12,7 +12,7 @@ export function GameView(props: GameViewProps): React.ReactElement
 	const gameViewElement: React.ReactElement =
 	(
 		<div>
-			Game view (gold: {Math.floor(props.psController[0].predictedDBData.gold)})
+			Future cool image.
 		</div>
 	);
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { UserRow } from "@/lib/dbTypes";
-import * as Auth from "@/lib/auth";
+import { UserRow } from "@/lib/db/dbTypes";
+import * as Auth from "@/lib/authentication/auth";
 
 export async function GET(): Promise<NextResponse>
 {

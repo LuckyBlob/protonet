@@ -45,10 +45,10 @@ CREATE TABLE planet
 	size INTEGER NOT NULL,
 	owner_player_id INTEGER,
   claimed_at INTEGER NOT NULL DEFAULT 0,
-	iron REAL NOT NULL DEFAULT 0,
-	iron_mine_level INTEGER NOT NULL DEFAULT 0,
+	ressource_1 REAL NOT NULL DEFAULT 0,
+	ressource_1_production_level INTEGER NOT NULL DEFAULT 0,
 	last_updated INTEGER NOT NULL DEFAULT 0,
-    building_upgrade_completes_at INTEGER NOT NULL DEFAULT 0,
+  building_upgrade_completes_at INTEGER NOT NULL DEFAULT 0,
 	building_being_upgraded INTEGER NOT NULL DEFAULT 0,
 	UNIQUE (slot, system, galaxy),
 	FOREIGN KEY (owner_player_id) REFERENCES player(id) ON DELETE SET NULL

@@ -1,17 +1,17 @@
 "use client";
 
-import * as MainPageTypes from "@/lib/mainPageTypes";
+import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
 
 type StatsViewProps =
 {
-	psController: MainPageTypes.PSController;
+	clientDataStateResult: UseLoadClientDataState.ClientDataStateResult;
 };
 
 export function StatsView(props: StatsViewProps): React.ReactElement
 {
 	const statsViewElement: React.ReactElement =
 	(
-		<div>Stats view (TODO)</div>
+		<div>You're the top player!</div>
 	);
 
 	return statsViewElement;

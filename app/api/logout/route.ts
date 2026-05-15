@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import * as Auth from "@/lib/auth";
+import * as Auth from "@/lib/authentication/auth";
 
-import { sessionCookieName } from "@/lib/auth";
+import { sessionCookieName } from "@/lib/authentication/auth";
 
 export async function POST(): Promise<NextResponse>
 {

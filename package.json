@@ -10,7 +10,7 @@
     "db:init": "tsx db/init.ts",
     "db:migrate": "tsx db/migrate.ts",
     "db:seed": "tsx db/seedWorld.ts",
-    "db:backfill-planets": "tsx db/backfillStartingPlanets.ts"
+    "db:backfill": "tsx db/backfillStartingPlanets.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

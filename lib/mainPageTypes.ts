@@ -1,30 +1,10 @@
-import { PlayerRow } from "@/lib/dbTypes";
-import * as ServerDataTypes from "@/lib/serverDataTypes";
+import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+import * as UseLoadCurrentUser from "@/lib/use/useLoadCurrentUser";
 
-export type PlayerState =
-{
-    dbData: PlayerRow;
-    lastFetchTimestamp: number;
-    predictedDBData: PlayerRow
-};
-
-export type PSController  = [PlayerState, (value: PlayerState) => void];
-export type SDSController  = [ServerDataTypes.ServerData, (value: ServerDataTypes.ServerData) => void];
-
-
-export const NullPlayerRow: PlayerRow =
-{
-	id: 0,
-	user_id: 0,
-	gold: 0,
-	upgrade_level: 0,
-    building_upgrade_completes_at: 0,
-	last_updated: 0
-};
-
-export const NullPlayerState: PlayerState =
-{
-    dbData: NullPlayerRow,
-    lastFetchTimestamp: 0,
-    predictedDBData: NullPlayerRow,
-};
+// consumers must check lsController[0].isLoading before reading
+export type PSController  = [PlayerDataType.PlayerState, (value: PlayerDataType.PlayerState) => void];
+export type SDSController  = [ServerDataType.ServerData, (value: ServerDataType.ServerData) => void];
+export type CUController  = [UseLoadCurrentUser.CurrentUserResult, (value: UseLoadCurrentUser.CurrentUserResult) => void];
+export type CVController  = [string, (value: string) => void];
+export type LSController  = [PlayerDataType.LoadingState, (value: PlayerDataType.LoadingState) => void];

@@ -1,4 +1,4 @@
-import { databaseConnection } from "@/lib/db";
+import { databaseConnection } from "@/lib/db/db";
 import Database from "better-sqlite3";
 
 type SlotSizeRange =

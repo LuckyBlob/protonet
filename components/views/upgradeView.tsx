@@ -1,28 +1,46 @@
 "use client";
 
-import * as MainPageTypes from "@/lib/mainPageTypes";
-import * as PlayerUpdateClient from "@/lib/playerUpdateClient";
-import * as UpgradeCost from "@/lib/upgradeCost";
+import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
+import * as Cost from "@/lib/gameplay/cost";
+import * as Duration from "@/lib/gameplay/duration";
+import * as GameType from "@/lib/gameplay/gameTypes";
+import * as DBType from "@/lib/db/dbTypes";
+import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
+import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
 
-import { formatRemainingTimeMs } from "@/lib/timeFormat";
+import { formatRemainingTimeMs } from "@/lib/helper/timeFormat";
 
 type UpgradeViewProps =
 {
-	psController: MainPageTypes.PSController;
-	sdsController: MainPageTypes.SDSController;
+	clientDataStateResult: UseLoadClientDataState.ClientDataStateResult;
 };
 
 export function UpgradeView(props: UpgradeViewProps): React.ReactElement
 {
-	const currentUpgradeLevel: number = props.psController[0].predictedDBData.upgrade_level;
-    const buildCompletesAt: number = props.psController[0].predictedDBData.building_upgrade_completes_at;
+	const selectedPlanet: DBType.PlanetRow = SelectedPlanet.getSelectedPlanetRow(props.clientDataStateResult.psController[0]);
+
+	const currentUpgradeLevel: number = selectedPlanet.ressource_1_production_level;
+	const buildCompletesAt: number = selectedPlanet.building_upgrade_completes_at;
 	const isBuilding: boolean = buildCompletesAt !== 0;
 
-    const currentTimestamp: number = Date.now();
+	const currentTimestamp: number = Date.now();
 	const remainingMs: number = buildCompletesAt - currentTimestamp;
 
-    const nextUpgradeCost: number = UpgradeCost.computeUpgradeCost(currentUpgradeLevel);
-	const canAffordUpgrade: boolean = props.psController[0].predictedDBData.gold >= nextUpgradeCost;
+	const nextUpgradeCost: number | null = Cost.computeUpgradeCost(currentUpgradeLevel, GameType.BUILDING_PRODUCTION_RESSOURCE_1);
+	const buildDurationSeconds: number | null = Duration.computeUpgradeBuildDurationSeconds(currentUpgradeLevel, GameType.BUILDING_PRODUCTION_RESSOURCE_1, props.clientDataStateResult.sdsController[0]);
+
+	if (nextUpgradeCost === null || buildDurationSeconds === null)
+	{
+		return <div>Cannot compute upgrade for this building type.</div>;
+	}
+
+	const canAffordUpgrade: boolean = Cost.canAffordUpgrade(selectedPlanet, GameType.BUILDING_PRODUCTION_RESSOURCE_1);
+
+	const planetIdForBuy: number = selectedPlanet.id;
+	const handleBuyUpgrade: () => void = () =>
+	{
+		PlayerUpdateClient.tryBuyBuildingUpgradeClient(props.clientDataStateResult.psController, planetIdForBuy);
+	};
 
 	const buttonElement: React.ReactElement = isBuilding === true
 		? (
@@ -32,11 +50,11 @@ export function UpgradeView(props: UpgradeViewProps): React.ReactElement
 		)
 		: (
 			<button
-				onClick={() => PlayerUpdateClient.tryBuyUpgrade(props.psController)}
+				onClick={handleBuyUpgrade}
 				disabled={canAffordUpgrade === false}
 				className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
 			>
-				Buy upgrade (cost: {nextUpgradeCost} / time: {formatRemainingTimeMs(UpgradeCost.computeUpgradeBuildDurationSeconds(currentUpgradeLevel, props.sdsController[0]) * 1000)})
+				Buy upgrade (cost: {nextUpgradeCost} / time: {formatRemainingTimeMs(buildDurationSeconds * 1000)})
 			</button>
 		);
 
@@ -47,5 +65,6 @@ export function UpgradeView(props: UpgradeViewProps): React.ReactElement
 			{buttonElement}
 		</div>
 	);
+
 	return upgradeViewElement;
 }

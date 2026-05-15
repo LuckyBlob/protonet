@@ -1,80 +1,64 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-	GameLayoutElement,
-	SideBarElement,
-	TopBarElement,
-	MainWindowElement,
-} from "@/components/persistentComponents";
-import * as BaseComponents from "@/components/baseComponents";
-import * as UpgradeCost from "@/lib/upgradeCost";
-import * as AuthClient from "@/lib/authClient";
-import * as PlayerUpdateClient from "@/lib/playerUpdateClient";
+import { GameLayoutElement} from "@/components/mainPageElements/gameLayoutElement";
+import { SideBarElement} from "@/components/mainPageElements/sideBarElement";
+import { TopBarElement} from "@/components/mainPageElements/topBarElement";
+import { MainWindowElement} from "@/components/mainPageElements/mainWindowElement";
+import { LoadingElement } from "@/components/mainPageElements/loadingElement";
+import * as AuthClient from "@/lib/authentication/authClient";
+import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
+import * as SelectedPlanetDisplay from "@/lib/update/client/selectedPlanetDisplay";
+import { PlanetSelector } from "@/components/mainPageElements/planetSelector";
 
-import { useCurrentUser } from "@/lib/useCurrentUser";
-import { useClientDataLoad } from "@/lib/useClientDataLoad";
+import * as UseLoadCurrentUser from "@/lib/use/useLoadCurrentUser";
+import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseAnimationTimer from "@/lib/use/useAnimationTimer";
+import * as UseCurrentView from "@/lib/use/useCurrentView"
+import * as UseSelectedPlanetApplyUpdate from "@/lib/use/useSelectedPlanetApplyUpdate"
+import * as MainPageType from "@/lib/mainPageTypes";
 
 export default function Home()
 {
 	const router = useRouter();
-	const useCurrentUserResult = useCurrentUser();
-	const useClientDataResult = useClientDataLoad(useCurrentUserResult.user !== null);
+	const cuController: MainPageType.CUController = UseLoadCurrentUser.useLoadCurrentUser();
+	const clientDataStateResult: UseLoadClientDataState.ClientDataStateResult = UseLoadClientDataState.useLoadClientDataState(cuController[0].user !== null);
+	const cvController: MainPageType.CVController = UseCurrentView.useCurrentView();
 
-	const currentViewState: [string, (value: string) => void] = useState<string>("game");
-	const setCurrentView: (value: string) => void = currentViewState[1];
+	UseAnimationTimer.useAnimationTimer(clientDataStateResult);
+	UseSelectedPlanetApplyUpdate.useSelectedPlanetApplyUpdate(clientDataStateResult);
 
-	if (useCurrentUserResult.isLoading === true || useClientDataResult.isLoading === true)
+	if (shouldShowLoading(cuController, clientDataStateResult))
 	{
-		return <BaseComponents.LoadingElement />;
+		return <LoadingElement />;
 	}
-
-	if (useCurrentUserResult.user === null)
-	{
-		return <BaseComponents.LoadingElement />;
-	}
-
-	const handleLogout: () => Promise<void> = async () =>
-	{
-		await AuthClient.tryLogout();
-		router.push("/login");
-	};
-
-	const handleRefreshServerData: () => Promise<void> = async () =>
-	{
-		await PlayerUpdateClient.tryRefreshServerData
-		(
-			useClientDataResult.psController,
-			useClientDataResult.sdsController,
-		);
-	};
+	const displayValues: SelectedPlanetDisplay.SelectedPlanetDisplayValues = SelectedPlanetDisplay.getSelectedPlanetDisplayValues(clientDataStateResult);
 
 	const pageComponent: React.ReactElement =
 	(
 		<GameLayoutElement
 			sideBar={
 				<SideBarElement
-					username={useCurrentUserResult.user.username}
-					currentView={currentViewState[0]}
-					admin_level={useCurrentUserResult.user.admin_level}
-					onSelectView={setCurrentView}
+					cuController={cuController}
+					cvController={cvController}
+					clientDataStateResult={clientDataStateResult}
+					router={router}
 					onLogout={handleLogout}
 					onRefreshServerData={handleRefreshServerData}
 				/>
 			}
 			topBar={
 				<TopBarElement
-					gold={Math.floor(useClientDataResult.psController[0].predictedDBData.gold)}
-					productionRate={Math.floor(UpgradeCost.getProductionRate(useClientDataResult.psController[0].predictedDBData, useClientDataResult.sdsController[0]) * 3600)}
-					buildCompletesAt={useClientDataResult.psController[0].predictedDBData.building_upgrade_completes_at}
+					clientDataStateResult={clientDataStateResult}
+					planetSelector={
+						<PlanetSelector clientDataStateResult={clientDataStateResult}/>
+					}
 				/>
 			}
 			mainWindow={
 				<MainWindowElement
-					currentView={currentViewState[0]}
-					psController={useClientDataResult.psController}
-					sdsController={useClientDataResult.sdsController}
+					cvController={cvController}
+					clientDataStateResult={clientDataStateResult}
 				/>
 			}
 		/>
@@ -82,3 +66,30 @@ export default function Home()
 
 	return pageComponent;
 }
+
+function shouldShowLoading(cuController: MainPageType.CUController, clientDataStateResult: UseLoadClientDataState.ClientDataStateResult)
+{
+	if (cuController[0].isLoading || clientDataStateResult.lsController[0].isLoading)
+	{
+		return true;
+	}
+
+	if (cuController[0].user === null)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+async function handleLogout(router: ReturnType<typeof useRouter>): Promise<void>
+{
+	await AuthClient.tryLogout();
+	router.push("/login");
+};
+
+async function handleRefreshServerData(clientDataStateResult: UseLoadClientDataState.ClientDataStateResult): Promise<void>
+{
+	await PlayerUpdateClient.tryRefreshServerData(clientDataStateResult);
+};
+
