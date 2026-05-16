@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: /*#171717*/#ffffff;
-}
+/*
+  Surfaces own a background AND its paired text color, declared together so
+  they can never disagree.
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  - surface-light : theme-AWARE. Follows the OS color-scheme preference.
+        OS light -> white bg, dark text
+        OS dark  -> dark bg, light text
+    Used by login / register / plain pages.
+
+  - surface-dark  : FIXED. Always the dark backdrop with light text,
+    regardless of OS theme. Used by the game (behind the bg image).
+
+  The media query is scoped to the light-surface tokens ONLY. It never
+  touches a global color, so it cannot reintroduce the white-on-white bug.
+*/
+
+:root {
+	/* light surface, OS light theme (default) */
+	--color-surface-light: #ffffff;
+	--color-on-surface-light: #171717;
+
+	/* dark surface, always fixed */
+	--color-surface-dark: #0a0a0a;
+	--color-on-surface-dark: #ededed;
+
+	--color-surface-default: var(--color-surface-light);
+	--color-on-surface-default: var(--color-on-surface-light);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+	:root {
+		/* ONLY the light surface flips with OS theme */
+		--color-surface-light: #0a0a0a;
+		--color-on-surface-light: #ededed;
+
+		--color-surface-default: var(--color-surface-light);
+		--color-on-surface-default: var(--color-on-surface-light);
+	}
+}
+
+@theme inline {
+	--font-sans: var(--font-geist-sans);
+	--font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+	background: var(--color-surface-default);
+	color: var(--color-on-surface-default);
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+.surface-light {
+	background: var(--color-surface-light);
+	color: var(--color-on-surface-light);
+}
+
+.surface-dark {
+	/* background image applied by the component; color is the paired half */
+	color: var(--color-on-surface-dark);
 }
