@@ -8,11 +8,11 @@ import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 import * as ClientUpdate from "@/lib/update/client/clientUpdate";
 
-export function updatePlanetPredictedData(clientDataStateResult: UseLoadClientDataState.ClientDataStateResult): void
+export function updatePlanetPredictedData(clientDataStateResult: UseClientDataState.ClientDataStateResult): void
 {
 	const playerState: PlayerDataType.PlayerState = clientDataStateResult.psController[0];
 	const selectedPlanet: DBType.PlanetRow = SelectedPlanet.getSelectedPlanetRow(playerState);

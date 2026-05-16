@@ -4,7 +4,7 @@ import * as Auth from "@/lib/authentication/auth";
 
 import * as DBTypes from "@/lib/db/dbTypes";
 
-import * as BuyTypes from "@/lib/networkCommunicationTypes/buyRequests";
+import * as BuyTypes from "@/lib/requestTypes/buyRequests";
 
 import * as ServerData from "@/lib/serverData/serverData";
 import * as ServerDataTypes from "@/lib/serverData/serverDataTypes";

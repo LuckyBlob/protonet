@@ -1,18 +1,18 @@
 import { useRouter } from "next/navigation";
 import React from "react";
 
-import * as MainPageType from "@/lib/mainPageTypes";
-
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
+import * as UseCurrentView from "@/lib/use/useCurrentView";
+import * as UseCurrentUser from "@/lib/use/useCurrentUser";
 
 type SideBarProps =
 {
-	cuController: MainPageType.CUController;
-	cvController: MainPageType.CVController;
-	clientDataStateResult: UseLoadClientDataState.ClientDataStateResult;
+	cuController: UseCurrentUser.CUController;
+	cvController: UseCurrentView.CVController;
+	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 	router: ReturnType<typeof useRouter>;
 	onLogout: (router: ReturnType<typeof useRouter>) => void;
-	onRefreshServerData: (clientDataStateResult: UseLoadClientDataState.ClientDataStateResult) => void;
+	onRefreshServerData: (clientDataStateResult: UseClientDataState.ClientDataStateResult) => void;
 };
 
 export function SideBarElement(props: SideBarProps): React.ReactElement

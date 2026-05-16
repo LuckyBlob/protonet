@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 import * as ClientUpdate from "@/lib/update/client/clientUpdate";
 
 const tickIntervalMilliseconds: number = 1000;
 
-export function useAnimationTimer(clientDataStateResult: UseLoadClientDataState.ClientDataStateResult): void
+export function useAnimationTimer(clientDataStateResult: UseClientDataState.ClientDataStateResult): void
 {
 	const tickCounterState: [number, (value: number | ((prev: number) => number)) => void] = useState<number>(0);
 	const setTickCounter: (value: number | ((prev: number) => number)) => void = tickCounterState[1];

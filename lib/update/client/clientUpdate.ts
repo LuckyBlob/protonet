@@ -2,7 +2,7 @@
 
 import * as DBType from "@/lib/db/dbTypes";
 
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 import * as PlanetUpdateClient from "@/lib/update/client/planetUpdateClient";
 
@@ -21,7 +21,7 @@ export function replacePlanetRowInArrayByUpdatedPlanetRow(planetRows: DBType.Pla
 	return newPlanetRows;
 }
 
-export function runClientTick(clientDataStateResult: UseLoadClientDataState.ClientDataStateResult): void
+export function runClientTick(clientDataStateResult: UseClientDataState.ClientDataStateResult): void
 {
 	PlanetUpdateClient.updatePlanetPredictedData(clientDataStateResult);
 }

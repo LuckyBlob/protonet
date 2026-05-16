@@ -6,6 +6,7 @@ export type PlayerData =
 	planetRows: DBType.PlanetRow[];
 };
 
+export type PSController  = [PlayerState, (value: PlayerState) => void];
 export type PlayerState =
 {
 	dbData: PlayerData;
@@ -14,7 +15,9 @@ export type PlayerState =
 	lastFetchTimestamp: number;
 };
 
+export type LSController  = [LoadingState, (value: LoadingState) => void];
 export type LoadingState =
 {
 	isLoading: boolean;
 };
+

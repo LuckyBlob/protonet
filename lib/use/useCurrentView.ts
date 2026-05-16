@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 
-import * as MainPageType from "@/lib/mainPageTypes";
+export type CVController  = [string, (value: string) => void];
 
-export function useCurrentView(): MainPageType.CVController
+export function useCurrentView(): CVController
 {
-	const cvController: MainPageType.CVController = useState<string>("game");
+	const cvController: CVController = useState<string>("game");
 
 	return cvController;
 }

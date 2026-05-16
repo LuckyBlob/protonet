@@ -1,16 +1,14 @@
 import { useState } from "react";
 
-import * as MainPageType from "@/lib/mainPageTypes";
-
 import * as DBType from "@/lib/db/dbTypes";
 
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 type PlanetSelectorProps =
 {
-	clientDataStateResult: UseLoadClientDataState.ClientDataStateResult;
+	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
 export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
@@ -81,7 +79,7 @@ export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
 	return selectorElement;
 }
 
-async function handleSelectPlanet(clientDataStateResult: UseLoadClientDataState.ClientDataStateResult, newPlanetID: number, setIsOpen: (value: boolean) => void): Promise<void>
+async function handleSelectPlanet(clientDataStateResult: UseClientDataState.ClientDataStateResult, newPlanetID: number, setIsOpen: (value: boolean) => void): Promise<void>
 {
 	SelectedPlanet.setSelectedPlanetInPlayerState(clientDataStateResult, newPlanetID);
 	setIsOpen(false);

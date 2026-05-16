@@ -1,12 +1,12 @@
 import * as TimeFormat from "@/lib/helper/timeFormat";
 
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
 
-import * as SelectedPlanetDisplay from "@/lib/update/client/selectedPlanetDisplay";
+import * as SelectedPlanetDisplay from "@/lib/display/selectedPlanetDisplay";
 
 type TopBarProps =
 {
-	clientDataStateResult: UseLoadClientDataState.ClientDataStateResult;
+	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 	planetSelector: React.ReactElement;
 };
 

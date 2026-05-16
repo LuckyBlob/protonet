@@ -7,7 +7,7 @@ import * as Association from "@/lib/gameplay/associations";
 import * as Cost from "@/lib/gameplay/cost";
 import * as Duration from "@/lib/gameplay/duration";
 
-import * as BuyTypes from "@/lib/networkCommunicationTypes/buyRequests";
+import * as BuyTypes from "@/lib/requestTypes/buyRequests";
 
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 

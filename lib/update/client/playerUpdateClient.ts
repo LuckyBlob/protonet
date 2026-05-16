@@ -1,18 +1,16 @@
-import * as MainPageType from "@/lib/mainPageTypes";
-
 import * as GameType from "@/lib/gameplay/gameTypes";
 
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 
-import * as BuyRequest from "@/lib/networkCommunicationTypes/buyRequests";
+import * as BuyRequest from "@/lib/requestTypes/buyRequests";
 
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
 
-export async function fetchAndSetPlayerState(psController: MainPageType.PSController): Promise<void>
+export async function fetchAndSetPlayerState(psController: PlayerDataType.PSController): Promise<void>
 {
 	const response: Response = await fetch("/api/playerData");
 
@@ -43,7 +41,7 @@ export async function fetchAndSetPlayerState(psController: MainPageType.PSContro
 	psController[1](loadedPlayerState);
 }
 
-export async function fetchAndSetServerData(sdsController: MainPageType.SDSController): Promise<void>
+export async function fetchAndSetServerData(sdsController: ServerDataType.SDSController): Promise<void>
 {
 	const response: Response = await fetch("/api/serverDataState");
 
@@ -56,7 +54,7 @@ export async function fetchAndSetServerData(sdsController: MainPageType.SDSContr
 	sdsController[1](serverData);
 }
 
-export async function tryBuyBuildingUpgradeClient(psController: MainPageType.PSController, planetId: number): Promise<void>
+export async function tryBuyBuildingUpgradeClient(psController: PlayerDataType.PSController, planetId: number): Promise<void>
 {
 	const requestBody: BuyRequest.BuildingUpgradeRequest =
 	{
@@ -90,7 +88,7 @@ export async function tryBuyBuildingUpgradeClient(psController: MainPageType.PSC
 	psController[1](updatedPlayerState);
 }
 
-export async function tryRefreshServerData(clientDataStateResult: UseLoadClientDataState.ClientDataStateResult): Promise<void>
+export async function tryRefreshServerData(clientDataStateResult: UseClientDataState.ClientDataStateResult): Promise<void>
 {
 	const response: Response = await fetch("/api/refreshServerData", { method: "POST" });
 

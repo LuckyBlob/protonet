@@ -1,10 +1,10 @@
 "use client";
 
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 type GameViewProps =
 {
-	clientDataStateResult: UseLoadClientDataState.ClientDataStateResult;
+	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
 export function GameView(props: GameViewProps): React.ReactElement

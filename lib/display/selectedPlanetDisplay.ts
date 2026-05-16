@@ -6,7 +6,7 @@ import * as Production from "@/lib/gameplay/production";
 
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 export type SelectedPlanetDisplayValues =
 {
@@ -15,7 +15,7 @@ export type SelectedPlanetDisplayValues =
 	buildCompletesAt: number;
 };
 
-export function getSelectedPlanetDisplayValues(clientDataStateResult: UseLoadClientDataState.ClientDataStateResult): SelectedPlanetDisplayValues
+export function getSelectedPlanetDisplayValues(clientDataStateResult: UseClientDataState.ClientDataStateResult): SelectedPlanetDisplayValues
 {
 	const selectedPlanet: DBType.PlanetRow = SelectedPlanet.getSelectedPlanetRow(clientDataStateResult.psController[0]);
 

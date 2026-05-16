@@ -3,10 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import * as MainPageType from "@/lib/mainPageTypes";
-
 import * as DBType from "@/lib/db/dbTypes";
 
+export type CUController  = [CurrentUserResult, (value: CurrentUserResult) => void];
 export type CurrentUserResult =
 {
 	user: DBType.UserRow | null;
@@ -19,15 +18,15 @@ const UnloadedCurrentUserResult: CurrentUserResult =
 	isLoading: true
 };
 
-export function useLoadCurrentUser(): MainPageType.CUController
+export function useCurrentUser(): CUController
 {
 	const router = useRouter();
 
-	const cuController: MainPageType.CUController = useState<CurrentUserResult>(UnloadedCurrentUserResult);
+	const cuController: CUController = useState<CurrentUserResult>(UnloadedCurrentUserResult);
 
 	useEffect(() =>
 	{
-		const loadCurrentUser: () => Promise<void> = async () =>
+		const currentUser: () => Promise<void> = async () =>
 		{
 			const response: Response = await fetch("/api/me");
 			const data: { user: DBType.UserRow | null } = await response.json();
@@ -47,7 +46,7 @@ export function useLoadCurrentUser(): MainPageType.CUController
 			cuController[1](currentUserResult);
 		};
 
-		loadCurrentUser();
+		currentUser();
 	}, []);
 
 	return cuController;

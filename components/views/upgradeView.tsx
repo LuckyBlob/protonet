@@ -10,13 +10,13 @@ import * as TimeFormat from "@/lib/helper/timeFormat";
 
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
 
 type UpgradeViewProps =
 {
-	clientDataStateResult: UseLoadClientDataState.ClientDataStateResult;
+	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
 export function UpgradeView(props: UpgradeViewProps): React.ReactElement

@@ -2,11 +2,11 @@
 
 import { useEffect } from "react";
 
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 import * as PlanetUpdateClient from "@/lib/update/client/planetUpdateClient";
 
-export function useSelectedPlanetApplyUpdate(clientDataStateResult: UseLoadClientDataState.ClientDataStateResult): void
+export function useSelectedPlanet(clientDataStateResult: UseClientDataState.ClientDataStateResult): void
 {
 	useEffect(() =>
 	{	    

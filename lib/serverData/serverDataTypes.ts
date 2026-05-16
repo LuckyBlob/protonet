@@ -1,5 +1,6 @@
 import * as DBTypes from "@/lib/db/dbTypes";
 
+export type SDSController  = [ServerData, (value: ServerData) => void];
 export type ServerData =
 {
 	config: DBTypes.ServerConfigRow;

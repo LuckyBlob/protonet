@@ -1,15 +1,14 @@
-import * as MainPageType from "@/lib/mainPageTypes";
-
 import * as GameView from "@/components/views/gameView";
 import * as StatsView from "@/components/views/statsView";
 import * as UpgradeView from "@/components/views/upgradeView";
 
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
+import * as UseCurrentView from "@/lib/use/useCurrentView";
 
 type MainWindowProps =
 {
-	cvController: MainPageType.CVController;
-	clientDataStateResult: UseLoadClientDataState.ClientDataStateResult;
+	cvController: UseCurrentView.CVController;
+	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
 export function MainWindowElement(props: MainWindowProps): React.ReactElement

@@ -2,7 +2,7 @@ import * as DBTypes from "@/lib/db/dbTypes";
 
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 
-import * as UseLoadClientDataState from "@/lib/use/useLoadClientDataState";
+import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 const SELECTED_PLANET_STORAGE_KEY: string = "protonet.selectedPlanetId";
 
@@ -82,7 +82,7 @@ export function getSelectedPlanetRow(playerState: PlayerDataType.PlayerState): D
 	return planetRows[0];
 }
 
-export function setSelectedPlanetInPlayerState(clientDataStateResult: UseLoadClientDataState.ClientDataStateResult, requestedPlanetId: number): void
+export function setSelectedPlanetInPlayerState(clientDataStateResult: UseClientDataState.ClientDataStateResult, requestedPlanetId: number): void
 {
 	if (clientDataStateResult.lsController[0].isLoading)
 	{

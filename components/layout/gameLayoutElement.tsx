@@ -1,4 +1,4 @@
-import * as BackgroundElement from "@/components/mainPageElements/backgroundElement";
+import * as BackgroundElement from "@/components/layout/backgroundElement";
 
 type GameLayoutProps =
 {
