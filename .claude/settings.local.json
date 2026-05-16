@@ -6,7 +6,10 @@
       "WebFetch(domain:ogame-wiki.net)",
       "WebFetch(domain:www.ogame.in)",
       "WebFetch(domain:board.ogame.gameforge.com)",
-      "WebFetch(domain:en.m.wikipedia.org)"
+      "WebFetch(domain:en.m.wikipedia.org)",
+      "Bash(Get-ChildItem -Path \"D:\\\\Claude\\\\WebsiteProject\\\\protonet\" -Recurse -Directory)",
+      "Bash(Select-Object -First 30)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\Claude\\\\WebsiteProject\\\\protonet\" -Recurse -Directory | Select-Object -First 30 | ForEach-Object { $_.FullName })"
     ]
   }
 }

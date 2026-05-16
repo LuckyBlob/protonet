@@ -44,14 +44,14 @@ export default function LoginPage()
 				placeholder="Username"
 				value={usernameState[0]}
 				onChange={(e) => setUsername(e.target.value)}
-				className="border px-2 py-1 rounded"
+				className="border border-gray-400 px-2 py-1 rounded bg-white text-black placeholder:text-gray-400"
 			/>
 			<input
 				type="password"
 				placeholder="Password"
 				value={passwordState[0]}
 				onChange={(e) => setPassword(e.target.value)}
-				className="border px-2 py-1 rounded"
+				className="border border-gray-400 px-2 py-1 rounded bg-white text-black placeholder:text-gray-400"
 			/>
 			{errorElement}
 			<button
