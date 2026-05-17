@@ -1,18 +1,18 @@
 import Database from "better-sqlite3";
 
 import * as DB from "@/lib/db/db";
-import * as DBTypes from "@/lib/db/dbTypes";
+import * as DBType from "@/lib/db/dbTypes";
 
-import * as ServerDataTypes from "@/lib/serverData/serverDataTypes";
+import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 
-let cachedServerData: ServerDataTypes.ServerData | null = null;
+let cachedServerData: ServerDataType.ServerData | null = null;
 
-function loadServerConfigFromDatabase(): DBTypes.ServerConfigRow
+function loadServerConfigFromDatabase(): DBType.ServerConfigRow
 {
 	const selectStatement: Database.Statement = DB.databaseConnection.prepare(
 		"SELECT * FROM server_config WHERE id = 1"
 	);
-	const serverConfigRow: DBTypes.ServerConfigRow | undefined = selectStatement.get() as DBTypes.ServerConfigRow | undefined;
+	const serverConfigRow: DBType.ServerConfigRow | undefined = selectStatement.get() as DBType.ServerConfigRow | undefined;
 
 	if (serverConfigRow === undefined)
 	{
@@ -22,18 +22,18 @@ function loadServerConfigFromDatabase(): DBTypes.ServerConfigRow
 	return serverConfigRow;
 }
 
-function loadServerStateFromDatabase(): ServerDataTypes.ServerData
+function loadServerStateFromDatabase(): ServerDataType.ServerData
 {
-	const serverConfigRow: DBTypes.ServerConfigRow = loadServerConfigFromDatabase();
+	const serverConfigRow: DBType.ServerConfigRow = loadServerConfigFromDatabase();
 
-	const serverData: ServerDataTypes.ServerData =
+	const serverData: ServerDataType.ServerData =
 	{
 		config: serverConfigRow,
 	};
 	return serverData;
 }
 
-export function getServerData(): ServerDataTypes.ServerData
+export function getServerData(): ServerDataType.ServerData
 {
 	if (cachedServerData === null)
 	{

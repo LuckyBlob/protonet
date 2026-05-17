@@ -1,9 +1,10 @@
 import * as DBType from "@/lib/db/dbTypes";
+import * as PlanetData from "@/lib/playerData/planetData";
 
 export type PlayerData =
 {
 	playerRow: DBType.PlayerRow;
-	planetRows: DBType.PlanetRow[];
+	fullPlanetDatas: PlanetData.FullPlanetData[];
 };
 
 export type PSController  = [PlayerState, (value: PlayerState) => void];
@@ -20,4 +21,3 @@ export type LoadingState =
 {
 	isLoading: boolean;
 };
-

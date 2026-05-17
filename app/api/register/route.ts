@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import * as Auth from "@/lib/authentication/auth";
 
 import * as DB from "@/lib/db/db";
-import * as DBTypes from "@/lib/db/dbTypes";
+import * as DBType from "@/lib/db/dbTypes";
 
 import * as PlanetServer from "@/lib/update/server/planetUpdateServer";
 
@@ -23,7 +23,7 @@ export async function POST(request: Request): Promise<NextResponse>
 		);
 	}
 
-	const existingUser: DBTypes.UserRow | null = Auth.findUserByUsername(username);
+	const existingUser: DBType.UserRow | null = Auth.findUserByUsername(username);
 	if (existingUser !== null)
 	{
 		return NextResponse.json(
@@ -33,7 +33,7 @@ export async function POST(request: Request): Promise<NextResponse>
 	}
 
 	const passwordHash: string = await Auth.hashPassword(password);
-	const newUser: DBTypes.UserRow = Auth.createUser(username, passwordHash);
+	const newUser: DBType.UserRow = Auth.createUser(username, passwordHash);
 
 	const playerCreated: boolean = createPlayer(newUser.id);
 	if (!playerCreated)
@@ -45,7 +45,7 @@ export async function POST(request: Request): Promise<NextResponse>
 		);
 	}
 
-	const session: DBTypes.SessionRow = Auth.createSession(newUser.id);
+	const session: DBType.SessionRow = Auth.createSession(newUser.id);
 
 	const cookieStore = await cookies();
 	cookieStore.set(Auth.sessionCookieName, session.token,
@@ -67,7 +67,7 @@ function createPlayer(userId: number): boolean
 		const insertPlayerStatement: Database.Statement = DB.databaseConnection.prepare(
 			"INSERT INTO player (user_id) VALUES (?) RETURNING *"
 		);
-		const playerRow: DBTypes.PlayerRow = insertPlayerStatement.get(userId) as DBTypes.PlayerRow;
+		const playerRow: DBType.PlayerRow = insertPlayerStatement.get(userId) as DBType.PlayerRow;
 
 		PlanetServer.assignStartingPlanets(playerRow);
 	});

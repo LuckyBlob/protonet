@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { cookies } from "next/headers";
 
 import * as DB from "@/lib/db/db";
-import * as DBTypes from "@/lib/db/dbTypes";
+import * as DBType from "@/lib/db/dbTypes";
 
 export const sessionCookieName: string = "session_token";
 export const sessionDurationSeconds: number = 60 * 60 * 24 * 30;
@@ -24,14 +24,14 @@ export async function verifyPassword(plainPassword: string, passwordHash: string
 	return passwordIsValid;
 }
 
-export function createUser(username: string, passwordHash: string): DBTypes.UserRow
+export function createUser(username: string, passwordHash: string): DBType.UserRow
 {
 	const createdAt: number = Date.now();
 
 	const insertStatement: Database.Statement = DB.databaseConnection.prepare(
 		"INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?) RETURNING *"
 	);
-	const userRow: DBTypes.UserRow = insertStatement.get(username, passwordHash, createdAt) as DBTypes.UserRow;
+	const userRow: DBType.UserRow = insertStatement.get(username, passwordHash, createdAt) as DBType.UserRow;
 	return userRow;
 }
 
@@ -43,16 +43,16 @@ export function deleteUser(userId: number): void
 	deleteStatement.run(userId);
 }
 
-export function findUserByUsername(username: string): DBTypes.UserRow | null
+export function findUserByUsername(username: string): DBType.UserRow | null
 {
 	const selectStatement: Database.Statement = DB.databaseConnection.prepare(
 		"SELECT * FROM users WHERE username = ?"
 	);
-	const userRow: DBTypes.UserRow | undefined = selectStatement.get(username) as DBTypes.UserRow | undefined;
+	const userRow: DBType.UserRow | undefined = selectStatement.get(username) as DBType.UserRow | undefined;
 	return userRow ?? null;
 }
 
-export function createSession(userId: number): DBTypes.SessionRow
+export function createSession(userId: number): DBType.SessionRow
 {
 	const sessionToken: string = crypto.randomBytes(32).toString("hex");
 	const expiresAt: number = Date.now() + sessionDurationMilliseconds;
@@ -62,7 +62,7 @@ export function createSession(userId: number): DBTypes.SessionRow
 	);
 	insertStatement.run(sessionToken, userId, expiresAt);
 
-	const sessionRow: DBTypes.SessionRow =
+	const sessionRow: DBType.SessionRow =
 	{
 		token: sessionToken,
 		user_id: userId,
@@ -71,12 +71,12 @@ export function createSession(userId: number): DBTypes.SessionRow
 	return sessionRow;
 }
 
-export function findSession(token: string): DBTypes.SessionRow | null
+export function findSession(token: string): DBType.SessionRow | null
 {
 	const selectStatement: Database.Statement = DB.databaseConnection.prepare(
 		"SELECT * FROM sessions WHERE token = ?"
 	);
-	const sessionRow: DBTypes.SessionRow | undefined = selectStatement.get(token) as DBTypes.SessionRow | undefined;
+	const sessionRow: DBType.SessionRow | undefined = selectStatement.get(token) as DBType.SessionRow | undefined;
 
 	if (sessionRow === undefined)
 	{
@@ -100,7 +100,7 @@ export function deleteSession(token: string): void
 	deleteStatement.run(token);
 }
 
-export async function getCurrentUser(): Promise<DBTypes.UserRow | null>
+export async function getCurrentUser(): Promise<DBType.UserRow | null>
 {
 	const cookieStore = await cookies();
 	const sessionTokenCookie = cookieStore.get(sessionCookieName);
@@ -110,7 +110,7 @@ export async function getCurrentUser(): Promise<DBTypes.UserRow | null>
 		return null;
 	}
 
-	const sessionRow: DBTypes.SessionRow | null = findSession(sessionTokenCookie.value);
+	const sessionRow: DBType.SessionRow | null = findSession(sessionTokenCookie.value);
 	if (sessionRow === null)
 	{
 		return null;
@@ -119,13 +119,13 @@ export async function getCurrentUser(): Promise<DBTypes.UserRow | null>
 	const selectStatement: Database.Statement = DB.databaseConnection.prepare(
 		"SELECT * FROM users WHERE id = ?"
 	);
-	const userRow: DBTypes.UserRow | undefined = selectStatement.get(sessionRow.user_id) as DBTypes.UserRow | undefined;
+	const userRow: DBType.UserRow | undefined = selectStatement.get(sessionRow.user_id) as DBType.UserRow | undefined;
 	return userRow ?? null;
 }
 
 export async function getCurrentAdminLevel(): Promise<number | null>
 {
-	const user: DBTypes.UserRow | null = await getCurrentUser();
+	const user: DBType.UserRow | null = await getCurrentUser();
 
 	if (user === null)
 	{

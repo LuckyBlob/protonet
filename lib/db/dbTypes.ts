@@ -30,6 +30,19 @@ export type ServerConfigRow =
 	time_multiplier: number;
 };
 
+export type PlanetRessourceRow =
+{
+	planet_id: number;
+	ressource_type: number;
+	ressource_quantity: number;
+};
+export type PlanetBuildingRow =
+{
+	planet_id: number;
+	building_type: number;
+	building_level: number;
+};
+
 export type PlanetRow =
 {
 	id: number;
@@ -39,8 +52,6 @@ export type PlanetRow =
 	size: number;
 	owner_player_id: number | null;
 	claimed_at: number;
-	ressource_1: number;
-	ressource_1_production_level: number;
 	last_updated: number;
 	building_upgrade_completes_at: number;
 	building_being_upgraded: number;

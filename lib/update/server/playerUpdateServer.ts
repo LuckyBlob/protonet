@@ -3,9 +3,7 @@ import Database from "better-sqlite3";
 import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
 
-import * as Association from "@/lib/gameplay/associations";
 import * as Cost from "@/lib/gameplay/cost";
-import * as Duration from "@/lib/gameplay/duration";
 
 import * as BuyTypes from "@/lib/requestTypes/buyRequests";
 
@@ -15,6 +13,7 @@ import * as ServerData from "@/lib/serverData/serverData";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 
 import * as PlanetServer from "@/lib/update/server/planetUpdateServer";
+import * as PlanetData from "@/lib/playerData/planetData";
 
 export type BuyUpgradeResult =
 {
@@ -51,24 +50,24 @@ function applyPlayerUpdateInner(playerId: number, preFetchedServerData?: ServerD
 	const updatedPlayer: PlayerDataType.PlayerData =
 	{
 		playerRow: updatePlayerColumns(playerId, { last_updated: currentTimestamp }),
-		planetRows: applyPlayerPlanetsUpdateInner(playerId, serverData),
+		fullPlanetDatas: applyPlayerPlanetsUpdateInner(playerId, serverData),
 	};
 
 	return updatedPlayer;
 }
 
-function applyPlayerPlanetsUpdateInner(playerId: number, preFetchedServerData?: ServerDataType.ServerData): DBType.PlanetRow[]
+function applyPlayerPlanetsUpdateInner(playerId: number, preFetchedServerData?: ServerDataType.ServerData): PlanetData.FullPlanetData[]
 {
-	const planetRows: DBType.PlanetRow[] = PlanetServer.findPlanetsByOwner(playerId);
+	const fullPlanetDatas: PlanetData.FullPlanetData[] = PlanetServer.findFullPlanetDatasByOwner(playerId);
 	const serverData: ServerDataType.ServerData = preFetchedServerData ?? ServerData.getServerData();
 	const currentTimestamp: number = Date.now();
 
-	for (let i: number = 0; i < planetRows.length; i++)
+	for (let i: number = 0; i < fullPlanetDatas.length; i++)
 	{
-		planetRows[i] = PlanetServer.applyPlanetUpdate(planetRows[i], serverData);
+		fullPlanetDatas[i] = PlanetServer.applyPlanetUpdate(fullPlanetDatas[i], serverData);
 	}
 
-	return planetRows;
+	return fullPlanetDatas;
 }
 
 export function applyPlayerUpdate(playerId: number, preFetchedServerData?: ServerDataType.ServerData): PlayerDataType.PlayerData
@@ -86,12 +85,13 @@ export function applyPlayerUpdate(playerId: number, preFetchedServerData?: Serve
 export function tryBuyBuildingUpgradeServer(playerId: number, serverData: ServerDataType.ServerData, requestData: BuyTypes.BuildingUpgradeRequest): BuyUpgradeResult
 {
 	const updatedPlayer: PlayerDataType.PlayerData = applyPlayerUpdate(playerId, serverData);
-	const relevantPlanetRowIndex: number = updatedPlayer.planetRows.findIndex((planet: DBType.PlanetRow) =>
+
+	const relevantPlanetDataIndex: number = updatedPlayer.fullPlanetDatas.findIndex((fullPlanetData: PlanetData.FullPlanetData) =>
 	{
-		return planet.id === requestData.planetId;
+		return fullPlanetData.planetRow.id === requestData.planetId;
 	});
 
-	if (relevantPlanetRowIndex === -1)
+	if (relevantPlanetDataIndex === -1)
 	{
 		const failureResult: BuyUpgradeResult =
 		{
@@ -102,31 +102,30 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 		return failureResult;
 	}
 
-	const relevantPlanetRow: DBType.PlanetRow = updatedPlayer.planetRows[relevantPlanetRowIndex];
-
-	if (relevantPlanetRow.building_upgrade_completes_at !== 0)
+	const relevantFullPlanetData: PlanetData.FullPlanetData = updatedPlayer.fullPlanetDatas[relevantPlanetDataIndex];
+	if (relevantFullPlanetData.planetRow.building_upgrade_completes_at !== 0)
 	{
 		const failureResult: BuyUpgradeResult =
 		{
 			success: false,
-			failureReason: "Upgrade already in progress",
+			failureReason: "Upgrade already in progress.",
 			playerStateResult: updatedPlayer,
 		};
 		return failureResult;
 	}
 
-	if (!Cost.canAffordUpgrade(relevantPlanetRow, requestData.buildingType))
+	if (!Cost.canAffordUpgrade(relevantFullPlanetData, requestData.buildingType))
 	{
 		const failureResult: BuyUpgradeResult =
 		{
 			success: false,
-			failureReason: "Not enough gold",
+			failureReason: "Not enough ressources.",
 			playerStateResult: updatedPlayer,
 		};
 		return failureResult;
 	}
 
-	const currentBuildingUpgradeLevel: number | null = Association.getProductionBuildingLevelForBuilding(relevantPlanetRow, requestData.buildingType);
+	const currentBuildingUpgradeLevel: number | null = PlanetData.getBuildingLevel(relevantFullPlanetData, requestData.buildingType);
 	if (currentBuildingUpgradeLevel === null)
 	{
 		const failureResult: BuyUpgradeResult =
@@ -138,7 +137,7 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 		return failureResult;
 	}
 
-	const buildDurationSeconds: number | null = Duration.computeUpgradeBuildDurationSeconds(currentBuildingUpgradeLevel, requestData.buildingType, serverData);
+	const buildDurationSeconds: number | null = PlanetData.getBuildingUpgradeDurationSeconds(relevantFullPlanetData, serverData, requestData.buildingType);
 	if (buildDurationSeconds === null)
 	{
 		const failureResult: BuyUpgradeResult =
@@ -150,7 +149,7 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 		return failureResult;
 	}
 
-	const upgradeCost: number | null = Cost.computeUpgradeCost(currentBuildingUpgradeLevel, requestData.buildingType);
+	const upgradeCost: Map<number, number> | null = Cost.computeUpgradeCost(currentBuildingUpgradeLevel, requestData.buildingType);
 	if (upgradeCost === null)
 	{
 		const failureResult: BuyUpgradeResult =
@@ -162,33 +161,23 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 		return failureResult;
 	}
 
-	const currentRessourceQuantity: number | null = Association.getRessourceQuantityForProductionBuildingType(relevantPlanetRow, requestData.buildingType);
-	if (currentRessourceQuantity === null)
+	for (const [ressourceType, ressourceCost] of upgradeCost)
 	{
-		const failureResult: BuyUpgradeResult =
-		{
-			success: false,
-			failureReason: "Wrong building type to upgrade.",
-			playerStateResult: updatedPlayer,
-		};
-		return failureResult;
+		substractPlanetRessource(relevantFullPlanetData, ressourceType, ressourceCost);
 	}
 
 	const buildCompletesAtMiliseconds: number = Date.now() + buildDurationSeconds * 1000;
-	const newRessourceValue: number = currentRessourceQuantity - upgradeCost;
-
-	const updatedPlanetRow: DBType.PlanetRow = PlanetServer.updatePlanetColumns(relevantPlanetRow.id,
+	const updatedPlanetRow: DBType.PlanetRow = PlanetServer.updatePlanetRowColumns(relevantFullPlanetData.planetRow.id,
 	{
-		ressource_1: newRessourceValue,
 		building_upgrade_completes_at: buildCompletesAtMiliseconds,
+		building_being_upgraded: requestData.buildingType,
 	});
 
-	updatedPlayer.planetRows[relevantPlanetRowIndex] = updatedPlanetRow;
-
+	updatedPlayer.fullPlanetDatas[relevantPlanetDataIndex].planetRow = updatedPlanetRow;
 	const changedPlayerStateResult: PlayerDataType.PlayerData =
 	{
 		playerRow: updatedPlayer.playerRow,
-		planetRows: updatedPlayer.planetRows,
+		fullPlanetDatas: updatedPlayer.fullPlanetDatas,
 	};
 
 	const successResult: BuyUpgradeResult =
@@ -198,6 +187,18 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 		playerStateResult: changedPlayerStateResult,
 	};
 	return successResult;
+}
+
+function substractPlanetRessource(fullPlanetData: PlanetData.FullPlanetData, ressourceType: number, amountToSubstract: number)
+{
+	const currentRessourceQuantity: number | null = PlanetData.getRessourceQuantity(fullPlanetData, ressourceType);
+	if (currentRessourceQuantity === null)
+	{
+		return;
+	}
+
+	const calculatedNewRessourceQuantity = Math.max(0, (currentRessourceQuantity - amountToSubstract));
+	PlanetData.setRessourceQuantity(fullPlanetData, ressourceType, calculatedNewRessourceQuantity);
 }
 
 export function findPlayerByUserId(userId: number): DBType.PlayerRow | null
@@ -236,6 +237,11 @@ export function refreshServerDataAndBankAllPlayers(): void
 			throw new Error(`Invalid time_multiplier: ${newMultiplier}`);
 		}
 
+		if (newMultiplier === oldMultiplier)
+		{
+			return;
+		}	
+		
 		const selectActiveBuildsStatement: Database.Statement = DB.databaseConnection.prepare(
 			"SELECT id, building_upgrade_completes_at FROM planet WHERE building_upgrade_completes_at != 0"
 		);
@@ -248,7 +254,7 @@ export function refreshServerDataAndBankAllPlayers(): void
 			const newRealMsRemaining: number = Math.floor(realMsRemaining * (oldMultiplier / newMultiplier));
 			const newCompletesAt: number = now + newRealMsRemaining;
 
-			PlanetServer.updatePlanetColumns(buildRow.id, { building_upgrade_completes_at: newCompletesAt });
+			PlanetServer.updatePlanetRowColumns(buildRow.id, { building_upgrade_completes_at: newCompletesAt });
 		}
 	});
 

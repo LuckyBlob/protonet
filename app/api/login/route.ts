@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import * as Auth from "@/lib/authentication/auth";
 
-import * as DBTypes from "@/lib/db/dbTypes";
+import * as DBType from "@/lib/db/dbTypes";
 
 export async function POST(request: Request): Promise<NextResponse>
 {
@@ -11,7 +11,7 @@ export async function POST(request: Request): Promise<NextResponse>
 	const username: string = requestBody.username;
 	const password: string = requestBody.password;
 
-	const user: DBTypes.UserRow | null = Auth.findUserByUsername(username);
+	const user: DBType.UserRow | null = Auth.findUserByUsername(username);
 	if (user === null)
 	{
 		return NextResponse.json(
@@ -29,7 +29,7 @@ export async function POST(request: Request): Promise<NextResponse>
 		);
 	}
 
-	const session: DBTypes.SessionRow = Auth.createSession(user.id);
+	const session: DBType.SessionRow = Auth.createSession(user.id);
 
 	const cookieStore = await cookies();
 	cookieStore.set(Auth.sessionCookieName, session.token,

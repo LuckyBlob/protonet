@@ -1,40 +1,49 @@
-import * as DBTypes from "@/lib/db/dbTypes";
+import * as DBType from "@/lib/db/dbTypes";
+import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 
-import * as Association from "@/lib/gameplay/associations";
+import * as Building from "@/lib/gameplay/coreData/buildingCostFormulas";
+import * as PlanetData from "@/lib/playerData/planetData";
 
-export const PRODUCTION_BUILDING_UPGRADE_COST_GROWTH_FACTOR: number = 1.5;
-export const BASE_RESSOURCE_1_PRODUCTION_BUILDING_COST: number = 60;
-
-export function computeUpgradeCost(currentUpgradeLevel: number, buildingType: number): number | null
+export function computeUpgradeCost(currentUpgradeLevel: number, buildingType: number): Map<number, number> | null
 {
-	const baseRessourceProductionCost: number | null = Association.getBaseProductionBuildingCostForBuilding(buildingType);
-	if (baseRessourceProductionCost === null)
+	const costFunction: ((currentUpgradeLevel: number) => Map<number, number>) | undefined = Building.buildingCostFunctionMap.get(buildingType);
+	if (costFunction === undefined)
 	{
-	    return null;
+		return null;
 	}
 
-	return Math.floor(baseRessourceProductionCost * Math.pow(PRODUCTION_BUILDING_UPGRADE_COST_GROWTH_FACTOR, currentUpgradeLevel));
+	return costFunction(currentUpgradeLevel);
 }
 
-export function canAffordUpgrade(planetRow: DBTypes.PlanetRow, buildingType: number): boolean
+export function canAffordUpgrade(fullPlanetData: PlanetData.FullPlanetData, buildingType: number): boolean
 {
-	const currentUpgradeLevel: number | null = Association.getProductionBuildingLevelForBuilding(planetRow, buildingType);
+	const currentUpgradeLevel: number | null = PlanetData.getBuildingLevel(fullPlanetData, buildingType);
 	if (currentUpgradeLevel === null)
 	{
 	    return false;
 	}
 	
-	const nextUpgradeCost: number | null = computeUpgradeCost(currentUpgradeLevel, buildingType);
-	if (nextUpgradeCost === null)
+	const nextUpgradeCostMap: Map<number, number> | null = computeUpgradeCost(currentUpgradeLevel, buildingType);
+	if (nextUpgradeCostMap === null)
 	{
 	    return false;
 	}
 
-	const ressourceQuantity: number | null = Association.getRessourceQuantityForProductionBuildingType(planetRow, buildingType);
-	if (ressourceQuantity === null)
-	{
-	    return false;
-	}
+	const ressourceQuantityMap: Map<number, number> = PlanetData.getRessourceQuantityMap(fullPlanetData);
 
-	return ressourceQuantity >= nextUpgradeCost;
+	for (const [ressourceType, ressourceCost] of nextUpgradeCostMap)
+	{
+        const currentRessourceQuantity: number | undefined = ressourceQuantityMap.get(ressourceType); 
+		if (currentRessourceQuantity === undefined)
+		{
+			return false;
+		}
+
+		if (currentRessourceQuantity < ressourceCost)
+		{
+			return false;
+		}
+    }
+
+	return true;
 }
