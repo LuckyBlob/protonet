@@ -1,10 +1,8 @@
 import { useState } from "react";
 
-import * as DBType from "@/lib/db/dbTypes";
-
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-
 import * as UseClientDataState from "@/lib/use/useClientDataState";
+import * as PlanetData from "@/lib/playerData/planetData";
 
 type PlanetSelectorProps =
 {
@@ -19,11 +17,11 @@ export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
 
 	const dropdownClass: string = isOpen === true ? "block" : "hidden";
 
-	const planetsWithDisplayName: { planet: DBType.PlanetRow; displayName: string }[] = props.clientDataStateResult.psController[0].dbData.planetRows.map((planet: DBType.PlanetRow) =>
+	const planetsWithDisplayName: { fullPlanetData: PlanetData.FullPlanetData; displayName: string }[] = props.clientDataStateResult.psController[0].dbData.fullPlanetDatas.map((fullPlanetData: PlanetData.FullPlanetData) =>
 	{
-		const displayName: string = `${planet.slot}:${planet.system}:${planet.galaxy}`;
+		const displayName: string = `${fullPlanetData.planetRow.slot}:${fullPlanetData.planetRow.system}:${fullPlanetData.planetRow.galaxy}`;
 
-		return { planet, displayName };
+		return { fullPlanetData, displayName };
 	});
 
 	const handleToggleDropdown: () => void = () =>
@@ -32,12 +30,12 @@ export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
 	};
 
 
-	const selectedPlanet: DBType.PlanetRow | undefined = props.clientDataStateResult.psController[0].dbData.planetRows.find((planetRow: DBType.PlanetRow) =>
+	const selectedFullPlanetData: PlanetData.FullPlanetData | undefined = props.clientDataStateResult.psController[0].dbData.fullPlanetDatas.find((fullPlanetData: PlanetData.FullPlanetData) =>
 	{
-		return planetRow.id === props.clientDataStateResult.psController[0].selectedPlanetId;
+		return fullPlanetData.planetRow.id === props.clientDataStateResult.psController[0].selectedPlanetId;
 	});
-	const selectedPlanetDisplayName: string = selectedPlanet !== undefined
-		? `(${selectedPlanet.slot}:${selectedPlanet.system}:${selectedPlanet.galaxy})`
+	const selectedPlanetDisplayName: string = selectedFullPlanetData !== undefined
+		? `(${selectedFullPlanetData.planetRow.slot}:${selectedFullPlanetData.planetRow.system}:${selectedFullPlanetData.planetRow.galaxy})`
 		: "...";
 
 	const selectorElement: React.ReactElement =
@@ -53,17 +51,17 @@ export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
 				className={`absolute top-full left-0 mt-1 w-max bg-black/90 border border-white/20 rounded shadow-lg z-50 ${dropdownClass}`}
 			>
 			{
-				planetsWithDisplayName.map(({ planet, displayName }: { planet: DBType.PlanetRow; displayName: string }) =>
+				planetsWithDisplayName.map(({ fullPlanetData, displayName }: { fullPlanetData: PlanetData.FullPlanetData; displayName: string }) =>
 				{
-					const isSelected: boolean = props.clientDataStateResult.psController[0].selectedPlanetId === planet.id;
+					const isSelected: boolean = props.clientDataStateResult.psController[0].selectedPlanetId === fullPlanetData.planetRow.id;
 					const itemClass: string = isSelected === true
 						? "bg-white/30 text-white"
 						: "bg-transparent hover:bg-white/10 text-white/80 hover:text-white";
 
 					return (
 						<button
-							key={planet.id}
-							onClick={() => handleSelectPlanet(props.clientDataStateResult, planet.id, setIsOpen)}
+							key={fullPlanetData.planetRow.id}
+							onClick={() => handleSelectPlanet(props.clientDataStateResult, fullPlanetData.planetRow.id, setIsOpen)}
 							className={`block w-full text-left px-4 py-2 text-sm transition-colors ${itemClass}`}
 						>
 							{displayName}
@@ -81,6 +79,6 @@ export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
 
 async function handleSelectPlanet(clientDataStateResult: UseClientDataState.ClientDataStateResult, newPlanetID: number, setIsOpen: (value: boolean) => void): Promise<void>
 {
-	SelectedPlanet.setSelectedPlanetInPlayerState(clientDataStateResult, newPlanetID);
+	SelectedPlanet.setSelectedPlanetInPredictedPlayerState(clientDataStateResult, newPlanetID);
 	setIsOpen(false);
 };

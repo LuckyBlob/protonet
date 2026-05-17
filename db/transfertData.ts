@@ -3,9 +3,10 @@ import { PlayerRow, PlanetRow } from "@/lib/db/dbTypes";
 import * as GameType from "@/lib/gameplay/gameTypes";
 import * as PlanetServer from "@/lib/update/server/planetUpdateServer";
 import Database from "better-sqlite3";
-
-function transferPlayerProgressToFirstPlanet(player: PlayerRow): void
+function transferPlayerProgress(player: PlayerRow): void
 {
+/*
+
 	const playerPlanets: PlanetRow[] = databaseConnection.prepare(
 		"SELECT * FROM planet WHERE owner_player_id = ? ORDER BY claimed_at ASC, id ASC"
 	).all(player.id) as PlanetRow[];
@@ -58,8 +59,8 @@ function transferPlayerProgressToFirstPlanet(player: PlayerRow): void
 
 	console.log(`  Player ${player.id}: transferred to planet ${playerPlanets[0].id} (iron=${player.gold}, level=${player.upgrade_level})`);
 	console.log(`  Player ${player.id}: transferred to planet ${playerPlanets[1].id} (iron=${PlanetServer.STARTING_PLANET_RESSOURCE_1})`);
+*/
 }
-
 const allPlayers: PlayerRow[] = databaseConnection.prepare("SELECT * FROM player").all() as PlayerRow[];
 
 console.log(`Found ${allPlayers.length} players. Processing...`);
@@ -69,8 +70,7 @@ for (const player of allPlayers)
 	console.log(`Player ${player.id}:`);
 	try
 	{
-		PlanetServer.assignStartingPlanets(player);
-		transferPlayerProgressToFirstPlanet(player);
+		transferPlayerProgress(player);
 	}
 	catch (error: unknown)
 	{

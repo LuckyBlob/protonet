@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 
 import * as ServerData from "@/lib/serverData/serverData";
-import * as ServerDataTypes from "@/lib/serverData/serverDataTypes";
+import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 
 export async function GET(): Promise<NextResponse>
 {
-	const serverData: ServerDataTypes.ServerData = ServerData.getServerData();
+	const serverData: ServerDataType.ServerData = ServerData.getServerData();
 
 	return NextResponse.json(serverData);
 }

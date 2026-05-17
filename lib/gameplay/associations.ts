@@ -1,19 +1,15 @@
-import * as DBTypes from "@/lib/db/dbTypes";
+/*import * as DBType from "@/lib/db/dbTypes";
 
-import * as Cost from "@/lib/gameplay/cost";
 import * as GameType from "@/lib/gameplay/gameTypes";
 import * as Production from "@/lib/gameplay/production";
 
-export function getProductionBuildingTypeForRessourceType(ressourceType: number): number | null
-{
-	switch (ressourceType)
-	{
-	    case GameType.RESSOURCE_1:
-	        return GameType.BUILDING_PRODUCTION_RESSOURCE_1;
-	    default:
-	        return null;
-	}
-}
+const RessourceTypeToProducingBuildingArray: Map<number, number[]> = new Map
+([
+	[GameType.RESSOURCE_1, [GameType.RESSOURCE_1]],
+	[GameType.RESSOURCE_2, [GameType.RESSOURCE_2]],
+])
+
+
 
 export function getRessourceTypeForProductionBuildingType(buildingType: number): number | null
 {
@@ -48,7 +44,7 @@ export function getBaseProductionRateForBuilding(buildingType: number): number |
 	return getBaseProductionRateForRessource(ressourceType);
 }
 
-export function getProductionBuildingLevelForRessource(planetRow: DBTypes.PlanetRow, ressourceType: number): number | null
+export function getProductionBuildingLevelForRessource(planetRow: DBType.PlanetRow, ressourceType: number): number | null
 {
 	switch (ressourceType)
 	{
@@ -59,18 +55,7 @@ export function getProductionBuildingLevelForRessource(planetRow: DBTypes.Planet
 	}
 }
 
-export function getProductionBuildingLevelForBuilding(planetRow: DBTypes.PlanetRow, buildingType: number): number | null
-{
-	const ressourceType: number | null = getRessourceTypeForProductionBuildingType(buildingType);
-	if (ressourceType === null)
-	{
-	    return null;
-	}
-
-	return getProductionBuildingLevelForRessource(planetRow, ressourceType);
-}
-
-export function getRessourceQuantityForProductionBuildingType(planetRow: DBTypes.PlanetRow, buildingType: number): number | null
+export function getRessourceQuantityForProductionBuildingType(planetRow: DBType.PlanetRow, buildingType: number): number | null
 {
 	switch (buildingType)
 	{
@@ -79,37 +64,4 @@ export function getRessourceQuantityForProductionBuildingType(planetRow: DBTypes
 	    default:
 	        return null;
 	}
-}
-
-export function getRessourceQuantityForRessourceType(planetRow: DBTypes.PlanetRow, ressourceType: number): number | null
-{
-	switch (ressourceType)
-	{
-	    case GameType.RESSOURCE_1:
-	        return planetRow.ressource_1;
-	    default:
-	        return null;
-	}
-}
-
-export function getBaseProductionBuildingCostForRessource(ressourceType: number): number | null
-{
-	switch (ressourceType)
-	{
-	    case GameType.RESSOURCE_1:
-	        return Cost.BASE_RESSOURCE_1_PRODUCTION_BUILDING_COST;
-	    default:
-	        return null;
-	}
-}
-
-export function getBaseProductionBuildingCostForBuilding(buildingType: number): number | null
-{
-	const ressourceType: number | null = getRessourceTypeForProductionBuildingType(buildingType);
-	if (ressourceType === null)
-	{
-	    return null;
-	}
-
-	return getBaseProductionBuildingCostForRessource(ressourceType);
-}
+}*/

@@ -5,20 +5,21 @@ import * as DBType from "@/lib/db/dbTypes";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 import * as PlanetUpdateClient from "@/lib/update/client/planetUpdateClient";
+import * as PlanetData from "@/lib/playerData/planetData";
 
-export function replacePlanetRowInArrayByUpdatedPlanetRow(planetRows: DBType.PlanetRow[], updatedPlanetRow: DBType.PlanetRow): DBType.PlanetRow[]
+export function replaceFullPlanetDataInArrayByUpdatedFullPlanetData(fullPlanetDatas: PlanetData.FullPlanetData[], updatedFullPlanetData: PlanetData.FullPlanetData): PlanetData.FullPlanetData[]
 {
-	const newPlanetRows: DBType.PlanetRow[] = planetRows.map((planetRow: DBType.PlanetRow): DBType.PlanetRow =>
+	const newFullPlanetDatas: PlanetData.FullPlanetData[] = fullPlanetDatas.map((fullPlanetData: PlanetData.FullPlanetData): PlanetData.FullPlanetData =>
 	{
-		if (planetRow.id === updatedPlanetRow.id)
+		if (fullPlanetData.planetRow.id === updatedFullPlanetData.planetRow.id)
 		{
-			return updatedPlanetRow;
+			return updatedFullPlanetData;
 		}
 
-		return planetRow;
+		return fullPlanetData;
 	});
 
-	return newPlanetRows;
+	return newFullPlanetDatas;
 }
 
 export function runClientTick(clientDataStateResult: UseClientDataState.ClientDataStateResult): void

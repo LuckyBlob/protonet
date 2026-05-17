@@ -1,26 +1,61 @@
-import * as DBTypes from "@/lib/db/dbTypes";
+import * as DBType from "@/lib/db/dbTypes";
 
-import * as GameType from "@/lib/gameplay/gameTypes";
-
-import * as ServerDataTypes from "@/lib/serverData/serverDataTypes";
+import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+import * as BuildingProductionFormulas from "@/lib/gameplay/coreData/buildingProductionFormulas";
+import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
+import * as PlanetData from "@/lib/playerData/planetData";
 
 export const RESSOURCE_1_BASE_PRODUCTION_RATE: number = 30;
 
-export function getPlanetProductionRatePerSecond(planetRow: DBTypes.PlanetRow, ressourceType: number, serverData: ServerDataTypes.ServerData): number
+export function getPlanetProductionRatePerSecond(fullPlanetData: PlanetData.FullPlanetData, ressourceType: number, serverData: ServerDataType.ServerData): number
 {
-	return getRawPlanetProductionRatePerSecond(planetRow.ressource_1_production_level, ressourceType, planetRow.size, serverData);
+	const buildingLevelMap: Map<number, number> = PlanetData.getBuildingLevelMap(fullPlanetData);
+
+	return getRawPlanetProductionRatePerSecond(buildingLevelMap, ressourceType, serverData);
 }
 
-export function getNextPlanetProductionRatePerSecond(planetRow: DBTypes.PlanetRow, ressourceType: number, serverData: ServerDataTypes.ServerData): number
+export function getNextPlanetProductionRatePerSecond(fullPlanetData: PlanetData.FullPlanetData, ressourceType: number, upgradedBuildingType: number, serverData: ServerDataType.ServerData): number
 {
-	return getRawPlanetProductionRatePerSecond(planetRow.ressource_1_production_level + 1, ressourceType, planetRow.size, serverData);
+	let buildingLevelMap: Map<number, number> = PlanetData.getBuildingLevelMap(fullPlanetData);
+	const currentBuildingLevel: number | undefined = buildingLevelMap.get(upgradedBuildingType);
+	if (currentBuildingLevel !== undefined)
+	{
+		buildingLevelMap.set(upgradedBuildingType, currentBuildingLevel + 1);
+	}
+
+	return getRawPlanetProductionRatePerSecond(buildingLevelMap, ressourceType, serverData);
 }
 
-function getRawPlanetProductionRatePerSecond(upgradeLevel: number, ressourceType: number, planetSize: number, serverData: ServerDataTypes.ServerData): number
+function getRawPlanetProductionRatePerSecond(buildingLevelMap: Map<number, number>, ressourceType: number, serverData: ServerDataType.ServerData): number
 {
-	const perSecondBaseProductionRate: number = RESSOURCE_1_BASE_PRODUCTION_RATE / 3600;
+	const productionRatePerHour: number = computeProductionRatePerHourForRessource(ressourceType, serverData, buildingLevelMap);
 
-	const productionRate: number = upgradeLevel === 0 ? perSecondBaseProductionRate : perSecondBaseProductionRate * upgradeLevel * Math.pow(1.1, upgradeLevel);
-	return productionRate * serverData.config.time_multiplier;
+	return productionRatePerHour / 3600;
 }
 
+function computeProductionRatePerHourForRessource(ressourceType: number, serverData: ServerDataType.ServerData, buildingLevelMap: Map<number, number>): number
+{
+	let totalQuerriedRessourceTypeProductionRatePerHour: number = 0;
+
+	for (const [buildingType, productionFunction] of BuildingProductionFormulas.buildingProductionPerHoursFunctionMap)
+	{
+		const currentLevel: number | undefined = buildingLevelMap.get(buildingType);
+
+		if (currentLevel === undefined)
+		{
+			continue;
+		}
+
+		const productionPerHourMap: Map<number, number> = productionFunction(currentLevel, serverData);
+		const queriedRessourceTypeProducionPerHour: number | undefined = productionPerHourMap.get(ressourceType);
+
+		if (queriedRessourceTypeProducionPerHour === undefined)
+		{
+			continue;
+		}
+
+		totalQuerriedRessourceTypeProductionRatePerHour = totalQuerriedRessourceTypeProductionRatePerHour + queriedRessourceTypeProducionPerHour;
+	}
+
+	return totalQuerriedRessourceTypeProductionRatePerHour * serverData.config.time_multiplier;
+}

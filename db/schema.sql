@@ -55,3 +55,24 @@ CREATE TABLE planet
 );
 
 CREATE INDEX idx_planet_owner ON planet(owner_player_id);
+
+CREATE TABLE IF NOT EXISTS planet_ressource
+(
+	planet_id INTEGER NOT NULL,
+	ressource_type INTEGER NOT NULL,
+	ressource_quantity REAL NOT NULL DEFAULT 0,
+	PRIMARY KEY (planet_id, ressource_type),
+	FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS planet_building
+(
+	planet_id INTEGER NOT NULL,
+	building_type INTEGER NOT NULL,
+	building_level INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY (planet_id, building_type),
+	FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_planet_ressource_planet ON planet_ressource(planet_id);
+CREATE INDEX IF NOT EXISTS idx_planet_building_planet ON planet_building(planet_id);

@@ -1,44 +1,69 @@
-import * as DBType from "@/lib/db/dbTypes";
-
-import * as Association from "@/lib/gameplay/associations";
-import * as GameType from "@/lib/gameplay/gameTypes";
 import * as Production from "@/lib/gameplay/production";
-
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-
+import * as PlanetProgress from "@/lib/gameplay/planetProgress";
+import * as PlanetData from "@/lib/playerData/planetData";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
+
+export type SelectedPlanetRessourceDisplayValues =
+{
+	ressourceType: number;
+	ressource: number;
+	productionRatePerHour: number;
+	affectedByCurrentBuild: boolean;
+};
 
 export type SelectedPlanetDisplayValues =
 {
-	ressource: number;
-	productionRatePerHour: number;
+	ressourceDisplayValues: SelectedPlanetRessourceDisplayValues[];
 	buildCompletesAt: number;
 };
 
-export function getSelectedPlanetDisplayValues(clientDataStateResult: UseClientDataState.ClientDataStateResult): SelectedPlanetDisplayValues
+// Per-resource display values for the currently selected planet. One entry per
+// resource type passed in (driven by RESSOURCE_DISPLAY_NAMES upstream, so
+// adding a resource adds a card with no change here). affectedByCurrentBuild
+// is true only when a build is in progress AND the building being upgraded
+// produces that resource -- the build timer should only show on those cards.
+export function getSelectedPlanetDisplayValues(clientDataStateResult: UseClientDataState.ClientDataStateResult, ressourceTypes: number[]): SelectedPlanetDisplayValues | null
 {
-	const selectedPlanet: DBType.PlanetRow = SelectedPlanet.getSelectedPlanetRow(clientDataStateResult.psController[0]);
-
-	const rawRessourceQuantity: number | null = Association.getRessourceQuantityForRessourceType(selectedPlanet, GameType.RESSOURCE_1);
-	const storedRessourceQuantity: number = rawRessourceQuantity ?? 0;
-
-	const productionRatePerSecond: number = Production.getPlanetProductionRatePerSecond(selectedPlanet, GameType.RESSOURCE_1, clientDataStateResult.sdsController[0]);
 	const now: number = Date.now();
-	const elapsedMilliseconds: number = now - selectedPlanet.last_updated;
-	const elapsedSeconds: number = elapsedMilliseconds > 0 ? elapsedMilliseconds / 1000 : 0;
-	const accruedSinceAnchor: number = productionRatePerSecond * elapsedSeconds;
 
-	const ressource: number = Math.floor(storedRessourceQuantity + accruedSinceAnchor);
+	const selectedFullPlanetDataPredicted: PlanetData.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(clientDataStateResult.psController[0]);
 
-	const productionRatePerHour: number = Math.floor(productionRatePerSecond * 3600);
+	const buildCompletesAt: number = selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at;
+	const isBuilding: boolean = buildCompletesAt !== 0;
+	const buildingBeingUpgraded: number = selectedFullPlanetDataPredicted.planetRow.building_being_upgraded;
 
-	const buildCompletesAt: number = selectedPlanet.building_upgrade_completes_at;
+	const ressourceDisplayValues: SelectedPlanetRessourceDisplayValues[] = [];
+
+	for (const ressourceType of ressourceTypes)
+	{
+		const calculatedNewRessourceQuantity: number | null = PlanetProgress.getPredictedRessourceQuantityWithoutUpgrade(selectedFullPlanetDataPredicted, clientDataStateResult.sdsController[0], now, ressourceType);
+
+		if (calculatedNewRessourceQuantity === null)
+		{
+			continue;
+		}
+
+		const productionRatePerSecond: number = Production.getPlanetProductionRatePerSecond(selectedFullPlanetDataPredicted, ressourceType, clientDataStateResult.sdsController[0]);
+		const productionRatePerHour: number = productionRatePerSecond * 3600;
+
+		const affectedByCurrentBuild: boolean = (isBuilding === true) && (PlanetData.doesBuildingProduceRessource(buildingBeingUpgraded, ressourceType) === true);
+
+		const singleRessourceDisplayValues: SelectedPlanetRessourceDisplayValues =
+		{
+			ressourceType: ressourceType,
+			ressource: calculatedNewRessourceQuantity,
+			productionRatePerHour: productionRatePerHour,
+			affectedByCurrentBuild: affectedByCurrentBuild,
+		};
+
+		ressourceDisplayValues.push(singleRessourceDisplayValues);
+	}
 
 	const displayValues: SelectedPlanetDisplayValues =
 	{
-		ressource,
-		productionRatePerHour,
-		buildCompletesAt,
+		ressourceDisplayValues: ressourceDisplayValues,
+		buildCompletesAt: buildCompletesAt,
 	};
 
 	return displayValues;

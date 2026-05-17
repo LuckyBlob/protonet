@@ -1,8 +1,11 @@
-import * as DBTypes from "@/lib/db/dbTypes";
+"use client";
+
+import * as DBType from "@/lib/db/dbTypes";
 
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
+import * as PlanetData from "@/lib/playerData/planetData";
 
 const SELECTED_PLANET_STORAGE_KEY: string = "protonet.selectedPlanetId";
 
@@ -40,57 +43,62 @@ export function writeStoredSelectedPlanetId(planetId: number): void
 	window.localStorage.setItem(SELECTED_PLANET_STORAGE_KEY, String(planetId));
 }
 
-export function resolveSelectedPlanetId(planetRows: DBTypes.PlanetRow[], candidateId: number | null): number | null
+export function resolveSelectedPlanetId(fullPlanetDatas: PlanetData.FullPlanetData[], candidateId: number | null): number | null
 {
-	if (planetRows.length === 0)
+	if (fullPlanetDatas.length === 0)
 	{
 		return null;
 	}
 
 	if (candidateId !== null)
 	{
-		const matchingPlanet: DBTypes.PlanetRow | undefined = planetRows.find((planetRow: DBTypes.PlanetRow) =>
+		const matchingPlanet: PlanetData.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlanetData.FullPlanetData) =>
 		{
-			return planetRow.id === candidateId;
+			return fullPlanetData.planetRow.id === candidateId;
 		});
 
 		if (matchingPlanet !== undefined)
 		{
-			return matchingPlanet.id;
+			return matchingPlanet.planetRow.id;
 		}
 	}
 
-	const firstPlanet: DBTypes.PlanetRow = planetRows[0];
+	const firstPlanet: PlanetData.FullPlanetData = fullPlanetDatas[0];
 
-	return firstPlanet.id;
+	return firstPlanet.planetRow.id;
 }
 
-export function getSelectedPlanetRow(playerState: PlayerDataType.PlayerState): DBTypes.PlanetRow
+export function getSelectedFullPlanetDataPredicted(playerState: PlayerDataType.PlayerState): PlanetData.FullPlanetData
 {
-	const planetRows: DBTypes.PlanetRow[] = playerState.predictedDBData.planetRows;
-
-	const matchingPlanet: DBTypes.PlanetRow | undefined = planetRows.find((planetRow: DBTypes.PlanetRow) =>
+	const fullPlanetDatas: PlanetData.FullPlanetData[] = playerState.predictedDBData.fullPlanetDatas;
+	const resolvedId: number | null = resolveSelectedPlanetId(fullPlanetDatas, playerState.selectedPlanetId);
+	if (resolvedId === null)
 	{
-		return planetRow.id === playerState.selectedPlanetId;
-	});
-
-	if (matchingPlanet !== undefined)
-	{
-		return matchingPlanet;
+		return fullPlanetDatas[0];
 	}
 
-	return planetRows[0];
+	const matchingFullPlanetData: PlanetData.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlanetData.FullPlanetData): boolean =>
+	{
+		return fullPlanetData.planetRow.id === resolvedId;
+	});
+
+	if (matchingFullPlanetData === undefined)
+	{
+		return fullPlanetDatas[0];
+	}
+
+	return matchingFullPlanetData;
 }
 
-export function setSelectedPlanetInPlayerState(clientDataStateResult: UseClientDataState.ClientDataStateResult, requestedPlanetId: number): void
+export function setSelectedPlanetInPredictedPlayerState(clientDataStateResult: UseClientDataState.ClientDataStateResult, requestedPlanetId: number): void
 {
 	if (clientDataStateResult.lsController[0].isLoading)
 	{
 		return;
 	}
 
-	const planetRows: DBTypes.PlanetRow[] = clientDataStateResult.psController[0].predictedDBData.planetRows;
-	const resolvedId: number | null = resolveSelectedPlanetId(planetRows, requestedPlanetId);
+	const fullPlanetDatas: PlanetData.FullPlanetData[] = clientDataStateResult.psController[0].predictedDBData.fullPlanetDatas;
+	const resolvedId: number | null = resolveSelectedPlanetId(fullPlanetDatas, requestedPlanetId);
 
 	if (resolvedId === null)
 	{

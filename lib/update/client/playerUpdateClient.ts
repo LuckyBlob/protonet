@@ -1,28 +1,23 @@
-import * as GameType from "@/lib/gameplay/gameTypes";
-
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-
 import * as BuyRequest from "@/lib/requestTypes/buyRequests";
-
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
-
 import * as UseClientDataState from "@/lib/use/useClientDataState";
+import * as PlayerDataSerialization from "@/lib/playerData/playerDataSerialization";
 
 export async function fetchAndSetPlayerState(psController: PlayerDataType.PSController): Promise<void>
 {
 	const response: Response = await fetch("/api/playerData");
-
 	if (response.ok === false)
 	{
 		return;
 	}
 
-	const playerData: PlayerDataType.PlayerData = await response.json();
+	const serializedPlayerData: PlayerDataSerialization.SerializedPlayerData = await response.json();
+	const playerData: PlayerDataType.PlayerData = PlayerDataSerialization.deserializePlayerData(serializedPlayerData);
 
 	const storedId: number | null = SelectedPlanet.readStoredSelectedPlanetId();
-	const resolvedId: number | null = SelectedPlanet.resolveSelectedPlanetId(playerData.planetRows, storedId);
+	const resolvedId: number | null = SelectedPlanet.resolveSelectedPlanetId(playerData.fullPlanetDatas, storedId);
 
 	if (resolvedId === null)
 	{
@@ -54,11 +49,11 @@ export async function fetchAndSetServerData(sdsController: ServerDataType.SDSCon
 	sdsController[1](serverData);
 }
 
-export async function tryBuyBuildingUpgradeClient(psController: PlayerDataType.PSController, planetId: number): Promise<void>
+export async function tryBuyBuildingUpgradeClient(psController: PlayerDataType.PSController, planetId: number, buildingType: number): Promise<void>
 {
 	const requestBody: BuyRequest.BuildingUpgradeRequest =
 	{
-		buildingType: GameType.BUILDING_PRODUCTION_RESSOURCE_1,
+		buildingType: buildingType,
 		planetId: planetId,
 	};
 
@@ -70,18 +65,19 @@ export async function tryBuyBuildingUpgradeClient(psController: PlayerDataType.P
 		},
 		body: JSON.stringify(requestBody),
 	});
-
 	if (response.ok === false)
 	{
 		return;
 	}
 
-	const updatedPlayerData: PlayerDataType.PlayerData = await response.json();
+	const serializedPlayerData: PlayerDataSerialization.SerializedPlayerData = await response.json();
+	const updatedPlayerData: PlayerDataType.PlayerData = PlayerDataSerialization.deserializePlayerData(serializedPlayerData);
+
 	const updatedPlayerState: PlayerDataType.PlayerState =
 	{
 		dbData: updatedPlayerData,
 		predictedDBData: updatedPlayerData,
-		selectedPlanetId: SelectedPlanet.resolveSelectedPlanetId(updatedPlayerData.planetRows, SelectedPlanet.readStoredSelectedPlanetId()) ?? updatedPlayerData.planetRows[0].id,
+		selectedPlanetId: SelectedPlanet.resolveSelectedPlanetId(updatedPlayerData.fullPlanetDatas, SelectedPlanet.readStoredSelectedPlanetId()) ?? updatedPlayerData.fullPlanetDatas[0].planetRow.id,
 		lastFetchTimestamp: Date.now(),
 	};
 
