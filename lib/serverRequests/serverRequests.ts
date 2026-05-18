@@ -13,7 +13,7 @@ export async function requestServerData<K extends keyof DataResponseMap>(dataReq
 
         return handleServerDataResponse<K>(parsed, dataRequest.name);
     }
-    catch
+    catch (error: unknown)
     {
         const responseFailure: DataResponseMap[K] =
         {
@@ -50,7 +50,7 @@ function handleServerDataResponse<K extends keyof DataResponseMap>(parsed: unkno
     return serverResponseData;
 }
 
-export async function requestServerAction<K extends keyof ActionResponseMap>(actionRequest: { name: K; endpoint: string }, clientData: RequestType.BaseClientRequest | null = null): Promise<ActionResponseMap[K]>
+export async function requestServerAction<K extends keyof ActionResponseMap>(actionRequest: { name: K; endpoint: string }, clientRequest: RequestType.BaseClientRequest | null = null): Promise<ActionResponseMap[K]>
 {
     try
     {
@@ -58,14 +58,14 @@ export async function requestServerAction<K extends keyof ActionResponseMap>(act
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(clientData),
+            body: JSON.stringify(clientRequest),
         });
 
         const parsed: unknown = await response.json();
 
         return handleServerActionResponse<K>(parsed, actionRequest.name);
     }
-    catch
+    catch (error: unknown)
     {
         const responseFailure: RequestType.BaseServerResponse =
         {

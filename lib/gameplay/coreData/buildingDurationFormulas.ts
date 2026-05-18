@@ -25,16 +25,19 @@ function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: numbe
     const nextUpgradeCostMap: Map<number, number> | null = Cost.computeBuildingUpgradeCost(currentUpgradeLevel, buildingType);
     if (nextUpgradeCostMap === null)
     {
+        throw new Error(`Building type ${buildingType} has no cost and thus no construction duration.`);
         return 0;
     }
 
     let totalCost: number = 0;
     for (const cost of nextUpgradeCostMap.values())
     {
+        // Each ressources counts for 1 independantly of type
         totalCost = totalCost + cost;
     }
     
-	const durationSeconds: number = totalCost / data.divider * 3600;
+    const durationHours: number = totalCost / data.divider;
+	const durationSeconds: number = durationHours * 3600;
 
 	return Math.floor(durationSeconds / timeMultiplier);
 }

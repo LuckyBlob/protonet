@@ -28,11 +28,15 @@ export function useClientDataState(enabled: boolean): ClientDataStateResult
 
 		const clientDataState: () => Promise<void> = async (): Promise<void> =>
 		{
-			const playerLoaded: boolean = await PlayerUpdateClient.fetchAndSetPlayerState(psController);
-			const serverLoaded: boolean = await PlayerUpdateClient.fetchAndSetServerData(sdsController);
-			if (playerLoaded === true && serverLoaded === true)
+			try
 			{
+				await PlayerUpdateClient.fetchAndSetPlayerData(psController);
+				await PlayerUpdateClient.fetchAndSetServerData(sdsController);
 				lsController[1]({ isLoading: false });
+			}
+			catch (error: unknown)
+			{
+				lsController[1]({ isLoading: true });
 			}
 		};
 

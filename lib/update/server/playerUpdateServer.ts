@@ -170,67 +170,106 @@ export function refreshServerDataAndBankAllPlayers(): void
 		// Use a fixed time even if it can take time for the full loop.
 		// Better to have a single time for debugging than drift.
 		const now: number = Date.now();
-
 		const oldServerData: ServerDataType.ServerData = ServerData.getServerData();
 
-		const selectStatement: Database.Statement = DB.databaseConnection.prepare(
-			"SELECT id FROM player"
-		);
-		const playerRows: { id: number }[] = selectStatement.all() as { id: number }[];
-
-		for (const playerRow of playerRows)
-		{
-			// We update the players at this time volontarily using the old server data since it was change manually in the DB.
-			// The "accepted" time is when we trigger this function, not when we modified the DB manually.
-			ServerProgress.applyPlayerUpdate(playerRow.id, oldServerData, now);
-		}
+		applyProgressToAllPlayersAtTime(now, oldServerData);
 
 		ServerData.reloadServerData();
 		const newServerData: ServerDataType.ServerData = ServerData.getServerData();
 
-		const newMultiplier: number = newServerData.config.time_multiplier;
-		const oldMultiplier: number = oldServerData.config.time_multiplier;
-
-		if (newMultiplier <= 0)
-		{
-			throw new Error(`Invalid time_multiplier: ${newMultiplier}`);
-		}
-
-		if (newMultiplier === oldMultiplier)
+		const rescaleFactor: number | null = calulateRescaleFactor(oldServerData, newServerData);
+		if (rescaleFactor === null)
 		{
 			return;
 		}
-		const rescaleFactor: number = (oldMultiplier / newMultiplier);
-		
-		const selectActiveBuildsStatement: Database.Statement = DB.databaseConnection.prepare(
-			"SELECT id, building_upgrade_completes_at FROM planet WHERE building_upgrade_completes_at != 0"
-		);
-		const activeBuildRows: { id: number; building_upgrade_completes_at: number }[] = selectActiveBuildsStatement.all() as { id: number; building_upgrade_completes_at: number }[];
 
-		for (const buildRow of activeBuildRows)
-		{
-			const realMsRemaining: number = buildRow.building_upgrade_completes_at - now;
-			const newRealMsRemaining: number = Math.floor(realMsRemaining * rescaleFactor);
-			const newCompletesAt: number = now + newRealMsRemaining;
-
-			PlanetServer.updatePlanetRowColumns(buildRow.id, { building_upgrade_completes_at: newCompletesAt });
-		}
-				const selectActiveShipBatchesStatement: Database.Statement = DB.databaseConnection.prepare(
-			"SELECT id, ship_construction_batch_completes_at FROM planet WHERE ship_construction_batch_completes_at != 0"
-		);
-		const activeShipBatchRows: { id: number; ship_construction_batch_completes_at: number }[] = selectActiveShipBatchesStatement.all() as { id: number; ship_construction_batch_completes_at: number }[];
-
-		for (const shipBatchRow of activeShipBatchRows)
-		{
-			const realMsRemaining: number = shipBatchRow.ship_construction_batch_completes_at - now;
-			const newRealMsRemaining: number = Math.floor(realMsRemaining * rescaleFactor);
-			const newCompletesAt: number = now + newRealMsRemaining;
-
-			PlanetServer.updatePlanetRowColumns(shipBatchRow.id, { ship_construction_batch_completes_at: newCompletesAt });
-		}
+		rescaleBuildingUpgradeEndTimesDB(rescaleFactor, now);
+		rescaleShipConstructionEndTimesDB(rescaleFactor, now);
 	});
 
 	transaction();
+}
+
+function calulateRescaleFactor(oldServerData: ServerDataType.ServerData, newServerData: ServerDataType.ServerData): number | null
+{
+	const newMultiplier: number = newServerData.config.time_multiplier;
+	const oldMultiplier: number = oldServerData.config.time_multiplier;
+
+	if (newMultiplier <= 0)
+	{
+		throw new Error(`Invalid time_multiplier: ${newMultiplier}`);
+		return null;
+	}
+
+	if (newMultiplier === oldMultiplier)
+	{
+		return null;
+	}
+
+	return (oldMultiplier / newMultiplier);
+}
+
+function applyProgressToAllPlayersAtTime(time: number, serverData: ServerDataType.ServerData)
+{
+	const selectStatement: Database.Statement = DB.databaseConnection.prepare
+	(
+		"SELECT id FROM player"
+	);
+	const playerRows: { id: number }[] = selectStatement.all() as { id: number }[];
+
+	for (const playerRow of playerRows)
+	{
+		// We update the players at this time volontarily using the old server data since it was change manually in the DB.
+		// The "accepted" time is when we trigger this function, not when we modified the DB manually.
+		ServerProgress.applyPlayerUpdate(playerRow.id, serverData, time);
+	}
+}
+
+// This will be 
+function rescaleBuildingUpgradeEndTimesDB(rescaleFactor: number, now: number)
+{
+	const selectActiveBuildsStatement: Database.Statement = DB.databaseConnection.prepare
+	(
+	"SELECT id, building_upgrade_completes_at FROM planet WHERE building_upgrade_completes_at != 0"
+	);
+
+	const activeBuildRows: { id: number; building_upgrade_completes_at: number }[] = selectActiveBuildsStatement.all() as { id: number; building_upgrade_completes_at: number }[];
+	for (const buildRow of activeBuildRows)
+	{
+		const realMsRemaining: number = buildRow.building_upgrade_completes_at - now;
+		if (realMsRemaining <= 0)
+		{
+			continue;
+		}
+
+		const newRealMsRemaining: number = Math.floor(realMsRemaining * rescaleFactor);
+		const newCompletesAt: number = now + newRealMsRemaining;
+
+		PlanetServer.updatePlanetRowColumns(buildRow.id, { building_upgrade_completes_at: newCompletesAt });
+	}
+}
+
+function rescaleShipConstructionEndTimesDB(rescaleFactor: number, now: number)
+{
+	const selectActiveShipBatchesStatement: Database.Statement = DB.databaseConnection.prepare
+	(
+		"SELECT id, ship_construction_batch_completes_at FROM planet WHERE ship_construction_batch_completes_at != 0"
+	);
+	const activeShipBatchRows: { id: number; ship_construction_batch_completes_at: number }[] = selectActiveShipBatchesStatement.all() as { id: number; ship_construction_batch_completes_at: number }[];
+
+	for (const shipBatchRow of activeShipBatchRows)
+	{
+		const realMsRemaining: number = shipBatchRow.ship_construction_batch_completes_at - now;
+		if (realMsRemaining <= 0)
+		{
+			continue;
+		}
+
+		const newRealMsRemaining: number = Math.floor(realMsRemaining * rescaleFactor);
+		const newCompletesAt: number = now + newRealMsRemaining;
+
+		PlanetServer.updatePlanetRowColumns(shipBatchRow.id, { ship_construction_batch_completes_at: newCompletesAt });
+	}
 }
 
 export function updatePlayerColumns(playerId: number, columnUpdates: Partial<DBType.PlayerRow>): DBType.PlayerRow

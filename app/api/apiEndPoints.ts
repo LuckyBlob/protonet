@@ -16,7 +16,7 @@ export interface ActionResponseMap
     Login: RequestType.BaseAuthenticationServerResponse;
     Register: RequestType.BaseAuthenticationServerResponse;
     Logout: RequestType.BaseAuthenticationServerResponse;
-    RefreshServer: RequestType.BaseServerResponse;
+    RefreshServer: RequestType.RefreshServer_ServerResponse;
     UpgradeBuilding: RequestType.BuildingUpgrade_ServerResponse;
 }
 

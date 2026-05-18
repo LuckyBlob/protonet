@@ -11,8 +11,8 @@ import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 
 export async function POST(request: Request): Promise<NextResponse>
 {
-	const clientData: RequestType.BuildingUpgrade_ClientRequest = await request.json();
-	const responseData: RequestType.BuildingUpgrade_ServerResponse =
+	const clientRequest: RequestType.BuildingUpgrade_ClientRequest = await request.json();
+	const serverResponse: RequestType.BuildingUpgrade_ServerResponse =
 	{
 		serializedPlayerData: null,
 		error: null,
@@ -20,26 +20,26 @@ export async function POST(request: Request): Promise<NextResponse>
 	const user: DBType.UserRow | null = await Auth.getCurrentUser();
 	if (user === null)
 	{
-		responseData.error = "Not logged in."
-		return NextResponse.json(responseData, { status: 401 });
+		serverResponse.error = "Not logged in."
+		return NextResponse.json(serverResponse, { status: 401 });
 	}
 
 	const player: DBType.PlayerRow | null = PlayerUpdateServer.findPlayerByUserId(user.id);
 	if (player === null)
 	{
-		responseData.error = "Player not found."
-		return NextResponse.json(responseData, { status: 404 });
+		serverResponse.error = "Player not found."
+		return NextResponse.json(serverResponse, { status: 404 });
 	}
 
 	const serverData: ServerDataType.ServerData = ServerData.getServerData();
 
-	const buyUpgradeResult: PlayerUpdateServer.BuyUpgradeResult = PlayerUpdateServer.tryBuyBuildingUpgradeServer(player.id, serverData, clientData);
+	const buyUpgradeResult: PlayerUpdateServer.BuyUpgradeResult = PlayerUpdateServer.tryBuyBuildingUpgradeServer(player.id, serverData, clientRequest);
 
 	if (buyUpgradeResult.success === false)
 	{
-		responseData.error = buyUpgradeResult.failureReason;
-		return NextResponse.json(responseData, { status: 400 });
+		serverResponse.error = buyUpgradeResult.failureReason;
+		return NextResponse.json(serverResponse, { status: 400 });
 	}
-	responseData.serializedPlayerData = PlayerDataSerialization.serializePlayerData(buyUpgradeResult.playerStateResult);
-	return NextResponse.json(responseData);
+	serverResponse.serializedPlayerData = PlayerDataSerialization.serializePlayerData(buyUpgradeResult.playerStateResult);
+	return NextResponse.json(serverResponse);
 }

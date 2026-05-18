@@ -1,5 +1,4 @@
 import * as DBType from "@/lib/db/dbTypes";
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 import * as PlayerDataSerialization from "@/lib/playerData/playerDataSerialization";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 
@@ -28,7 +27,6 @@ export type ServerDataStateRequest = BaseServerResponse &
 //#endregion
 
 //#region Action requests
-
 //#region Authentication
 export type BaseAuthenticationClientRequest = BaseClientRequest &
 {
@@ -40,6 +38,12 @@ export type BaseAuthenticationServerResponse = BaseServerResponse &
 	username: string,
 }
 //#endregion
+
+export type RefreshServer_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData?: PlayerDataSerialization.SerializedPlayerData | null;
+	serverData?: ServerDataType.ServerData | null;
+}
 
 export type BuildingUpgrade_ClientRequest = BaseClientRequest &
 {

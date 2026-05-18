@@ -7,25 +7,25 @@ import * as RequestType from "@/lib/serverRequests/requestTypes";
 
 export async function POST(request: Request): Promise<NextResponse>
 {
-	const clientData: RequestType.BaseAuthenticationClientRequest = await request.json();
-	const responseData: RequestType.BaseAuthenticationServerResponse =
+	const clientRequest: RequestType.BaseAuthenticationClientRequest = await request.json();
+	const serverResponse: RequestType.BaseAuthenticationServerResponse =
 	{
-		username: clientData.username,
+		username: clientRequest.username,
 		error: null,
 	}
 
-    const user: DBType.UserRow | null = Auth.findUserByUsername(clientData.username);
+    const user: DBType.UserRow | null = Auth.findUserByUsername(clientRequest.username);
 	if (user === null)
 	{
-		responseData.error = "Invalid username or password.";
-		return NextResponse.json(responseData, { status: 401 });
+		serverResponse.error = "Invalid username or password.";
+		return NextResponse.json(serverResponse, { status: 401 });
 	}
 
-	const passwordIsValid: boolean = await Auth.verifyPassword(clientData.password, user.password_hash);
+	const passwordIsValid: boolean = await Auth.verifyPassword(clientRequest.password, user.password_hash);
 	if (passwordIsValid === false)
 	{
-		responseData.error = "Invalid username or password.";
-		return NextResponse.json(responseData, { status: 401 });
+		serverResponse.error = "Invalid username or password.";
+		return NextResponse.json(serverResponse, { status: 401 });
 	}
 
 	const session: DBType.SessionRow = Auth.createSession(user.id);
@@ -39,5 +39,5 @@ export async function POST(request: Request): Promise<NextResponse>
 		path: "/",
 	});
 
-	return NextResponse.json(responseData);
+	return NextResponse.json(serverResponse);
 }

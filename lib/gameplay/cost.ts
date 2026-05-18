@@ -8,6 +8,7 @@ export function computeBuildingUpgradeCost(currentUpgradeLevel: number, building
 	const costFunction: ((currentUpgradeLevel: number) => Map<number, number>) | undefined = Building.buildingCostFunctionMap.get(buildingType);
 	if (costFunction === undefined)
 	{
+        throw new Error(`Building type ${buildingType} has no calculatable cost.`);
 		return null;
 	}
 

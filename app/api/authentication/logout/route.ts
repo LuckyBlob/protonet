@@ -6,6 +6,11 @@ import * as Auth from "@/lib/authentication/auth";
 
 export async function POST(): Promise<NextResponse>
 {
+	const serverResponse: RequestType.BaseServerResponse =
+	{
+		error: null,
+	}
+	
 	const cookieStore = await cookies();
 	const sessionTokenCookie = cookieStore.get(Auth.sessionCookieName);
 
@@ -15,9 +20,5 @@ export async function POST(): Promise<NextResponse>
 		cookieStore.delete(Auth.sessionCookieName);
 	}
 
-	const responseData: RequestType.BaseServerResponse =
-	{
-		error: null,
-	}
-	return NextResponse.json(responseData);
+	return NextResponse.json(serverResponse);
 }
