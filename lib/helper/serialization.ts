@@ -9,6 +9,7 @@ import * as DBType from "@/lib/db/dbTypes";
 // accidentally NextResponse.json() a raw PlayerData (with Maps), the compiler
 // rejects it.
 
+//#region Planet Data
 export type SerializedDynamicPlanetData =
 {
 	resourceQuantity: [number, number][];
@@ -22,14 +23,6 @@ export type SerializedFullPlanetData =
 	planetRow: DBType.PlanetRow;
 	dynamicPlanetData: SerializedDynamicPlanetData;
 };
-
-export type SerializedPlayerData =
-{
-	playerRow: DBType.PlayerRow;
-	fullPlanetDatas: SerializedFullPlanetData[];
-};
-
-// ---- Server side: in-memory (Maps) -> wire (arrays) ----
 
 function serializeFullPlanetData(fullPlanetData: PlayerDataType.FullPlanetData): SerializedFullPlanetData
 {
@@ -47,6 +40,14 @@ function serializeFullPlanetData(fullPlanetData: PlayerDataType.FullPlanetData):
 
 	return serialized;
 }
+//#endregion
+
+//#region Player Data
+export type SerializedPlayerData =
+{
+	playerRow: DBType.PlayerRow;
+	fullPlanetDatas: SerializedFullPlanetData[];
+};
 
 export function serializePlayerData(playerData: PlayerDataType.PlayerData): SerializedPlayerData
 {
@@ -63,8 +64,6 @@ export function serializePlayerData(playerData: PlayerDataType.PlayerData): Seri
 
 	return serialized;
 }
-
-// ---- Client side: wire (arrays) -> in-memory (Maps) ----
 
 function deserializeFullPlanetData(serialized: SerializedFullPlanetData): PlayerDataType.FullPlanetData
 {
@@ -98,3 +97,40 @@ export function deserializePlayerData(serialized: SerializedPlayerData): PlayerD
 
 	return playerData;
 }
+//#endregion
+
+//#region Player State
+export type SerializedPlayerState =
+{
+	dbData: SerializedPlayerData;
+	predictedDBData: SerializedPlayerData;
+	selectedPlanetId: number;
+	lastFetchTimestamp: number;
+};
+
+export function serializePlayerState(playerState: PlayerDataType.PlayerState): SerializedPlayerState
+{
+	const serialized: SerializedPlayerState =
+	{
+		dbData: serializePlayerData(playerState.dbData),
+		predictedDBData: serializePlayerData(playerState.predictedDBData),
+		selectedPlanetId: playerState.selectedPlanetId,
+		lastFetchTimestamp: playerState.lastFetchTimestamp,
+	};
+
+	return serialized;
+}
+
+export function deserializePlayerState(serializedPlayerState: SerializedPlayerState): PlayerDataType.PlayerState
+{
+	const playerData: PlayerDataType.PlayerState =
+	{
+		dbData: deserializePlayerData(serializedPlayerState.dbData),
+		predictedDBData: deserializePlayerData(serializedPlayerState.predictedDBData),
+		selectedPlanetId: serializedPlayerState.selectedPlanetId,
+		lastFetchTimestamp: serializedPlayerState.lastFetchTimestamp,
+	};
+
+	return playerData;
+}
+//#endregion

@@ -5,11 +5,11 @@ import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser"
 import * as RequestType from "@/lib/serverRequests/requestTypes";
 import * as ServerRequest from "@/lib/serverRequests/serverRequests"
-import { ActionRequest } from "@/app/api/apiEndPoints"
+import * as APIEndPoint from "@/app/api/apiEndPoints"
 
 export async function handleLogout(router: ReturnType<typeof useRouter>): Promise<void>
 {
-    const serverResponse: RequestType.BaseServerResponse = await ServerRequest.requestServerAction(ActionRequest.Logout);
+    const serverResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Logout);
     if (serverResponse.error !== null)
     {
         return;

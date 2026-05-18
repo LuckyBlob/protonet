@@ -5,7 +5,7 @@ import * as PlayerUpdateServer from "@/lib/update/server/playerUpdateServer";
 import * as RequestType from "@/lib/serverRequests/requestTypes";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 import * as ServerProgress from "@/lib/gameplay/progressUpdate/server/serverProgress";
-import * as PlayerDataSerialization from "@/lib/playerData/playerDataSerialization";
+import * as PlayerDataSerialization from "@/lib/helper/serialization";
 import * as DBType from "@/lib/db/dbTypes";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as ServerData from "@/lib/serverData/serverData";
@@ -22,8 +22,9 @@ export async function POST(): Promise<NextResponse>
 		serverResponse.error = "Did not find user.";
 		return NextResponse.json(serverResponse, { status: 401 });
 	}
-
-	if (admin_level !== 0) //0 means power admin
+	
+ 	//0 means power admin (only assignable manually in the DB)
+	if (admin_level !== 0)
 	{
 		serverResponse.error = "Forbidden.";
 		return NextResponse.json(serverResponse, { status: 403 });

@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import * as RequestType from "@/lib/serverRequests/requestTypes";
 import * as ServerRequest from "@/lib/serverRequests/serverRequests"
-import { ActionRequest } from "@/app/api/apiEndPoints"
+import * as APIEndPoint from "@/app/api/apiEndPoints"
 
 export default function RegisterPage()
 {
@@ -22,12 +22,12 @@ export default function RegisterPage()
 
 	const handleSubmit: () => Promise<void> = async () =>
 	{
-		const authenticationData: RequestType.BaseAuthenticationClientRequest =
+		const authenticationData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Register> =
 		{
 			username: usernameState[0],
 			password: passwordState[0],
 		}
-		const serverResponse: RequestType.BaseServerResponse = await ServerRequest.requestServerAction(ActionRequest.Register, authenticationData);
+		const serverResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Register, authenticationData);
 		if (serverResponse.error !== null)
 		{
 			setError(serverResponse.error);

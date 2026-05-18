@@ -33,7 +33,7 @@ export function getBuildingLevel(fullPlanetData: PlayerDataType.FullPlanetData, 
 
 export function getBuildingLevelMap(fullPlanetData: PlayerDataType.FullPlanetData): Map<number, number>
 {
-    const buildingTypes: number[] = getBuildingTypes();
+    const buildingTypes: number[] = AssociationMaps.getTypes(AssociationMaps.ThingType.Building);
     const buildingLevelMap: Map<number, number> = new Map<number, number>();
 
     for (const buildingType of buildingTypes)
@@ -46,24 +46,25 @@ export function getBuildingLevelMap(fullPlanetData: PlayerDataType.FullPlanetDat
 
 export function getBuildingUpgradeDurationSeconds(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, buildingType: number): number | null
 {
-    const upgradeDurationSecondsFunction: ((currentUpgradeLevel: number, buildingType: number, serverData: ServerDataType.ServerData | null) => number) | undefined = BuildingDurationFormulas.buildingUpgradeDurationSecondsFunctionMap.get(buildingType);
-    if (upgradeDurationSecondsFunction === undefined)
+    try
+    {
+        const upgradeDurationSecondsFunction: ((currentUpgradeLevel: number, buildingType: number, serverData: ServerDataType.ServerData | null) => number) | undefined = BuildingDurationFormulas.buildingUpgradeDurationSecondsFunctionMap.get(buildingType);
+        if (upgradeDurationSecondsFunction === undefined)
+        {
+            return null;
+        }
+        
+        const currentBuildingUpgradeLevel: number = getBuildingLevel(fullPlanetData, buildingType);
+        return upgradeDurationSecondsFunction(currentBuildingUpgradeLevel, buildingType,serverData);
+    }
+    catch (error: unknown)
     {
         return null;
     }
-    
-	const currentBuildingUpgradeLevel: number = getBuildingLevel(fullPlanetData, buildingType);
-    return upgradeDurationSecondsFunction(currentBuildingUpgradeLevel, buildingType,serverData);
 }
 // #endregion
 
 // #region Building Helpers
-export function getBuildingTypes(): number[]
-{
-	const buildingTypeArray: number[] = [...AssociationMaps.BUILDING_DISPLAY_NAMES.keys()];
-	return buildingTypeArray;
-}
-
 export function isProductionBuilding(buildingType: number): boolean
 {
     return BuildingProductionFormulas.buildingProductionPerHoursFunctionMap.get(buildingType) !== undefined;

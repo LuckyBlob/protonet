@@ -53,7 +53,7 @@ function applyUpdateAtTimeForPlanet(fullPlanetData: PlayerDataType.FullPlanetDat
 
 function getPredictedResourceQuantitiesAtTime(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, time: number): Map<number, number>
 {
-    const resourceTypes: number[] = ResourceData.getResourceTypes();
+    const resourceTypes: number[] = AssociationMaps.getTypes(AssociationMaps.ThingType.Resource);
 
     const predictedResourceQuantities: Map<number, number> = new Map<number, number>();
     for (const resourceType of resourceTypes)

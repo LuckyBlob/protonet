@@ -4,7 +4,7 @@ import * as Auth from "@/lib/authentication/auth";
 import * as DBType from "@/lib/db/dbTypes";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 import * as PlayerUpdateServer from "@/lib/update/server/playerUpdateServer";
-import * as PlayerDataSerialization from "@/lib/playerData/playerDataSerialization";
+import * as PlayerDataSerialization from "@/lib/helper/serialization";
 import * as RequestType from "@/lib/serverRequests/requestTypes";
 import * as ServerProgress from "@/lib/gameplay/progressUpdate/server/serverProgress";
 import * as ServerData from "@/lib/serverData/serverData";

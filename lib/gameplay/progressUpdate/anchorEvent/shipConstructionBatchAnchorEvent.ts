@@ -47,6 +47,9 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
     const fullPlanetData: PlayerDataType.FullPlanetData = playerData.fullPlanetDatas[shipConstructionBatchAnchorEvent.fullPlanetDataIndex];
     if (fullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs.length === 0)
     {
+        fullPlanetData.planetRow.current_ship_construction_batch_id = 0;
+        fullPlanetData.planetRow.ship_construction_batch_completes_at = 0;
+        console.warn(`Detected ship construction batch anchor event but had no queuedShipConstructionBatchs for planet id ${fullPlanetData.planetRow.id}`);
         return;
     }
 
@@ -54,7 +57,6 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
     if (finishedBatch.batchId !== fullPlanetData.planetRow.current_ship_construction_batch_id)
     {
         throw new Error(`UNREACHABLE: Ship construction batch ID missmatch: BatchId ${finishedBatch.batchId} / construction id${fullPlanetData.planetRow.current_ship_construction_batch_id} / planetid ${fullPlanetData.planetRow.id}`);
-        return;
     }
 
     for (const shipConstructionRow of finishedBatch.shipConstructionRows)

@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS users
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
-  admin_level INTEGER NOT NULL DEFAULT 1,
+--admin_levels are: 0 Power admin, 1 normal, 2+ increasing admin powers. This can ONLY be set by hand in the DB
+  admin_level INTEGER NOT NULL DEFAULT 1, //Defaul
   created_at INTEGER NOT NULL
 );
 
@@ -95,7 +96,6 @@ CREATE TABLE IF NOT EXISTS ship_construction
     ship_type INTEGER NOT NULL,
     ship_quantity INTEGER NOT NULL,
     queue_order INTEGER NOT NULL,
-    completes_at INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_ship_construction_planet_queue ON ship_construction(planet_id, queue_order);

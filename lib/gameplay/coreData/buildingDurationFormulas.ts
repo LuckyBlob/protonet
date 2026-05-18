@@ -26,7 +26,6 @@ function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: numbe
     if (nextUpgradeCostMap === null)
     {
         throw new Error(`Building type ${buildingType} has no cost and thus no construction duration.`);
-        return 0;
     }
 
     let totalCost: number = 0;

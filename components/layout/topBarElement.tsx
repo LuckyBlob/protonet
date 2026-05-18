@@ -33,7 +33,7 @@ function renderResourceCard(resourceDisplayValues: SelectedPlanetDisplay.Selecte
 
 export function TopBarElement(props: TopBarProps): React.ReactElement
 {
-	const resourceTypes: number[] = ResourceData.getResourceTypes();
+	const resourceTypes: number[] = AssociationMaps.getTypes(AssociationMaps.ThingType.Resource);
 	const displayValues: SelectedPlanetDisplay.SelectedPlanetDisplayValues | null = SelectedPlanetDisplay.getSelectedPlanetDisplayValues(props.clientDataStateResult, resourceTypes);
 
 	if (displayValues === null)

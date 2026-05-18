@@ -32,36 +32,46 @@ export function updateDynamicPlanetData(planetId: number, dynamicPlanetData: Pla
     {
 		for (const dataContext of PlayerDataType.getDataContexts())
 		{
-			switch (dataContext)
-			{
-				case PlayerDataType.DataContext.BuildingLevel:
-				{
-					updateBuildingLevels(planetId, dynamicPlanetData);
-					break;	
-				}
-				case PlayerDataType.DataContext.ResourceQuantity:
-				{
-					updateRessourceQuantities(planetId, dynamicPlanetData);
-					break;	
-				}
-				case PlayerDataType.DataContext.ShipConstruction:
-				{
-					updateShipConstructionBatches(planetId, dynamicPlanetData);
-					break;	
-				}
-				case PlayerDataType.DataContext.ShipQuantity:
-				{
-					updateShipQuantities(planetId, dynamicPlanetData);
-					break;	
-				}
-				default:
-			        throw new Error(`UNREACHABLE: Dynamic data update function undefined for data context ${dataContext}.`);
-			}
+			updateDataContext(planetId, dataContext, dynamicPlanetData);
 		}
     });
+
     transaction();
 
 	return getDynamicPlanetData(planetId);
+}
+
+export function updateDataContext(planetId: number, dataContext: PlayerDataType.DataContext, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+{
+	const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+		switch (dataContext)
+		{
+			case PlayerDataType.DataContext.BuildingLevel:
+			{
+				updateBuildingLevels(planetId, dynamicPlanetData);
+				break;	
+			}
+			case PlayerDataType.DataContext.ResourceQuantity:
+			{
+				updateRessourceQuantities(planetId, dynamicPlanetData);
+				break;	
+			}
+			case PlayerDataType.DataContext.ShipConstruction:
+			{
+				updateShipConstructionBatches(planetId, dynamicPlanetData);
+				break;	
+			}
+			case PlayerDataType.DataContext.ShipQuantity:
+			{
+				updateShipQuantities(planetId, dynamicPlanetData);
+				break;	
+			}
+			default:
+				throw new Error(`UNREACHABLE: Dynamic data update function undefined for data context ${dataContext}.`);
+		}
+    });
+    transaction();
 }
 
 function updateRessourceQuantities(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
@@ -96,7 +106,7 @@ function updateBuildingLevels(planetId: number, dynamicPlanetData: PlayerDataTyp
     transaction();
 }
 
-function updateShipQuantities(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateShipConstructionBatches(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
 {
 	const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
@@ -125,7 +135,7 @@ function updateShipQuantities(planetId: number, dynamicPlanetData: PlayerDataTyp
     transaction();
 }
 
-function updateShipConstructionBatches(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateShipQuantities(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
@@ -268,12 +278,12 @@ function readPlanetRow(planetId: number): DBType.PlanetRow
 	return planetRow;
 }
 
-export function findAllPlanetsPublic(): DBType.PlanetRow[]
+export function findAllPlanetsPublic(): DBType.PublicPlanetRow[]
 {
 	const selectStatement: Database.Statement = DB.databaseConnection.prepare(
 		"SELECT id, slot, system, galaxy, owner_player_id FROM planet ORDER BY galaxy ASC, system ASC, slot ASC"
 	);
-	const planetRows: DBType.PlanetRow[] = selectStatement.all() as DBType.PlanetRow[];
+	const planetRows: DBType.PublicPlanetRow[] = selectStatement.all() as DBType.PublicPlanetRow[];
 	return planetRows;
 }
 
@@ -335,14 +345,7 @@ export function cleanPlanet(planetId: number): PlayerDataType.FullPlanetData
 {
 	const cleanPlanetData: PlayerDataType.FullPlanetData =
 	{
-		planetRow: updatePlanetRowColumns(planetId,
-		{
-			owner_player_id: null,
-			claimed_at: 0,
-			last_updated: 0,
-			building_upgrade_completes_at: 0,
-			building_being_upgraded: 0,
-		}),
+		planetRow: updatePlanetRowColumns(planetId, AssociationMaps.CLEAN_PLANET),
 		dynamicPlanetData: updateDynamicPlanetData(planetId, PlayerDataType.EmptyPlanetData),
 	};
 

@@ -162,11 +162,3 @@ function computeMaxAffordableShipQuantities(shipQuantities: Map<number, number>,
 	return buildableShipQuantities;
 }
 // #endregion
-
-//#region Ship helpers
-export function getShipTypes(): number[]
-{
-	const shipTypeArray: number[] = [...AssociationMaps.SHIP_DISPLAY_NAMES.keys()];
-	return shipTypeArray;
-}
-//#endregion

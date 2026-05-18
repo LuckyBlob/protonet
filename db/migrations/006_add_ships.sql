@@ -16,7 +16,6 @@ CREATE TABLE IF NOT EXISTS ship_construction
     ship_type INTEGER NOT NULL,
     ship_quantity INTEGER NOT NULL,
     queue_order INTEGER NOT NULL,
-    completes_at INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_ship_construction_planet ON ship_construction(planet_id, queue_order);

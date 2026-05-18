@@ -7,11 +7,12 @@ import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
 import * as RequestType from "@/lib/serverRequests/requestTypes";
 import * as PlanetServer from "@/lib/update/server/planetUpdateServer";
+import { ActionRequest, ResponseForAction, RequestForAction } from "@/app/api/apiEndPoints"
 
 export async function POST(request: Request): Promise<NextResponse>
 {
-	const clientRequest: RequestType.BaseAuthenticationClientRequest = await request.json();
-	const serverResponse: RequestType.BaseAuthenticationServerResponse =
+	const clientRequest: RequestForAction<typeof ActionRequest.Register> = await request.json();
+	const serverResponse: ResponseForAction<typeof ActionRequest.Register> =
 	{
 		username: clientRequest.username,
 		error: null,

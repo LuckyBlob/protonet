@@ -47,7 +47,7 @@ class ServerProgressResolver extends AnchorEvent.ProgressResolver
                 // Persist here just in case even if it's redundant with the end update in applyProgressToPlayerData
                 last_updated: fullPlanetData.planetRow.last_updated,
             });
-            PlanetUpdateServer.updateDynamicPlanetData(fullPlanetData.planetRow.id, fullPlanetData.dynamicPlanetData);
+            PlanetUpdateServer.updateDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, fullPlanetData.dynamicPlanetData);
         }
     }
 }
@@ -64,7 +64,7 @@ function resolveBuildingUpgradeAnchorEventToDB(playerData: PlayerDataType.Player
             building_upgrade_completes_at: 0,
             building_being_upgraded: 0,
         });
-        PlanetUpdateServer.updateDynamicPlanetData(newPlanetData.planetRow.id, newPlanetData.dynamicPlanetData);
+        PlanetUpdateServer.updateDataContext(newPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, newPlanetData.dynamicPlanetData);
     });
 
     transaction();
@@ -82,7 +82,7 @@ function resolveShipBatchConstructionAnchorEventToDB(playerData: PlayerDataType.
             ship_construction_batch_completes_at: newPlanetData.planetRow.ship_construction_batch_completes_at,
             current_ship_construction_batch_id: newPlanetData.planetRow.current_ship_construction_batch_id,
         });
-        PlanetUpdateServer.updateDynamicPlanetData(newPlanetData.planetRow.id, newPlanetData.dynamicPlanetData);
+        PlanetUpdateServer.updateDataContext(newPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, newPlanetData.dynamicPlanetData);
     });
 
     transaction();

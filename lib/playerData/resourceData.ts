@@ -36,11 +36,3 @@ export function getResourceQuantity(fullPlanetData: PlayerDataType.FullPlanetDat
     return getter();
 }
 //#endregion
-
-// #region Resource Helpers
-export function getResourceTypes(): number[]
-{
-	const resourceTypeArray: number[] = [...AssociationMaps.RESOURCE_DISPLAY_NAMES.keys()];
-	return resourceTypeArray;
-}
-//#endregion

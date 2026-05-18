@@ -102,7 +102,7 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 			building_being_upgraded: requestData.buildingType,
 		});
 
-		PlanetServer.updateDynamicPlanetData(relevantFullPlanetData.planetRow.id, relevantFullPlanetData.dynamicPlanetData);
+		PlanetServer.updateDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, relevantFullPlanetData.dynamicPlanetData);
 
 		updatedPlayer.fullPlanetDatas[relevantPlanetDataIndex].planetRow = updatedPlanetRow;
 		const result: PlayerDataType.PlayerData =

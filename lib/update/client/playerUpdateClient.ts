@@ -2,14 +2,15 @@ import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as PlayerDataSerialization from "@/lib/playerData/playerDataSerialization";
+import * as PlayerDataSerialization from "@/lib/helper/serialization";
 import * as ServerRequest from "@/lib/serverRequests/serverRequests";
 import * as RequestType from "@/lib/serverRequests/requestTypes";
-import { DataRequest, ActionRequest } from "@/app/api/apiEndPoints"
+import * as LocalStorage from "@/lib/localStorage/localStorage"
+import * as APIEndPoint from "@/app/api/apiEndPoints"
 
 export async function fetchPlayerData(): Promise<PlayerDataType.PlayerData>
 {
-	const playerDataRequest: RequestType.PlayerDataRequest | null = await ServerRequest.requestServerData(DataRequest.PlayerData);
+	const playerDataRequest: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.PlayerData> | null = await ServerRequest.requestServerData(APIEndPoint.DataRequest.PlayerData);
 	if (playerDataRequest === null || playerDataRequest.serializedPlayerData == null)
 	{
 		throw Error(`Failed to fetch player data.`)
@@ -19,26 +20,52 @@ export async function fetchPlayerData(): Promise<PlayerDataType.PlayerData>
 	return playerData;
 }
 
-async function setPlayerData(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): Promise<PlayerDataType.PlayerData>
+export function setSelectedPlanetID(psController: PlayerDataType.PSController, selectedPlanetId: number)
 {
-	let selectedPlanetId: number | null = SelectedPlanet.updateStoredSelectedPlanetId(newPlayerData);
-	try
+	const newPlayerState: PlayerDataType.PlayerState =
 	{
-		if (selectedPlanetId === null)
-		{
-			throw Error(`Couldnt resolve selected planet ID.`)
-		}
+		...psController[0],
+		selectedPlanetId: selectedPlanetId,
 	}
-	catch (error: unknown)
+	SelectedPlanet.writeStoredSelectedPlanetId(selectedPlanetId);
+	psController[1](newPlayerState);
+}
+
+function updateSelectedPlanetIdInStorage(psController: PlayerDataType.PSController): number
+{
+	const currentlySelectedPlanetId: number = SelectedPlanet.readStoredSelectedPlanetId() ?? psController[0].predictedDBData.fullPlanetDatas[0].planetRow.id;
+	if (currentlySelectedPlanetId === psController[0].selectedPlanetId)
 	{
-		selectedPlanetId = newPlayerData.fullPlanetDatas[0].planetRow.id;
+		return currentlySelectedPlanetId;
 	}
 
+	SelectedPlanet.writeStoredSelectedPlanetId(currentlySelectedPlanetId);
+	return currentlySelectedPlanetId;
+}
+
+export async function setPlayerState(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): Promise<PlayerDataType.PlayerData>
+{
+	const currentlySelectedPlanetId: number = updateSelectedPlanetIdInStorage(psController);
 	const loadedPlayerState: PlayerDataType.PlayerState =
 	{
 		dbData: newPlayerData,
 		predictedDBData: newPlayerData,
-		selectedPlanetId: selectedPlanetId,
+		selectedPlanetId: currentlySelectedPlanetId,
+		lastFetchTimestamp: Date.now(),
+	};
+
+	psController[1](loadedPlayerState);
+	return newPlayerData;
+}
+
+export async function setPredictedPlayerState(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): Promise<PlayerDataType.PlayerData>
+{
+	const currentlySelectedPlanetId: number = updateSelectedPlanetIdInStorage(psController);
+	const loadedPlayerState: PlayerDataType.PlayerState =
+	{
+		dbData: psController[0].dbData,
+		predictedDBData: newPlayerData,
+		selectedPlanetId: currentlySelectedPlanetId,
 		lastFetchTimestamp: Date.now(),
 	};
 
@@ -53,12 +80,12 @@ export async function fetchAndSetPlayerData(psController: PlayerDataType.PSContr
 	{
 		throw Error(`Failed to fetch player data.`)
 	}
-	setPlayerData(psController, playerData);
+	setPlayerState(psController, playerData);
 }
 
 export async function fetchServerData(): Promise<ServerDataType.ServerData>
 {
-	const serverDataStateRequest: RequestType.ServerDataStateRequest | null = await ServerRequest.requestServerData(DataRequest.ServerConfig)
+	const serverDataStateRequest: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.ServerConfig> | null = await ServerRequest.requestServerData(APIEndPoint.DataRequest.ServerConfig)
 	if (serverDataStateRequest === null || serverDataStateRequest.serverData == null)
 	{
 		throw Error(`Failed to fetch server data.`)
@@ -84,12 +111,12 @@ export async function fetchAndSetServerData(sdsController: ServerDataType.SDSCon
 
 export async function tryBuyBuildingUpgradeClient(psController: PlayerDataType.PSController, planetId: number, buildingType: number): Promise<void>
 {
-	const clientRequest: RequestType.BuildingUpgrade_ClientRequest =
+	const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding> = 
 	{
 		buildingType: buildingType,
 		planetId: planetId,
 	};
-	const serverResponse: RequestType.BuildingUpgrade_ServerResponse | null = await ServerRequest.requestServerAction(ActionRequest.UpgradeBuilding, clientRequest);
+	const serverResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding> | null = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.UpgradeBuilding, clientRequest);
 	if (serverResponse === null)
 	{
         throw new Error(`Building upgrade failed for planetId ${planetId}: No response from server.`);
@@ -101,21 +128,12 @@ export async function tryBuyBuildingUpgradeClient(psController: PlayerDataType.P
 	}
 
 	const updatedPlayerData: PlayerDataType.PlayerData = PlayerDataSerialization.deserializePlayerData(serverResponse.serializedPlayerData);
-
-	const updatedPlayerState: PlayerDataType.PlayerState =
-	{
-		dbData: updatedPlayerData,
-		predictedDBData: updatedPlayerData,
-		selectedPlanetId: psController[0].selectedPlanetId,
-		lastFetchTimestamp: Date.now(),
-	};
-
-	psController[1](updatedPlayerState);
+	setPlayerState(psController, updatedPlayerData);
 }
 
 export async function tryRefreshServerData(clientDataStateResult: UseClientDataState.ClientDataStateResult): Promise<void>
 {
-	const serverResponse: RequestType.RefreshServer_ServerResponse | null = await ServerRequest.requestServerAction(ActionRequest.RefreshServer);
+	const serverResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RefreshServer> | null = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.RefreshServer);
 	if (serverResponse === null)
 	{
         throw new Error(`Refresh server failed: No response from server.`);
@@ -126,7 +144,7 @@ export async function tryRefreshServerData(clientDataStateResult: UseClientDataS
         throw new Error(`Refresh server failed: Invalid response from server.`);
 	}
 
-	if (!setPlayerData(clientDataStateResult.psController, PlayerDataSerialization.deserializePlayerData(serverResponse.serializedPlayerData)))
+	if (!setPlayerState(clientDataStateResult.psController, PlayerDataSerialization.deserializePlayerData(serverResponse.serializedPlayerData)))
 	{
 		throw new Error(`Failed to set player data.`);
 	}

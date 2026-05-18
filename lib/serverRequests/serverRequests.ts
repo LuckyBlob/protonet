@@ -2,6 +2,7 @@
 
 import * as RequestType from "@/lib/serverRequests/requestTypes";
 import { DataResponseMap, ActionResponseMap } from "@/app/api/apiEndPoints"
+import * as APIEndPoint from "@/app/api/apiEndPoints"
 
 export async function requestServerData<K extends keyof DataResponseMap>(dataRequest: { name: K; endpoint: string }): Promise<DataResponseMap[K] | null>
 {
@@ -37,7 +38,7 @@ function handleServerDataResponse<K extends keyof DataResponseMap>(parsed: unkno
     }
 
     const serverResponseData: DataResponseMap[K] = parsed as DataResponseMap[K];
-    if (serverResponseData.error !== null)
+    if (serverResponseData.error != null)
     {
         const responseFailure: DataResponseMap[K] =
         {
@@ -89,7 +90,7 @@ function handleServerActionResponse<K extends keyof ActionResponseMap>(parsed: u
     }
 
     const serverResponseData: ActionResponseMap[K] = parsed as ActionResponseMap[K];
-    if (serverResponseData.error !== null)
+    if (serverResponseData.error != null)
     {
         const responseFailure: RequestType.BaseServerResponse =
         {

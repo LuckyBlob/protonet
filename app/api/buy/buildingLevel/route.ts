@@ -6,7 +6,7 @@ import * as RequestType from "@/lib/serverRequests/requestTypes";
 import * as ServerData from "@/lib/serverData/serverData";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as PlayerUpdateServer from "@/lib/update/server/playerUpdateServer";
-import * as PlayerDataSerialization from "@/lib/playerData/playerDataSerialization";
+import * as PlayerDataSerialization from "@/lib/helper/serialization";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 
 export async function POST(request: Request): Promise<NextResponse>

@@ -5,21 +5,21 @@ import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 const SELECTED_PLANET_STORAGE_KEY: string = "protonet.selectedPlanetId";
 
-export function updateStoredSelectedPlanetId(playerData: PlayerDataType.PlayerData): number | null
+export function updateStoredSelectedPlanetId(playerData: PlayerDataType.PlayerData, oldId: number): number
 {
     const storedId: number | null = readStoredSelectedPlanetId();
-    const resolvedId: number | null = resolveSelectedPlanetId(playerData.fullPlanetDatas, storedId);
+    const validateddId: number = validateSelectedPlanetId(playerData.fullPlanetDatas, storedId);
 
-    if (resolvedId === null)
+    if (validateddId === oldId)
     {
-        return null;
+        return validateddId;
     }
-    writeStoredSelectedPlanetId(resolvedId);
 
-    return resolvedId;
+    writeStoredSelectedPlanetId(validateddId);
+    return validateddId;
 }
 
-function readStoredSelectedPlanetId(): number | null
+export function readStoredSelectedPlanetId(): number | null
 {
     if (typeof window === "undefined")
     {
@@ -43,7 +43,7 @@ function readStoredSelectedPlanetId(): number | null
     return parsedValue;
 }
 
-function writeStoredSelectedPlanetId(planetId: number): void
+export function writeStoredSelectedPlanetId(planetId: number): void
 {
     if (typeof window === "undefined")
     {
@@ -53,12 +53,12 @@ function writeStoredSelectedPlanetId(planetId: number): void
     window.localStorage.setItem(SELECTED_PLANET_STORAGE_KEY, String(planetId));
 }
 
-function resolveSelectedPlanetId(fullPlanetDatas: PlayerDataType.FullPlanetData[], candidateId: number | null): number | null
+function validateSelectedPlanetId(fullPlanetDatas: PlayerDataType.FullPlanetData[], candidateId: number | null): number
 {
     if (fullPlanetDatas.length === 0)
     {
-        return null;
-    }
+		throw Error(`Player has no planets!`);
+	}
 
     if (candidateId !== null)
     {
@@ -74,20 +74,15 @@ function resolveSelectedPlanetId(fullPlanetDatas: PlayerDataType.FullPlanetData[
     }
 
     const firstPlanet: PlayerDataType.FullPlanetData = fullPlanetDatas[0];
-
     return firstPlanet.planetRow.id;
 }
 
 export function getSelectedFullPlanetDataPredicted(playerState: PlayerDataType.PlayerState): PlayerDataType.FullPlanetData
 {
     const fullPlanetDatas: PlayerDataType.FullPlanetData[] = playerState.predictedDBData.fullPlanetDatas;
-    const resolvedId: number | null = resolveSelectedPlanetId(fullPlanetDatas, playerState.selectedPlanetId);
-    if (resolvedId === null)
-    {
-        return fullPlanetDatas[0];
-    }
+    const resolvedId: number = validateSelectedPlanetId(fullPlanetDatas, playerState.selectedPlanetId);
 
-    const matchingFullPlanetData: PlayerDataType.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData): boolean =>
+	const matchingFullPlanetData: PlayerDataType.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData): boolean =>
     {
         return fullPlanetData.planetRow.id === resolvedId;
     });
@@ -98,35 +93,4 @@ export function getSelectedFullPlanetDataPredicted(playerState: PlayerDataType.P
     }
 
     return matchingFullPlanetData;
-}
-
-export function setSelectedPlanetInPredictedPlayerState(clientDataStateResult: UseClientDataState.ClientDataStateResult, requestedPlanetId: number): void
-{
-    if (clientDataStateResult.lsController[0].isLoading)
-    {
-        return;
-    }
-
-    const fullPlanetDatas: PlayerDataType.FullPlanetData[] = clientDataStateResult.psController[0].predictedDBData.fullPlanetDatas;
-    const resolvedId: number | null = resolveSelectedPlanetId(fullPlanetDatas, requestedPlanetId);
-
-    if (resolvedId === null)
-    {
-        return;
-    }
-
-    if (resolvedId === clientDataStateResult.psController[0].selectedPlanetId)
-    {
-        return;
-    }
-
-    writeStoredSelectedPlanetId(resolvedId);
-
-    const updatedPlayerState: PlayerDataType.PlayerState =
-    {
-        ...clientDataStateResult.psController[0],
-        selectedPlanetId: resolvedId,
-    };
-
-    clientDataStateResult.psController[1](updatedPlayerState);
 }
