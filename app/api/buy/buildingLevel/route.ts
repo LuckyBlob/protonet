@@ -2,40 +2,44 @@ import { NextResponse } from "next/server";
 
 import * as Auth from "@/lib/authentication/auth";
 import * as DBType from "@/lib/db/dbTypes";
-import * as BuyTypes from "@/lib/requestTypes/buyRequests";
+import * as RequestType from "@/lib/serverRequests/requestTypes";
 import * as ServerData from "@/lib/serverData/serverData";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as PlayerUpdateServer from "@/lib/update/server/playerUpdateServer";
 import * as PlayerDataSerialization from "@/lib/playerData/playerDataSerialization";
+import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 
 export async function POST(request: Request): Promise<NextResponse>
 {
+	const clientData: RequestType.BuildingUpgrade_ClientRequest = await request.json();
+	const responseData: RequestType.BuildingUpgrade_ServerResponse =
+	{
+		serializedPlayerData: null,
+		error: null,
+	}
 	const user: DBType.UserRow | null = await Auth.getCurrentUser();
 	if (user === null)
 	{
-		return NextResponse.json({ error: "Not logged in." }, { status: 401 });
+		responseData.error = "Not logged in."
+		return NextResponse.json(responseData, { status: 401 });
 	}
 
 	const player: DBType.PlayerRow | null = PlayerUpdateServer.findPlayerByUserId(user.id);
 	if (player === null)
 	{
-		return NextResponse.json({ error: "Player not found." }, { status: 404 });
+		responseData.error = "Player not found."
+		return NextResponse.json(responseData, { status: 404 });
 	}
 
 	const serverData: ServerDataType.ServerData = ServerData.getServerData();
 
-	const requestData: BuyTypes.BuildingUpgradeRequest = await request.json();
+	const buyUpgradeResult: PlayerUpdateServer.BuyUpgradeResult = PlayerUpdateServer.tryBuyBuildingUpgradeServer(player.id, serverData, clientData);
 
-	const result: PlayerUpdateServer.BuyUpgradeResult = PlayerUpdateServer.tryBuyBuildingUpgradeServer(player.id, serverData, requestData);
-
-	if (result.success === false)
+	if (buyUpgradeResult.success === false)
 	{
-		const errorResponse: NextResponse = NextResponse.json(
-			{ error: { message: result.failureReason } },
-			{ status: 400 }
-		);
-		return errorResponse;
+		responseData.error = buyUpgradeResult.failureReason;
+		return NextResponse.json(responseData, { status: 400 });
 	}
-
-	return NextResponse.json(PlayerDataSerialization.serializePlayerData(result.playerStateResult));
+	responseData.serializedPlayerData = PlayerDataSerialization.serializePlayerData(buyUpgradeResult.playerStateResult);
+	return NextResponse.json(responseData);
 }

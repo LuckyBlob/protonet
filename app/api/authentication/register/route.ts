@@ -3,46 +3,42 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import * as Auth from "@/lib/authentication/auth";
-
 import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
-
+import * as RequestType from "@/lib/serverRequests/requestTypes";
 import * as PlanetServer from "@/lib/update/server/planetUpdateServer";
 
 export async function POST(request: Request): Promise<NextResponse>
 {
-	const requestBody: { username: string; password: string } = await request.json();
-	const username: string = requestBody.username;
-	const password: string = requestBody.password;
-
-	if (username.length < 3 || password.length < 6)
+	const clientData: RequestType.BaseAuthenticationClientRequest = await request.json();
+	const responseData: RequestType.BaseAuthenticationServerResponse =
 	{
-		return NextResponse.json(
-			{ error: "Username must be 3+ chars, password 6+ chars" },
-			{ status: 400 }
-		);
+		username: clientData.username,
+		error: null,
 	}
 
-	const existingUser: DBType.UserRow | null = Auth.findUserByUsername(username);
+	if (clientData.username.length < 3 || clientData.password.length < 6)
+	{
+		responseData.error = "Username must be 3+ chars, password 6+ chars.";
+		return NextResponse.json(responseData, { status: 400 });
+	}
+
+	const existingUser: DBType.UserRow | null = Auth.findUserByUsername(clientData.username);
 	if (existingUser !== null)
 	{
-		return NextResponse.json(
-			{ error: "Username already taken" },
-			{ status: 400 }
-		);
+		responseData.error = "Username already taken.";
+		return NextResponse.json(responseData, { status: 400 });
 	}
 
-	const passwordHash: string = await Auth.hashPassword(password);
-	const newUser: DBType.UserRow = Auth.createUser(username, passwordHash);
+	const passwordHash: string = await Auth.hashPassword(clientData.password);
+	const newUser: DBType.UserRow = Auth.createUser(clientData.username, passwordHash);
 
 	const playerCreated: boolean = createPlayer(newUser.id);
 	if (!playerCreated)
 	{
 		Auth.deleteUser(newUser.id);
-		return NextResponse.json(
-			{ error: "Failed to create player" },
-			{ status: 500 }
-		);
+		responseData.error = "Failed to create player.";
+		return NextResponse.json(responseData, { status: 500 });
 	}
 
 	const session: DBType.SessionRow = Auth.createSession(newUser.id);
@@ -57,7 +53,7 @@ export async function POST(request: Request): Promise<NextResponse>
 		path: "/",
 	});
 
-	return NextResponse.json({ username: newUser.username });
+	return NextResponse.json(responseData);
 }
 
 function createPlayer(userId: number): boolean

@@ -1,10 +1,9 @@
-import * as DBType from "@/lib/db/dbTypes";
-import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
-
 import * as Building from "@/lib/gameplay/coreData/buildingCostFormulas";
-import * as PlanetData from "@/lib/playerData/planetData";
+import * as PlanetData from "@/lib/playerData/buildingData";
+import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+import * as ResourceData from "@/lib/playerData/resourceData";
 
-export function computeUpgradeCost(currentUpgradeLevel: number, buildingType: number): Map<number, number> | null
+export function computeBuildingUpgradeCost(currentUpgradeLevel: number, buildingType: number): Map<number, number> | null
 {
 	const costFunction: ((currentUpgradeLevel: number) => Map<number, number>) | undefined = Building.buildingCostFunctionMap.get(buildingType);
 	if (costFunction === undefined)
@@ -15,31 +14,24 @@ export function computeUpgradeCost(currentUpgradeLevel: number, buildingType: nu
 	return costFunction(currentUpgradeLevel);
 }
 
-export function canAffordUpgrade(fullPlanetData: PlanetData.FullPlanetData, buildingType: number): boolean
+export function canAffordUpgrade(fullPlanetData: PlayerDataType.FullPlanetData, buildingType: number): boolean
 {
-	const currentUpgradeLevel: number | null = PlanetData.getBuildingLevel(fullPlanetData, buildingType);
-	if (currentUpgradeLevel === null)
-	{
-	    return false;
-	}
-	
-	const nextUpgradeCostMap: Map<number, number> | null = computeUpgradeCost(currentUpgradeLevel, buildingType);
+	const currentUpgradeLevel: number = PlanetData.getBuildingLevel(fullPlanetData, buildingType);
+	const nextUpgradeCostMap: Map<number, number> | null = computeBuildingUpgradeCost(currentUpgradeLevel, buildingType);
 	if (nextUpgradeCostMap === null)
 	{
 	    return false;
 	}
 
-	const ressourceQuantityMap: Map<number, number> = PlanetData.getRessourceQuantityMap(fullPlanetData);
-
-	for (const [ressourceType, ressourceCost] of nextUpgradeCostMap)
+	for (const [resourceType, resourceCost] of nextUpgradeCostMap)
 	{
-        const currentRessourceQuantity: number | undefined = ressourceQuantityMap.get(ressourceType); 
-		if (currentRessourceQuantity === undefined)
+        const currentResourceQuantity: number | undefined = ResourceData.getResourceQuantity(fullPlanetData, resourceType); 
+		if (currentResourceQuantity === undefined)
 		{
 			return false;
 		}
 
-		if (currentRessourceQuantity < ressourceCost)
+		if (currentResourceQuantity < resourceCost)
 		{
 			return false;
 		}

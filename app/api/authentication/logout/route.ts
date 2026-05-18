@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import * as RequestType from "@/lib/serverRequests/requestTypes";
 
 import * as Auth from "@/lib/authentication/auth";
 
@@ -14,5 +15,9 @@ export async function POST(): Promise<NextResponse>
 		cookieStore.delete(Auth.sessionCookieName);
 	}
 
-	return NextResponse.json({ success: true });
+	const responseData: RequestType.BaseServerResponse =
+	{
+		error: null,
+	}
+	return NextResponse.json(responseData);
 }

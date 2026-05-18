@@ -7,31 +7,31 @@ export const buildingProductionPerHoursFunctionMap: Map<number, (currentUpgradeL
 	[GameType.BUILDING_2, (currentUpgradeLevel: number, serverData: ServerDataType.ServerData | null): Map<number, number> => computeProductionRate_SimpleProductionBuilding(currentUpgradeLevel, BUILDING_2_DATA, serverData)],
 ]);
 
-type SimpleProductionBuildingPerRessourceProductionData =
+type SimpleProductionBuildingPerResourceProductionData =
 {
     minProductionPerHour: number;
     productionFactor: number;
 };
 type SimpleProductionBuildingProductionData =
 {
-    perRessourceDataMap: Map<number, SimpleProductionBuildingPerRessourceProductionData>;
+    perResourceDataMap: Map<number, SimpleProductionBuildingPerResourceProductionData>;
     exponentBase: number;
 };
 
 const BUILDING_1_DATA: SimpleProductionBuildingProductionData =
 {
-    perRessourceDataMap: new Map<number, SimpleProductionBuildingPerRessourceProductionData>
+    perResourceDataMap: new Map<number, SimpleProductionBuildingPerResourceProductionData>
     ([
-        [GameType.RESSOURCE_1, { minProductionPerHour: 30, productionFactor: 30 }],
+        [GameType.RESOURCE_1, { minProductionPerHour: 30, productionFactor: 30 }],
     ]),
     exponentBase: 1.1,
 };
 
 const BUILDING_2_DATA: SimpleProductionBuildingProductionData =
 {
-    perRessourceDataMap: new Map<number, SimpleProductionBuildingPerRessourceProductionData>
+    perResourceDataMap: new Map<number, SimpleProductionBuildingPerResourceProductionData>
     ([
-        [GameType.RESSOURCE_2, { minProductionPerHour: 15, productionFactor: 20 }],
+        [GameType.RESOURCE_2, { minProductionPerHour: 15, productionFactor: 20 }],
     ]),
     exponentBase: 1.1,
 };
@@ -41,10 +41,10 @@ function computeProductionRate_SimpleProductionBuilding(currentUpgradeLevel: num
 	const productionMap: Map<number, number> = new Map<number, number>();
 	const timeMultiplier: number = serverData ? serverData.config.time_multiplier : 1;
 
-	for (const [ressourceType, perRessourceData] of data.perRessourceDataMap)
+	for (const [resourceType, perResourceData] of data.perResourceDataMap)
 	{
-        const productionPerHour: number = Math.floor(Math.max(perRessourceData.minProductionPerHour, perRessourceData.productionFactor * currentUpgradeLevel * Math.pow(data.exponentBase, currentUpgradeLevel)));
-		productionMap.set(ressourceType, Math.floor(productionPerHour * timeMultiplier));
+        const productionPerHour: number = Math.floor(Math.max(perResourceData.minProductionPerHour, perResourceData.productionFactor * currentUpgradeLevel * Math.pow(data.exponentBase, currentUpgradeLevel)));
+		productionMap.set(resourceType, Math.floor(productionPerHour * timeMultiplier));
 	}
 
 	return productionMap;

@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
-
 import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
 
 export type ClientDataStateResult =
@@ -30,9 +28,12 @@ export function useClientDataState(enabled: boolean): ClientDataStateResult
 
 		const clientDataState: () => Promise<void> = async (): Promise<void> =>
 		{
-			await PlayerUpdateClient.fetchAndSetPlayerState(psController);
-			await PlayerUpdateClient.fetchAndSetServerData(sdsController);
-			lsController[1]({ isLoading: false });
+			const playerLoaded: boolean = await PlayerUpdateClient.fetchAndSetPlayerState(psController);
+			const serverLoaded: boolean = await PlayerUpdateClient.fetchAndSetServerData(sdsController);
+			if (playerLoaded === true && serverLoaded === true)
+			{
+				lsController[1]({ isLoading: false });
+			}
 		};
 
 		clientDataState();

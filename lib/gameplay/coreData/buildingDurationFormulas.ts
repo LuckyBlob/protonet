@@ -22,7 +22,7 @@ const BUILDING_GENERIC_DATA: SimpleBuildingUpgradeDurationData =
 function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: number, data: SimpleBuildingUpgradeDurationData, buildingType: number, serverData: ServerDataType.ServerData | null): number
 {
 	const timeMultiplier: number = serverData ? serverData.config.time_multiplier : 1;
-    const nextUpgradeCostMap: Map<number, number> | null = Cost.computeUpgradeCost(currentUpgradeLevel, buildingType);
+    const nextUpgradeCostMap: Map<number, number> | null = Cost.computeBuildingUpgradeCost(currentUpgradeLevel, buildingType);
     if (nextUpgradeCostMap === null)
     {
         return 0;

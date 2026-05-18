@@ -1,15 +1,25 @@
 "use client";
 
-import * as DBType from "@/lib/db/dbTypes";
-
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as PlanetData from "@/lib/playerData/planetData";
 
 const SELECTED_PLANET_STORAGE_KEY: string = "protonet.selectedPlanetId";
 
-export function readStoredSelectedPlanetId(): number | null
+export function updateStoredSelectedPlanetId(playerData: PlayerDataType.PlayerData): number | null
+{
+	const storedId: number | null = readStoredSelectedPlanetId();
+	const resolvedId: number | null = resolveSelectedPlanetId(playerData.fullPlanetDatas, storedId);
+
+	if (resolvedId === null)
+	{
+		return null;
+	}
+	writeStoredSelectedPlanetId(resolvedId);
+
+	return resolvedId;
+}
+
+function readStoredSelectedPlanetId(): number | null
 {
 	if (typeof window === "undefined")
 	{
@@ -33,7 +43,7 @@ export function readStoredSelectedPlanetId(): number | null
 	return parsedValue;
 }
 
-export function writeStoredSelectedPlanetId(planetId: number): void
+function writeStoredSelectedPlanetId(planetId: number): void
 {
 	if (typeof window === "undefined")
 	{
@@ -43,7 +53,7 @@ export function writeStoredSelectedPlanetId(planetId: number): void
 	window.localStorage.setItem(SELECTED_PLANET_STORAGE_KEY, String(planetId));
 }
 
-export function resolveSelectedPlanetId(fullPlanetDatas: PlanetData.FullPlanetData[], candidateId: number | null): number | null
+function resolveSelectedPlanetId(fullPlanetDatas: PlayerDataType.FullPlanetData[], candidateId: number | null): number | null
 {
 	if (fullPlanetDatas.length === 0)
 	{
@@ -52,7 +62,7 @@ export function resolveSelectedPlanetId(fullPlanetDatas: PlanetData.FullPlanetDa
 
 	if (candidateId !== null)
 	{
-		const matchingPlanet: PlanetData.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlanetData.FullPlanetData) =>
+		const matchingPlanet: PlayerDataType.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData) =>
 		{
 			return fullPlanetData.planetRow.id === candidateId;
 		});
@@ -63,21 +73,21 @@ export function resolveSelectedPlanetId(fullPlanetDatas: PlanetData.FullPlanetDa
 		}
 	}
 
-	const firstPlanet: PlanetData.FullPlanetData = fullPlanetDatas[0];
+	const firstPlanet: PlayerDataType.FullPlanetData = fullPlanetDatas[0];
 
 	return firstPlanet.planetRow.id;
 }
 
-export function getSelectedFullPlanetDataPredicted(playerState: PlayerDataType.PlayerState): PlanetData.FullPlanetData
+export function getSelectedFullPlanetDataPredicted(playerState: PlayerDataType.PlayerState): PlayerDataType.FullPlanetData
 {
-	const fullPlanetDatas: PlanetData.FullPlanetData[] = playerState.predictedDBData.fullPlanetDatas;
+	const fullPlanetDatas: PlayerDataType.FullPlanetData[] = playerState.predictedDBData.fullPlanetDatas;
 	const resolvedId: number | null = resolveSelectedPlanetId(fullPlanetDatas, playerState.selectedPlanetId);
 	if (resolvedId === null)
 	{
 		return fullPlanetDatas[0];
 	}
 
-	const matchingFullPlanetData: PlanetData.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlanetData.FullPlanetData): boolean =>
+	const matchingFullPlanetData: PlayerDataType.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData): boolean =>
 	{
 		return fullPlanetData.planetRow.id === resolvedId;
 	});
@@ -97,7 +107,7 @@ export function setSelectedPlanetInPredictedPlayerState(clientDataStateResult: U
 		return;
 	}
 
-	const fullPlanetDatas: PlanetData.FullPlanetData[] = clientDataStateResult.psController[0].predictedDBData.fullPlanetDatas;
+	const fullPlanetDatas: PlayerDataType.FullPlanetData[] = clientDataStateResult.psController[0].predictedDBData.fullPlanetDatas;
 	const resolvedId: number | null = resolveSelectedPlanetId(fullPlanetDatas, requestedPlanetId);
 
 	if (resolvedId === null)

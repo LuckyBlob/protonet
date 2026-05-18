@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import * as AuthClient from "@/lib/authentication/authClient";
+import * as ServerRequest from "@/lib/serverRequests/serverRequests"
+import * as RequestType from "@/lib/serverRequests/requestTypes";
+import { ActionRequest } from "@/app/api/apiEndPoints"
 
 export default function LoginPage()
 {
@@ -20,11 +22,15 @@ export default function LoginPage()
 
 	const handleSubmit: () => Promise<void> = async () =>
 	{
-		const result: AuthClient.AuthResult = await AuthClient.tryLogin(usernameState[0], passwordState[0]);
-
-		if (result.success === false)
+		const authenticationData: RequestType.BaseAuthenticationClientRequest =
 		{
-			setError(result.errorMessage);
+			username: usernameState[0],
+			password: passwordState[0],
+		}
+		const serverResponse: RequestType.BaseServerResponse = await ServerRequest.requestServerAction(ActionRequest.Login, authenticationData);
+		if (serverResponse.error !== null)
+		{
+			setError(serverResponse.error);
 			return;
 		}
 

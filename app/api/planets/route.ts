@@ -4,7 +4,7 @@ import * as Auth from "@/lib/authentication/auth";
 import * as DBType from "@/lib/db/dbTypes";
 import * as PlanetServer from "@/lib/update/server/planetUpdateServer";
 import * as PlayerUpdateServer from "@/lib/update/server/playerUpdateServer";
-import * as PlanetData from "@/lib/playerData/planetData";
+import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 
 export async function GET(): Promise<NextResponse>
 {
@@ -20,6 +20,6 @@ export async function GET(): Promise<NextResponse>
 		return NextResponse.json({ error: "Player not found" }, { status: 404 });
 	}
 
-	const fullPlanetDatas: PlanetData.FullPlanetData[] = PlanetServer.findFullPlanetDatasByOwner(player.id);
+	const fullPlanetDatas: PlayerDataType.FullPlanetData[] = PlanetServer.getFullPlanetDatas(player.id);
 	return NextResponse.json({ fullPlanetDatas: fullPlanetDatas });
 }

@@ -1,14 +1,21 @@
 import { useRouter } from "next/navigation";
 
-import * as AuthClient from "@/lib/authentication/authClient";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser"
+import * as RequestType from "@/lib/serverRequests/requestTypes";
+import * as ServerRequest from "@/lib/serverRequests/serverRequests"
+import { ActionRequest } from "@/app/api/apiEndPoints"
 
 export async function handleLogout(router: ReturnType<typeof useRouter>): Promise<void>
 {
-	await AuthClient.tryLogout();
-	router.push("/login");
+    const serverResponse: RequestType.BaseServerResponse = await ServerRequest.requestServerAction(ActionRequest.Logout);
+    if (serverResponse.error !== null)
+    {
+        return;
+    }
+
+    router.push("/login");
 };
 
 export async function handleRefreshServerData(clientDataStateResult: UseClientDataState.ClientDataStateResult): Promise<void>

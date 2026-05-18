@@ -35,6 +35,7 @@ export function SideBarElement(props: SideBarProps): React.ReactElement
 	(
 	    <div className="w-[200px] bg-black/50 text-white pt-[300px] pb-8 px-4 flex flex-col items-center min-h-screen">
 	        <div className="text-sm text-gray-300 mb-12">
+				{/*This should always be true as we gated with is Loading!*/}
 	            {props.cuController[0].user!.username}
 	        </div>
 

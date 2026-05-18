@@ -44,24 +44,24 @@ CREATE TABLE planet
 	galaxy INTEGER NOT NULL,
 	size INTEGER NOT NULL,
 	owner_player_id INTEGER,
-  claimed_at INTEGER NOT NULL DEFAULT 0,
-	ressource_1 REAL NOT NULL DEFAULT 0,
-	ressource_1_production_level INTEGER NOT NULL DEFAULT 0,
+ 	claimed_at INTEGER NOT NULL DEFAULT 0,
 	last_updated INTEGER NOT NULL DEFAULT 0,
-  building_upgrade_completes_at INTEGER NOT NULL DEFAULT 0,
+	building_upgrade_completes_at INTEGER NOT NULL DEFAULT 0,
 	building_being_upgraded INTEGER NOT NULL DEFAULT 0,
+  ship_construction_batch_completes_at INTEGER NOT NULL DEFAULT 0,
+	current_ship_construction_batch_id INTEGER NOT NULL DEFAULT 0,
 	UNIQUE (slot, system, galaxy),
 	FOREIGN KEY (owner_player_id) REFERENCES player(id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_planet_owner ON planet(owner_player_id);
 
-CREATE TABLE IF NOT EXISTS planet_ressource
+CREATE TABLE IF NOT EXISTS planet_resource
 (
 	planet_id INTEGER NOT NULL,
-	ressource_type INTEGER NOT NULL,
-	ressource_quantity REAL NOT NULL DEFAULT 0,
-	PRIMARY KEY (planet_id, ressource_type),
+	resource_type INTEGER NOT NULL,
+	resource_quantity REAL NOT NULL DEFAULT 0,
+	PRIMARY KEY (planet_id, resource_type),
 	FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
 );
 
@@ -74,5 +74,29 @@ CREATE TABLE IF NOT EXISTS planet_building
 	FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_planet_ressource_planet ON planet_ressource(planet_id);
+CREATE INDEX IF NOT EXISTS idx_planet_resource_planet ON planet_resource(planet_id);
 CREATE INDEX IF NOT EXISTS idx_planet_building_planet ON planet_building(planet_id);
+
+CREATE TABLE IF NOT EXISTS planet_ship
+(
+    planet_id INTEGER NOT NULL,
+    ship_type INTEGER NOT NULL,
+    ship_quantity INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (planet_id, ship_type),
+    FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_planet_ship_planet ON planet_ship(planet_id);
+
+CREATE TABLE IF NOT EXISTS ship_construction
+(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    planet_id INTEGER NOT NULL,
+    batch_id INTEGER NOT NULL,
+    ship_type INTEGER NOT NULL,
+    ship_quantity INTEGER NOT NULL,
+    queue_order INTEGER NOT NULL,
+    completes_at INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_ship_construction_planet_queue ON ship_construction(planet_id, queue_order);
+CREATE INDEX IF NOT EXISTS idx_ship_construction_batch ON ship_construction(batch_id);

@@ -1,5 +1,5 @@
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as PlanetData from "@/lib/playerData/planetData";
+import * as PlanetData from "@/lib/playerData/buildingData";
 import * as DBType from "@/lib/db/dbTypes";
 
 // The wire format. Maps cannot survive JSON.stringify, so on the wire each
@@ -11,8 +11,10 @@ import * as DBType from "@/lib/db/dbTypes";
 
 export type SerializedDynamicPlanetData =
 {
-	ressourceQuantity: [number, number][];
+	resourceQuantity: [number, number][];
 	buildingLevels: [number, number][];
+	shipQuantity: [number, number][];
+	queuedShipConstructionBatchs: PlayerDataType.ShipConstructionBatch[];
 };
 
 export type SerializedFullPlanetData =
@@ -29,15 +31,17 @@ export type SerializedPlayerData =
 
 // ---- Server side: in-memory (Maps) -> wire (arrays) ----
 
-function serializeFullPlanetData(fullPlanetData: PlanetData.FullPlanetData): SerializedFullPlanetData
+function serializeFullPlanetData(fullPlanetData: PlayerDataType.FullPlanetData): SerializedFullPlanetData
 {
 	const serialized: SerializedFullPlanetData =
 	{
 		planetRow: fullPlanetData.planetRow,
 		dynamicPlanetData:
 		{
-			ressourceQuantity: [...fullPlanetData.dynamicPlanetData.ressourceQuantity],
+			resourceQuantity: [...fullPlanetData.dynamicPlanetData.resourceQuantity],
 			buildingLevels: [...fullPlanetData.dynamicPlanetData.buildingLevels],
+			shipQuantity: [...fullPlanetData.dynamicPlanetData.shipQuantity],
+			queuedShipConstructionBatchs: [...fullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs],
 		},
 	};
 
@@ -46,7 +50,7 @@ function serializeFullPlanetData(fullPlanetData: PlanetData.FullPlanetData): Ser
 
 export function serializePlayerData(playerData: PlayerDataType.PlayerData): SerializedPlayerData
 {
-	const serializedFullPlanetDatas: SerializedFullPlanetData[] = playerData.fullPlanetDatas.map((fullPlanetData: PlanetData.FullPlanetData): SerializedFullPlanetData =>
+	const serializedFullPlanetDatas: SerializedFullPlanetData[] = playerData.fullPlanetDatas.map((fullPlanetData: PlayerDataType.FullPlanetData): SerializedFullPlanetData =>
 	{
 		return serializeFullPlanetData(fullPlanetData);
 	});
@@ -62,15 +66,17 @@ export function serializePlayerData(playerData: PlayerDataType.PlayerData): Seri
 
 // ---- Client side: wire (arrays) -> in-memory (Maps) ----
 
-function deserializeFullPlanetData(serialized: SerializedFullPlanetData): PlanetData.FullPlanetData
+function deserializeFullPlanetData(serialized: SerializedFullPlanetData): PlayerDataType.FullPlanetData
 {
-	const fullPlanetData: PlanetData.FullPlanetData =
+	const fullPlanetData: PlayerDataType.FullPlanetData =
 	{
 		planetRow: serialized.planetRow,
 		dynamicPlanetData:
 		{
-			ressourceQuantity: new Map<number, number>(serialized.dynamicPlanetData.ressourceQuantity),
+			resourceQuantity: new Map<number, number>(serialized.dynamicPlanetData.resourceQuantity),
 			buildingLevels: new Map<number, number>(serialized.dynamicPlanetData.buildingLevels),
+			shipQuantity: new Map<number, number>(serialized.dynamicPlanetData.shipQuantity),
+			queuedShipConstructionBatchs: serialized.dynamicPlanetData.queuedShipConstructionBatchs,
 		},
 	};
 
@@ -79,7 +85,7 @@ function deserializeFullPlanetData(serialized: SerializedFullPlanetData): Planet
 
 export function deserializePlayerData(serialized: SerializedPlayerData): PlayerDataType.PlayerData
 {
-	const fullPlanetDatas: PlanetData.FullPlanetData[] = serialized.fullPlanetDatas.map((serializedFullPlanetData: SerializedFullPlanetData): PlanetData.FullPlanetData =>
+	const fullPlanetDatas: PlayerDataType.FullPlanetData[] = serialized.fullPlanetDatas.map((serializedFullPlanetData: SerializedFullPlanetData): PlayerDataType.FullPlanetData =>
 	{
 		return deserializeFullPlanetData(serializedFullPlanetData);
 	});
