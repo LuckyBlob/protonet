@@ -10,6 +10,7 @@ import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as PlanetServer from "@/lib/update/server/planetUpdateServer";
 import * as PlanetData from "@/lib/playerData/buildingData";
 import * as ResourceData from "@/lib/playerData/resourceData";
+import * as ShipData from "@/lib/playerData/shipData";
 import * as ServerProgress from "@/lib/gameplay/progressUpdate/server/serverProgress";
 
 export type BuyUpgradeResult =
@@ -115,6 +116,149 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 	})();
 	
 	const successResult: BuyUpgradeResult =
+	{
+		success: true,
+		failureReason: null,
+		playerStateResult: changedPlayerStateResult,
+	};
+	return successResult;
+}
+
+export type BuildShipsResult =
+{
+	success: boolean;
+	failureReason: string | null;
+	playerStateResult: PlayerDataType.PlayerData;
+};
+
+export function tryBuildShipsServer(playerId: number, serverData: ServerDataType.ServerData, requestData: RequestType.BuildShips_ClientRequest): BuildShipsResult
+{
+	const now: number = Date.now();
+	const playerData: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+	const relevantPlanetDataIndex: number = playerData.fullPlanetDatas.findIndex((fullPlanetData: PlayerDataType.FullPlanetData) =>
+	{
+		return fullPlanetData.planetRow.id === requestData.planetId;
+	});
+
+	if (relevantPlanetDataIndex === -1)
+	{
+		const failureResult: BuildShipsResult =
+		{
+			success: false,
+			failureReason: "Wrong planet to build ships.",
+			playerStateResult: playerData,
+		};
+		return failureResult;
+	}
+
+	const relevantFullPlanetData: PlayerDataType.FullPlanetData = playerData.fullPlanetDatas[relevantPlanetDataIndex];
+	const requestedShipQuantities: Map<number, number> = new Map<number, number>();
+	for (const shipQuantityRequest of requestData.shipQuantities)
+	{
+		if (shipQuantityRequest.shipQuantity <= 0)
+		{
+			continue;
+		}
+
+		const existingQuantity: number = requestedShipQuantities.get(shipQuantityRequest.shipType) ?? 0;
+		requestedShipQuantities.set(shipQuantityRequest.shipType, existingQuantity + shipQuantityRequest.shipQuantity);
+	}
+
+	if (requestedShipQuantities.size === 0)
+	{
+		const failureResult: BuildShipsResult =
+		{
+			success: false,
+			failureReason: "No ships requested.",
+			playerStateResult: playerData,
+		};
+		return failureResult;
+	}
+
+	const possibleRequestedShipQuantities: Map<number, number> = ShipData.computeMaxAffordableShipQuantities(relevantFullPlanetData, requestedShipQuantities);
+	if (possibleRequestedShipQuantities.size === 0)
+	{
+		const failureResult: BuildShipsResult =
+		{
+			success: false,
+			failureReason: "Not enough resources.",
+			playerStateResult: playerData,
+		};
+		return failureResult;
+	}
+
+	const batchDurationSeconds: number = ShipData.computeShipQuantitiesConstructionDurationSeconds(possibleRequestedShipQuantities, relevantFullPlanetData, serverData);
+	if (batchDurationSeconds <= 0)
+	{
+		const failureResult: BuildShipsResult =
+		{
+			success: false,
+			failureReason: "Invalid ship construction duration.",
+			playerStateResult: playerData,
+		};
+		return failureResult;
+	}
+
+	const totalCost: Map<number, number> = ShipData.computeShipConstructionBatchCost(possibleRequestedShipQuantities);
+	for (const [resourceType, resourceCost] of totalCost)
+	{
+		substractPlanetResource(relevantFullPlanetData, resourceType, resourceCost);
+	}
+
+	const newestBatchId: number | undefined = relevantFullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs.at(-1)?.batchId;
+	const newBatchId: number = newestBatchId ? newestBatchId + 1 : 1;
+	const shipConstructionRows: DBType.ShipConstructionRow[] = [];
+	for (const [shipType, shipQuantity] of possibleRequestedShipQuantities)
+	{
+		const shipConstructionRow: DBType.ShipConstructionRow =
+		{
+			id: 0,
+			planet_id: relevantFullPlanetData.planetRow.id,
+			batch_id: newBatchId,
+			ship_type: shipType,
+			ship_quantity: shipQuantity,
+		};
+
+		shipConstructionRows.push(shipConstructionRow);
+	}
+
+	const newBatch: PlayerDataType.ShipConstructionBatch =
+	{
+		shipConstructionRows: shipConstructionRows,
+		batchId: newBatchId,
+	};
+	relevantFullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs.push(newBatch);
+
+	const isAlreadyConstructing: boolean = relevantFullPlanetData.planetRow.ship_construction_batch_completes_at !== 0;
+	const changedPlayerStateResult: PlayerDataType.PlayerData = DB.databaseConnection.transaction((): PlayerDataType.PlayerData =>
+	{
+		let updatedPlanetRow: DBType.PlanetRow = relevantFullPlanetData.planetRow;
+
+		if (isAlreadyConstructing === false)
+		{
+			const completesAtMilliseconds: number = now + batchDurationSeconds * 1000;
+			updatedPlanetRow = PlanetServer.updatePlanetRowColumns(relevantFullPlanetData.planetRow.id,
+			{
+				ship_construction_batch_completes_at: completesAtMilliseconds,
+				current_ship_construction_batch_id: newBatchId,
+			});
+		}
+				
+		PlanetServer.updateDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
+		PlanetServer.updateDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, relevantFullPlanetData.dynamicPlanetData);
+
+		playerData.fullPlanetDatas[relevantPlanetDataIndex].planetRow = updatedPlanetRow;
+		const result: PlayerDataType.PlayerData =
+		{
+			playerRow: playerData.playerRow,
+			fullPlanetDatas: playerData.fullPlanetDatas,
+		};
+
+		return result;
+	})();
+
+	const successResult: BuildShipsResult =
 	{
 		success: true,
 		failureReason: null,

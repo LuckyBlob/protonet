@@ -9,48 +9,64 @@ import * as PlayerDataSerialization from "@/lib/helper/serialization";
 import * as DBType from "@/lib/db/dbTypes";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as ServerData from "@/lib/serverData/serverData";
+import * as APIEndPoint from "@/app/api/apiEndPoints"
 
 export async function POST(): Promise<NextResponse>
 {
 	const admin_level: number | null = await Auth.getCurrentAdminLevel();
-	const serverResponse: RequestType.RefreshServer_ServerResponse =
+	let errorServerResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RefreshServer> =
 	{
 		error: "Unknown error.",
+		serializedPlayerData: null,
+		serverData: null,
 	}
+
 	if (admin_level === null)
 	{
-		serverResponse.error = "Did not find user.";
-		return NextResponse.json(serverResponse, { status: 401 });
+		errorServerResponse.error = "Did not find user.";
+		return NextResponse.json(errorServerResponse, { status: 401 });
 	}
 	
  	//0 means power admin (only assignable manually in the DB)
 	if (admin_level !== 0)
 	{
-		serverResponse.error = "Forbidden.";
-		return NextResponse.json(serverResponse, { status: 403 });
+		errorServerResponse.error = "Forbidden.";
+		return NextResponse.json(errorServerResponse, { status: 403 });
 	}
 
 	const user: DBType.UserRow | null = await Auth.getCurrentUser();
 	if (user === null)
 	{
-		serverResponse.error = "Not logged in.";
-		return NextResponse.json(serverResponse, { status: 401 });
+		errorServerResponse.error = "Not logged in.";
+		return NextResponse.json(errorServerResponse, { status: 401 });
 	}
 
-	const player: DBType.PlayerRow | null = PlayerUpdateServer.findPlayerByUserId(user.id);
-	if (player === null)
+	let player: DBType.PlayerRow | null = null;
+	try
 	{
-		serverResponse.error = "Player not found.";
-		return NextResponse.json(serverResponse, { status: 404 });
+		player = PlayerUpdateServer.findPlayerByUserId(user.id);
+		if (player === null)
+		{
+			errorServerResponse.error = "Player not found.";
+			return NextResponse.json(errorServerResponse, { status: 404 });
+		}
+		
+		PlayerUpdateServer.refreshServerDataAndBankAllPlayers();
 	}
-
-	PlayerUpdateServer.refreshServerDataAndBankAllPlayers();
+	catch (error: unknown)
+	{
+		const errorMessage: string = error instanceof Error ? error.message : String(error);
+		errorServerResponse.error = errorMessage;
+		return NextResponse.json(errorServerResponse, { status: 401 });
+	}
 
 	const serverData: ServerDataType.ServerData = ServerData.getServerData();
 	const now: number = Date.now();
 	const playerData: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(player.id, serverData, now);
-	serverResponse.serializedPlayerData = PlayerDataSerialization.serializePlayerData(playerData);
-	serverResponse.error = null;
-	
-	return NextResponse.json(serverResponse);
+	return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RefreshServer>>(
+	{
+		error: null,
+		serializedPlayerData: PlayerDataSerialization.serializePlayerData(playerData),
+		serverData: serverData,
+	}, { status: 200 });
 }

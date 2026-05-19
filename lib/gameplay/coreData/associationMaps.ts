@@ -129,7 +129,7 @@ function buildContextToThingTag(): ReadonlyMap<number, number>
 
 const CONTEXT_TO_THING_TAG: ReadonlyMap<number, number> = buildContextToThingTag();
 
-export function getTypes(thingType: ThingType): number[]
+function getThingNameMap(thingType: ThingType): ReadonlyMap<number, string>
 {
 	const displayNameMap: ReadonlyMap<number, string> | undefined = THING_TAG_TO_DISPLAY_NAMES.get(thingType);
 
@@ -138,9 +138,19 @@ export function getTypes(thingType: ThingType): number[]
 		throw new Error(`UNREACHABLE: Invalid ThingType ${thingType}`);
 	}
 
-	const typeArray: number[] = [...displayNameMap.keys()];
+	return displayNameMap;
+}
 
+export function getTypes(thingType: ThingType): number[]
+{
+	const typeArray: number[] = [...getThingNameMap(thingType).keys()];
 	return typeArray;
+}
+
+export function getThingName(thingType: ThingType, specificType: number): string
+{
+	const displayNameMap: ReadonlyMap<number, string> = getThingNameMap(thingType);
+    return displayNameMap.get(specificType) ?? `Thing Name ${specificType}`;
 }
 //#endregion
 

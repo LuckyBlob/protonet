@@ -33,20 +33,14 @@ export function getShipQuantity(fullPlanetData: PlayerDataType.FullPlanetData, s
 	return getter();
 }
 
-export function getShipConstructionDurationSeconds(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, shipType: number): number | null
+export function getShipConstructionBatchRemainingMs(fullPlanetData: PlayerDataType.FullPlanetData): number | null
 {
-    const constructionDurationSecondsFunction: ((extraShipConstructionData: ShipConstructionFormulas.ExtraShipConstructionData, serverData: ServerDataType.ServerData | null) => number) | undefined = ShipConstructionFormulas.shipConstructionDurationSecondsFunctionMap.get(shipType);
-    if (constructionDurationSecondsFunction === undefined)
-    {
-        return null;
-    }
-    
-    const extraShipConstructionData: ShipConstructionFormulas.ExtraShipConstructionData =
-    {
-        currentShipyardLevel: PlanetData.getBuildingLevel(fullPlanetData, AssociationMaps.SHIPYARD_BUILDING_TYPE) ?? 0,
-        structuralIntegrity: AssociationMaps.SHIP_STRUCTUAL_INTEGRITY.get(shipType) ?? 0,
-    }
-    return constructionDurationSecondsFunction(extraShipConstructionData, serverData);
+	if (fullPlanetData.planetRow.ship_construction_batch_completes_at === 0)
+	{
+		return null;
+	}
+
+    return fullPlanetData.planetRow.ship_construction_batch_completes_at - Date.now();
 }
 
 function getShipQuantitiesForConstructionBatch(shipConstructionbatch: PlayerDataType.ShipConstructionBatch): Map<number, number>
@@ -68,15 +62,14 @@ export function computeShipConstructionBatchDurationSeconds(shipConstructionbatc
 	return shipConstructionBatchDurationSeconds;
 }
 
-function computeShipQuantitiesConstructionDurationSeconds(shipQuantities: Map<number, number>, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData): number
+export function getShipConstructionDurationSeconds(shipType: number, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData): number | null
 {
-	let totalConstructionDurationSeconds: number = 0;
-	for (const [shipType, shipQuantity] of shipQuantities)
+	try
 	{
 		const shipConstructionDurationSecondsFunction: ((extraConstructionData: ShipConstructionFormulas.ExtraShipConstructionData, serverData: ServerDataType.ServerData | null) => number) | undefined = ShipConstructionFormulas.shipConstructionDurationSecondsFunctionMap.get(shipType);
 		if (shipConstructionDurationSecondsFunction === undefined)
 		{
-			continue;
+			return null;
 		}
 
 		const extraShipConstructionData: ShipConstructionFormulas.ExtraShipConstructionData =
@@ -85,34 +78,64 @@ function computeShipQuantitiesConstructionDurationSeconds(shipQuantities: Map<nu
 			structuralIntegrity: AssociationMaps.SHIP_STRUCTUAL_INTEGRITY.get(shipType) ?? 0,
 		}
 
-		totalConstructionDurationSeconds += (shipConstructionDurationSecondsFunction(extraShipConstructionData, serverData) * shipQuantity);
+		return shipConstructionDurationSecondsFunction(extraShipConstructionData, serverData);
+	}
+	catch (error: unknown)
+	{
+		console.warn("⚠️:", error); 
+		return null;
+	}
+}
+
+export function computeShipQuantitiesConstructionDurationSeconds(shipQuantities: Map<number, number>, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData): number
+{
+	let totalConstructionDurationSeconds: number = 0;
+	for (const [shipType, shipQuantity] of shipQuantities)
+	{
+		const shipConstructionDurationSeconds: number | null = getShipConstructionDurationSeconds(shipType, fullPlanetData, serverData);
+		if (shipConstructionDurationSeconds === null)
+		{
+			continue;
+		}
+
+		totalConstructionDurationSeconds += shipConstructionDurationSeconds * shipQuantity;
 	}
 
 	return totalConstructionDurationSeconds;
 }
 
-function computeBatchShipConstructionCost(shipQuantities: Map<number, number>): Map<number, number>
+export function getSingleShipCost(shipType: number): Map<number, number> | null
+{
+	const singleShipCost: Map<number, number> | undefined = AssociationMaps.SHIP_COST.get(shipType);
+	if (singleShipCost === undefined)
+	{
+		return null;
+	}
+
+	return singleShipCost;
+}
+
+export function computeShipConstructionBatchCost(shipQuantities: Map<number, number>): Map<number, number>
 {
 	const totalShipConstructionCost: Map<number, number> = new Map<number, number>();
 	for (const [shipType, shipQuantity] of shipQuantities)
 	{
-		const singleShipCost: Map<number, number> | undefined = AssociationMaps.SHIP_COST.get(shipType);
-		if (singleShipCost === undefined)
+		const singleShipCost: Map<number, number> | null = computeSingleShipTypeConstructionCost(shipType, shipQuantity);
+		if (singleShipCost === null)
 		{
 			continue;
 		}
 
-		for (const [resourceType, resourceQuantity] of singleShipCost)
+		for (const [resourceType, totalResourceQuantity] of singleShipCost)
 		{
 			const currentResourceCost: number | undefined = totalShipConstructionCost.get(resourceType);
-			const addedResourceCost: number = resourceQuantity * shipQuantity;
 			if (currentResourceCost === undefined)
 			{
-				totalShipConstructionCost.set(resourceType, addedResourceCost);
+				totalShipConstructionCost.set(resourceType, totalResourceQuantity);
 			}
 			else
 			{
-				totalShipConstructionCost.set(resourceType, currentResourceCost + addedResourceCost);
+				totalShipConstructionCost.set(resourceType, currentResourceCost + totalResourceQuantity);
 			}
 		}
 	}
@@ -120,9 +143,29 @@ function computeBatchShipConstructionCost(shipQuantities: Map<number, number>): 
 	return totalShipConstructionCost;
 }
 
-function computeMaxAffordableShipQuantities(shipQuantities: Map<number, number>, fullPlanetData: PlayerDataType.FullPlanetData): Map<number, number>
+function computeSingleShipTypeConstructionCost(shipType: number, shipQuantity: number): Map<number, number> | null
+{
+	const totalShipConstructionCost: Map<number, number> = new Map<number, number>();
+	const singleShipCost: Map<number, number> | undefined = AssociationMaps.SHIP_COST.get(shipType);
+	if (singleShipCost === undefined)
+	{
+		return null;
+	}
+
+	for (const [resourceType, resourceQuantity] of singleShipCost)
+	{
+		const currentResourceCost: number | undefined = totalShipConstructionCost.get(resourceType);
+		const addedResourceCost: number = resourceQuantity * shipQuantity;
+		totalShipConstructionCost.set(resourceType, addedResourceCost);
+	}
+
+	return totalShipConstructionCost;
+}
+
+export function computeMaxAffordableShipQuantities(fullPlanetData: PlayerDataType.FullPlanetData, shipQuantities: Map<number, number>): Map<number, number>
 {
 	const buildableShipQuantities: Map<number, number> = new Map<number, number>();
+	const availableResourceQuantities: Map<number, number> = new Map<number, number>(ResourceData.getResourceQuantities(fullPlanetData));
 
 	for (const [desiredShipType, desiredShipQuantity] of shipQuantities)
 	{
@@ -140,7 +183,7 @@ function computeMaxAffordableShipQuantities(shipQuantities: Map<number, number>,
 				continue;
 			}
 
-			const availableResourceQuantity: number = ResourceData.getResourceQuantity(fullPlanetData, resourceType);
+			const availableResourceQuantity: number = availableResourceQuantities.get(resourceType) ?? 0;
 			smallestQuantityPossible = Math.min(smallestQuantityPossible, desiredShipQuantity, Math.floor(availableResourceQuantity / shipResourceCost));
 		}
 
@@ -148,15 +191,23 @@ function computeMaxAffordableShipQuantities(shipQuantities: Map<number, number>,
 		{
 			continue;
 		}
-
-		for (const [resourceType, shipResourceCost] of shipCost)
+		
+		buildableShipQuantities.set(desiredShipType, smallestQuantityPossible);
+		const ressourceCostForDesiredShipType: Map<number, number> | null = computeSingleShipTypeConstructionCost(desiredShipType, smallestQuantityPossible);
+		if (ressourceCostForDesiredShipType == null)
 		{
-			const availableResourceQuantity: number = ResourceData.getResourceQuantity(fullPlanetData, resourceType);
-			const remainingResourceQuantity: number = availableResourceQuantity - (smallestQuantityPossible * shipResourceCost);
-			ResourceData.setResourceQuantity(fullPlanetData, resourceType, remainingResourceQuantity);
+			continue;
 		}
 
-		buildableShipQuantities.set(desiredShipType, smallestQuantityPossible);
+		for (const [resourceType, totalResourceQuantity] of ressourceCostForDesiredShipType)
+		{
+			const currentResourceAvailability: number | undefined = availableResourceQuantities.get(resourceType);
+			if (currentResourceAvailability === undefined)
+			{
+				continue;
+			}
+			availableResourceQuantities.set(resourceType, currentResourceAvailability - totalResourceQuantity);
+		}
 	}
 
 	return buildableShipQuantities;

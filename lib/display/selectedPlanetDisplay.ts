@@ -19,11 +19,16 @@ export type SelectedPlanetDisplayValues =
 	buildCompletesAt: number;
 };
 
-export function getSelectedPlanetDisplayValues(clientDataStateResult: UseClientDataState.ClientDataStateResult, resourceTypes: number[]): SelectedPlanetDisplayValues | null
+export function getSelectedPlanetDisplayValues(clientDataStateResult: UseClientDataState.ClientDataStateResult, resourceTypes: number[]): SelectedPlanetDisplayValues
 {
 	const now: number = Date.now();
 
 	const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(clientDataStateResult.psController[0]);
+
+	if (selectedFullPlanetDataPredicted === null)
+	{
+		throw Error(`Predicted planet data is unavailable!`);
+	}
 
 	const buildCompletesAt: number = selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at;
 	const isBuilding: boolean = buildCompletesAt !== 0;

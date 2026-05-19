@@ -1,8 +1,7 @@
 "use client";
 
 import * as RequestType from "@/lib/serverRequests/requestTypes";
-import { DataResponseMap, ActionResponseMap } from "@/app/api/apiEndPoints"
-import * as APIEndPoint from "@/app/api/apiEndPoints"
+import { DataResponseMap, ActionResponseMap, ActionRequestMap } from "@/app/api/apiEndPoints"
 
 export async function requestServerData<K extends keyof DataResponseMap>(dataRequest: { name: K; endpoint: string }): Promise<DataResponseMap[K] | null>
 {
@@ -19,8 +18,9 @@ export async function requestServerData<K extends keyof DataResponseMap>(dataReq
         const responseFailure: DataResponseMap[K] =
         {
             error: `Unknown ${dataRequest.name} error.`,
-        }
+        } as DataResponseMap[K]
 
+		console.warn("⚠️:", error); 
         return responseFailure;
     }
 }
@@ -32,7 +32,7 @@ function handleServerDataResponse<K extends keyof DataResponseMap>(parsed: unkno
         const responseFailure: DataResponseMap[K] =
         {
             error: `Unknown ${actionName} error.`,
-        };
+        } as DataResponseMap[K];
 
         return responseFailure;
     }
@@ -43,7 +43,7 @@ function handleServerDataResponse<K extends keyof DataResponseMap>(parsed: unkno
         const responseFailure: DataResponseMap[K] =
         {
             error: serverResponseData.error,
-        };
+        } as DataResponseMap[K];
 
         return responseFailure;
     }
@@ -51,7 +51,7 @@ function handleServerDataResponse<K extends keyof DataResponseMap>(parsed: unkno
     return serverResponseData;
 }
 
-export async function requestServerAction<K extends keyof ActionResponseMap>(actionRequest: { name: K; endpoint: string }, clientRequest: RequestType.BaseClientRequest | null = null): Promise<ActionResponseMap[K]>
+export async function requestServerAction<K extends keyof ActionResponseMap>(actionRequest: { name: K; endpoint: string }, clientRequest: ActionRequestMap[K]): Promise<ActionResponseMap[K]>
 {
     try
     {
@@ -61,6 +61,17 @@ export async function requestServerAction<K extends keyof ActionResponseMap>(act
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(clientRequest),
         });
+
+        if (response.ok === false)
+        {
+            const errorText: string = await response.text();
+            const responseFailure: RequestType.BaseServerResponse =
+            {
+                error: `${actionRequest.name} failed: HTTP ${response.status}: ${errorText}`,
+            };
+
+            return responseFailure as ActionResponseMap[K];
+        }
 
         const parsed: unknown = await response.json();
 
@@ -73,6 +84,7 @@ export async function requestServerAction<K extends keyof ActionResponseMap>(act
             error: `Unknown ${actionRequest.name} error.`,
         }
 
+		console.warn("⚠️:", error); 
         return responseFailure as ActionResponseMap[K];
     }
 }

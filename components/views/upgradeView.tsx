@@ -9,6 +9,7 @@ import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 import * as BuildingData from "@/lib/playerData/buildingData";
+import * as HelperElements from "@/components/helperElements";
 
 type UpgradeViewProps =
 {
@@ -139,19 +140,27 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 
 export function UpgradeView(props: UpgradeViewProps): React.ReactElement
 {
-	const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-
-	const cardElements: React.ReactElement[] = AssociationMaps.getTypes(AssociationMaps.ThingType.Building).map((buildingType: number): React.ReactElement =>
+	try
 	{
-		return renderBuildingCard(props, selectedFullPlanetDataPredicted, buildingType);
-	});
+		const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 
-	const upgradeViewElement: React.ReactElement =
-	(
-		<div className="flex flex-row flex-wrap justify-center gap-4 p-4">
-			{cardElements}
-		</div>
-	);
+		const cardElements: React.ReactElement[] = AssociationMaps.getTypes(AssociationMaps.ThingType.Building).map((buildingType: number): React.ReactElement =>
+		{
+			return renderBuildingCard(props, selectedFullPlanetDataPredicted, buildingType);
+		});
 
-	return upgradeViewElement;
+		const upgradeViewElement: React.ReactElement =
+		(
+			<div className="flex flex-row flex-wrap justify-center gap-4 p-4">
+				{cardElements}
+			</div>
+		);
+
+		return upgradeViewElement;
+	}
+	catch (error: unknown)
+	{
+		console.warn("⚠️:", error); 
+		return <HelperElements.EmptyElement></HelperElements.EmptyElement>;
+	}
 }

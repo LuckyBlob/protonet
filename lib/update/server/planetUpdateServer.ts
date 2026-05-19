@@ -115,8 +115,8 @@ function updateShipConstructionBatches(planetId: number, dynamicPlanetData: Play
 		);
 		deleteShipConstructionStatement.run(planetId);
 		const insertShipConstructionStatement: Database.Statement = DB.databaseConnection.prepare(
-			`INSERT INTO ship_construction (planet_id, batch_id, ship_type, ship_quantity, queue_order)
-				VALUES (?, ?, ?, ?, ?)`
+			`INSERT INTO ship_construction (planet_id, batch_id, ship_type, ship_quantity)
+				VALUES (?, ?, ?, ?)`
 		);
 		for (const shipConstructionBatch of dynamicPlanetData.queuedShipConstructionBatchs)
 		{
@@ -127,7 +127,6 @@ function updateShipConstructionBatches(planetId: number, dynamicPlanetData: Play
 					shipConstructionRow.batch_id,
 					shipConstructionRow.ship_type,
 					shipConstructionRow.ship_quantity,
-					shipConstructionRow.queue_order
 				);
 			}
 		}
@@ -207,7 +206,7 @@ function getDynamicPlanetShipData(planetId: number): Map<number, number>
 function getDynamicPlanetShipConstructionBatchData(planetId: number): PlayerDataType.ShipConstructionBatch[]
 {
     const shipConstructionStatement: Database.Statement = DB.databaseConnection.prepare(
-        "SELECT id, planet_id, batch_id, ship_type, ship_quantity, queue_order FROM ship_construction WHERE planet_id = ? ORDER BY queue_order"
+        "SELECT id, planet_id, batch_id, ship_type, ship_quantity FROM ship_construction WHERE planet_id = ? ORDER BY batch_id"
     );
     const shipConstructionRows = shipConstructionStatement.all(planetId) as DBType.ShipConstructionRow[];
 

@@ -5,20 +5,6 @@ import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 const SELECTED_PLANET_STORAGE_KEY: string = "protonet.selectedPlanetId";
 
-export function updateStoredSelectedPlanetId(playerData: PlayerDataType.PlayerData, oldId: number): number
-{
-    const storedId: number | null = readStoredSelectedPlanetId();
-    const validateddId: number = validateSelectedPlanetId(playerData.fullPlanetDatas, storedId);
-
-    if (validateddId === oldId)
-    {
-        return validateddId;
-    }
-
-    writeStoredSelectedPlanetId(validateddId);
-    return validateddId;
-}
-
 export function readStoredSelectedPlanetId(): number | null
 {
     if (typeof window === "undefined")
@@ -79,7 +65,17 @@ function validateSelectedPlanetId(fullPlanetDatas: PlayerDataType.FullPlanetData
 
 export function getSelectedFullPlanetDataPredicted(playerState: PlayerDataType.PlayerState): PlayerDataType.FullPlanetData
 {
-    const fullPlanetDatas: PlayerDataType.FullPlanetData[] = playerState.predictedDBData.fullPlanetDatas;
+    if (playerState === undefined || playerState.predictedDBData === undefined)
+    {
+        throw Error(`Player state or player predicted state is invalid for selected planet data.`);
+    }
+
+    const fullPlanetDatas: PlayerDataType.FullPlanetData[] | undefined = playerState.predictedDBData.fullPlanetDatas;
+    if (fullPlanetDatas === undefined || fullPlanetDatas.length === 0)
+    {
+        throw Error(`Player state or player predicted state is invalid for selected planet data.`);
+    }
+
     const resolvedId: number = validateSelectedPlanetId(fullPlanetDatas, playerState.selectedPlanetId);
 
 	const matchingFullPlanetData: PlayerDataType.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData): boolean =>

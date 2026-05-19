@@ -34,31 +34,35 @@ function renderResourceCard(resourceDisplayValues: SelectedPlanetDisplay.Selecte
 export function TopBarElement(props: TopBarProps): React.ReactElement
 {
 	const resourceTypes: number[] = AssociationMaps.getTypes(AssociationMaps.ThingType.Resource);
-	const displayValues: SelectedPlanetDisplay.SelectedPlanetDisplayValues | null = SelectedPlanetDisplay.getSelectedPlanetDisplayValues(props.clientDataStateResult, resourceTypes);
 
-	if (displayValues === null)
+	try
 	{
+		const displayValues: SelectedPlanetDisplay.SelectedPlanetDisplayValues = SelectedPlanetDisplay.getSelectedPlanetDisplayValues(props.clientDataStateResult, resourceTypes);
+
+		const remainingMs: number = displayValues.buildCompletesAt - Date.now();
+
+		const cardElements: React.ReactElement[] = displayValues.resourceDisplayValues.map((resourceDisplayValues: SelectedPlanetDisplay.SelectedPlanetResourceDisplayValues): React.ReactElement =>
+		{
+			return renderResourceCard(resourceDisplayValues, remainingMs);
+		});
+
+		const topBarElement: React.ReactElement =
+		(
+			<div className="bg-black/50 text-white py-3 px-4 flex items-start">
+				<div className="flex items-center">
+					{props.planetSelector}
+				</div>
+				<div className="flex-1 flex justify-center gap-4">
+					{cardElements}
+				</div>
+			</div>
+		);
+
+		return topBarElement;
+	}
+	catch (error: unknown)
+	{
+		console.warn("⚠️:", error); 
 		return <HelperElements.EmptyElement></HelperElements.EmptyElement>;
 	}
-
-	const remainingMs: number = displayValues.buildCompletesAt - Date.now();
-
-	const cardElements: React.ReactElement[] = displayValues.resourceDisplayValues.map((resourceDisplayValues: SelectedPlanetDisplay.SelectedPlanetResourceDisplayValues): React.ReactElement =>
-	{
-		return renderResourceCard(resourceDisplayValues, remainingMs);
-	});
-
-	const topBarElement: React.ReactElement =
-	(
-		<div className="bg-black/50 text-white py-3 px-4 flex items-start">
-			<div className="flex items-center">
-				{props.planetSelector}
-			</div>
-			<div className="flex-1 flex justify-center gap-4">
-				{cardElements}
-			</div>
-		</div>
-	);
-
-	return topBarElement;
 }

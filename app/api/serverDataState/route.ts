@@ -2,15 +2,32 @@ import { NextResponse } from "next/server";
 
 import * as ServerData from "@/lib/serverData/serverData";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
-import * as RequestType from "@/lib/serverRequests/requestTypes";
+import * as APIEndPoint from "@/app/api/apiEndPoints"
 
 export async function GET(): Promise<NextResponse>
 {
-	const serverData: ServerDataType.ServerData = ServerData.getServerData();
-	const serverResponse: RequestType.ServerDataStateRequest =
+	const errorServerResponse: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.ServerConfig> =
 	{
-		serverData: serverData,
-		error: null,
+		error: "Unknown error.",
+		serverData: null,
 	}
-	return NextResponse.json(serverResponse);
+
+	let serverData: ServerDataType.ServerData;
+	try
+	{
+		serverData = ServerData.getServerData();
+	}
+	catch (error: unknown)
+	{
+		const errorMessage: string = error instanceof Error ? error.message : String(error);
+
+		errorServerResponse.error = errorMessage;
+		return NextResponse.json(errorServerResponse, { status: 500 });
+	}
+
+	return NextResponse.json<APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.ServerConfig>>(
+	{
+		error: null,
+		serverData: serverData,
+	}, { status: 200 });
 }

@@ -1,6 +1,7 @@
 import * as DBType from "@/lib/db/dbTypes";
 import * as PlayerDataSerialization from "@/lib/helper/serialization";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 
 export type BaseServerResponse = 
 {
@@ -12,18 +13,27 @@ export type BaseClientRequest = {}
 //#region Data requests
 export type UserRowRequest = BaseServerResponse &
 {
-	userRow?: DBType.UserRow | null;
+	userRow: DBType.UserRow | null;
 };
 
 export type PlayerDataRequest = BaseServerResponse &
 {
-	serializedPlayerData?: PlayerDataSerialization.SerializedPlayerData | null;
+	serializedPlayerData: PlayerDataSerialization.SerializedPlayerData | null;
 };
 
 export type ServerDataStateRequest = BaseServerResponse &
 {
-	serverData?: ServerDataType.ServerData | null;
+	serverData: ServerDataType.ServerData | null;
 };
+
+export type AllPlanetDataRequest = BaseServerResponse &
+{
+	publicPlanetRows: DBType.PublicPlanetRow[];
+}
+export type OwnedPlanetDataRequest = BaseServerResponse &
+{
+	fullPlanetDatas: PlayerDataType.FullPlanetData[];
+}
 //#endregion
 
 //#region Action requests
@@ -41,8 +51,8 @@ export type BaseAuthenticationServerResponse = BaseServerResponse &
 
 export type RefreshServer_ServerResponse = BaseServerResponse &
 {
-	serializedPlayerData?: PlayerDataSerialization.SerializedPlayerData | null;
-	serverData?: ServerDataType.ServerData | null;
+	serializedPlayerData: PlayerDataSerialization.SerializedPlayerData | null;
+	serverData: ServerDataType.ServerData | null;
 }
 
 export type BuildingUpgrade_ClientRequest = BaseClientRequest &
@@ -52,6 +62,21 @@ export type BuildingUpgrade_ClientRequest = BaseClientRequest &
 };
 export type BuildingUpgrade_ServerResponse = BaseServerResponse &
 {
-	serializedPlayerData?: PlayerDataSerialization.SerializedPlayerData | null;
+	serializedPlayerData: PlayerDataSerialization.SerializedPlayerData | null;
+};
+
+export type ShipQuantityRequest =
+{
+	shipType: number;
+	shipQuantity: number;
+};
+export type BuildShips_ClientRequest = BaseClientRequest &
+{
+	planetId: number;
+	shipQuantities: ShipQuantityRequest[];
+};
+export type BuildShips_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: PlayerDataSerialization.SerializedPlayerData | null;
 };
 //#endregion

@@ -35,4 +35,16 @@ export function getResourceQuantity(fullPlanetData: PlayerDataType.FullPlanetDat
 
     return getter();
 }
+
+export function getResourceQuantities(fullPlanetData: PlayerDataType.FullPlanetData): Map<number, number>
+{
+    const resourceQuantities: Map<number, number> = new Map<number, number>();
+    const resourceTypes: number[] = AssociationMaps.getTypes(AssociationMaps.ThingType.Resource);
+    for (const resourceType of resourceTypes)
+    {
+        resourceQuantities.set(resourceType, getResourceQuantity(fullPlanetData, resourceType));
+    }
+
+    return resourceQuantities;
+}
 //#endregion

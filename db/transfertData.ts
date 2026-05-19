@@ -21,9 +21,8 @@ for (const player of allPlayers)
 	}
 	catch (error: unknown)
 	{
-		const errorMessage: string = error instanceof Error ? error.message : String(error);
-		console.log(`  FAILED: ${errorMessage}`);
+		console.warn("⚠️ Failed:", error); 
 	}
 }
 
-console.log("Done.");
+console.log("Done.")

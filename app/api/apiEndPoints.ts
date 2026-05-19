@@ -9,6 +9,7 @@ export const ActionRequest =
     Logout:   { endpoint: "authentication/logout",   name: "Logout" },
     RefreshServer:   { endpoint: "refreshServerData",   name: "RefreshServer" },
     UpgradeBuilding:   { endpoint: "buy/buildingLevel",   name: "UpgradeBuilding" },
+    BuildShips:   { endpoint: "buy/ships",   name: "BuildShips" },
 } as const satisfies Record<string, validEndpoint>;
 
 export interface ActionResponseMap
@@ -18,6 +19,7 @@ export interface ActionResponseMap
     Logout: RequestType.BaseAuthenticationServerResponse;
     RefreshServer: RequestType.RefreshServer_ServerResponse;
     UpgradeBuilding: RequestType.BuildingUpgrade_ServerResponse;
+    BuildShips: RequestType.BuildShips_ServerResponse;
 }
 export interface ActionRequestMap
 {
@@ -26,6 +28,7 @@ export interface ActionRequestMap
     Logout: RequestType.BaseAuthenticationClientRequest;
     RefreshServer: null;
     UpgradeBuilding: RequestType.BuildingUpgrade_ClientRequest;
+    BuildShips: RequestType.BuildShips_ClientRequest;
 }
 
 export const DataRequest =
@@ -33,12 +36,16 @@ export const DataRequest =
     UserInfo: { endpoint: "authentication/me",       name: "UserInfo" },
     PlayerData: { endpoint: "playerData",            name: "PlayerData" },
     ServerConfig: { endpoint: "serverDataState",       name: "ServerConfig" },
+    AllPlanets: { endpoint: "planets/all",       name: "AllPlanets" },
+    OwnedPlanets: { endpoint: "planets/owned",       name: "OwnedPlanets" },
 } as const satisfies Record<string, validEndpoint>;
 export interface DataResponseMap
 {
     UserInfo: RequestType.UserRowRequest;
     PlayerData: RequestType.PlayerDataRequest;
     ServerConfig: RequestType.ServerDataStateRequest;
+    AllPlanets: RequestType.ServerDataStateRequest;
+    OwnedPlanets: RequestType.ServerDataStateRequest;
 }
 
 export type DataRequest = (typeof DataRequest)[keyof typeof DataRequest];

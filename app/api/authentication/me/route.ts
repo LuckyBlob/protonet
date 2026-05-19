@@ -2,33 +2,41 @@ import { NextResponse } from "next/server";
 
 import * as Auth from "@/lib/authentication/auth";
 import * as DBType from "@/lib/db/dbTypes";
-import * as RequestType from "@/lib/serverRequests/requestTypes";
+import * as APIEndPoint from "@/app/api/apiEndPoints"
 
 export async function GET(): Promise<NextResponse>
 {
-	const failureRowRequest: RequestType.UserRowRequest =
+	const errorServerResponse: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.UserInfo> =
 	{
+		error: "Unknown error.",
 		userRow: null,
-		error: "Unknown error."
-	};
-
-	const currentUserRow: DBType.UserRow | null = await Auth.getCurrentUser();
-
-	if (currentUserRow === null)
-	{
-		failureRowRequest.error = "Didn't find user.";
-		return NextResponse.json(failureRowRequest, { status: 401 });
 	}
 
-	const userRowRequest: RequestType.UserRowRequest =
+	let currentUserRow: DBType.UserRow | null = null;
+	try
 	{
+		currentUserRow = await Auth.getCurrentUser();
+		if (currentUserRow === null)
+		{
+			errorServerResponse.error = "Didn't find user.";
+			return NextResponse.json(errorServerResponse, { status: 401 });
+		}
+	}
+	catch (error: unknown)
+	{
+		const errorMessage: string = error instanceof Error ? error.message : String(error);
+
+		errorServerResponse.error = errorMessage;
+		return NextResponse.json(errorServerResponse, { status: 500 });
+	}
+
+	return NextResponse.json<APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.UserInfo>>(
+	{
+		error: null,
 		userRow:
 		{
 			...currentUserRow,
 			password_hash: "" // Don't send password hash to client
 		},
-		error: null,
-	};
-
-	return NextResponse.json(userRowRequest, { status: 200 });
+	}, { status: 200 });
 }

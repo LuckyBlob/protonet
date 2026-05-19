@@ -13,7 +13,7 @@ export async function fetchPlayerData(): Promise<PlayerDataType.PlayerData>
 	const playerDataRequest: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.PlayerData> | null = await ServerRequest.requestServerData(APIEndPoint.DataRequest.PlayerData);
 	if (playerDataRequest === null || playerDataRequest.serializedPlayerData == null)
 	{
-		throw Error(`Failed to fetch player data.`)
+		throw Error(`Failed to fetch player data.`);
 	}
 
 	const playerData: PlayerDataType.PlayerData = PlayerDataSerialization.deserializePlayerData(playerDataRequest.serializedPlayerData);
@@ -31,9 +31,9 @@ export function setSelectedPlanetID(psController: PlayerDataType.PSController, s
 	psController[1](newPlayerState);
 }
 
-function updateSelectedPlanetIdInStorage(psController: PlayerDataType.PSController): number
+function updateSelectedPlanetIdInStorage(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): number
 {
-	const currentlySelectedPlanetId: number = SelectedPlanet.readStoredSelectedPlanetId() ?? psController[0].predictedDBData.fullPlanetDatas[0].planetRow.id;
+	const currentlySelectedPlanetId: number = SelectedPlanet.readStoredSelectedPlanetId() ?? newPlayerData.fullPlanetDatas[0].planetRow.id;
 	if (currentlySelectedPlanetId === psController[0].selectedPlanetId)
 	{
 		return currentlySelectedPlanetId;
@@ -45,7 +45,7 @@ function updateSelectedPlanetIdInStorage(psController: PlayerDataType.PSControll
 
 export async function setPlayerState(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): Promise<PlayerDataType.PlayerData>
 {
-	const currentlySelectedPlanetId: number = updateSelectedPlanetIdInStorage(psController);
+	const currentlySelectedPlanetId: number = updateSelectedPlanetIdInStorage(psController, newPlayerData);
 	const loadedPlayerState: PlayerDataType.PlayerState =
 	{
 		dbData: newPlayerData,
@@ -53,14 +53,14 @@ export async function setPlayerState(psController: PlayerDataType.PSController, 
 		selectedPlanetId: currentlySelectedPlanetId,
 		lastFetchTimestamp: Date.now(),
 	};
-
+	
 	psController[1](loadedPlayerState);
 	return newPlayerData;
 }
 
 export async function setPredictedPlayerState(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): Promise<PlayerDataType.PlayerData>
 {
-	const currentlySelectedPlanetId: number = updateSelectedPlanetIdInStorage(psController);
+	const currentlySelectedPlanetId: number = updateSelectedPlanetIdInStorage(psController, newPlayerData);
 	const loadedPlayerState: PlayerDataType.PlayerState =
 	{
 		dbData: psController[0].dbData,
@@ -78,7 +78,7 @@ export async function fetchAndSetPlayerData(psController: PlayerDataType.PSContr
 	const playerData: PlayerDataType.PlayerData | null = await fetchPlayerData();
 	if (playerData === null)
 	{
-		throw Error(`Failed to fetch player data.`)
+		throw Error(`Failed to fetch player data.`);
 	}
 	setPlayerState(psController, playerData);
 }
@@ -131,23 +131,62 @@ export async function tryBuyBuildingUpgradeClient(psController: PlayerDataType.P
 	setPlayerState(psController, updatedPlayerData);
 }
 
-export async function tryRefreshServerData(clientDataStateResult: UseClientDataState.ClientDataStateResult): Promise<void>
+export async function tryBuildShipsClient(psController: PlayerDataType.PSController, planetId: number, shipQuantities: RequestType.ShipQuantityRequest[]): Promise<void>
 {
-	const serverResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RefreshServer> | null = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.RefreshServer);
+	const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips> =
+	{
+		planetId: planetId,
+		shipQuantities: shipQuantities,
+	};
+	const serverResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.BuildShips> | null = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.BuildShips, clientRequest);
 	if (serverResponse === null)
 	{
-        throw new Error(`Refresh server failed: No response from server.`);
+		throw new Error(`Build ships failed for planetId ${planetId}: No response from server.`);
 	}
 
-	if (!serverResponse.serializedPlayerData || !serverResponse.serverData)
+	if (serverResponse.serializedPlayerData == null)
 	{
-        throw new Error(`Refresh server failed: Invalid response from server.`);
+		throw new Error(`Build ships failed for planetId ${planetId}: Invalid response from server.`);
 	}
 
-	if (!setPlayerState(clientDataStateResult.psController, PlayerDataSerialization.deserializePlayerData(serverResponse.serializedPlayerData)))
+	const updatedPlayerData: PlayerDataType.PlayerData = PlayerDataSerialization.deserializePlayerData(serverResponse.serializedPlayerData);
+	setPlayerState(psController, updatedPlayerData);
+}
+
+export async function tryRefreshServerData(clientDataStateResult: UseClientDataState.ClientDataStateResult): Promise<void>
+{
+	try
 	{
-		throw new Error(`Failed to set player data.`);
-	}
+		const serverResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RefreshServer> | null = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.RefreshServer, null);
+		if (!serverResponse)
+		{
+			throw new Error(`Refresh server failed: No response from server.`);
+		}
 
-	setServerData(clientDataStateResult.sdsController, serverResponse.serverData);
+		if (serverResponse.error !== null)
+		{
+			throw new Error(`${serverResponse.error}`);
+		}
+
+		if (!serverResponse.serializedPlayerData)
+		{
+			throw new Error(`Refresh server failed: Invalid player data serialization.`);
+		}
+		
+		if (!serverResponse.serverData)
+		{
+			throw new Error(`Refresh server failed: Invalid server data serialization.`);
+		}
+
+		if (!setPlayerState(clientDataStateResult.psController, PlayerDataSerialization.deserializePlayerData(serverResponse.serializedPlayerData)))
+		{
+			throw new Error(`Failed to set player data.`);
+		}
+
+		setServerData(clientDataStateResult.sdsController, serverResponse.serverData);
+	}
+	catch (error: unknown)
+	{
+		console.warn("⚠️:", error); 
+	}
 }

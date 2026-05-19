@@ -59,6 +59,7 @@ export function getBuildingUpgradeDurationSeconds(fullPlanetData: PlayerDataType
     }
     catch (error: unknown)
     {
+		console.warn("⚠️:", error); 
         return null;
     }
 }

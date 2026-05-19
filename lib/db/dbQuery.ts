@@ -6,10 +6,10 @@ import * as DBType from "@/lib/db/dbTypes";
 export function findShipConstructionRowsByPlanet(planetId: number): DBType.ShipConstructionRow[]
 {
 	const selectStatement: Database.Statement = DB.databaseConnection.prepare(
-		`SELECT id, planet_id, batch_id, ship_type, ship_quantity, queue_order
+		`SELECT id, planet_id, batch_id, ship_type, ship_quantity
 		 FROM ship_construction
 		 WHERE planet_id = ?
-		 ORDER BY queue_order ASC, batch_id ASC, ship_type ASC`
+		 ORDER BY batch_id ASC`
 	);
 
 	const queueRows: DBType.ShipConstructionRow[] = selectStatement.all(planetId) as DBType.ShipConstructionRow[];

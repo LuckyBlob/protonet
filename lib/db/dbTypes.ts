@@ -82,5 +82,4 @@ export type ShipConstructionRow   =
     batch_id : number;
     ship_type: number;
     ship_quantity: number;
-    queue_order: number;
 };

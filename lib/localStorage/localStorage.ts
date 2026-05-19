@@ -46,7 +46,7 @@ function readPlayerStateFromLocalStorage(): PlayerDataType.PlayerState | null
     }
     catch (error: unknown)
     {
-        console.error("Failed to parse local storage data:", error);
+		console.warn("⚠️:", error); 
         return null;
     }
 }

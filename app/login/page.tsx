@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import * as ServerRequest from "@/lib/serverRequests/serverRequests"
-import * as RequestType from "@/lib/serverRequests/requestTypes";
 import * as APIEndPoint from "@/app/api/apiEndPoints"
 
 export default function LoginPage()
