@@ -9,7 +9,7 @@ import * as APIEndPoint from "@/app/api/apiEndPoints"
 
 export async function handleLogout(router: ReturnType<typeof useRouter>): Promise<void>
 {
-    const serverResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Logout);
+    const serverResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Logout, null);
     if (serverResponse.error !== null)
     {
         return;
