@@ -16,7 +16,7 @@ export interface ActionRequestMap
 {
     Login: RequestType.BaseAuthenticationClientRequest;
     Register: RequestType.BaseAuthenticationClientRequest;
-    Logout: RequestType.BaseAuthenticationClientRequest;
+    Logout: null;
     RefreshServer: null;
     UpgradeBuilding: RequestType.BuildingUpgrade_ClientRequest;
     BuildShips: RequestType.BuildShips_ClientRequest;
