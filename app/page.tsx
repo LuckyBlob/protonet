@@ -7,7 +7,6 @@ import * as UseAnimationTimer from "@/lib/use/useAnimationTimer";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser";
-import * as UseSelectedPlanet from "@/lib/use/useSelectedPlanet";
 
 import * as Actions from "@/lib/mainPageHelpers/actions"
 
@@ -17,8 +16,8 @@ export default function Home()
 	const clientDataStateResult: UseClientDataState.ClientDataStateResult = UseClientDataState.useClientDataState(cuController[0].user !== null);
 	const cvController: UseCurrentView.CVController = UseCurrentView.useCurrentView();
 
+
 	UseAnimationTimer.useAnimationTimer(clientDataStateResult);
-	UseSelectedPlanet.useSelectedPlanet(clientDataStateResult);
 
 	if (Actions.shouldShowLoading(cuController, clientDataStateResult))
 	{

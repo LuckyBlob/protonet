@@ -2,40 +2,61 @@ import { NextResponse } from "next/server";
 
 import * as Auth from "@/lib/authentication/auth";
 import * as DBType from "@/lib/db/dbTypes";
-import * as BuyTypes from "@/lib/requestTypes/buyRequests";
+import * as RequestType from "@/lib/serverRequests/requestTypes";
 import * as ServerData from "@/lib/serverData/serverData";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as PlayerUpdateServer from "@/lib/update/server/playerUpdateServer";
-import * as PlayerDataSerialization from "@/lib/playerData/playerDataSerialization";
+import * as PlayerDataSerialization from "@/lib/helper/serialization";
+import * as APIEndPoint from "@/app/api/apiEndPoints"
 
 export async function POST(request: Request): Promise<NextResponse>
 {
+	const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding> = await request.json();
+	const errorServerResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding> =
+	{
+		error: "Unknown error.",
+		serializedPlayerData: null,
+	}
+
 	const user: DBType.UserRow | null = await Auth.getCurrentUser();
 	if (user === null)
 	{
-		return NextResponse.json({ error: "Not logged in." }, { status: 401 });
+		errorServerResponse.error = "Not logged in.";
+		return NextResponse.json(errorServerResponse, { status: 401 });
 	}
 
-	const player: DBType.PlayerRow | null = PlayerUpdateServer.findPlayerByUserId(user.id);
-	if (player === null)
+	let serializedPlayerData: PlayerDataSerialization.SerializedPlayerData;
+	try
 	{
-		return NextResponse.json({ error: "Player not found." }, { status: 404 });
+		const player: DBType.PlayerRow | null = PlayerUpdateServer.findPlayerByUserId(user.id);
+		if (player === null)
+		{
+			errorServerResponse.error = "Player not found.";
+			return NextResponse.json(errorServerResponse, { status: 404 });
+		}
+
+		const serverData: ServerDataType.ServerData = ServerData.getServerData();
+
+		const buyUpgradeResult: PlayerUpdateServer.BuyUpgradeResult = PlayerUpdateServer.tryBuyBuildingUpgradeServer(player.id, serverData, clientRequest);
+		if (buyUpgradeResult.success === false)
+		{
+			errorServerResponse.error = buyUpgradeResult.failureReason;
+			return NextResponse.json(errorServerResponse, { status: 400 });
+		}
+
+		serializedPlayerData = PlayerDataSerialization.serializePlayerData(buyUpgradeResult.playerStateResult);
 	}
-
-	const serverData: ServerDataType.ServerData = ServerData.getServerData();
-
-	const requestData: BuyTypes.BuildingUpgradeRequest = await request.json();
-
-	const result: PlayerUpdateServer.BuyUpgradeResult = PlayerUpdateServer.tryBuyBuildingUpgradeServer(player.id, serverData, requestData);
-
-	if (result.success === false)
+	catch (error: unknown)
 	{
-		const errorResponse: NextResponse = NextResponse.json(
-			{ error: { message: result.failureReason } },
-			{ status: 400 }
-		);
-		return errorResponse;
+		const errorMessage: string = error instanceof Error ? error.message : String(error);
+
+		errorServerResponse.error = errorMessage;
+		return NextResponse.json(errorServerResponse, { status: 500 });
 	}
 
-	return NextResponse.json(PlayerDataSerialization.serializePlayerData(result.playerStateResult));
+	return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding>>(
+	{
+		error: null,
+		serializedPlayerData: serializedPlayerData,
+	}, { status: 200 });
 }

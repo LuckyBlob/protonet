@@ -41,6 +41,8 @@ export function deleteUser(userId: number): void
 		"DELETE FROM users WHERE id = ?"
 	);
 	deleteStatement.run(userId);
+
+	// MUST RESET PLANETS HERE
 }
 
 export function findUserByUsername(username: string): DBType.UserRow | null

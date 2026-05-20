@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "configurations": [
     {
       "name": "Next.js Dev",
@@ -10,6 +10,39 @@
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      "name": "Launch Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3001",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "name": "Attach to Chrome",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}",
+      "sourceMapPathOverrides":
+      {
+        "turbo://preview/*": "${workspaceFolder}/*"
+      }
+    },
+    {
+      "name": "Launch in Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3001",
+      "webRoot": "${workspaceFolder}",
+      "runtimeArgs": [
+        "--disable-web-security",
+        "--allow-running-insecure-content"
+      ],
+      "sourceMapPathOverrides":
+      {
+        "turbo://preview/*": "${workspaceFolder}/*"
+      }
     }
   ]
 }

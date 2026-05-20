@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as PlanetData from "@/lib/playerData/planetData";
+import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
+import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 
 type PlanetSelectorProps =
 {
@@ -17,7 +17,7 @@ export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
 
 	const dropdownClass: string = isOpen === true ? "block" : "hidden";
 
-	const planetsWithDisplayName: { fullPlanetData: PlanetData.FullPlanetData; displayName: string }[] = props.clientDataStateResult.psController[0].dbData.fullPlanetDatas.map((fullPlanetData: PlanetData.FullPlanetData) =>
+	const planetsWithDisplayName: { fullPlanetData: PlayerDataType.FullPlanetData; displayName: string }[] = props.clientDataStateResult.psController[0].dbData.fullPlanetDatas.map((fullPlanetData: PlayerDataType.FullPlanetData) =>
 	{
 		const displayName: string = `${fullPlanetData.planetRow.slot}:${fullPlanetData.planetRow.system}:${fullPlanetData.planetRow.galaxy}`;
 
@@ -30,7 +30,7 @@ export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
 	};
 
 
-	const selectedFullPlanetData: PlanetData.FullPlanetData | undefined = props.clientDataStateResult.psController[0].dbData.fullPlanetDatas.find((fullPlanetData: PlanetData.FullPlanetData) =>
+	const selectedFullPlanetData: PlayerDataType.FullPlanetData | undefined = props.clientDataStateResult.psController[0].dbData.fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData) =>
 	{
 		return fullPlanetData.planetRow.id === props.clientDataStateResult.psController[0].selectedPlanetId;
 	});
@@ -51,7 +51,7 @@ export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
 				className={`absolute top-full left-0 mt-1 w-max bg-black/90 border border-white/20 rounded shadow-lg z-50 ${dropdownClass}`}
 			>
 			{
-				planetsWithDisplayName.map(({ fullPlanetData, displayName }: { fullPlanetData: PlanetData.FullPlanetData; displayName: string }) =>
+				planetsWithDisplayName.map(({ fullPlanetData, displayName }: { fullPlanetData: PlayerDataType.FullPlanetData; displayName: string }) =>
 				{
 					const isSelected: boolean = props.clientDataStateResult.psController[0].selectedPlanetId === fullPlanetData.planetRow.id;
 					const itemClass: string = isSelected === true
@@ -79,6 +79,6 @@ export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
 
 async function handleSelectPlanet(clientDataStateResult: UseClientDataState.ClientDataStateResult, newPlanetID: number, setIsOpen: (value: boolean) => void): Promise<void>
 {
-	SelectedPlanet.setSelectedPlanetInPredictedPlayerState(clientDataStateResult, newPlanetID);
+	PlayerUpdateClient.setSelectedPlanetID(clientDataStateResult.psController, newPlanetID);
 	setIsOpen(false);
 };

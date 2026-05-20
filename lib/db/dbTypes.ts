@@ -30,11 +30,11 @@ export type ServerConfigRow =
 	time_multiplier: number;
 };
 
-export type PlanetRessourceRow =
+export type PlanetResourceRow =
 {
 	planet_id: number;
-	ressource_type: number;
-	ressource_quantity: number;
+	resource_type: number;
+	resource_quantity: number;
 };
 export type PlanetBuildingRow =
 {
@@ -55,6 +55,8 @@ export type PlanetRow =
 	last_updated: number;
 	building_upgrade_completes_at: number;
 	building_being_upgraded: number;
+	ship_construction_batch_completes_at: number;
+	current_ship_construction_batch_id: number;
 };
 
 export type PublicPlanetRow =
@@ -64,4 +66,20 @@ export type PublicPlanetRow =
 	system: number;
 	galaxy: number;
 	owner_player_id: number | null;
+};
+
+export type PlanetShipRow  =
+{
+    planet_id: number;
+    ship_type: number;
+    ship_quantity: number;
+};
+
+export type ShipConstructionRow   =
+{
+    id: number;
+    planet_id: number;
+    batch_id : number;
+    ship_type: number;
+    ship_quantity: number;
 };

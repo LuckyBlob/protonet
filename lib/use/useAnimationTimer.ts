@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-
-import * as ClientUpdate from "@/lib/update/client/clientUpdate";
+import * as ClientProgress from "@/lib/gameplay/progressUpdate/client/clientProgress";
 
 const tickIntervalMilliseconds: number = 1000;
 
@@ -29,7 +28,7 @@ export function useAnimationTimer(clientDataStateResult: UseClientDataState.Clie
 			{
 				return prev + 1;
 			});
-			ClientUpdate.runClientTick(stateRef.current);
+			ClientProgress.runClientTick(stateRef.current);
 		}, tickIntervalMilliseconds);
 
 		const cleanup: () => void = (): void =>

@@ -2,18 +2,19 @@ import Database from "better-sqlite3";
 
 import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
-
 import * as Cost from "@/lib/gameplay/cost";
-
-import * as BuyTypes from "@/lib/requestTypes/buyRequests";
-
+import * as RequestType from "@/lib/serverRequests/requestTypes";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-
 import * as ServerData from "@/lib/serverData/serverData";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
-
 import * as PlanetServer from "@/lib/update/server/planetUpdateServer";
-import * as PlanetData from "@/lib/playerData/planetData";
+import * as PlanetData from "@/lib/playerData/thingData/buildingData";
+import * as ResourceData from "@/lib/playerData/thingData/resourceData";
+import * as ShipData from "@/lib/playerData/thingData/shipData";
+import * as ServerProgress from "@/lib/gameplay/progressUpdate/server/serverProgress";
+import * as APIEndPoint from "@/app/api/apiEndPoints"
+import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
+import * as PlayerData from "@/lib/playerData/thingData/playerData";
 
 export type BuyUpgradeResult =
 {
@@ -22,71 +23,12 @@ export type BuyUpgradeResult =
 	playerStateResult: PlayerDataType.PlayerData;
 };
 
-function readPlayerRow(playerId: number): DBType.PlayerRow
+export function tryBuyBuildingUpgradeServer(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding>): BuyUpgradeResult
 {
-	const selectStatement: Database.Statement = DB.databaseConnection.prepare("SELECT * FROM player WHERE id = ?");
-	const playerRow: DBType.PlayerRow = selectStatement.get(playerId) as DBType.PlayerRow;
-	return playerRow;
-}
+	const now: number = Date.now();
+	const updatedPlayer: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
 
-export function updatePlayerColumns(playerId: number, columnUpdates: Partial<DBType.PlayerRow>): DBType.PlayerRow
-{
-	const columnNames: string[] = Object.keys(columnUpdates);
-	const columnValues: unknown[] = Object.values(columnUpdates);
-	const setClause: string = columnNames.map((columnName) => `${columnName} = ?`).join(", ");
-
-	const updateStatement: Database.Statement = DB.databaseConnection.prepare(`UPDATE player SET ${setClause} WHERE id = ?`);
-	updateStatement.run(...columnValues, playerId);
-
-	return readPlayerRow(playerId);
-}
-
-function applyPlayerUpdateInner(playerId: number, preFetchedServerData?: ServerDataType.ServerData): PlayerDataType.PlayerData
-{
-	const playerRow: DBType.PlayerRow = readPlayerRow(playerId);
-	const serverData: ServerDataType.ServerData = preFetchedServerData ?? ServerData.getServerData();
-	const currentTimestamp: number = Date.now();
-
-	const updatedPlayer: PlayerDataType.PlayerData =
-	{
-		playerRow: updatePlayerColumns(playerId, { last_updated: currentTimestamp }),
-		fullPlanetDatas: applyPlayerPlanetsUpdateInner(playerId, serverData),
-	};
-
-	return updatedPlayer;
-}
-
-function applyPlayerPlanetsUpdateInner(playerId: number, preFetchedServerData?: ServerDataType.ServerData): PlanetData.FullPlanetData[]
-{
-	const fullPlanetDatas: PlanetData.FullPlanetData[] = PlanetServer.findFullPlanetDatasByOwner(playerId);
-	const serverData: ServerDataType.ServerData = preFetchedServerData ?? ServerData.getServerData();
-	const currentTimestamp: number = Date.now();
-
-	for (let i: number = 0; i < fullPlanetDatas.length; i++)
-	{
-		fullPlanetDatas[i] = PlanetServer.applyPlanetUpdate(fullPlanetDatas[i], serverData);
-	}
-
-	return fullPlanetDatas;
-}
-
-export function applyPlayerUpdate(playerId: number, preFetchedServerData?: ServerDataType.ServerData): PlayerDataType.PlayerData
-{
-	// inTransaction means "Already in one" which could come from refreshServerDataAndBankAllPlayers. We dont need to gate if so.
-	if (DB.databaseConnection.inTransaction)
-	{
-		return applyPlayerUpdateInner(playerId, preFetchedServerData);
-	}
-
-	// If not in a transaction, we start one to ensure the player update is atomic 2 different calls to applyPlayerUpdate don't interleave and cause incorrect player state.
-	return DB.databaseConnection.transaction(() => applyPlayerUpdateInner(playerId, preFetchedServerData))();
-}
-
-export function tryBuyBuildingUpgradeServer(playerId: number, serverData: ServerDataType.ServerData, requestData: BuyTypes.BuildingUpgradeRequest): BuyUpgradeResult
-{
-	const updatedPlayer: PlayerDataType.PlayerData = applyPlayerUpdate(playerId, serverData);
-
-	const relevantPlanetDataIndex: number = updatedPlayer.fullPlanetDatas.findIndex((fullPlanetData: PlanetData.FullPlanetData) =>
+	const relevantPlanetDataIndex: number = updatedPlayer.fullPlanetDatas.findIndex((fullPlanetData: PlayerDataType.FullPlanetData) =>
 	{
 		return fullPlanetData.planetRow.id === requestData.planetId;
 	});
@@ -102,7 +44,18 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 		return failureResult;
 	}
 
-	const relevantFullPlanetData: PlanetData.FullPlanetData = updatedPlayer.fullPlanetDatas[relevantPlanetDataIndex];
+	const relevantFullPlanetData: PlayerDataType.FullPlanetData = updatedPlayer.fullPlanetDatas[relevantPlanetDataIndex];
+	if (!PlayerData.meetsBuildingUpgradeRequirements(updatedPlayer, requestData.buildingType, relevantFullPlanetData.planetRow.id))
+	{
+		const failureResult: BuyUpgradeResult =
+		{
+			success: false,
+			failureReason: "Building doesnt meet requirements.",
+			playerStateResult: updatedPlayer,
+		};
+		return failureResult;
+	}
+
 	if (relevantFullPlanetData.planetRow.building_upgrade_completes_at !== 0)
 	{
 		const failureResult: BuyUpgradeResult =
@@ -119,25 +72,14 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 		const failureResult: BuyUpgradeResult =
 		{
 			success: false,
-			failureReason: "Not enough ressources.",
+			failureReason: "Not enough resources.",
 			playerStateResult: updatedPlayer,
 		};
 		return failureResult;
 	}
 
-	const currentBuildingUpgradeLevel: number | null = PlanetData.getBuildingLevel(relevantFullPlanetData, requestData.buildingType);
-	if (currentBuildingUpgradeLevel === null)
-	{
-		const failureResult: BuyUpgradeResult =
-		{
-			success: false,
-			failureReason: "Wrong building type to upgrade.",
-			playerStateResult: updatedPlayer,
-		};
-		return failureResult;
-	}
-
-	const buildDurationSeconds: number | null = PlanetData.getBuildingUpgradeDurationSeconds(relevantFullPlanetData, serverData, requestData.buildingType);
+	const currentBuildingUpgradeLevel: number = PlanetData.getBuildingLevel(relevantFullPlanetData, requestData.buildingType);
+	const buildDurationSeconds: number | null = PlanetData.getBuildingUpgradeDurationSeconds(updatedPlayer, relevantFullPlanetData, serverData, requestData.buildingType);
 	if (buildDurationSeconds === null)
 	{
 		const failureResult: BuyUpgradeResult =
@@ -149,7 +91,7 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 		return failureResult;
 	}
 
-	const upgradeCost: Map<number, number> | null = Cost.computeUpgradeCost(currentBuildingUpgradeLevel, requestData.buildingType);
+	const upgradeCost: Map<number, number> | null = Cost.computeBuildingUpgradeCost(currentBuildingUpgradeLevel, requestData.buildingType);
 	if (upgradeCost === null)
 	{
 		const failureResult: BuyUpgradeResult =
@@ -161,25 +103,32 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 		return failureResult;
 	}
 
-	for (const [ressourceType, ressourceCost] of upgradeCost)
+	for (const [resourceType, resourceCost] of upgradeCost)
 	{
-		substractPlanetRessource(relevantFullPlanetData, ressourceType, ressourceCost);
+		substractPlanetResource(relevantFullPlanetData, resourceType, resourceCost);
 	}
 
-	const buildCompletesAtMiliseconds: number = Date.now() + buildDurationSeconds * 1000;
-	const updatedPlanetRow: DBType.PlanetRow = PlanetServer.updatePlanetRowColumns(relevantFullPlanetData.planetRow.id,
+	const changedPlayerStateResult: PlayerDataType.PlayerData = DB.databaseConnection.transaction((): PlayerDataType.PlayerData =>
 	{
-		building_upgrade_completes_at: buildCompletesAtMiliseconds,
-		building_being_upgraded: requestData.buildingType,
-	});
+		const buildCompletesAtMiliseconds: number = now + buildDurationSeconds * 1000;
+		const updatedPlanetRow: DBType.PlanetRow = PlanetServer.updatePlanetRowColumns(relevantFullPlanetData.planetRow.id,
+		{
+			building_upgrade_completes_at: buildCompletesAtMiliseconds,
+			building_being_upgraded: requestData.buildingType,
+		});
 
-	updatedPlayer.fullPlanetDatas[relevantPlanetDataIndex].planetRow = updatedPlanetRow;
-	const changedPlayerStateResult: PlayerDataType.PlayerData =
-	{
-		playerRow: updatedPlayer.playerRow,
-		fullPlanetDatas: updatedPlayer.fullPlanetDatas,
-	};
+		PlanetServer.updateDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, relevantFullPlanetData.dynamicPlanetData);
 
+		updatedPlayer.fullPlanetDatas[relevantPlanetDataIndex].planetRow = updatedPlanetRow;
+		const result: PlayerDataType.PlayerData =
+		{
+			playerRow: updatedPlayer.playerRow,
+			fullPlanetDatas: updatedPlayer.fullPlanetDatas,
+		};
+
+		return result;
+	})();
+	
 	const successResult: BuyUpgradeResult =
 	{
 		success: true,
@@ -189,16 +138,192 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 	return successResult;
 }
 
-function substractPlanetRessource(fullPlanetData: PlanetData.FullPlanetData, ressourceType: number, amountToSubstract: number)
+export type BuildShipsResult =
 {
-	const currentRessourceQuantity: number | null = PlanetData.getRessourceQuantity(fullPlanetData, ressourceType);
-	if (currentRessourceQuantity === null)
+	success: boolean;
+	failureReason: string | null;
+	playerStateResult: PlayerDataType.PlayerData;
+};
+
+export function tryBuildShipsServer(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips>): BuildShipsResult
+{
+	const now: number = Date.now();
+	const playerData: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+	const relevantPlanetDataIndex: number = playerData.fullPlanetDatas.findIndex((fullPlanetData: PlayerDataType.FullPlanetData) =>
+	{
+		return fullPlanetData.planetRow.id === requestData.planetId;
+	});
+
+	if (relevantPlanetDataIndex === -1)
+	{
+		const failureResult: BuildShipsResult =
+		{
+			success: false,
+			failureReason: "Wrong planet to build ships.",
+			playerStateResult: playerData,
+		};
+		return failureResult;
+	}
+
+	const relevantFullPlanetData: PlayerDataType.FullPlanetData = playerData.fullPlanetDatas[relevantPlanetDataIndex];
+	const requestedShipQuantities: Map<number, number> = new Map<number, number>();
+	for (const shipQuantityRequest of requestData.shipQuantities)
+	{
+		if (shipQuantityRequest.shipQuantity <= 0)
+		{
+			continue;
+		}
+
+		const existingQuantity: number = requestedShipQuantities.get(shipQuantityRequest.shipType) ?? 0;
+		requestedShipQuantities.set(shipQuantityRequest.shipType, existingQuantity + shipQuantityRequest.shipQuantity);
+	}
+
+	if (requestedShipQuantities.size === 0)
+	{
+		const failureResult: BuildShipsResult =
+		{
+			success: false,
+			failureReason: "No ships requested.",
+			playerStateResult: playerData,
+		};
+		return failureResult;
+	}
+
+	for (const shipQuantities of requestData.shipQuantities)
+	{
+		if (!PlayerData.meetsShipBuildRequirements(playerData, shipQuantities.shipType, relevantFullPlanetData.planetRow.id))
+		{
+			const failureResult: BuildShipsResult =
+			{
+				success: false,
+				failureReason: "A ship doesn't meet requirements.",
+				playerStateResult: playerData,
+			};
+			return failureResult;
+		}
+	}
+
+	const possibleRequestedShipQuantities: Map<number, number> = ShipData.computeMaxAffordableShipQuantities(relevantFullPlanetData, requestedShipQuantities);
+	if (possibleRequestedShipQuantities.size === 0)
+	{
+		const failureResult: BuildShipsResult =
+		{
+			success: false,
+			failureReason: "Not enough resources.",
+			playerStateResult: playerData,
+		};
+		return failureResult;
+	}
+
+	const batchDurationSeconds: number = ShipData.computeShipQuantitiesConstructionDurationSeconds(possibleRequestedShipQuantities, relevantFullPlanetData, serverData);
+	if (batchDurationSeconds <= 0)
+	{
+		const failureResult: BuildShipsResult =
+		{
+			success: false,
+			failureReason: "Invalid ship construction duration.",
+			playerStateResult: playerData,
+		};
+		return failureResult;
+	}
+
+	const totalCost: Map<number, number> = ShipData.computeShipConstructionBatchCost(possibleRequestedShipQuantities);
+	for (const [resourceType, resourceCost] of totalCost)
+	{
+		substractPlanetResource(relevantFullPlanetData, resourceType, resourceCost);
+	}
+
+	const newestBatchId: number | undefined = relevantFullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs.at(-1)?.batchId;
+	const newBatchId: number = newestBatchId ? newestBatchId + 1 : 1;
+	const shipConstructionRows: DBType.ShipConstructionRow[] = [];
+	for (const [shipType, shipQuantity] of possibleRequestedShipQuantities)
+	{
+		const shipConstructionRow: DBType.ShipConstructionRow =
+		{
+			id: 0,
+			planet_id: relevantFullPlanetData.planetRow.id,
+			batch_id: newBatchId,
+			ship_type: shipType,
+			ship_quantity: shipQuantity,
+		};
+
+		shipConstructionRows.push(shipConstructionRow);
+	}
+
+	const newBatch: PlayerDataType.ShipConstructionBatch =
+	{
+		shipConstructionRows: shipConstructionRows,
+		batchId: newBatchId,
+	};
+	relevantFullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs.push(newBatch);
+
+	const isAlreadyConstructing: boolean = relevantFullPlanetData.planetRow.ship_construction_batch_completes_at !== 0;
+	const changedPlayerStateResult: PlayerDataType.PlayerData = DB.databaseConnection.transaction((): PlayerDataType.PlayerData =>
+	{
+		let updatedPlanetRow: DBType.PlanetRow = relevantFullPlanetData.planetRow;
+
+		if (isAlreadyConstructing === false)
+		{
+			const completesAtMilliseconds: number = now + batchDurationSeconds * 1000;
+			updatedPlanetRow = PlanetServer.updatePlanetRowColumns(relevantFullPlanetData.planetRow.id,
+			{
+				ship_construction_batch_completes_at: completesAtMilliseconds,
+				current_ship_construction_batch_id: newBatchId,
+			});
+		}
+				
+		PlanetServer.updateDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
+		PlanetServer.updateDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, relevantFullPlanetData.dynamicPlanetData);
+
+		playerData.fullPlanetDatas[relevantPlanetDataIndex].planetRow = updatedPlanetRow;
+		const result: PlayerDataType.PlayerData =
+		{
+			playerRow: playerData.playerRow,
+			fullPlanetDatas: playerData.fullPlanetDatas,
+		};
+
+		return result;
+	})();
+
+	const successResult: BuildShipsResult =
+	{
+		success: true,
+		failureReason: null,
+		playerStateResult: changedPlayerStateResult,
+	};
+	return successResult;
+}
+
+function substractPlanetResource(fullPlanetData: PlayerDataType.FullPlanetData, resourceType: number, amountToSubstract: number)
+{
+	const currentResourceQuantity: number | null = ResourceData.getResourceQuantity(fullPlanetData, resourceType);
+	if (currentResourceQuantity === null)
 	{
 		return;
 	}
 
-	const calculatedNewRessourceQuantity = Math.max(0, (currentRessourceQuantity - amountToSubstract));
-	PlanetData.setRessourceQuantity(fullPlanetData, ressourceType, calculatedNewRessourceQuantity);
+	const calculatedNewResourceQuantity = Math.max(0, (currentResourceQuantity - amountToSubstract));
+	ResourceData.setResourceQuantity(fullPlanetData, resourceType, calculatedNewResourceQuantity);
+}
+
+//#region Player DB Helpers
+export function getPlayerData(playerId: number): PlayerDataType.PlayerData
+{
+	const playerData: PlayerDataType.PlayerData =
+	{
+		playerRow: getPlayerRow(playerId),
+		fullPlanetDatas: PlanetServer.getFullPlanetDatas(playerId),
+	};
+
+	return playerData;
+}
+
+export function getPlayerRow(playerId: number): DBType.PlayerRow
+{
+	const selectStatement: Database.Statement = DB.databaseConnection.prepare("SELECT * FROM player WHERE id = ?");
+	const playerRow: DBType.PlayerRow = selectStatement.get(playerId) as DBType.PlayerRow;
+	return playerRow;
 }
 
 export function findPlayerByUserId(userId: number): DBType.PlayerRow | null
@@ -214,49 +339,120 @@ export function refreshServerDataAndBankAllPlayers(): void
 {
 	const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
 	{
+		// Use a fixed time even if it can take time for the full loop.
+		// Better to have a single time for debugging than drift.
+		const now: number = Date.now();
 		const oldServerData: ServerDataType.ServerData = ServerData.getServerData();
 
-		const selectStatement: Database.Statement = DB.databaseConnection.prepare(
-			"SELECT id FROM player"
-		);
-		const playerRows: { id: number }[] = selectStatement.all() as { id: number }[];
-
-		for (const playerRow of playerRows)
-		{
-			applyPlayerUpdate(playerRow.id, oldServerData);
-		}
+		applyProgressToAllPlayersAtTime(now, oldServerData);
 
 		ServerData.reloadServerData();
 		const newServerData: ServerDataType.ServerData = ServerData.getServerData();
 
-		const newMultiplier: number = newServerData.config.time_multiplier;
-		const oldMultiplier: number = oldServerData.config.time_multiplier;
-
-		if (newMultiplier <= 0)
-		{
-			throw new Error(`Invalid time_multiplier: ${newMultiplier}`);
-		}
-
-		if (newMultiplier === oldMultiplier)
+		const rescaleFactor: number | null = calulateRescaleFactor(oldServerData, newServerData);
+		if (rescaleFactor === null)
 		{
 			return;
-		}	
-		
-		const selectActiveBuildsStatement: Database.Statement = DB.databaseConnection.prepare(
-			"SELECT id, building_upgrade_completes_at FROM planet WHERE building_upgrade_completes_at != 0"
-		);
-		const activeBuildRows: { id: number; building_upgrade_completes_at: number }[] = selectActiveBuildsStatement.all() as { id: number; building_upgrade_completes_at: number }[];
-		const now: number = Date.now();
-
-		for (const buildRow of activeBuildRows)
-		{
-			const realMsRemaining: number = buildRow.building_upgrade_completes_at - now;
-			const newRealMsRemaining: number = Math.floor(realMsRemaining * (oldMultiplier / newMultiplier));
-			const newCompletesAt: number = now + newRealMsRemaining;
-
-			PlanetServer.updatePlanetRowColumns(buildRow.id, { building_upgrade_completes_at: newCompletesAt });
 		}
+
+		rescaleBuildingUpgradeEndTimesDB(rescaleFactor, now);
+		rescaleShipConstructionEndTimesDB(rescaleFactor, now);
 	});
 
 	transaction();
 }
+
+function calulateRescaleFactor(oldServerData: ServerDataType.ServerData, newServerData: ServerDataType.ServerData): number | null
+{
+	const newMultiplier: number = newServerData.config.time_multiplier;
+	const oldMultiplier: number = oldServerData.config.time_multiplier;
+
+	if (newMultiplier <= 0)
+	{
+		throw new Error(`Invalid time_multiplier: ${newMultiplier}`);
+		return null;
+	}
+
+	if (newMultiplier === oldMultiplier)
+	{
+		return null;
+	}
+
+	return (oldMultiplier / newMultiplier);
+}
+
+function applyProgressToAllPlayersAtTime(time: number, serverData: ServerDataType.ServerData)
+{
+	const selectStatement: Database.Statement = DB.databaseConnection.prepare
+	(
+		"SELECT id FROM player"
+	);
+	const playerRows: { id: number }[] = selectStatement.all() as { id: number }[];
+
+	for (const playerRow of playerRows)
+	{
+		// We update the players at this time volontarily using the old server data since it was change manually in the DB.
+		// The "accepted" time is when we trigger this function, not when we modified the DB manually.
+		ServerProgress.applyPlayerUpdate(playerRow.id, serverData, time);
+	}
+}
+
+// This will be 
+function rescaleBuildingUpgradeEndTimesDB(rescaleFactor: number, now: number)
+{
+	const selectActiveBuildsStatement: Database.Statement = DB.databaseConnection.prepare
+	(
+	"SELECT id, building_upgrade_completes_at FROM planet WHERE building_upgrade_completes_at != 0"
+	);
+
+	const activeBuildRows: { id: number; building_upgrade_completes_at: number }[] = selectActiveBuildsStatement.all() as { id: number; building_upgrade_completes_at: number }[];
+	for (const buildRow of activeBuildRows)
+	{
+		const realMsRemaining: number = buildRow.building_upgrade_completes_at - now;
+		if (realMsRemaining <= 0)
+		{
+			continue;
+		}
+
+		const newRealMsRemaining: number = Math.floor(realMsRemaining * rescaleFactor);
+		const newCompletesAt: number = now + newRealMsRemaining;
+
+		PlanetServer.updatePlanetRowColumns(buildRow.id, { building_upgrade_completes_at: newCompletesAt });
+	}
+}
+
+function rescaleShipConstructionEndTimesDB(rescaleFactor: number, now: number)
+{
+	const selectActiveShipBatchesStatement: Database.Statement = DB.databaseConnection.prepare
+	(
+		"SELECT id, ship_construction_batch_completes_at FROM planet WHERE ship_construction_batch_completes_at != 0"
+	);
+	const activeShipBatchRows: { id: number; ship_construction_batch_completes_at: number }[] = selectActiveShipBatchesStatement.all() as { id: number; ship_construction_batch_completes_at: number }[];
+
+	for (const shipBatchRow of activeShipBatchRows)
+	{
+		const realMsRemaining: number = shipBatchRow.ship_construction_batch_completes_at - now;
+		if (realMsRemaining <= 0)
+		{
+			continue;
+		}
+
+		const newRealMsRemaining: number = Math.floor(realMsRemaining * rescaleFactor);
+		const newCompletesAt: number = now + newRealMsRemaining;
+
+		PlanetServer.updatePlanetRowColumns(shipBatchRow.id, { ship_construction_batch_completes_at: newCompletesAt });
+	}
+}
+
+export function updatePlayerColumns(playerId: number, columnUpdates: Partial<DBType.PlayerRow>): DBType.PlayerRow
+{
+	const columnNames: string[] = Object.keys(columnUpdates);
+	const columnValues: unknown[] = Object.values(columnUpdates);
+	const setClause: string = columnNames.map((columnName) => `${columnName} = ?`).join(", ");
+
+	const updateStatement: Database.Statement = DB.databaseConnection.prepare(`UPDATE player SET ${setClause} WHERE id = ?`);
+	updateStatement.run(...columnValues, playerId);
+
+	return getPlayerRow(playerId);
+}
+//#endregion
