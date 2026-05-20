@@ -3,6 +3,7 @@ import * as BuildingDurationFormulas from "@/lib/gameplay/coreData/buildingDurat
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as BuildingProductionFormulas from "@/lib/gameplay/coreData/buildingProductionFormulas";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+import * as PlayerData from "@/lib/playerData/thingData/playerData";
 
 // #region BuildingManagement
 export function setBuildingLevel(fullPlanetData: PlayerDataType.FullPlanetData, buildingType: number, value: number): void
@@ -12,7 +13,6 @@ export function setBuildingLevel(fullPlanetData: PlayerDataType.FullPlanetData, 
     if (!setter)
     {
     	throw new Error("Building levels dont have setters.");
-        return;
     }
 
     setter(value);
@@ -25,7 +25,6 @@ export function getBuildingLevel(fullPlanetData: PlayerDataType.FullPlanetData, 
     if (!getter)
     {
     	throw new Error("Building levels dont have Getters.");
-        return 0;
     }
 
     return getter();
@@ -44,18 +43,18 @@ export function getBuildingLevelMap(fullPlanetData: PlayerDataType.FullPlanetDat
     return buildingLevelMap;
 }
 
-export function getBuildingUpgradeDurationSeconds(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, buildingType: number): number | null
+export function getBuildingUpgradeDurationSeconds(playerData: PlayerDataType.PlayerData, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, buildingType: number): number | null
 {
     try
     {
-        const upgradeDurationSecondsFunction: ((currentUpgradeLevel: number, buildingType: number, serverData: ServerDataType.ServerData | null) => number) | undefined = BuildingDurationFormulas.buildingUpgradeDurationSecondsFunctionMap.get(buildingType);
+        const upgradeDurationSecondsFunction: ((currentUpgradeLevel: number, buildingType: number, playerData: PlayerDataType.PlayerData, planetId: number, serverData: ServerDataType.ServerData | null) => number) | undefined = BuildingDurationFormulas.buildingUpgradeDurationSecondsFunctionMap.get(buildingType);
         if (upgradeDurationSecondsFunction === undefined)
         {
             return null;
         }
         
         const currentBuildingUpgradeLevel: number = getBuildingLevel(fullPlanetData, buildingType);
-        return upgradeDurationSecondsFunction(currentBuildingUpgradeLevel, buildingType,serverData);
+        return upgradeDurationSecondsFunction(currentBuildingUpgradeLevel, buildingType, playerData, fullPlanetData.planetRow.id, serverData);
     }
     catch (error: unknown)
     {
@@ -126,5 +125,18 @@ export function getAllProducableResourceTypes(): number[]
 	}
 
 	return getAllProducableResourceTypes;
+}
+
+export function hasBuilding(fullPlanetData: PlayerDataType.FullPlanetData, buildingType: number, buildingLevel: number): boolean
+{
+    try
+    {
+        const hasBuildingLevel: number = getBuildingLevel(fullPlanetData, buildingType);
+        return hasBuildingLevel >= buildingLevel;
+    }
+    catch(error: unknown)
+    {
+        return false;
+    }
 }
 // #endregion

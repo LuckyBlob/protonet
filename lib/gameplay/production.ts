@@ -1,6 +1,6 @@
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as BuildingProductionFormulas from "@/lib/gameplay/coreData/buildingProductionFormulas";
-import * as BuildingData from "@/lib/playerData/buildingData";
+import * as BuildingData from "@/lib/playerData/thingData/buildingData";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 
 // #region Resource Production

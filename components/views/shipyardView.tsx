@@ -1,14 +1,16 @@
 "use client";
 
+import { StringDecoder } from "string_decoder";
 import { useState, ChangeEvent, ReactElement } from "react";
 
+import * as PlayerData from "@/lib/playerData/thingData/playerData";
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as ShipData from "@/lib/playerData/shipData";
+import * as ShipData from "@/lib/playerData/thingData/shipData";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as RequestType from "@/lib/serverRequests/requestTypes";
 import * as HelperElements from "@/components/helperElements";
@@ -47,7 +49,7 @@ type RequestedQuantitiesState =
 
 function getShipImagePath(shipType: number): string
 {
-    return `/ships/shipType_${shipType}/0.png`;
+    return `/ships/${shipType}.png`;
 }
 
 function buildSingleShipCostParts(shipType: number): string[]
@@ -61,7 +63,7 @@ function buildSingleShipCostParts(shipType: number): string[]
     const costParts: string[] = [];
     for (const [resourceType, resourceCost] of singleCostMap)
 	{
-        costParts.push(`${resourceCost} ${AssociationMaps.getThingName(AssociationMaps.ThingType.Resource, resourceType)}`);
+        costParts.push(`${resourceCost} ${AssociationMaps.getThingName(AssociationMaps.resource(resourceType))}`);
     }
 
     return costParts;
@@ -149,33 +151,51 @@ function renderConstructionCountdownLine(fullPlanetData: PlayerDataType.FullPlan
 	return element;
 }
 
-function renderQuantityInput(shipType: number, requestedQuantity: number, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
+function renderQuantityInput(props: ShipyardViewProps, shipType: number, requestedQuantity: number, fullPlanetData: PlayerDataType.FullPlanetData, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
 {
-    const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>) =>
+	let element: ReactElement | null = null
+	if (!PlayerData.meetsShipBuildRequirements(props.clientDataStateResult.psController[0].predictedDBData, shipType, fullPlanetData.planetRow.id))
 	{
-        const parsedValue = Number.parseInt(e.target.value, 10);
-        if (Number.isNaN(parsedValue) || parsedValue < 0) {
-            setRequestedQuantity(shipType, 0);
-            return;
-        }
-        setRequestedQuantity(shipType, parsedValue);
-    };
-	const element: ReactElement =
-	(
-		<input
-            type="number"
-            min={0}
-            value={requestedQuantity}
-            onChange={handleQuantityChange}
-            className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-24"
-        />
-	);
+		const requirements: string[] = PlayerData.getShipRequirementDescriptions(shipType);
+		element =
+		(
+			<div>
+				{requirements.map((requirement: string) =>
+				{
+					return <div key={requirement}>{requirement}</div>;
+				})}
+			</div>
+		);
+	}
+	else
+	{
+		const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>) =>
+		{
+			const parsedValue = Number.parseInt(e.target.value, 10);
+			if (Number.isNaN(parsedValue) || parsedValue < 0) {
+				setRequestedQuantity(shipType, 0);
+				return;
+			}
+			setRequestedQuantity(shipType, parsedValue);
+		};
+		element =
+		(
+			<input
+				type="number"
+				min={0}
+				value={requestedQuantity}
+				onChange={handleQuantityChange}
+				className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-24"
+			/>
+		);
+	}
+
 	return element;
 }
 
-function renderShipBuildRow(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, shipType: number, requestedQuantity: number, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
+function renderShipBuildRow(props: ShipyardViewProps, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, shipType: number, requestedQuantity: number, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
 {
-    const shipName: string = AssociationMaps.getThingName(AssociationMaps.ThingType.Ship, shipType);
+    const shipName: string = AssociationMaps.getThingName(AssociationMaps.ship(shipType));
     const ownedQuantity: number = ShipData.getShipQuantity(fullPlanetData, shipType);
     const singleDurationSeconds: number = ShipData.getShipConstructionDurationSeconds(shipType, fullPlanetData, serverData)?? 0;
     const costParts: string[] = buildSingleShipCostParts(shipType);
@@ -197,20 +217,21 @@ function renderShipBuildRow(fullPlanetData: PlayerDataType.FullPlanetData, serve
             </div>
 
             <div className="flex items-center justify-center px-4 py-3 min-w-[140px]">
-                {renderQuantityInput(shipType, requestedQuantity, setRequestedQuantity)}
+                {renderQuantityInput(props, shipType, requestedQuantity, fullPlanetData, setRequestedQuantity)}
             </div>
         </div>
 	);
 	return element;
 }
 
-function renderShipBuildRows(shipTypes: number[], fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, requestedQuantities: Map<number, number>, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
+function renderShipBuildRows(props: ShipyardViewProps, shipTypes: number[], fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, requestedQuantities: Map<number, number>, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
 {
     const rowElements = shipTypes.map((shipType: number) =>
 	{
-        const requestedQuantity = requestedQuantities.get(shipType) ?? 0;
-        return renderShipBuildRow(fullPlanetData, serverData, shipType, requestedQuantity, setRequestedQuantity);
+		const requestedQuantity = requestedQuantities.get(shipType) ?? 0;
+        return renderShipBuildRow(props, fullPlanetData, serverData, shipType, requestedQuantity, setRequestedQuantity);
     });
+
 	const element: ReactElement =
 	(
         <div className="text-sm font-semibold text-white whitespace-nowrap inline-block">
@@ -233,7 +254,7 @@ function renderBuildableShipLines(buildableQuantities: Map<number, number>): Rea
 
         shipLineElements.push(
             <div key={shipType} className="text-sm">
-                {AssociationMaps.getThingName(AssociationMaps.ThingType.Ship, shipType)} x {shipQuantity}
+                {AssociationMaps.getThingName(AssociationMaps.ship(shipType))} x {shipQuantity}
             </div>
         );
     }
@@ -256,7 +277,7 @@ function renderBuildableResourceLines(totalCost: Map<number, number>): ReactElem
         resourceLineElements.push
 		(
             <div key={resourceType} className="text-sm text-blue-400">
-                {resourceCost} {AssociationMaps.getThingName(AssociationMaps.ThingType.Resource, resourceType)}
+                {resourceCost} {AssociationMaps.getThingName(AssociationMaps.resource(resourceType))}
             </div>
         );
     }
@@ -428,7 +449,7 @@ function renderShipyardBody(props: ShipyardViewProps, fullPlanetData: PlayerData
     const previewContent: ReactElement | null = renderBuildPreviewContent(fullPlanetData, serverData, requestedMap);
     const buildButton: ReactElement | null = renderBuildButton(hasRequestedData, onBuildAll);
     const previewSlot: ReactElement = renderPreviewSlot(previewContent, buildButton);
-    const buildRowElements: ReactElement = renderShipBuildRows(shipTypes, fullPlanetData, serverData, quantitiesState.requestedQuantities, quantitiesState.setRequestedQuantity);
+    const buildRowElements: ReactElement = renderShipBuildRows(props, shipTypes, fullPlanetData, serverData, quantitiesState.requestedQuantities, quantitiesState.setRequestedQuantity);
 
     return renderShipyardLayout(previewSlot, buildRowElements, countdownLine);
 }

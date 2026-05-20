@@ -1,6 +1,6 @@
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as ResourceData from "@/lib/playerData/resourceData";
+import * as ResourceData from "@/lib/playerData/thingData/resourceData";
 import * as SelectedPlanetDisplay from "@/lib/display/selectedPlanetDisplay";
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 import * as HelperElements from "@/components/helperElements";

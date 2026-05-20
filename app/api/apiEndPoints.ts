@@ -2,6 +2,7 @@
 
 import * as RequestType from "@/lib/serverRequests/requestTypes";
 
+//#region Actions
 export const ActionRequest =
 {
     Login:    { endpoint: "authentication/login",    name: "Login" },
@@ -11,16 +12,6 @@ export const ActionRequest =
     UpgradeBuilding:   { endpoint: "buy/buildingLevel",   name: "UpgradeBuilding" },
     BuildShips:   { endpoint: "buy/ships",   name: "BuildShips" },
 } as const satisfies Record<string, validEndpoint>;
-
-export interface ActionResponseMap
-{
-    Login: RequestType.BaseAuthenticationServerResponse;
-    Register: RequestType.BaseAuthenticationServerResponse;
-    Logout: RequestType.BaseAuthenticationServerResponse;
-    RefreshServer: RequestType.RefreshServer_ServerResponse;
-    UpgradeBuilding: RequestType.BuildingUpgrade_ServerResponse;
-    BuildShips: RequestType.BuildShips_ServerResponse;
-}
 export interface ActionRequestMap
 {
     Login: RequestType.BaseAuthenticationClientRequest;
@@ -30,7 +21,18 @@ export interface ActionRequestMap
     UpgradeBuilding: RequestType.BuildingUpgrade_ClientRequest;
     BuildShips: RequestType.BuildShips_ClientRequest;
 }
+export interface ActionResponseMap
+{
+    Login: RequestType.BaseAuthenticationServerResponse;
+    Register: RequestType.BaseAuthenticationServerResponse;
+    Logout: RequestType.BaseAuthenticationServerResponse;
+    RefreshServer: RequestType.RefreshServer_ServerResponse;
+    UpgradeBuilding: RequestType.BuildingUpgrade_ServerResponse;
+    BuildShips: RequestType.BuildShips_ServerResponse;
+}
+//#endregion
 
+//#region Data
 export const DataRequest =
 {
     UserInfo: { endpoint: "authentication/me",       name: "UserInfo" },
@@ -47,7 +49,9 @@ export interface DataResponseMap
     AllPlanets: RequestType.ServerDataStateRequest;
     OwnedPlanets: RequestType.ServerDataStateRequest;
 }
+//#endregion
 
+//#region Inner workings (magic!)
 export type DataRequest = (typeof DataRequest)[keyof typeof DataRequest];
 export type ActionRequest = (typeof ActionRequest)[keyof typeof ActionRequest];
 
@@ -76,3 +80,4 @@ type FindDataKeyByValueObject<TObject> =
 
 export type ResponseForData<T extends typeof DataRequest[DataRequestKey]> = DataResponseMap[FindDataKeyByValueObject<T>];
 export type RequestForData<T extends typeof DataRequest[DataRequestKey]> = DataResponseMap[FindDataKeyByValueObject<T>];
+//#endregion

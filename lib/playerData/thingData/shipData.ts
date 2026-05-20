@@ -1,10 +1,13 @@
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as ShipConstructionFormulas from "@/lib/gameplay/coreData/shipConstructionFormulas";
-import * as PlanetData from "@/lib/playerData/buildingData";
+import * as PlayerData from "@/lib/playerData/thingData/playerData";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as BuildingData from "@/lib/playerData/buildingData";
-import * as ResourceData from "@/lib/playerData/resourceData";
+import * as BuildingData from "@/lib/playerData/thingData/buildingData";
+import * as ResourceData from "@/lib/playerData/thingData/resourceData";
+import * as APIEndPoint from "@/app/api/apiEndPoints"
+import * as RequestType from "@/lib/serverRequests/requestTypes";
+import * as GameType from "@/lib/gameplay/gameTypes";
 
 // #region Ship Management
 export function setShipQuantity(fullPlanetData: PlayerDataType.FullPlanetData, shipType: number, value: number): void
@@ -74,7 +77,7 @@ export function getShipConstructionDurationSeconds(shipType: number, fullPlanetD
 
 		const extraShipConstructionData: ShipConstructionFormulas.ExtraShipConstructionData =
 		{
-			currentShipyardLevel: BuildingData.getBuildingLevel(fullPlanetData, AssociationMaps.SHIPYARD_BUILDING_TYPE) ?? 0,
+			currentShipyardLevel: BuildingData.getBuildingLevel(fullPlanetData, GameType.SHIPYARD_BUILDING_TYPE) ?? 0,
 			structuralIntegrity: AssociationMaps.SHIP_STRUCTUAL_INTEGRITY.get(shipType) ?? 0,
 		}
 
@@ -213,3 +216,7 @@ export function computeMaxAffordableShipQuantities(fullPlanetData: PlayerDataTyp
 	return buildableShipQuantities;
 }
 // #endregion
+
+//#region Requirement
+
+//#endregion

@@ -6,7 +6,7 @@ import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionBatchAnchorEvent"
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
-import * as PlanetData from "@/lib/playerData/buildingData";
+import * as PlanetData from "@/lib/playerData/thingData/buildingData";
 import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
 import * as PlanetUpdateServer from "@/lib/update/server/planetUpdateServer"

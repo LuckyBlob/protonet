@@ -4,6 +4,7 @@ import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+import * as PlayerData from "@/lib/playerData/thingData/playerData";
 
 export function updatePlanetRowColumns(planetId: number, columnUpdates: Partial<DBType.PlanetRow>): DBType.PlanetRow
 {
@@ -30,7 +31,7 @@ export function updateDynamicPlanetData(planetId: number, dynamicPlanetData: Pla
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-		for (const dataContext of PlayerDataType.getDataContexts())
+		for (const dataContext of PlayerData.getDataContexts())
 		{
 			updateDataContext(planetId, dataContext, dynamicPlanetData);
 		}

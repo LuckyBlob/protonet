@@ -1,9 +1,9 @@
 import * as Production from "@/lib/gameplay/production";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-import * as PlanetData from "@/lib/playerData/buildingData";
+import * as PlanetData from "@/lib/playerData/thingData/buildingData";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as ResourceData from "@/lib/playerData/resourceData";
+import * as ResourceData from "@/lib/playerData/thingData/resourceData";
 
 export type SelectedPlanetResourceDisplayValues =
 {

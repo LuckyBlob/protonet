@@ -1,6 +1,7 @@
 "use client";
 
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+import * as PlayerData from "@/lib/playerData/thingData/playerData";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 const SELECTED_PLANET_STORAGE_KEY: string = "protonet.selectedPlanetId";
@@ -39,28 +40,19 @@ export function writeStoredSelectedPlanetId(planetId: number): void
     window.localStorage.setItem(SELECTED_PLANET_STORAGE_KEY, String(planetId));
 }
 
-function validateSelectedPlanetId(fullPlanetDatas: PlayerDataType.FullPlanetData[], candidateId: number | null): number
+function getRelevantSelectedPlanetId(fullPlanetDatas: PlayerDataType.FullPlanetData[], candidateId: number | null): number
 {
     if (fullPlanetDatas.length === 0)
     {
 		throw Error(`Player has no planets!`);
 	}
 
-    if (candidateId !== null)
+    if (candidateId === null)
     {
-        const matchingPlanet: PlayerDataType.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData) =>
-        {
-            return fullPlanetData.planetRow.id === candidateId;
-        });
-
-        if (matchingPlanet !== undefined)
-        {
-            return matchingPlanet.planetRow.id;
-        }
+        return fullPlanetDatas[0].planetRow.id;
     }
 
-    const firstPlanet: PlayerDataType.FullPlanetData = fullPlanetDatas[0];
-    return firstPlanet.planetRow.id;
+    return PlayerData.getFullPlanetDataForId(fullPlanetDatas, candidateId)?.planetRow.id ?? fullPlanetDatas[0].planetRow.id;
 }
 
 export function getSelectedFullPlanetDataPredicted(playerState: PlayerDataType.PlayerState): PlayerDataType.FullPlanetData
@@ -76,7 +68,7 @@ export function getSelectedFullPlanetDataPredicted(playerState: PlayerDataType.P
         throw Error(`Player state or player predicted state is invalid for selected planet data.`);
     }
 
-    const resolvedId: number = validateSelectedPlanetId(fullPlanetDatas, playerState.selectedPlanetId);
+    const resolvedId: number = getRelevantSelectedPlanetId(fullPlanetDatas, playerState.selectedPlanetId);
 
 	const matchingFullPlanetData: PlayerDataType.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData): boolean =>
     {

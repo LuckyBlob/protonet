@@ -2,7 +2,7 @@ import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as DBType from "@/lib/db/dbTypes";
-import * as ShipData from "@/lib/playerData/shipData";
+import * as ShipData from "@/lib/playerData/thingData/shipData";
 
 export type ShipConstructionBatchAnchorEvent = AnchorEvent.AnchorEvent &
 {

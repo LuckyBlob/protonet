@@ -1,7 +1,7 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
-import * as ResourceData from "@/lib/playerData/resourceData";
+import * as ResourceData from "@/lib/playerData/thingData/resourceData";
 import * as Production from "@/lib/gameplay/production";
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"

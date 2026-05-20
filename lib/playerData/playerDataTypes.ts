@@ -54,7 +54,7 @@ export const DataContext =
 	ShipConstruction: 4,
 } as const;
 export type DataContext = typeof DataContext[keyof typeof DataContext];
-const DataContextToVariableNameMap = {
+export const DataContextToVariableNameMap = {
     [DataContext.ResourceQuantity]: "resourceQuantity",
     [DataContext.BuildingLevel]: "buildingLevels",
     [DataContext.ShipQuantity]: "shipQuantity",
@@ -73,21 +73,8 @@ export type ShipConstructionBatch =
 	batchId: number;
 }
 
-//#region helpers
-export function getVariableFromContext<T extends DataContext>(data: DynamicPlanetData, variable: T): DynamicPlanetData[typeof DataContextToVariableNameMap[T]]
+export function isPlayerData(value: PlayerData | FullPlanetData): value is PlayerData
 {
-	const propertyKey = DataContextToVariableNameMap[variable];
-    
-    if (!propertyKey)
-	{
-        throw new Error(`UNREACHABLE: Mismatch DynamicPlanetData: fill DataContext and DataContextToVariableNameMap.`);
-    }
-
-    return data[propertyKey] as DynamicPlanetData[typeof DataContextToVariableNameMap[T]];
+	const key: keyof PlayerData = "fullPlanetDatas";
+	return key in value;
 }
-
-export function getDataContexts(): PlayerDataType.DataContext[]
-{
-	return Object.values(DataContext) as PlayerDataType.DataContext[];
-}
-//#endregion

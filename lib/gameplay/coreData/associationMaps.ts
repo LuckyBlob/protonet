@@ -1,14 +1,53 @@
 import * as GameType from "@/lib/gameplay/gameTypes";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 import * as DBType from "@/lib/db/dbTypes";
+import * as PlayerData from "@/lib/playerData/thingData/playerData";
 
 //#region On changes in the game, update all these values!
 export const BUILDING_DISPLAY_NAMES: ReadonlyMap<number, string> = new Map<number, string>
 ([
 	[GameType.BUILDING_1, "Iron Mine"],
 	[GameType.BUILDING_2, "Crystal Mine"],
-	[GameType.BUILDING_3, "Shipyard"],
+	[GameType.SHIPYARD_BUILDING_TYPE, "Shipyard"],
+	[GameType.ROBOTIC_FACTORY_TYPE, "Robotics Factory"],
 ]);
+
+export const BUILDING_1_DATA: SimpleProductionBuildingCostData =
+{
+	baseCostMap: new Map<number, number>
+	([
+		[GameType.RESOURCE_1, 60],
+		[GameType.RESOURCE_2, 15],
+	]),
+	growthFactor: 1.5,
+};
+export const BUILDING_2_DATA: SimpleProductionBuildingCostData =
+{
+	baseCostMap: new Map<number, number>
+	([
+		[GameType.RESOURCE_1, 48],
+		[GameType.RESOURCE_2, 24],
+	]),
+	growthFactor: 1.6,
+};
+export const BUILDING_3_DATA: ExponentialBuildingCostData =
+{
+	baseCostMap: new Map<number, number>
+	([
+		[GameType.RESOURCE_1, 400],
+		[GameType.RESOURCE_2, 200],
+	]),
+	exponentBase: 2,
+};
+export const BUILDING_4_DATA: ExponentialBuildingCostData =
+{
+	baseCostMap: new Map<number, number>
+	([
+		[GameType.RESOURCE_1, 400],
+		[GameType.RESOURCE_2, 120],
+	]),
+	exponentBase: 2,
+};
 
 export const RESOURCE_DISPLAY_NAMES: ReadonlyMap<number, string> = new Map<number, string>
 ([
@@ -52,7 +91,6 @@ export const SHIP_COST: ReadonlyMap<number, Map<number, number>> = new Map<numbe
 	])],
 ]);
 
-export const SHIPYARD_BUILDING_TYPE: number = GameType.BUILDING_3;
 export const STARTING_PLANET_SIZE: number = 163;
 
 export const CLEAN_PLANET: Partial<DBType.PlanetRow> =
@@ -64,6 +102,55 @@ export const CLEAN_PLANET: Partial<DBType.PlanetRow> =
 	ship_construction_batch_completes_at: 0,
 	current_ship_construction_batch_id: 0,
 };
+
+//#region Thing type system (moved up so it can be used in data tables)
+export const ThingType =
+{
+	Resource: 1,
+	Building: 2,
+	Ship: 3,
+} as const;
+export type ThingType = typeof ThingType[keyof typeof ThingType];
+export function resource(id: number): SpecificThingType { return { thingType: ThingType.Resource, specificThingType: id }; }
+export function building(id: number): SpecificThingType { return { thingType: ThingType.Building, specificThingType: id }; }
+export function ship(id: number):         SpecificThingType { return { thingType: ThingType.Ship,     specificThingType: id }; }
+
+export type SpecificThingType =
+{
+	thingType: ThingType;
+	specificThingType: number;
+};
+
+export type ThingRequirement =
+{
+	specificThingType: SpecificThingType;
+	value: number;
+};
+export type ThingRequirementMap = ReadonlyMap<ThingType, ReadonlyMap<number, ThingRequirement[]>>;
+//#endregion
+
+export const THING_REQUIREMENT: ThingRequirementMap = new Map<ThingType, ReadonlyMap<number, ThingRequirement[]>>
+([
+	[ThingType.Ship, new Map<number, ThingRequirement[]>(
+		[[GameType.SHIP_1,[
+			{
+				specificThingType: building(GameType.SHIPYARD_BUILDING_TYPE),
+				value: 2,
+			}]],
+		[GameType.SHIP_2,[
+			{
+				specificThingType: building(GameType.SHIPYARD_BUILDING_TYPE),
+				value: 6,
+			}]],
+		])],
+	[ThingType.Building, new Map<number, ThingRequirement[]>(
+		[[GameType.SHIPYARD_BUILDING_TYPE,[
+			{
+				specificThingType: building(GameType.ROBOTIC_FACTORY_TYPE),
+				value: 2,
+			}]]]
+	)],
+]);
 
 const THING_DEFINITIONS: ThingDefinition[] =
 [
@@ -89,14 +176,6 @@ const THING_DEFINITIONS: ThingDefinition[] =
 //#endregion
 
 //#region Thing type system
-export const ThingType =
-{
-	Resource: 1,
-	Building: 2,
-	Ship: 3,
-} as const;
-export type ThingType = typeof ThingType[keyof typeof ThingType];
-
 type ThingDefinition =
 {
 	key: string;
@@ -147,10 +226,10 @@ export function getTypes(thingType: ThingType): number[]
 	return typeArray;
 }
 
-export function getThingName(thingType: ThingType, specificType: number): string
+export function getThingName(specificThing: SpecificThingType): string
 {
-	const displayNameMap: ReadonlyMap<number, string> = getThingNameMap(thingType);
-    return displayNameMap.get(specificType) ?? `Thing Name ${specificType}`;
+	const displayNameMap: ReadonlyMap<number, string> = getThingNameMap(specificThing.thingType);
+    return displayNameMap.get(specificThing.specificThingType) ?? `Thing Name ${specificThing.specificThingType}`;
 }
 //#endregion
 
@@ -162,7 +241,7 @@ export function getTypeGetters(fullPlanetData: PlayerDataType.FullPlanetData, da
 		throw new Error("ShipConstruction context is not supported for type getters.");
 	}
 
-	const targetMap: Map<number, number> = PlayerDataType.getVariableFromContext(fullPlanetData.dynamicPlanetData, dataContext);
+	const targetMap: Map<number, number> = PlayerData.getVariableFromContext(fullPlanetData.dynamicPlanetData, dataContext);
 	const types: number[] = getTypesFromContext(dataContext);
 	const typeGetters: Map<number, PlayerDataType.TypeGetter> = new Map();
 
@@ -181,7 +260,7 @@ export function getTypeSetters(fullPlanetData: PlayerDataType.FullPlanetData, da
 		throw new Error("ShipConstruction context is not supported for type setters.");
 	}
 
-	const targetMap: Map<number, number> = PlayerDataType.getVariableFromContext(fullPlanetData.dynamicPlanetData, dataContext);
+	const targetMap: Map<number, number> = PlayerData.getVariableFromContext(fullPlanetData.dynamicPlanetData, dataContext);
 	const types: number[] = getTypesFromContext(dataContext);
 	const typeSetters: Map<number, PlayerDataType.TypeSetter> = new Map();
 
@@ -204,4 +283,18 @@ function getTypesFromContext(dataContext: PlayerDataType.DataContext): number[]
 
 	return getTypes(thingTag as ThingType);
 }
+//#endregion
+
+//#region Building Cost Production Types
+export type SimpleProductionBuildingCostData =
+{
+	baseCostMap: Map<number, number>;
+	growthFactor: number;
+};
+
+export type ExponentialBuildingCostData =
+{
+	baseCostMap: Map<number, number>;
+	exponentBase: number;
+};
 //#endregion

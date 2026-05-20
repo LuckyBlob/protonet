@@ -1,7 +1,7 @@
 import * as Building from "@/lib/gameplay/coreData/buildingCostFormulas";
-import * as PlanetData from "@/lib/playerData/buildingData";
+import * as PlanetData from "@/lib/playerData/thingData/buildingData";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as ResourceData from "@/lib/playerData/resourceData";
+import * as ResourceData from "@/lib/playerData/thingData/resourceData";
 
 export function computeBuildingUpgradeCost(currentUpgradeLevel: number, buildingType: number): Map<number, number> | null
 {

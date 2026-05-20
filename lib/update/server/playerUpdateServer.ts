@@ -8,10 +8,13 @@ import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
 import * as ServerData from "@/lib/serverData/serverData";
 import * as ServerDataType from "@/lib/serverData/serverDataTypes";
 import * as PlanetServer from "@/lib/update/server/planetUpdateServer";
-import * as PlanetData from "@/lib/playerData/buildingData";
-import * as ResourceData from "@/lib/playerData/resourceData";
-import * as ShipData from "@/lib/playerData/shipData";
+import * as PlanetData from "@/lib/playerData/thingData/buildingData";
+import * as ResourceData from "@/lib/playerData/thingData/resourceData";
+import * as ShipData from "@/lib/playerData/thingData/shipData";
 import * as ServerProgress from "@/lib/gameplay/progressUpdate/server/serverProgress";
+import * as APIEndPoint from "@/app/api/apiEndPoints"
+import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
+import * as PlayerData from "@/lib/playerData/thingData/playerData";
 
 export type BuyUpgradeResult =
 {
@@ -20,7 +23,7 @@ export type BuyUpgradeResult =
 	playerStateResult: PlayerDataType.PlayerData;
 };
 
-export function tryBuyBuildingUpgradeServer(playerId: number, serverData: ServerDataType.ServerData, requestData: RequestType.BuildingUpgrade_ClientRequest): BuyUpgradeResult
+export function tryBuyBuildingUpgradeServer(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding>): BuyUpgradeResult
 {
 	const now: number = Date.now();
 	const updatedPlayer: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
@@ -42,6 +45,17 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 	}
 
 	const relevantFullPlanetData: PlayerDataType.FullPlanetData = updatedPlayer.fullPlanetDatas[relevantPlanetDataIndex];
+	if (!PlayerData.meetsBuildingUpgradeRequirements(updatedPlayer, requestData.buildingType, relevantFullPlanetData.planetRow.id))
+	{
+		const failureResult: BuyUpgradeResult =
+		{
+			success: false,
+			failureReason: "Building doesnt meet requirements.",
+			playerStateResult: updatedPlayer,
+		};
+		return failureResult;
+	}
+
 	if (relevantFullPlanetData.planetRow.building_upgrade_completes_at !== 0)
 	{
 		const failureResult: BuyUpgradeResult =
@@ -65,7 +79,7 @@ export function tryBuyBuildingUpgradeServer(playerId: number, serverData: Server
 	}
 
 	const currentBuildingUpgradeLevel: number = PlanetData.getBuildingLevel(relevantFullPlanetData, requestData.buildingType);
-	const buildDurationSeconds: number | null = PlanetData.getBuildingUpgradeDurationSeconds(relevantFullPlanetData, serverData, requestData.buildingType);
+	const buildDurationSeconds: number | null = PlanetData.getBuildingUpgradeDurationSeconds(updatedPlayer, relevantFullPlanetData, serverData, requestData.buildingType);
 	if (buildDurationSeconds === null)
 	{
 		const failureResult: BuyUpgradeResult =
@@ -131,7 +145,7 @@ export type BuildShipsResult =
 	playerStateResult: PlayerDataType.PlayerData;
 };
 
-export function tryBuildShipsServer(playerId: number, serverData: ServerDataType.ServerData, requestData: RequestType.BuildShips_ClientRequest): BuildShipsResult
+export function tryBuildShipsServer(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips>): BuildShipsResult
 {
 	const now: number = Date.now();
 	const playerData: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
@@ -174,6 +188,20 @@ export function tryBuildShipsServer(playerId: number, serverData: ServerDataType
 			playerStateResult: playerData,
 		};
 		return failureResult;
+	}
+
+	for (const shipQuantities of requestData.shipQuantities)
+	{
+		if (!PlayerData.meetsShipBuildRequirements(playerData, shipQuantities.shipType, relevantFullPlanetData.planetRow.id))
+		{
+			const failureResult: BuildShipsResult =
+			{
+				success: false,
+				failureReason: "A ship doesn't meet requirements.",
+				playerStateResult: playerData,
+			};
+			return failureResult;
+		}
 	}
 
 	const possibleRequestedShipQuantities: Map<number, number> = ShipData.computeMaxAffordableShipQuantities(relevantFullPlanetData, requestedShipQuantities);

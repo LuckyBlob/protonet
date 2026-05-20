@@ -3,13 +3,14 @@
 import * as Cost from "@/lib/gameplay/cost";
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-import * as PlanetData from "@/lib/playerData/buildingData";
+import * as PlanetData from "@/lib/playerData/thingData/buildingData";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as BuildingData from "@/lib/playerData/buildingData";
+import * as BuildingData from "@/lib/playerData/thingData/buildingData";
 import * as HelperElements from "@/components/helperElements";
+import * as PlayerData from "@/lib/playerData/thingData/playerData";
 
 type UpgradeViewProps =
 {
@@ -60,7 +61,7 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 	const currentLevel: number = PlanetData.getBuildingLevel(selectedFullPlanetDataPredicted, buildingType);
 
 	const nextCostMap: Map<number, number> | null = Cost.computeBuildingUpgradeCost(currentLevel, buildingType);
-	const buildDurationSeconds: number | null = PlanetData.getBuildingUpgradeDurationSeconds(selectedFullPlanetDataPredicted, props.clientDataStateResult.sdsController[0], buildingType);
+	const buildDurationSeconds: number | null = PlanetData.getBuildingUpgradeDurationSeconds(props.clientDataStateResult.psController[0].predictedDBData, selectedFullPlanetDataPredicted, props.clientDataStateResult.sdsController[0], buildingType);
 
 	if (nextCostMap === null || buildDurationSeconds === null)
 	{
@@ -75,6 +76,7 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 
 	const isThisBuildingUpgrading: boolean = (selectedFullPlanetDataPredicted.planetRow.building_being_upgraded === buildingType) && (selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at !== 0);
 	const isAnyBuildingUpgrading: boolean = selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at !== 0;
+	const meetsBuildingRequirements: boolean = PlayerData.meetsBuildingUpgradeRequirements(props.clientDataStateResult.psController[0].predictedDBData, buildingType, selectedFullPlanetDataPredicted.planetRow.id);
 
 	const remainingMs: number = selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at - Date.now();
 	const canAfford: boolean = Cost.canAffordUpgrade(selectedFullPlanetDataPredicted, buildingType);
@@ -93,6 +95,15 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 			<div className="w-full px-4 py-2 bg-yellow-600 text-white rounded text-center">
 				<div className="font-bold">Building</div>
 				<div className="text-xs">Time: {TimeFormat.formatRemainingTimeMs(remainingMs)}</div>
+			</div>
+		)
+		: meetsBuildingRequirements === false
+		? (
+			<div className="w-full px-4 py-2 bg-gray-600 text-white rounded text-center">
+				{PlayerData.getBuildingRequirementDescriptions(buildingType).map((requirement: string) =>
+				{
+					return <div key={requirement} className="text-xs">{requirement}</div>;
+				})}
 			</div>
 		)
 		: (

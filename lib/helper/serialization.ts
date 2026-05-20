@@ -1,5 +1,5 @@
 import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as PlanetData from "@/lib/playerData/buildingData";
+import * as PlanetData from "@/lib/playerData/thingData/buildingData";
 import * as DBType from "@/lib/db/dbTypes";
 
 // The wire format. Maps cannot survive JSON.stringify, so on the wire each
