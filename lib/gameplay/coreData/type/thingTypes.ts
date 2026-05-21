@@ -90,6 +90,10 @@ export function getAllSpecificThings(thingType: Thing): SpecificThing[]
     throw new Error(`getAllSpecificThings not supported for Thing ${thingType}`);
 }
 
+export function resource(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.Resource, specificThingType: specificThing }; }
+export function building(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.Building, specificThingType: specificThing }; }
+export function ship(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.Ship, specificThingType: specificThing }; }
+
 function getDataContextsForThing(thingType: Thing): PlayerDataType.DataContext[]
 {
     const thingDefinition: ThingDefinition | undefined = THING_DEFINITIONS.get(thingType);
