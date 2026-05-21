@@ -1,10 +1,23 @@
 import Database from "better-sqlite3";
-import { readFileSync, readdirSync } from "fs";
+import { existsSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
-import { createDatabaseConnection, databaseFilePath } from "@/lib/db/databaseConnection";
+import
+{
+	createDatabaseConnection,
+	databaseFilePath,
+	ensureDatabaseDirectoryExists,
+} from "@/lib/db/databaseConnection";
 
 const schemaFilePath: string = join(process.cwd(), "db", "schema.sql");
 const migrationsDirectoryPath: string = join(process.cwd(), "db", "migrations");
+
+ensureDatabaseDirectoryExists();
+
+if (existsSync(databaseFilePath) === true)
+{
+	console.error(`Database already exists at ${databaseFilePath}. Delete it first or run npm run db:migrate.`);
+	process.exit(1);
+}
 
 const databaseConnection: Database.Database = createDatabaseConnection();
 const schemaSqlText: string = readFileSync(schemaFilePath, "utf-8");
