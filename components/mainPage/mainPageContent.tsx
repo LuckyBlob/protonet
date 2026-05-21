@@ -7,12 +7,10 @@ import * as MainWindowElement from "@/components/layout/mainWindowElement";
 import * as PlanetSelector from "@/components/widgets/planetSelector";
 import * as SideBarElement from "@/components/layout/sideBarElement";
 import * as TopBarElement from "@/components/layout/topBarElement";
-
+import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser";
-
-import * as Actions from "@/lib/mainPageHelpers/actions"
 
 type MainPageContentProps =
 {
@@ -34,8 +32,8 @@ export function MainPageContent(props: MainPageContentProps): React.ReactElement
                     cvController={props.cvController}
                     clientDataStateResult={props.clientDataStateResult}
                     router={router}
-                    onLogout={Actions.handleLogout}
-                    onRefreshServerData={Actions.handleRefreshServerData}
+                    onLogout={handleLogout}
+                    onRefreshServerData={handleRefreshServerData}
                 />
             }
             topBar={
@@ -56,4 +54,34 @@ export function MainPageContent(props: MainPageContentProps): React.ReactElement
 	);
 
 	return mainPageContent;
+}
+
+export async function handleLogout(router: ReturnType<typeof useRouter>): Promise<void>
+{
+    const response = await ClientRequestFunctions.clientTryLogoutRequest();
+    if (response.error !== null)
+    {
+        return;
+    }
+    router.push("/login");
+};
+
+export async function handleRefreshServerData(clientDataStateResult: UseClientDataState.ClientDataStateResult): Promise<void>
+{
+    await ClientRequestFunctions.clientTryRefreshServerRequest(clientDataStateResult);
+};
+
+export function shouldShowLoading(cuController: UseCurrentUser.CUController, clientDataStateResult: UseClientDataState.ClientDataStateResult): boolean
+{
+    if (cuController[0].isLoading || clientDataStateResult.lsController[0].isLoading)
+    {
+        return true;
+    }
+
+    if (cuController[0].user === null)
+    {
+        return true;
+    }
+
+    return false;
 }

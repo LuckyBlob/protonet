@@ -1,12 +1,35 @@
 "use client";
 
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as PlayerData from "@/lib/playerData/thingData/playerData";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 const SELECTED_PLANET_STORAGE_KEY: string = "protonet.selectedPlanetId";
 
-export function readStoredSelectedPlanetId(): number | null
+export function updateSelectedPlanetIdInStorage(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): number
+{
+    const currentlySelectedPlanetId: number = readStoredSelectedPlanetId() ?? newPlayerData.fullPlanetDatas[0].planetRow.id;
+    if (currentlySelectedPlanetId === psController[0].selectedPlanetId)
+    {
+        return currentlySelectedPlanetId;
+    }
+
+    writeStoredSelectedPlanetId(currentlySelectedPlanetId);
+    return currentlySelectedPlanetId;
+}
+
+export function setSelectedPlanetID(psController: PlayerDataType.PSController, selectedPlanetId: number)
+{
+    const newPlayerState: PlayerDataType.PlayerState =
+    {
+        ...psController[0],
+        selectedPlanetId: selectedPlanetId,
+    }
+    writeStoredSelectedPlanetId(selectedPlanetId);
+    psController[1](newPlayerState);
+}
+
+function readStoredSelectedPlanetId(): number | null
 {
     if (typeof window === "undefined")
     {
@@ -30,7 +53,7 @@ export function readStoredSelectedPlanetId(): number | null
     return parsedValue;
 }
 
-export function writeStoredSelectedPlanetId(planetId: number): void
+function writeStoredSelectedPlanetId(planetId: number): void
 {
     if (typeof window === "undefined")
     {

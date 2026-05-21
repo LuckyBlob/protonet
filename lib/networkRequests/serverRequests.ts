@@ -1,6 +1,6 @@
 "use client";
 
-import * as RequestType from "@/lib/serverRequests/requestTypes";
+import * as RequestType from "@/lib/networkRequests/requestTypes";
 import { DataResponseMap, ActionResponseMap, ActionRequestMap } from "@/app/api/apiEndPoints"
 
 export async function requestServerData<K extends keyof DataResponseMap>(dataRequest: { name: K; endpoint: string }): Promise<DataResponseMap[K] | null>

@@ -1,9 +1,9 @@
-import * as GameType from "@/lib/gameplay/gameTypes";
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 import * as Cost from "@/lib/gameplay/cost";
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as BuildingData from "@/lib/playerData/thingData/buildingData";
-import * as PlayerData from "@/lib/playerData/thingData/playerData";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
+import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 
 export const buildingUpgradeDurationSecondsFunctionMap: Map<number, (currentUpgradeLevel: number, buildingType: number, playerData: PlayerDataType.PlayerData, planetId: number, serverData: ServerDataType.ServerData | null) => number> = new Map
 ([

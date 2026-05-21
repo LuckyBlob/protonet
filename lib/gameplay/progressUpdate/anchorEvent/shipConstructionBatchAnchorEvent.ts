@@ -1,8 +1,8 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 import * as DBType from "@/lib/db/dbTypes";
-import * as ShipData from "@/lib/playerData/thingData/shipData";
+import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
 
 export type ShipConstructionBatchAnchorEvent = AnchorEvent.AnchorEvent &
 {
@@ -75,9 +75,8 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
         if (newBatchTimeSeconds === 0 || fullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs[0].shipConstructionRows.length === 0)
         {
             throw new Error(`UNREACHABLE: Corrupted ship construction batch: PlanetId ${fullPlanetData.planetRow.id}`);
-            return;
         }
-        fullPlanetData.planetRow.current_ship_construction_batch_id = fullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs[0].shipConstructionRows[0].batch_id;
+        fullPlanetData.planetRow.current_ship_construction_batch_id = fullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs[0].batchId;
         const newBatchTimeMilliseconds: number = newBatchTimeSeconds * 1000;
         fullPlanetData.planetRow.ship_construction_batch_completes_at = anchorEvent.time + newBatchTimeMilliseconds ;
     }

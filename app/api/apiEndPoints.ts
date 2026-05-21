@@ -1,6 +1,6 @@
 "use client"
 
-import * as RequestType from "@/lib/serverRequests/requestTypes";
+import * as RequestType from "@/lib/networkRequests/requestTypes";
 
 //#region Actions
 export const ActionRequest =
@@ -46,8 +46,8 @@ export interface DataResponseMap
     UserInfo: RequestType.UserRowRequest;
     PlayerData: RequestType.PlayerDataRequest;
     ServerConfig: RequestType.ServerDataStateRequest;
-    AllPlanets: RequestType.ServerDataStateRequest;
-    OwnedPlanets: RequestType.ServerDataStateRequest;
+    AllPlanets: RequestType.AllPlanetDataRequest;
+    OwnedPlanets: RequestType.OwnedPlanetDataRequest;
 }
 //#endregion
 

@@ -3,14 +3,15 @@
 import * as Cost from "@/lib/gameplay/cost";
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-import * as PlanetData from "@/lib/playerData/thingData/buildingData";
+import * as PlanetData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
-import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as BuildingData from "@/lib/playerData/thingData/buildingData";
+import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as HelperElements from "@/components/helperElements";
-import * as PlayerData from "@/lib/playerData/thingData/playerData";
+import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
+import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 
 type UpgradeViewProps =
 {
@@ -48,7 +49,7 @@ function renderCostLine(nextCostMap: Map<number, number>): React.ReactElement
 
 	for (const [resourceType, resourceCost] of nextCostMap)
 	{
-		const resourceName: string = AssociationMaps.RESOURCE_DISPLAY_NAMES.get(resourceType) ?? `Resource ${resourceType}`;
+		const resourceName: string = GameType.RESOURCE_DISPLAY_NAMES.get(resourceType) ?? `Resource ${resourceType}`;
 		parts.push(`${resourceCost} ${resourceName}`);
 	}
 
@@ -57,11 +58,14 @@ function renderCostLine(nextCostMap: Map<number, number>): React.ReactElement
 
 function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData, buildingType: number): React.ReactElement
 {
-	const displayName: string = AssociationMaps.BUILDING_DISPLAY_NAMES.get(buildingType) ?? `Building ${buildingType}`;
+	const playerData: PlayerDataType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
+	const planetId: number = selectedFullPlanetDataPredicted.planetRow.id;
+
+	const displayName: string = GameType.BUILDING_DISPLAY_NAMES.get(buildingType) ?? `Building ${buildingType}`;
 	const currentLevel: number = PlanetData.getBuildingLevel(selectedFullPlanetDataPredicted, buildingType);
 
 	const nextCostMap: Map<number, number> | null = Cost.computeBuildingUpgradeCost(currentLevel, buildingType);
-	const buildDurationSeconds: number | null = PlanetData.getBuildingUpgradeDurationSeconds(props.clientDataStateResult.psController[0].predictedDBData, selectedFullPlanetDataPredicted, props.clientDataStateResult.sdsController[0], buildingType);
+	const buildDurationSeconds: number | null = PlanetData.getBuildingUpgradeDurationSeconds(playerData, selectedFullPlanetDataPredicted, props.clientDataStateResult.sdsController[0], buildingType);
 
 	if (nextCostMap === null || buildDurationSeconds === null)
 	{
@@ -74,16 +78,21 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 
 	const imagePath: string = getBuildingImagePath(buildingType, currentLevel);
 
-	const isThisBuildingUpgrading: boolean = (selectedFullPlanetDataPredicted.planetRow.building_being_upgraded === buildingType) && (selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at !== 0);
-	const isAnyBuildingUpgrading: boolean = selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at !== 0;
-	const meetsBuildingRequirements: boolean = PlayerData.meetsBuildingUpgradeRequirements(props.clientDataStateResult.psController[0].predictedDBData, buildingType, selectedFullPlanetDataPredicted.planetRow.id);
+
+	const isThisBuildingUpgrading: boolean = (
+		(selectedFullPlanetDataPredicted.planetRow.building_being_upgraded === buildingType) &&
+		(selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at !== 0)
+	);
+	const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedBuildingUpgradeRequirements(playerData, buildingType, planetId);
+	const failedHidingRequirements: RequirementType.Requirement[] = failedRequirements.filter((r: RequirementType.Requirement): boolean => r.hideDataWhenRequirementFailed === true);
+	const hidingDescriptions: string[] = Requirement.getRequirementDescriptions(failedHidingRequirements, playerData, planetId);
 
 	const remainingMs: number = selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at - Date.now();
 	const canAfford: boolean = Cost.canAffordUpgrade(selectedFullPlanetDataPredicted, buildingType);
 
 	const handleBuyUpgrade: () => void = () =>
 	{
-		PlayerUpdateClient.tryBuyBuildingUpgradeClient(props.clientDataStateResult.psController, selectedFullPlanetDataPredicted.planetRow.id, buildingType);
+		ClientRequestFunctions.clientTryUpgradeBuildingRequest(props.clientDataStateResult.psController, planetId, buildingType);
 	};
 
 	const levelLine: React.ReactElement = isThisBuildingUpgrading === true
@@ -97,19 +106,19 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 				<div className="text-xs">Time: {TimeFormat.formatRemainingTimeMs(remainingMs)}</div>
 			</div>
 		)
-		: meetsBuildingRequirements === false
+		: (failedHidingRequirements.length > 0)
 		? (
 			<div className="w-full px-4 py-2 bg-gray-600 text-white rounded text-center">
-				{PlayerData.getBuildingRequirementDescriptions(buildingType).map((requirement: string) =>
+				{hidingDescriptions.map((description: string) =>
 				{
-					return <div key={requirement} className="text-xs">{requirement}</div>;
+					return <div key={description} className="text-xs">{description}</div>;
 				})}
 			</div>
 		)
 		: (
 			<button
 				onClick={handleBuyUpgrade}
-				disabled={(canAfford === false) || (isAnyBuildingUpgrading === true)}
+				disabled={(canAfford === false) || (failedRequirements.length > 0)}
 				className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex flex-col items-center"
 			>
 				<span className="font-bold">Build Upgrade</span>
@@ -130,6 +139,7 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 					{
 						(e.currentTarget as HTMLImageElement).style.display = "none";
 						const fallback: HTMLElement | null = (e.currentTarget.nextElementSibling as HTMLElement | null);
+
 						if (fallback !== null)
 						{
 							fallback.style.display = "flex";
@@ -155,7 +165,7 @@ export function UpgradeView(props: UpgradeViewProps): React.ReactElement
 	{
 		const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 
-		const cardElements: React.ReactElement[] = AssociationMaps.getTypes(AssociationMaps.ThingType.Building).map((buildingType: number): React.ReactElement =>
+		const cardElements: React.ReactElement[] = ThingType.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: number): React.ReactElement =>
 		{
 			return renderBuildingCard(props, selectedFullPlanetDataPredicted, buildingType);
 		});
@@ -171,7 +181,7 @@ export function UpgradeView(props: UpgradeViewProps): React.ReactElement
 	}
 	catch (error: unknown)
 	{
-		console.warn("⚠️:", error); 
+		console.warn("⚠️:", error);
 		return <HelperElements.EmptyElement></HelperElements.EmptyElement>;
 	}
 }

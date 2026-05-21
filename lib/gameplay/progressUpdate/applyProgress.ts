@@ -1,9 +1,9 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
-import * as ResourceData from "@/lib/playerData/thingData/resourceData";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as Production from "@/lib/gameplay/production";
-import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
+import * as ThingTypes from "@/lib/gameplay/coreData/type/thingTypes";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionBatchAnchorEvent"
 
@@ -53,7 +53,7 @@ function applyUpdateAtTimeForPlanet(fullPlanetData: PlayerDataType.FullPlanetDat
 
 function getPredictedResourceQuantitiesAtTime(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, time: number): Map<number, number>
 {
-    const resourceTypes: number[] = AssociationMaps.getTypes(AssociationMaps.ThingType.Resource);
+    const resourceTypes: number[] = ThingTypes.getAllSpecificThings(ThingTypes.Thing.Resource);
 
     const predictedResourceQuantities: Map<number, number> = new Map<number, number>();
     for (const resourceType of resourceTypes)
@@ -66,12 +66,7 @@ function getPredictedResourceQuantitiesAtTime(fullPlanetData: PlayerDataType.Ful
 
 function getPredictedResourceQuantityAtTime(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, time: number, resourceType: number): number
 {
-    const currentResourceQuantity: number | null = ResourceData.getResourceQuantity(fullPlanetData, resourceType);
-    if (currentResourceQuantity === null)
-    {
-        return 0;
-    }
-
+    const currentResourceQuantity: number = ResourceData.getResourceQuantity(fullPlanetData, resourceType);
     const elapsedMilliseconds: number = time - fullPlanetData.planetRow.last_updated;
     const elapsedSeconds: number = elapsedMilliseconds / 1000;
     if (elapsedSeconds <= 0)

@@ -8,7 +8,6 @@ import * as UseCurrentView from "@/lib/use/useCurrentView";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser";
 
-import * as Actions from "@/lib/mainPageHelpers/actions"
 
 export default function Home()
 {
@@ -19,7 +18,7 @@ export default function Home()
 
 	UseAnimationTimer.useAnimationTimer(clientDataStateResult);
 
-	if (Actions.shouldShowLoading(cuController, clientDataStateResult))
+	if (MainPageContent.shouldShowLoading(cuController, clientDataStateResult))
 	{
 		return <LoadingElement.LoadingElement />;
 	}

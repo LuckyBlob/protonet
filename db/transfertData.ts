@@ -1,7 +1,6 @@
 import { databaseConnection } from "@/lib/db/db";
 import { PlayerRow, PlanetRow } from "@/lib/db/dbTypes";
-import * as GameType from "@/lib/gameplay/gameTypes";
-import * as PlanetServer from "@/lib/update/server/planetUpdateServer";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import Database from "better-sqlite3";
 
 function transferPlayerProgress(player: PlayerRow): void

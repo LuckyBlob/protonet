@@ -1,5 +1,5 @@
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionBatchAnchorEvent"

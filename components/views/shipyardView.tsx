@@ -1,28 +1,29 @@
 "use client";
 
-import { StringDecoder } from "string_decoder";
 import { useState, ChangeEvent, ReactElement } from "react";
 
-import * as PlayerData from "@/lib/playerData/thingData/playerData";
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
-import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as ShipData from "@/lib/playerData/thingData/shipData";
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
-import * as RequestType from "@/lib/serverRequests/requestTypes";
+import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as RequestType from "@/lib/networkRequests/requestTypes";
 import * as HelperElements from "@/components/helperElements";
+import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
+import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 
 const PREVIEW_MAX_SHIP_LINES = 7;
 const PREVIEW_MAX_RESOURCE_LINES = 7;
-const PREVIEW_TEXT_LINE_HEIGHT_PX = 20;   
+const PREVIEW_TEXT_LINE_HEIGHT_PX = 20;
 const PREVIEW_TOTAL_TIME_LINE_PX = 20;
 const PREVIEW_COUNTDOWN_LINE_PX = 20;
-const PREVIEW_BUTTON_PX = 40;             
-const PREVIEW_BOX_VERTICAL_PADDING_PX = 32; 
-const PREVIEW_STACK_GAPS_PX = 32;         
+const PREVIEW_BUTTON_PX = 40;
+const PREVIEW_BOX_VERTICAL_PADDING_PX = 32;
+const PREVIEW_STACK_GAPS_PX = 32;
 
 const PREVIEW_RESERVE_HEIGHT_PX =
     (PREVIEW_MAX_SHIP_LINES * PREVIEW_TEXT_LINE_HEIGHT_PX)
@@ -55,15 +56,17 @@ function getShipImagePath(shipType: number): string
 function buildSingleShipCostParts(shipType: number): string[]
 {
     const singleCostMap: Map<number, number> | null = ShipData.getSingleShipCost(shipType);
+
     if (singleCostMap === null)
-	{
-		return [];
-	} 
+    {
+        return [];
+    }
 
     const costParts: string[] = [];
+
     for (const [resourceType, resourceCost] of singleCostMap)
-	{
-        costParts.push(`${resourceCost} ${AssociationMaps.getThingName(AssociationMaps.resource(resourceType))}`);
+    {
+        costParts.push(`${resourceCost} ${ThingType.getSpecificThingName(ThingType.resource(resourceType))}`);
     }
 
     return costParts;
@@ -74,12 +77,14 @@ function buildRequestedQuantitiesMap(shipTypes: number[], requestedQuantities: M
     const requestedMap: Map<number, number> = new Map<number, number>();
 
     for (const shipType of shipTypes)
-	{
+    {
         const requestedQuantity: number = requestedQuantities.get(shipType) ?? 0;
+
         if (requestedQuantity <= 0)
-		{
-			continue;
-		}
+        {
+            continue;
+        }
+
         requestedMap.set(shipType, requestedQuantity);
     }
 
@@ -91,20 +96,23 @@ function buildShipQuantityRequests(shipTypes: number[], requestedQuantities: Map
     const shipQuantityRequests: RequestType.ShipQuantityRequest[] = [];
 
     for (const shipType of shipTypes)
-	{
+    {
         const requestedQuantity: number = requestedQuantities.get(shipType) ?? 0;
+
         if (requestedQuantity <= 0)
-		{
-			continue;
-		}
-		const newShipQuantityRequest: RequestType.ShipQuantityRequest =
-		{
-			shipType: shipType,
-			shipQuantity: requestedQuantity,
-		}
+        {
+            continue;
+        }
+
+        const newShipQuantityRequest: RequestType.ShipQuantityRequest =
+        {
+            shipType: shipType,
+            shipQuantity: requestedQuantity,
+        };
 
         shipQuantityRequests.push(newShipQuantityRequest);
     }
+
     return shipQuantityRequests;
 }
 //#endregion
@@ -113,9 +121,9 @@ function buildShipQuantityRequests(shipTypes: number[], requestedQuantities: Map
 function renderShipImage(shipType: number): ReactElement
 {
     const imagePath = getShipImagePath(shipType);
-	const element: ReactElement =
-	(
-		<div className="w-24 h-24 flex flex-col items-center justify-center text-center">
+    const element: ReactElement =
+    (
+        <div className="w-24 h-24 flex flex-col items-center justify-center text-center">
             <img
                 src={imagePath}
                 alt=""
@@ -130,78 +138,92 @@ function renderShipImage(shipType: number): ReactElement
                 <span>[Image]</span>
             </div>
         </div>
-	);
+    );
 
-	return element;
+    return element;
 }
 
 function renderConstructionCountdownLine(fullPlanetData: PlayerDataType.FullPlanetData): ReactElement | null
 {
     const remainingMs: number | null = ShipData.getShipConstructionBatchRemainingMs(fullPlanetData);
+
     if (remainingMs === null)
-	{
-		return null;
-	}
-	const element: ReactElement =
-	(
-		<div className="text-sm font-semibold text-yellow-400 whitespace-nowrap inline-block">
+    {
+        return null;
+    }
+
+    const element: ReactElement =
+    (
+        <div className="text-sm font-semibold text-yellow-400 whitespace-nowrap inline-block">
             Next ship batch construction ends in: {TimeFormat.formatRemainingTimeMs(remainingMs)}
         </div>
-	);
-	return element;
+    );
+
+    return element;
 }
 
 function renderQuantityInput(props: ShipyardViewProps, shipType: number, requestedQuantity: number, fullPlanetData: PlayerDataType.FullPlanetData, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
 {
-	let element: ReactElement | null = null
-	if (!PlayerData.meetsShipBuildRequirements(props.clientDataStateResult.psController[0].predictedDBData, shipType, fullPlanetData.planetRow.id))
-	{
-		const requirements: string[] = PlayerData.getShipRequirementDescriptions(shipType);
-		element =
-		(
-			<div>
-				{requirements.map((requirement: string) =>
-				{
-					return <div key={requirement}>{requirement}</div>;
-				})}
-			</div>
-		);
-	}
-	else
-	{
-		const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>) =>
-		{
-			const parsedValue = Number.parseInt(e.target.value, 10);
-			if (Number.isNaN(parsedValue) || parsedValue < 0) {
-				setRequestedQuantity(shipType, 0);
-				return;
-			}
-			setRequestedQuantity(shipType, parsedValue);
-		};
-		element =
-		(
-			<input
-				type="number"
-				min={0}
-				value={requestedQuantity}
-				onChange={handleQuantityChange}
-				className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-24"
-			/>
-		);
-	}
+    const playerData: PlayerDataType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
+    const planetId: number = fullPlanetData.planetRow.id;
 
-	return element;
+    let element: ReactElement | null = null;
+
+    const failedShipRequirements: RequirementType.Requirement[] = Requirement.getFailedShipBuildRequirements(playerData, shipType, planetId);
+    if (failedShipRequirements.length > 0)
+    {
+        const requirements: string[] = Requirement.getRequirementDescriptions(failedShipRequirements, playerData, planetId);
+
+        element =
+        (
+            <div>
+                {requirements.map((requirement: string) =>
+                {
+                    return <div key={requirement}>{requirement}</div>;
+                })}
+            </div>
+        );
+    }
+    else
+    {
+        const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>) =>
+        {
+            const parsedValue = Number.parseInt(e.target.value, 10);
+
+            if (Number.isNaN(parsedValue) || parsedValue < 0)
+            {
+                setRequestedQuantity(shipType, 0);
+                return;
+            }
+
+            setRequestedQuantity(shipType, parsedValue);
+        };
+
+        element =
+        (
+            <input
+                type="number"
+                min={0}
+                value={requestedQuantity}
+                onChange={handleQuantityChange}
+                className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-24"
+            />
+        );
+    }
+
+    return element;
 }
 
 function renderShipBuildRow(props: ShipyardViewProps, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, shipType: number, requestedQuantity: number, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
 {
-    const shipName: string = AssociationMaps.getThingName(AssociationMaps.ship(shipType));
+    const shipName: string = ThingType.getSpecificThingName(ThingType.ship(shipType));
     const ownedQuantity: number = ShipData.getShipQuantity(fullPlanetData, shipType);
-    const singleDurationSeconds: number = ShipData.getShipConstructionDurationSeconds(shipType, fullPlanetData, serverData)?? 0;
+    const singleDurationSeconds: number = ShipData.getShipConstructionDurationSeconds(shipType, fullPlanetData, serverData) ?? 0;
     const costParts: string[] = buildSingleShipCostParts(shipType);
-	const element: ReactElement =
-	(
-		<div key={shipType} className="flex flex-row items-center border border-gray-400 rounded">
+
+    const element: ReactElement =
+    (
+        <div key={shipType} className="flex flex-row items-center border border-gray-400 rounded">
             <div className="flex items-center justify-center px-4 py-3 border-r border-gray-400">
                 {renderShipImage(shipType)}
             </div>
@@ -220,25 +242,28 @@ function renderShipBuildRow(props: ShipyardViewProps, fullPlanetData: PlayerData
                 {renderQuantityInput(props, shipType, requestedQuantity, fullPlanetData, setRequestedQuantity)}
             </div>
         </div>
-	);
-	return element;
+    );
+
+    return element;
 }
 
 function renderShipBuildRows(props: ShipyardViewProps, shipTypes: number[], fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, requestedQuantities: Map<number, number>, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
 {
     const rowElements = shipTypes.map((shipType: number) =>
-	{
-		const requestedQuantity = requestedQuantities.get(shipType) ?? 0;
+    {
+        const requestedQuantity = requestedQuantities.get(shipType) ?? 0;
+
         return renderShipBuildRow(props, fullPlanetData, serverData, shipType, requestedQuantity, setRequestedQuantity);
     });
 
-	const element: ReactElement =
-	(
+    const element: ReactElement =
+    (
         <div className="text-sm font-semibold text-white whitespace-nowrap inline-block">
             {rowElements}
         </div>
-	);
-	return element;
+    );
+
+    return element;
 }
 
 function renderBuildableShipLines(buildableQuantities: Map<number, number>): ReactElement
@@ -246,26 +271,27 @@ function renderBuildableShipLines(buildableQuantities: Map<number, number>): Rea
     const shipLineElements: ReactElement[] = [];
 
     for (const [shipType, shipQuantity] of buildableQuantities)
-	{
+    {
         if (shipQuantity <= 0)
-		{
-			continue;
-		}
+        {
+            continue;
+        }
 
         shipLineElements.push(
             <div key={shipType} className="text-sm">
-                {AssociationMaps.getThingName(AssociationMaps.ship(shipType))} x {shipQuantity}
+                {ThingType.getSpecificThingName(ThingType.ship(shipType))} x {shipQuantity}
             </div>
         );
     }
-	const element: ReactElement =
-	(
-		<div className="contents">
+
+    const element: ReactElement =
+    (
+        <div className="contents">
             {shipLineElements}
         </div>
-	);
+    );
 
-	return element;
+    return element;
 }
 
 function renderBuildableResourceLines(totalCost: Map<number, number>): ReactElement
@@ -273,33 +299,36 @@ function renderBuildableResourceLines(totalCost: Map<number, number>): ReactElem
     const resourceLineElements: ReactElement[] = [];
 
     for (const [resourceType, resourceCost] of totalCost)
-	{
+    {
         resourceLineElements.push
-		(
+        (
             <div key={resourceType} className="text-sm text-blue-400">
-                {resourceCost} {AssociationMaps.getThingName(AssociationMaps.resource(resourceType))}
+                {resourceCost} {ThingType.getSpecificThingName(ThingType.resource(resourceType))}
             </div>
         );
     }
-	const element: ReactElement =
-	(
-		<div className="contents">
+
+    const element: ReactElement =
+    (
+        <div className="contents">
             {resourceLineElements}
         </div>
-	);
-	return element;
+    );
+
+    return element;
 }
 
-function renderBuildPreviewContent(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, requestedMap: Map<number, number>): ReactElement | null 
+function renderBuildPreviewContent(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, requestedMap: Map<number, number>): ReactElement | null
 {
     if (requestedMap.size === 0)
-	{
-		return null;
-	}
+    {
+        return null;
+    }
 
     const buildableQuantities: Map<number, number> = ShipData.computeMaxAffordableShipQuantities(fullPlanetData, requestedMap);
+
     if (buildableQuantities.size === 0)
-	{
+    {
         return (
             <div className="border border-gray-400 rounded px-6 py-4 text-center w-80">
                 Rien, esti de pauvre.
@@ -310,8 +339,8 @@ function renderBuildPreviewContent(fullPlanetData: PlayerDataType.FullPlanetData
     const totalDurationSeconds: number = ShipData.computeShipQuantitiesConstructionDurationSeconds(buildableQuantities, fullPlanetData, serverData);
     const totalCost: Map<number, number> = ShipData.computeShipConstructionBatchCost(buildableQuantities);
 
-	const element: ReactElement =
-	(
+    const element: ReactElement =
+    (
         <div className="border border-gray-400 rounded px-6 py-4 flex flex-col items-center gap-2 w-80 bg-black">
             <div className="flex flex-col items-center gap-1">
                 {renderBuildableShipLines(buildableQuantities)}
@@ -333,12 +362,12 @@ function renderBuildPreviewContent(fullPlanetData: PlayerDataType.FullPlanetData
 function renderBuildButton(hasRequestedData: boolean, onBuildAll: () => void): ReactElement | null
 {
     if (!hasRequestedData)
-	{
-		return null;
-	}
+    {
+        return null;
+    }
 
-	const element: ReactElement =
-	(
+    const element: ReactElement =
+    (
         <button
             onClick={onBuildAll}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
@@ -346,13 +375,14 @@ function renderBuildButton(hasRequestedData: boolean, onBuildAll: () => void): R
             Build all
         </button>
     );
+
     return element;
 }
 
 function renderShipyardLayout(previewSlot: ReactElement, buildRowElements: ReactElement, countdownLine: ReactElement | null): ReactElement
 {
-	const element: ReactElement =
-	(
+    const element: ReactElement =
+    (
         <div className="w-full flex flex-col items-center justify-center gap-4">
             <div
                 className="w-full flex flex-col items-center justify-center shrink-0"
@@ -363,11 +393,11 @@ function renderShipyardLayout(previewSlot: ReactElement, buildRowElements: React
 
             <div className="relative flex flex-col gap-2 items-center">
                 {countdownLine && (
-                    <div 
+                    <div
                         className="absolute text-sm font-semibold text-yellow-400 whitespace-nowrap z-20"
-                        style={{ 
-                            transform: 'translateY(-100%)', 
-                            top: '-12px' 
+                        style={{
+                            transform: 'translateY(-100%)',
+                            top: '-12px'
                         }}
                     >
                         {countdownLine}
@@ -376,21 +406,22 @@ function renderShipyardLayout(previewSlot: ReactElement, buildRowElements: React
                 {buildRowElements}
             </div>
         </div>
-	);
+    );
 
     return element;
 }
 
 function renderPreviewSlot(previewContent: ReactElement | null, buildButton: ReactElement | null): ReactElement
 {
-	const element: ReactElement =
-	(
-		<div className="flex flex-col items-center justify-center gap-4">
+    const element: ReactElement =
+    (
+        <div className="flex flex-col items-center justify-center gap-4">
             {previewContent}
             {buildButton}
         </div>
-	);
-	return element;
+    );
+
+    return element;
 }
 //#endregion
 
@@ -400,14 +431,14 @@ function useRequestedQuantities(): RequestedQuantitiesState
     const [requestedQuantities, setRequestedQuantitiesMap] = useState<Map<number, number>>(new Map<number, number>());
 
     const setRequestedQuantity = (shipType: number, value: number) =>
-	{
+    {
         const updatedMap = new Map<number, number>(requestedQuantities);
         updatedMap.set(shipType, value);
         setRequestedQuantitiesMap(updatedMap);
     };
 
     const resetRequestedQuantities = () =>
-	{
+    {
         setRequestedQuantitiesMap(new Map<number, number>());
     };
 
@@ -418,27 +449,27 @@ function useRequestedQuantities(): RequestedQuantitiesState
     };
 }
 
-function makeBuildAllHandler(props: ShipyardViewProps, fullPlanetData: PlayerDataType.FullPlanetData, shipTypes: number[], requestedQuantities: Map<number, number>, resetRequestedQuantities: () => void): () => void 
+function makeBuildAllHandler(props: ShipyardViewProps, fullPlanetData: PlayerDataType.FullPlanetData, shipTypes: number[], requestedQuantities: Map<number, number>, resetRequestedQuantities: () => void): () => void
 {
     return () =>
-	{
+    {
         const shipQuantityRequests: RequestType.ShipQuantityRequest[] = buildShipQuantityRequests(shipTypes, requestedQuantities);
-        if (shipQuantityRequests.length === 0)
-		{
-			return;
-		}
 
-        PlayerUpdateClient.tryBuildShipsClient(props.clientDataStateResult.psController, fullPlanetData.planetRow.id, shipQuantityRequests);
+        if (shipQuantityRequests.length === 0)
+        {
+            return;
+        }
+
+        ClientRequestFunctions.clientTryBuildShipsRequest(props.clientDataStateResult.psController, fullPlanetData.planetRow.id, shipQuantityRequests);
         resetRequestedQuantities();
     };
 }
-
 //#endregion
 
 function renderShipyardBody(props: ShipyardViewProps, fullPlanetData: PlayerDataType.FullPlanetData, quantitiesState: RequestedQuantitiesState): ReactElement
 {
-	const serverData: ServerDataType.ServerData = props.clientDataStateResult.sdsController[0];
-    const shipTypes: number[] = AssociationMaps.getTypes(AssociationMaps.ThingType.Ship);
+    const serverData: ServerDataType.ServerData = props.clientDataStateResult.sdsController[0];
+    const shipTypes: number[] = ThingType.getAllSpecificThings(ThingType.Thing.Ship);
 
     const requestedMap: Map<number, number> = buildRequestedQuantitiesMap(shipTypes, quantitiesState.requestedQuantities);
     const hasRequestedData: boolean = requestedMap.size > 0;
@@ -457,19 +488,14 @@ function renderShipyardBody(props: ShipyardViewProps, fullPlanetData: PlayerData
 export function ShipyardView(props: ShipyardViewProps): ReactElement
 {
     const quantitiesState: RequestedQuantitiesState = useRequestedQuantities();
-    const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-
-    if (!selectedFullPlanetDataPredicted)
-	{
-        return <HelperElements.EmptyElement />;
-    }
 
     try
-	{
+    {
+        const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
         return renderShipyardBody(props, selectedFullPlanetDataPredicted, quantitiesState);
     }
-	catch (error)
-	{
+    catch (error)
+    {
         console.warn("⚠️:", error);
         return <HelperElements.EmptyElement />;
     }

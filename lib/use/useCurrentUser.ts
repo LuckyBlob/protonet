@@ -4,9 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import * as DBType from "@/lib/db/dbTypes";
-import * as ServerRequest from "@/lib/serverRequests/serverRequests";
-import * as RequestType from "@/lib/serverRequests/requestTypes";
-import * as APIEndPoint from "@/app/api/apiEndPoints"
+import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 
 export type CUController  = [CurrentUserResult, (value: CurrentUserResult) => void];
 export type CurrentUserResult =
@@ -31,9 +29,9 @@ export function useCurrentUser(): CUController
 	{
 		const currentUser: () => Promise<void> = async () =>
 		{
-			const userRowRequest: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.UserInfo> | null = await ServerRequest.requestServerData(APIEndPoint.DataRequest.UserInfo);
-			
-			if (userRowRequest === null || userRowRequest.userRow == null)
+			const response = await ClientRequestFunctions.clientTryUserInfoRequest();
+
+			if (response === null || response.userRow == null)
 			{
 				router.push("/login");
 				return;
@@ -41,9 +39,9 @@ export function useCurrentUser(): CUController
 
 			const currentUserResult: CurrentUserResult =
 			{
-				user: userRowRequest.userRow,
+				user: response.userRow,
 				isLoading: false
-			}
+			};
 
 			cuController[1](currentUserResult);
 		};

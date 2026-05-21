@@ -1,7 +1,7 @@
 import * as DBType from "@/lib/db/dbTypes";
 import * as PlayerDataSerialization from "@/lib/helper/serialization";
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 
 export type BaseServerResponse = 
 {

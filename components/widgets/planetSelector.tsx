@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 
 type PlanetSelectorProps =
 {
@@ -79,6 +79,6 @@ export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
 
 async function handleSelectPlanet(clientDataStateResult: UseClientDataState.ClientDataStateResult, newPlanetID: number, setIsOpen: (value: boolean) => void): Promise<void>
 {
-	PlayerUpdateClient.setSelectedPlanetID(clientDataStateResult.psController, newPlanetID);
+	SelectedPlanet.setSelectedPlanetID(clientDataStateResult.psController, newPlanetID);
 	setIsOpen(false);
 };

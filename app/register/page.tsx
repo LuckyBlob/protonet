@@ -3,9 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import * as RequestType from "@/lib/serverRequests/requestTypes";
-import * as ServerRequest from "@/lib/serverRequests/serverRequests"
-import * as APIEndPoint from "@/app/api/apiEndPoints"
+import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 
 export default function RegisterPage()
 {
@@ -22,18 +20,12 @@ export default function RegisterPage()
 
 	const handleSubmit: () => Promise<void> = async () =>
 	{
-		const authenticationData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Register> =
+		const response = await ClientRequestFunctions.clientTryRegisterRequest(usernameState[0], passwordState[0]);
+		if (response.error !== null)
 		{
-			username: usernameState[0],
-			password: passwordState[0],
-		}
-		const serverResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Register, authenticationData);
-		if (serverResponse.error !== null)
-		{
-			setError(serverResponse.error);
+			setError(response.error);
 			return;
 		}
-
 		router.push("/");
 	};
 

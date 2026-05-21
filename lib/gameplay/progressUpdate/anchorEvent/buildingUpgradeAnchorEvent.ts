@@ -1,7 +1,7 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as PlanetData from "@/lib/playerData/thingData/buildingData";
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as PlanetData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 
 export type BuildingUpgradeAnchorEvent = AnchorEvent.AnchorEvent &
 {

@@ -5,8 +5,8 @@ import { ReactElement } from "react";
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as HelperElements from "@/components/helperElements";
 
 type ShipViewProps =
@@ -21,7 +21,7 @@ function renderBatchShipLines(batch: PlayerDataType.ShipConstructionBatch): Reac
 
     for (const shipConstructionRow of batch.shipConstructionRows)
     {
-        const shipName: string = AssociationMaps.SHIP_DISPLAY_NAMES.get(shipConstructionRow.ship_type) ?? `Ship ${shipConstructionRow.ship_type}`;
+        const shipName: string = GameType.SHIP_DISPLAY_NAMES.get(shipConstructionRow.ship_type) ?? `Ship ${shipConstructionRow.ship_type}`;
 
         lineElements.push(
             <div key={shipConstructionRow.ship_type} className="text-sm">

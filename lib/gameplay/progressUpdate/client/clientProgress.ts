@@ -2,8 +2,8 @@
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 
@@ -16,5 +16,5 @@ export function runClientTick(clientDataStateResult: UseClientDataState.ClientDa
 
     const updatedPlayerData: PlayerDataType.PlayerData = ApplyProgress.applyProgressToPlayerData(clientDataStateResult.psController[0].dbData, clientDataStateResult.sdsController[0], now, clientProgressResolver);
 
-    PlayerUpdateClient.setPredictedPlayerState(clientDataStateResult.psController, updatedPlayerData);
+    ClientRequestFunctions.setPredictedPlayerState(clientDataStateResult.psController, updatedPlayerData);
 }

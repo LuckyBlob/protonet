@@ -1,5 +1,4 @@
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as PlanetData from "@/lib/playerData/thingData/buildingData";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as DBType from "@/lib/db/dbTypes";
 
 // The wire format. Maps cannot survive JSON.stringify, so on the wire each
@@ -10,7 +9,7 @@ import * as DBType from "@/lib/db/dbTypes";
 // rejects it.
 
 //#region Planet Data
-export type SerializedDynamicPlanetData =
+type SerializedDynamicPlanetData =
 {
 	resourceQuantity: [number, number][];
 	buildingLevels: [number, number][];
@@ -18,7 +17,7 @@ export type SerializedDynamicPlanetData =
 	queuedShipConstructionBatchs: PlayerDataType.ShipConstructionBatch[];
 };
 
-export type SerializedFullPlanetData =
+type SerializedFullPlanetData =
 {
 	planetRow: DBType.PlanetRow;
 	dynamicPlanetData: SerializedDynamicPlanetData;
@@ -93,42 +92,6 @@ export function deserializePlayerData(serialized: SerializedPlayerData): PlayerD
 	{
 		playerRow: serialized.playerRow,
 		fullPlanetDatas: fullPlanetDatas,
-	};
-
-	return playerData;
-}
-//#endregion
-
-//#region Player State
-export type SerializedPlayerState =
-{
-	dbData: SerializedPlayerData;
-	predictedDBData: SerializedPlayerData;
-	selectedPlanetId: number;
-	lastFetchTimestamp: number;
-};
-
-export function serializePlayerState(playerState: PlayerDataType.PlayerState): SerializedPlayerState
-{
-	const serialized: SerializedPlayerState =
-	{
-		dbData: serializePlayerData(playerState.dbData),
-		predictedDBData: serializePlayerData(playerState.predictedDBData),
-		selectedPlanetId: playerState.selectedPlanetId,
-		lastFetchTimestamp: playerState.lastFetchTimestamp,
-	};
-
-	return serialized;
-}
-
-export function deserializePlayerState(serializedPlayerState: SerializedPlayerState): PlayerDataType.PlayerState
-{
-	const playerData: PlayerDataType.PlayerState =
-	{
-		dbData: deserializePlayerData(serializedPlayerState.dbData),
-		predictedDBData: deserializePlayerData(serializedPlayerState.predictedDBData),
-		selectedPlanetId: serializedPlayerState.selectedPlanetId,
-		lastFetchTimestamp: serializedPlayerState.lastFetchTimestamp,
 	};
 
 	return playerData;

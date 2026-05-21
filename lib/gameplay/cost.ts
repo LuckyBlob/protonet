@@ -1,14 +1,14 @@
-import * as Building from "@/lib/gameplay/coreData/buildingCostFormulas";
-import * as PlanetData from "@/lib/playerData/thingData/buildingData";
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as ResourceData from "@/lib/playerData/thingData/resourceData";
+import * as Building from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
+import * as PlanetData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 
 export function computeBuildingUpgradeCost(currentUpgradeLevel: number, buildingType: number): Map<number, number> | null
 {
 	const costFunction: ((currentUpgradeLevel: number) => Map<number, number>) | undefined = Building.buildingCostFunctionMap.get(buildingType);
 	if (costFunction === undefined)
 	{
-        throw new Error(`Building type ${buildingType} has no calculatable cost.`);
+		console.warn("⚠️:", `Building type ${buildingType} has no calculatable cost.`); 
 		return null;
 	}
 
@@ -26,12 +26,7 @@ export function canAffordUpgrade(fullPlanetData: PlayerDataType.FullPlanetData, 
 
 	for (const [resourceType, resourceCost] of nextUpgradeCostMap)
 	{
-        const currentResourceQuantity: number | undefined = ResourceData.getResourceQuantity(fullPlanetData, resourceType); 
-		if (currentResourceQuantity === undefined)
-		{
-			return false;
-		}
-
+        const currentResourceQuantity: number = ResourceData.getResourceQuantity(fullPlanetData, resourceType); 
 		if (currentResourceQuantity < resourceCost)
 		{
 			return false;

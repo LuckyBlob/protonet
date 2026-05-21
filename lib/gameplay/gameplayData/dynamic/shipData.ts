@@ -1,39 +1,25 @@
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
-import * as ShipConstructionFormulas from "@/lib/gameplay/coreData/shipConstructionFormulas";
-import * as PlayerData from "@/lib/playerData/thingData/playerData";
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as BuildingData from "@/lib/playerData/thingData/buildingData";
-import * as ResourceData from "@/lib/playerData/thingData/resourceData";
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as ShipConstructionFormulas from "@/lib/gameplay/coreData/formula/shipConstructionFormulas";
+import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
+import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as APIEndPoint from "@/app/api/apiEndPoints"
-import * as RequestType from "@/lib/serverRequests/requestTypes";
-import * as GameType from "@/lib/gameplay/gameTypes";
+import * as RequestType from "@/lib/networkRequests/requestTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 
 // #region Ship Management
 export function setShipQuantity(fullPlanetData: PlayerDataType.FullPlanetData, shipType: number, value: number): void
 {
-	const setter: PlayerDataType.TypeSetter | undefined = AssociationMaps.getTypeSetters(fullPlanetData, PlayerDataType.DataContext.ShipQuantity).get(shipType);
-
-	if (!setter)
-	{
-		throw new Error("Ship quantities dont have setters.");
-		return;
-	}
-
-	setter(value);
+	ThingType.setSpecificThingValue(fullPlanetData, PlayerDataType.DataContext.ShipQuantity, shipType, value);
 }
 
 export function getShipQuantity(fullPlanetData: PlayerDataType.FullPlanetData, shipType: number): number
 {
-	const getter: PlayerDataType.TypeGetter | undefined = AssociationMaps.getTypeGetters(fullPlanetData, PlayerDataType.DataContext.ShipQuantity).get(shipType);
-
-	if (!getter)
-	{
-		throw new Error("Ship quantities dont have Getters.");
-		return 0;
-	}
-
-	return getter();
+	const shipQuantities: Map<ThingType.SpecificThing, number> = ThingType.getThingValues(fullPlanetData, PlayerDataType.DataContext.ShipQuantity);
+	return shipQuantities.get(shipType) ?? 0;
 }
 
 export function getShipConstructionBatchRemainingMs(fullPlanetData: PlayerDataType.FullPlanetData): number | null
@@ -77,7 +63,7 @@ export function getShipConstructionDurationSeconds(shipType: number, fullPlanetD
 
 		const extraShipConstructionData: ShipConstructionFormulas.ExtraShipConstructionData =
 		{
-			currentShipyardLevel: BuildingData.getBuildingLevel(fullPlanetData, GameType.SHIPYARD_BUILDING_TYPE) ?? 0,
+			currentShipyardLevel: BuildingData.getBuildingLevel(fullPlanetData, GameType.SHIPYARD_BUILDING_TYPE),
 			structuralIntegrity: AssociationMaps.SHIP_STRUCTUAL_INTEGRITY.get(shipType) ?? 0,
 		}
 
@@ -197,7 +183,7 @@ export function computeMaxAffordableShipQuantities(fullPlanetData: PlayerDataTyp
 		
 		buildableShipQuantities.set(desiredShipType, smallestQuantityPossible);
 		const ressourceCostForDesiredShipType: Map<number, number> | null = computeSingleShipTypeConstructionCost(desiredShipType, smallestQuantityPossible);
-		if (ressourceCostForDesiredShipType == null)
+		if (ressourceCostForDesiredShipType === null)
 		{
 			continue;
 		}
@@ -216,7 +202,3 @@ export function computeMaxAffordableShipQuantities(fullPlanetData: PlayerDataTyp
 	return buildableShipQuantities;
 }
 // #endregion
-
-//#region Requirement
-
-//#endregion

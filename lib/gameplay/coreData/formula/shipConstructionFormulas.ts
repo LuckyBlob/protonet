@@ -1,5 +1,5 @@
-import * as GameType from "@/lib/gameplay/gameTypes";
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 import * as Cost from "@/lib/gameplay/cost";
 
 export type ExtraShipConstructionData =

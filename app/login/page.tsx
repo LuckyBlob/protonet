@@ -3,8 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import * as ServerRequest from "@/lib/serverRequests/serverRequests"
-import * as APIEndPoint from "@/app/api/apiEndPoints"
+import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 
 export default function LoginPage()
 {
@@ -21,18 +20,12 @@ export default function LoginPage()
 
 	const handleSubmit: () => Promise<void> = async () =>
 	{
-		const authenticationData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Login> =
+		const response = await ClientRequestFunctions.clientTryLoginRequest(usernameState[0], passwordState[0]);
+		if (response.error !== null)
 		{
-			username: usernameState[0],
-			password: passwordState[0],
-		}
-		const serverResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Login> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Login, authenticationData);
-		if (serverResponse.error !== null)
-		{
-			setError(serverResponse.error);
+			setError(response.error);
 			return;
 		}
-
 		router.push("/");
 	};
 

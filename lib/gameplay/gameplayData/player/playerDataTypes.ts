@@ -1,5 +1,5 @@
 import * as DBType from "@/lib/db/dbTypes";
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
+import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes"
 
 export type PlayerData =
 {
@@ -22,26 +22,18 @@ export type LoadingState =
 	isLoading: boolean;
 };
 
-export type TypeGetter = () => number;
-export type TypeSetter = (value: number) => void;
-export type NumberRowValueAccessor =
-{
-	get: TypeGetter;
-	set: TypeSetter;
-};
-
 export type DynamicPlanetData =
 {
-	resourceQuantity: Map<number, number>;
-	buildingLevels: Map<number, number>;
-	shipQuantity: Map<number, number>,
+	resourceQuantity: Map<ThingType.SpecificThing, number>;
+	buildingLevels: Map<ThingType.SpecificThing, number>;
+	shipQuantity: Map<ThingType.SpecificThing, number>,
 	queuedShipConstructionBatchs: ShipConstructionBatch[];
 };
 export const EmptyPlanetData: DynamicPlanetData =
 {
-	resourceQuantity: new Map<number, number>(),
-	buildingLevels: new Map<number, number>(),
-	shipQuantity: new Map<number, number>(),
+	resourceQuantity: new Map<ThingType.SpecificThing, number>(),
+	buildingLevels: new Map<ThingType.SpecificThing, number>(),
+	shipQuantity: new Map<ThingType.SpecificThing, number>(),
 	queuedShipConstructionBatchs: [],
 
 } as const;
@@ -54,7 +46,8 @@ export const DataContext =
 	ShipConstruction: 4,
 } as const;
 export type DataContext = typeof DataContext[keyof typeof DataContext];
-export const DataContextToVariableNameMap = {
+export const DataContextToVariableNameMap =
+{
     [DataContext.ResourceQuantity]: "resourceQuantity",
     [DataContext.BuildingLevel]: "buildingLevels",
     [DataContext.ShipQuantity]: "shipQuantity",

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-import * as PlayerDataType from "@/lib/playerData/playerDataTypes";
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
-import * as PlayerUpdateClient from "@/lib/update/client/playerUpdateClient";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 
 export type ClientDataStateResult =
 {
@@ -30,13 +30,13 @@ export function useClientDataState(enabled: boolean): ClientDataStateResult
 		{
 			try
 			{
-				await PlayerUpdateClient.fetchAndSetPlayerData(psController);
-				await PlayerUpdateClient.fetchAndSetServerData(sdsController);
+				await ClientRequestFunctions.clientTryPlayerDataRequest(psController);
+				await ClientRequestFunctions.clientTryServerConfigRequest(sdsController);
 				lsController[1]({ isLoading: false });
 			}
 			catch (error: unknown)
 			{
-				console.warn("⚠️:", error); 
+				console.warn("⚠️:", error);
 				lsController[1]({ isLoading: true });
 			}
 		};

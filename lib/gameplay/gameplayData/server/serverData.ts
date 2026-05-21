@@ -3,7 +3,7 @@ import Database from "better-sqlite3";
 import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
 
-import * as ServerDataType from "@/lib/serverData/serverDataTypes";
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 
 let cachedServerData: ServerDataType.ServerData | null = null;
 

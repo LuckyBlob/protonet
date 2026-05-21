@@ -1,4 +1,4 @@
-import * as GameType from "@/lib/gameplay/gameTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 
 export const buildingCostFunctionMap: Map<number, (currentUpgradeLevel: number) => Map<number, number>> = new Map
