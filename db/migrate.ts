@@ -2,11 +2,11 @@ import Database from "better-sqlite3";
 import { readFileSync, readdirSync } from "fs";
 import { join } from "path";
 import { copyFileSync, existsSync } from "fs";
+import { createDatabaseConnection, databaseDirectoryPath, databaseFilePath } from "@/lib/db/databaseConnection";
 
-const databaseFilePath: string = join(process.cwd(), "data", "game.db");
 const migrationsDirectoryPath: string = join(process.cwd(), "db", "migrations");
 
-const databaseConnection: Database.Database = new Database(databaseFilePath);
+const databaseConnection: Database.Database = createDatabaseConnection();
 
 databaseConnection.exec(`
 	CREATE TABLE IF NOT EXISTS applied_migrations
@@ -37,15 +37,14 @@ if (pendingMigrationFilenames.length === 0)
 	process.exit(0);
 }
 
-const dataDirectoryPath: string = join(process.cwd(), "data");
 let backupIndex: number = 1;
 
-while (existsSync(join(dataDirectoryPath, `game.db.backup.${backupIndex}`)) === true)
+while (existsSync(join(databaseDirectoryPath, `game.db.backup.${backupIndex}`)) === true)
 {
 	backupIndex = backupIndex + 1;
 }
 
-const backupFilePath: string = join(dataDirectoryPath, `game.db.backup.${backupIndex}`);
+const backupFilePath: string = join(databaseDirectoryPath, `game.db.backup.${backupIndex}`);
 copyFileSync(databaseFilePath, backupFilePath);
 console.log(`Backed up DB to: ${backupFilePath}`);
 

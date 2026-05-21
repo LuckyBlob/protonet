@@ -1,12 +1,12 @@
 import Database from "better-sqlite3";
 import { readFileSync, readdirSync } from "fs";
 import { join } from "path";
+import { createDatabaseConnection, databaseFilePath } from "@/lib/db/databaseConnection";
 
-const databaseFilePath: string = join(process.cwd(), "data", "game.db");
 const schemaFilePath: string = join(process.cwd(), "db", "schema.sql");
 const migrationsDirectoryPath: string = join(process.cwd(), "db", "migrations");
 
-const databaseConnection: Database.Database = new Database(databaseFilePath);
+const databaseConnection: Database.Database = createDatabaseConnection();
 const schemaSqlText: string = readFileSync(schemaFilePath, "utf-8");
 
 databaseConnection.exec(schemaSqlText);

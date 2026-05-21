@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS users
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
 --admin_levels are: 0 Power admin, 1 normal, 2+ increasing admin powers. This can ONLY be set by hand in the DB
-  admin_level INTEGER NOT NULL DEFAULT 1, //Defaul
+  admin_level INTEGER NOT NULL DEFAULT 1,
   created_at INTEGER NOT NULL
 );
 
