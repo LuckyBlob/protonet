@@ -2,7 +2,6 @@
 
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
-import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 const SELECTED_PLANET_STORAGE_KEY: string = "protonet.selectedPlanetId";
 

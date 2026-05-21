@@ -1,16 +1,10 @@
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
-import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
-import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
-import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
-import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes"
-import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements"
 
 export function getVariableFromContext<T extends PlayerDataType.DataContext>(data: PlayerDataType.DynamicPlanetData, variable: T): PlayerDataType.DynamicPlanetData[typeof PlayerDataType.DataContextToVariableNameMap[T]]
 {
-	const propertyKey = PlayerDataType.DataContextToVariableNameMap[variable];
+	const propertyKey: typeof PlayerDataType.DataContextToVariableNameMap[T] = PlayerDataType.DataContextToVariableNameMap[variable];
     
-    if (!propertyKey)
+    if (propertyKey === undefined)
 	{
         throw new Error(`UNREACHABLE: Mismatch DynamicPlanetData: fill DataContext and DataContextToVariableNameMap.`);
     }

@@ -63,12 +63,6 @@ type ThingDefinition =
 	contexts: PlayerDataType.DataContext[];
 };
 
-export type SpecificThingSetter = (value: number) => void;
-export type SpecificThingAccessor =
-{
-    set: SpecificThingSetter;
-};
-
 export function getAllSpecificThings(thingType: Thing): SpecificThing[]
 {
     switch (thingType)
@@ -93,18 +87,6 @@ export function getAllSpecificThings(thingType: Thing): SpecificThing[]
 export function resource(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.Resource, specificThingType: specificThing }; }
 export function building(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.Building, specificThingType: specificThing }; }
 export function ship(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.Ship, specificThingType: specificThing }; }
-
-function getDataContextsForThing(thingType: Thing): PlayerDataType.DataContext[]
-{
-    const thingDefinition: ThingDefinition | undefined = THING_DEFINITIONS.get(thingType);
-
-    if (thingDefinition === undefined)
-    {
-        throw new Error(`UNREACHABLE: Invalid ThingType ${thingType}`);
-    }
-
-    return thingDefinition.contexts;
-}
 
 function getSpecificThingNameMap(thingType: Thing): ReadonlyMap<SpecificThing, string>
 {

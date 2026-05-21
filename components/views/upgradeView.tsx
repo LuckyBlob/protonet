@@ -1,17 +1,15 @@
 "use client";
 
-import * as Cost from "@/lib/gameplay/cost";
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-import * as PlanetData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
-import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 
 type UpgradeViewProps =
 {
@@ -49,7 +47,7 @@ function renderCostLine(nextCostMap: Map<number, number>): React.ReactElement
 
 	for (const [resourceType, resourceCost] of nextCostMap)
 	{
-		const resourceName: string = GameType.RESOURCE_DISPLAY_NAMES.get(resourceType) ?? `Resource ${resourceType}`;
+		const resourceName: string = ThingType.getSpecificThingName(ThingType.resource(resourceType));
 		parts.push(`${resourceCost} ${resourceName}`);
 	}
 
@@ -61,11 +59,11 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 	const playerData: PlayerDataType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 	const planetId: number = selectedFullPlanetDataPredicted.planetRow.id;
 
-	const displayName: string = GameType.BUILDING_DISPLAY_NAMES.get(buildingType) ?? `Building ${buildingType}`;
-	const currentLevel: number = PlanetData.getBuildingLevel(selectedFullPlanetDataPredicted, buildingType);
+	const displayName: string = ThingType.getSpecificThingName(ThingType.building(buildingType));
+	const currentLevel: number = BuildingData.getBuildingLevel(selectedFullPlanetDataPredicted, buildingType);
 
-	const nextCostMap: Map<number, number> | null = Cost.computeBuildingUpgradeCost(currentLevel, buildingType);
-	const buildDurationSeconds: number | null = PlanetData.getBuildingUpgradeDurationSeconds(playerData, selectedFullPlanetDataPredicted, props.clientDataStateResult.sdsController[0], buildingType);
+	const nextCostMap: Map<number, number> | null = BuildingData.computeBuildingUpgradeCost(currentLevel, buildingType);
+	const buildDurationSeconds: number | null = BuildingData.getBuildingUpgradeDurationSeconds(playerData, selectedFullPlanetDataPredicted, props.clientDataStateResult.sdsController[0], buildingType);
 
 	if (nextCostMap === null || buildDurationSeconds === null)
 	{
@@ -84,11 +82,11 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 		(selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at !== 0)
 	);
 	const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedBuildingUpgradeRequirements(playerData, buildingType, planetId);
-	const failedHidingRequirements: RequirementType.Requirement[] = failedRequirements.filter((r: RequirementType.Requirement): boolean => r.hideDataWhenRequirementFailed === true);
+	const failedHidingRequirements: RequirementType.Requirement[] = failedRequirements.filter((requirement: RequirementType.Requirement): boolean => requirement.hideDataWhenRequirementFailed === true);
 	const hidingDescriptions: string[] = Requirement.getRequirementDescriptions(failedHidingRequirements, playerData, planetId);
 
 	const remainingMs: number = selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at - Date.now();
-	const canAfford: boolean = Cost.canAffordUpgrade(selectedFullPlanetDataPredicted, buildingType);
+	const canAfford: boolean = BuildingData.canAffordUpgrade(selectedFullPlanetDataPredicted, buildingType);
 
 	const handleBuyUpgrade: () => void = () =>
 	{

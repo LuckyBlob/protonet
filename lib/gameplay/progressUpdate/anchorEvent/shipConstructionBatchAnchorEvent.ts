@@ -1,7 +1,6 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
-import * as DBType from "@/lib/db/dbTypes";
 import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
 
 export type ShipConstructionBatchAnchorEvent = AnchorEvent.AnchorEvent &
@@ -13,17 +12,17 @@ export function findNextAnchorEvent(playerData: PlayerDataType.PlayerData): Anch
 {
     let nextTime: number | null = null;
     let nextFullPlanetDataIndex: number | null = null;
-    for (let Index = 0; Index < playerData.fullPlanetDatas.length; Index++)
+    for (let index = 0; index < playerData.fullPlanetDatas.length; index++)
     {
-        if (playerData.fullPlanetDatas[Index].planetRow.ship_construction_batch_completes_at === 0)
+        if (playerData.fullPlanetDatas[index].planetRow.ship_construction_batch_completes_at === 0)
         {
             continue;
         }
 
-        if (nextTime === null || playerData.fullPlanetDatas[Index].planetRow.ship_construction_batch_completes_at < nextTime)
+        if (nextTime === null || playerData.fullPlanetDatas[index].planetRow.ship_construction_batch_completes_at < nextTime)
         {
-            nextTime = playerData.fullPlanetDatas[Index].planetRow.ship_construction_batch_completes_at;
-            nextFullPlanetDataIndex = Index;
+            nextTime = playerData.fullPlanetDatas[index].planetRow.ship_construction_batch_completes_at;
+            nextFullPlanetDataIndex = index;
         }
     }
 
@@ -49,7 +48,7 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
     {
         fullPlanetData.planetRow.current_ship_construction_batch_id = 0;
         fullPlanetData.planetRow.ship_construction_batch_completes_at = 0;
-        console.warn(`Detected ship construction batch anchor event but had no queuedShipConstructionBatchs for planet id ${fullPlanetData.planetRow.id}`);
+        console.warn("⚠️:", `Detected ship construction batch anchor event but had no queuedShipConstructionBatchs for planet id ${fullPlanetData.planetRow.id}`);
         return;
     }
 
@@ -78,6 +77,6 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
         }
         fullPlanetData.planetRow.current_ship_construction_batch_id = fullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs[0].batchId;
         const newBatchTimeMilliseconds: number = newBatchTimeSeconds * 1000;
-        fullPlanetData.planetRow.ship_construction_batch_completes_at = anchorEvent.time + newBatchTimeMilliseconds ;
+        fullPlanetData.planetRow.ship_construction_batch_completes_at = anchorEvent.time + newBatchTimeMilliseconds;
     }
 }

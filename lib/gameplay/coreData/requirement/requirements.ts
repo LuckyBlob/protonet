@@ -133,7 +133,8 @@ function meetsSingleRequirement(playerData: PlayerDataType.PlayerData, planetId:
         const thingValueGetter: number = thingRequirement.valueGetter(playerData, planetId);
         const threshold: number = resolveValueToNumber(thingRequirement.value, thingRequirement.operator);
 
-        if (!compare(thingValueGetter, thingRequirement.operator, threshold))
+        const conditionRespected: boolean = compare(thingValueGetter, thingRequirement.operator, threshold);
+        if (conditionRespected === false)
         {
             return false;
         }
@@ -145,7 +146,8 @@ function meetsSingleRequirement(playerData: PlayerDataType.PlayerData, planetId:
         const specificThingValueGetter: number = specificThingRequirement.valueGetter(playerData, planetId);
         const threshold: number = resolveValueToNumber(specificThingRequirement.value, specificThingRequirement.operator);
 
-        if (!compare(specificThingValueGetter, specificThingRequirement.operator, threshold))
+        const conditionRespected: boolean = compare(specificThingValueGetter, specificThingRequirement.operator, threshold);
+        if (conditionRespected === false)
         {
             return false;
         }
@@ -193,7 +195,7 @@ function describeSingleRequirement(playerData: PlayerDataType.PlayerData, planet
 
         if (specificThingRequirement.thingType === ThingType.Thing.BuildingUpgrade)
         {
-            const buildingName: string = ThingType.getSpecificThingName({ thingType: ThingType.Thing.Building, specificThingType: specificThingRequirement.specificThingType });
+            const buildingName: string = ThingType.getSpecificThingName(ThingType.building(specificThingRequirement.specificThingType));
             return `${buildingName} upgrading`;
         }
 

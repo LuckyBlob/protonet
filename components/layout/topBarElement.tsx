@@ -1,13 +1,11 @@
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as ThingTypes from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as HelperElements from "@/components/helperElements";
-import * as Production from "@/lib/gameplay/production";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-import * as PlanetData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
+import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 
 type TopBarProps =
 {
@@ -17,7 +15,7 @@ type TopBarProps =
 
 function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, remainingMs: number): React.ReactElement
 {
-	const resourceName: string = GameType.RESOURCE_DISPLAY_NAMES.get(resourceDisplayValues.resourceType) ?? `Resource ${resourceDisplayValues.resourceType}`;
+	const resourceName: string = ThingType.getSpecificThingName(ThingType.resource(resourceDisplayValues.resourceType));
 
 	const buildLineElement: React.ReactElement | null = resourceDisplayValues.affectedByCurrentBuild === true
 		? <div className="text-sm">({TimeFormat.formatRemainingTimeMs(remainingMs)})</div>
@@ -37,7 +35,7 @@ function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, 
 
 export function TopBarElement(props: TopBarProps): React.ReactElement
 {
-	const resourceTypes: number[] = ThingTypes.getAllSpecificThings(ThingTypes.Thing.Resource);
+	const resourceTypes: number[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
 
 	try
 	{
@@ -90,12 +88,6 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 	const now: number = Date.now();
 
 	const fullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(clientDataStateResult.psController[0]);
-
-	if (fullPlanetDataPredicted === null)
-	{
-		throw Error(`Predicted planet data is unavailable!`);
-	}
-
 	const buildCompletesAt: number = fullPlanetDataPredicted.planetRow.building_upgrade_completes_at;
 	const isBuilding: boolean = buildCompletesAt !== 0;
 	const buildingBeingUpgraded: number = fullPlanetDataPredicted.planetRow.building_being_upgraded;
@@ -104,12 +96,12 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 
 	for (const resourceType of resourceTypes)
 	{
-		const calculatedNewResourceQuantity: number = ResourceData.getResourceQuantity(fullPlanetDataPredicted, resourceType) ?? -1;
+		const calculatedNewResourceQuantity: number = ResourceData.getResourceQuantity(fullPlanetDataPredicted, resourceType);
 
-		const productionRatePerSecond: number = Production.getPlanetProductionRatePerSecond(fullPlanetDataPredicted, resourceType, clientDataStateResult.sdsController[0]);
+		const productionRatePerSecond: number = BuildingData.getPlanetProductionRatePerSecond(fullPlanetDataPredicted, resourceType, clientDataStateResult.sdsController[0]);
 		const productionRatePerHour: number = productionRatePerSecond * 3600;
 
-		const affectedByCurrentBuild: boolean = (isBuilding === true) && (PlanetData.doesBuildingProduceResource(buildingBeingUpgraded, resourceType) === true);
+		const affectedByCurrentBuild: boolean = (isBuilding === true) && (BuildingData.doesBuildingProduceResource(buildingBeingUpgraded, resourceType) === true);
 
 		const singleResourceDisplayValues: PlanetResourceDisplayValues =
 		{

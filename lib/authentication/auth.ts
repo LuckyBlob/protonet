@@ -2,6 +2,8 @@ import bcrypt from "bcrypt";
 import Database from "better-sqlite3";
 import crypto from "crypto";
 import { cookies } from "next/headers";
+import { RequestCookie } from 'next/dist/compiled/@edge-runtime/cookies';
+import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
 import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
@@ -104,8 +106,8 @@ export function deleteSession(token: string): void
 
 export async function getCurrentUser(): Promise<DBType.UserRow | null>
 {
-	const cookieStore = await cookies();
-	const sessionTokenCookie = cookieStore.get(sessionCookieName);
+	const cookieStore: ReadonlyRequestCookies = await cookies();
+	const sessionTokenCookie: RequestCookie | undefined = cookieStore.get(sessionCookieName);
 
 	if (sessionTokenCookie === undefined)
 	{

@@ -1,12 +1,13 @@
 import Database from "better-sqlite3";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { RequestCookie } from 'next/dist/compiled/@edge-runtime/cookies';
+import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
 import * as Auth from "@/lib/authentication/auth";
 import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
-import * as Cost from "@/lib/gameplay/cost";
 import * as ServerData from "@/lib/gameplay/gameplayData/server/serverData";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
@@ -37,183 +38,7 @@ export type BuildShipsResult =
 
 //#endregion
 
-//#region Player DB operations
-
-export function serverFindPlayerByUserId(userId: number): DBType.PlayerRow | null
-{
-    const playerRow: DBType.PlayerRow | undefined = DB.databaseConnection.prepare(
-        "SELECT * FROM player WHERE user_id = ?"
-    ).get(userId) as DBType.PlayerRow | undefined;
-    return playerRow ?? null;
-}
-
-export function serverGetPlayerRow(playerId: number): DBType.PlayerRow
-{
-    const playerRow: DBType.PlayerRow = DB.databaseConnection.prepare(
-        "SELECT * FROM player WHERE id = ?"
-    ).get(playerId) as DBType.PlayerRow;
-    return playerRow;
-}
-
-export function serverGetPlayerData(playerId: number): PlayerDataType.PlayerData
-{
-    const playerData: PlayerDataType.PlayerData =
-    {
-        playerRow: serverGetPlayerRow(playerId),
-        fullPlanetDatas: serverGetFullPlanetDatas(playerId),
-    };
-    return playerData;
-}
-
-export function serverUpdatePlayerColumns(playerId: number, columnUpdates: Partial<DBType.PlayerRow>): DBType.PlayerRow
-{
-    const columnNames: string[] = Object.keys(columnUpdates);
-    const columnValues: unknown[] = Object.values(columnUpdates);
-    const setClause: string = columnNames.map((columnName: string): string => `${columnName} = ?`).join(", ");
-
-    DB.databaseConnection.prepare(`UPDATE player SET ${setClause} WHERE id = ?`).run(...columnValues, playerId);
-    return serverGetPlayerRow(playerId);
-}
-
-//#endregion
-
-//#region Planet DB operations
-
-export function serverGetFullPlanetDatas(playerId: number): PlayerDataType.FullPlanetData[]
-{
-    const planetRows: DBType.PlanetRow[] = getPlanetsByOwner(playerId);
-    const fullPlanetDatas: PlayerDataType.FullPlanetData[] = [];
-
-    for (const planetRow of planetRows)
-    {
-        const dynamicPlanetData: PlayerDataType.DynamicPlanetData = getDynamicPlanetData(planetRow.id);
-        const fullPlanetData: PlayerDataType.FullPlanetData =
-        {
-            planetRow: planetRow,
-            dynamicPlanetData: dynamicPlanetData,
-        };
-        fullPlanetDatas.push(fullPlanetData);
-    }
-
-    return fullPlanetDatas;
-}
-
-export function serverFindAllPlanetsPublic(): DBType.PublicPlanetRow[]
-{
-    const planetRows: DBType.PublicPlanetRow[] = DB.databaseConnection.prepare(
-        "SELECT id, slot, system, galaxy, owner_player_id FROM planet ORDER BY galaxy ASC, system ASC, slot ASC"
-    ).all() as DBType.PublicPlanetRow[];
-    return planetRows;
-}
-
-export function serverUpdatePlanetRow(planetId: number, columnUpdates: Partial<DBType.PlanetRow>): DBType.PlanetRow
-{
-    const columnNames: string[] = Object.keys(columnUpdates);
-    if (columnNames.length === 0)
-    {
-        return readPlanetRow(planetId);
-    }
-
-    const columnValues: unknown[] = Object.values(columnUpdates);
-    const setClause: string = columnNames.map((columnName: string): string => `${columnName} = ?`).join(", ");
-
-    const result: DBType.PlanetRow = (DB.databaseConnection.transaction(() =>
-    {
-        DB.databaseConnection.prepare(`UPDATE planet SET ${setClause} WHERE id = ?`).run(...columnValues, planetId);
-        return readPlanetRow(planetId);
-    })() as DBType.PlanetRow);
-
-    return result;
-}
-
-export function serverUpdatePlanetDataContext(planetId: number, dataContext: PlayerDataType.DataContext, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        switch (dataContext)
-        {
-            case PlayerDataType.DataContext.BuildingLevel:
-            {
-                updateBuildingLevels(planetId, dynamicPlanetData);
-                break;
-            }
-            case PlayerDataType.DataContext.ResourceQuantity:
-            {
-                updateResourceQuantities(planetId, dynamicPlanetData);
-                break;
-            }
-            case PlayerDataType.DataContext.ShipConstruction:
-            {
-                updateShipConstructionBatches(planetId, dynamicPlanetData);
-                break;
-            }
-            case PlayerDataType.DataContext.ShipQuantity:
-            {
-                updateShipQuantities(planetId, dynamicPlanetData);
-                break;
-            }
-            default:
-                throw new Error(`UNREACHABLE: Dynamic data update function undefined for data context ${dataContext}.`);
-        }
-    });
-    transaction();
-}
-
-export function serverUpdateAllPlanetData(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): PlayerDataType.DynamicPlanetData
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        for (const dataContext of PlayerData.getDataContexts())
-        {
-            serverUpdatePlanetDataContext(planetId, dataContext, dynamicPlanetData);
-        }
-    });
-    transaction();
-    return getDynamicPlanetData(planetId);
-}
-
-export function serverAssignStartingPlanets(playerRow: DBType.PlayerRow): void
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        const firstPlanetRow: DBType.PlanetRow | undefined = DB.databaseConnection.prepare(
-            "SELECT * FROM planet WHERE owner_player_id IS NULL AND (slot = 3 OR slot = 4) ORDER BY RANDOM() LIMIT 1"
-        ).get() as DBType.PlanetRow | undefined;
-
-        if (firstPlanetRow === undefined)
-        {
-            throw new Error("Failed to assign first planet: no available planets.");
-        }
-
-        const secondPlanetRow: DBType.PlanetRow | undefined = DB.databaseConnection.prepare(
-            "SELECT * FROM planet WHERE owner_player_id IS NULL AND (slot = 3 OR slot = 4) AND NOT (system = ? AND galaxy = ?) ORDER BY RANDOM() LIMIT 1"
-        ).get(firstPlanetRow.system, firstPlanetRow.galaxy) as DBType.PlanetRow | undefined;
-
-        if (secondPlanetRow === undefined)
-        {
-            throw new Error("Failed to assign second planet: no available planets in a different system.");
-        }
-
-        const now: number = Date.now();
-        claimPlanet(firstPlanetRow.id, playerRow.id, now, true);
-        claimPlanet(secondPlanetRow.id, playerRow.id, now + 1, true);
-    });
-    transaction();
-}
-
-export function serverCleanPlanet(planetId: number): PlayerDataType.FullPlanetData
-{
-    const cleanPlanetData: PlayerDataType.FullPlanetData =
-    {
-        planetRow: serverUpdatePlanetRow(planetId, AssociationMaps.CLEAN_PLANET),
-        dynamicPlanetData: serverUpdateAllPlanetData(planetId, PlayerDataType.EmptyPlanetData),
-    };
-    return cleanPlanetData;
-}
-
-//#endregion
-
-//#region Data request handlers
+//#region Request handlers
 
 export async function serverTryUserInfoRequest(): Promise<NextResponse>
 {
@@ -314,10 +139,6 @@ export async function serverTryServerConfigRequest(): Promise<NextResponse>
     }, { status: 200 });
 }
 
-//#endregion
-
-//#region Action request handlers
-
 export async function serverTryLoginRequest(request: Request): Promise<NextResponse>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Login> = await request.json();
@@ -344,7 +165,7 @@ export async function serverTryLoginRequest(request: Request): Promise<NextRespo
         }
 
         const session: DBType.SessionRow = Auth.createSession(user.id);
-        const cookieStore = await cookies();
+        const cookieStore: ReadonlyRequestCookies = await cookies();
         cookieStore.set(Auth.sessionCookieName, session.token,
         {
             httpOnly: true,
@@ -403,7 +224,7 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
         }
 
         const session: DBType.SessionRow = Auth.createSession(newUser.id);
-        const cookieStore = await cookies();
+        const cookieStore: ReadonlyRequestCookies = await cookies();
         cookieStore.set(Auth.sessionCookieName, session.token,
         {
             httpOnly: true,
@@ -436,8 +257,8 @@ export async function serverTryLogoutRequest(): Promise<NextResponse>
 
     try
     {
-        const cookieStore = await cookies();
-        const sessionTokenCookie = cookieStore.get(Auth.sessionCookieName);
+        const cookieStore: ReadonlyRequestCookies = await cookies();
+        const sessionTokenCookie: RequestCookie | undefined = cookieStore.get(Auth.sessionCookieName);
         if (sessionTokenCookie !== undefined)
         {
             Auth.deleteSession(sessionTokenCookie.value);
@@ -488,7 +309,7 @@ export async function serverTryRefreshServerRequest(): Promise<NextResponse>
             errorResponse.error = "Player not found.";
             return NextResponse.json(errorResponse, { status: 404 });
         }
-        bankAllPlayers();
+        applyProgressToAllPlayersAndRescaleEndTimes();
     }
     catch (error: unknown)
     {
@@ -607,7 +428,433 @@ export async function serverTryBuildShipsRequest(request: Request): Promise<Next
 
 //#endregion
 
-//#region Private business logic
+//#region DB functions
+
+export function serverFindPlayerByUserId(userId: number): DBType.PlayerRow | null
+{
+    const playerRow: DBType.PlayerRow | undefined = DB.databaseConnection.prepare(
+        "SELECT * FROM player WHERE user_id = ?"
+    ).get(userId) as DBType.PlayerRow | undefined;
+    return playerRow ?? null;
+}
+
+export function serverGetPlayerRow(playerId: number): DBType.PlayerRow
+{
+    const playerRow: DBType.PlayerRow = DB.databaseConnection.prepare(
+        "SELECT * FROM player WHERE id = ?"
+    ).get(playerId) as DBType.PlayerRow;
+    return playerRow;
+}
+
+export function serverGetPlayerData(playerId: number): PlayerDataType.PlayerData
+{
+    const playerData: PlayerDataType.PlayerData =
+    {
+        playerRow: serverGetPlayerRow(playerId),
+        fullPlanetDatas: serverGetFullPlanetDatas(playerId),
+    };
+    return playerData;
+}
+
+export function serverUpdatePlayerColumns(playerId: number, columnUpdates: Partial<DBType.PlayerRow>): DBType.PlayerRow
+{
+    const columnNames: string[] = Object.keys(columnUpdates);
+    const columnValues: unknown[] = Object.values(columnUpdates);
+    const setClause: string = columnNames.map((columnName: string): string => `${columnName} = ?`).join(", ");
+
+    DB.databaseConnection.prepare(`UPDATE player SET ${setClause} WHERE id = ?`).run(...columnValues, playerId);
+    return serverGetPlayerRow(playerId);
+}
+
+export function serverGetFullPlanetDatas(playerId: number): PlayerDataType.FullPlanetData[]
+{
+    const planetRows: DBType.PlanetRow[] = getPlanetsByOwner(playerId);
+    const fullPlanetDatas: PlayerDataType.FullPlanetData[] = [];
+
+    for (const planetRow of planetRows)
+    {
+        const dynamicPlanetData: PlayerDataType.DynamicPlanetData = getDynamicPlanetData(planetRow.id);
+        const fullPlanetData: PlayerDataType.FullPlanetData =
+        {
+            planetRow: planetRow,
+            dynamicPlanetData: dynamicPlanetData,
+        };
+        fullPlanetDatas.push(fullPlanetData);
+    }
+
+    return fullPlanetDatas;
+}
+
+export function serverFindAllPlanetsPublic(): DBType.PublicPlanetRow[]
+{
+    const planetRows: DBType.PublicPlanetRow[] = DB.databaseConnection.prepare(
+        "SELECT id, slot, system, galaxy, owner_player_id FROM planet ORDER BY galaxy ASC, system ASC, slot ASC"
+    ).all() as DBType.PublicPlanetRow[];
+    return planetRows;
+}
+
+export function serverUpdatePlanetRow(planetId: number, columnUpdates: Partial<DBType.PlanetRow>): DBType.PlanetRow
+{
+    const columnNames: string[] = Object.keys(columnUpdates);
+    if (columnNames.length === 0)
+    {
+        return readPlanetRow(planetId);
+    }
+
+    const columnValues: unknown[] = Object.values(columnUpdates);
+    const setClause: string = columnNames.map((columnName: string): string => `${columnName} = ?`).join(", ");
+
+    const result: DBType.PlanetRow = (DB.databaseConnection.transaction(() =>
+    {
+        DB.databaseConnection.prepare(`UPDATE planet SET ${setClause} WHERE id = ?`).run(...columnValues, planetId);
+        return readPlanetRow(planetId);
+    })() as DBType.PlanetRow);
+
+    return result;
+}
+
+export function serverUpdatePlanetDataContext(planetId: number, dataContext: PlayerDataType.DataContext, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        switch (dataContext)
+        {
+            case PlayerDataType.DataContext.BuildingLevel:
+            {
+                updateBuildingLevels(planetId, dynamicPlanetData);
+                break;
+            }
+            case PlayerDataType.DataContext.ResourceQuantity:
+            {
+                updateResourceQuantities(planetId, dynamicPlanetData);
+                break;
+            }
+            case PlayerDataType.DataContext.ShipConstruction:
+            {
+                updateShipConstructionBatchs(planetId, dynamicPlanetData);
+                break;
+            }
+            case PlayerDataType.DataContext.ShipQuantity:
+            {
+                updateShipQuantities(planetId, dynamicPlanetData);
+                break;
+            }
+            default:
+                throw new Error(`UNREACHABLE: Dynamic data update function undefined for data context ${dataContext}.`);
+        }
+    });
+    transaction();
+}
+
+export function serverUpdateAllPlanetData(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): PlayerDataType.DynamicPlanetData
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        for (const dataContext of PlayerData.getDataContexts())
+        {
+            serverUpdatePlanetDataContext(planetId, dataContext, dynamicPlanetData);
+        }
+    });
+    transaction();
+    return getDynamicPlanetData(planetId);
+}
+
+export function serverAssignStartingPlanets(playerRow: DBType.PlayerRow): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        const firstPlanetRow: DBType.PlanetRow | undefined = DB.databaseConnection.prepare(
+            "SELECT * FROM planet WHERE owner_player_id IS NULL AND (slot = 3 OR slot = 4) ORDER BY RANDOM() LIMIT 1"
+        ).get() as DBType.PlanetRow | undefined;
+
+        if (firstPlanetRow === undefined)
+        {
+            throw new Error("Failed to assign first planet: no available planets.");
+        }
+
+        const secondPlanetRow: DBType.PlanetRow | undefined = DB.databaseConnection.prepare(
+            "SELECT * FROM planet WHERE owner_player_id IS NULL AND (slot = 3 OR slot = 4) AND NOT (system = ? AND galaxy = ?) ORDER BY RANDOM() LIMIT 1"
+        ).get(firstPlanetRow.system, firstPlanetRow.galaxy) as DBType.PlanetRow | undefined;
+
+        if (secondPlanetRow === undefined)
+        {
+            throw new Error("Failed to assign second planet: no available planets in a different system.");
+        }
+
+        const now: number = Date.now();
+        claimPlanet(firstPlanetRow.id, playerRow.id, now, true);
+        claimPlanet(secondPlanetRow.id, playerRow.id, now + 1, true);
+    });
+    transaction();
+}
+
+export function serverCleanPlanet(planetId: number): PlayerDataType.FullPlanetData
+{
+    const cleanPlanetData: PlayerDataType.FullPlanetData =
+    {
+        planetRow: serverUpdatePlanetRow(planetId, AssociationMaps.CLEAN_PLANET),
+        dynamicPlanetData: serverUpdateAllPlanetData(planetId, PlayerDataType.EmptyPlanetData),
+    };
+    return cleanPlanetData;
+}
+
+function createPlayer(userId: number): boolean
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        const playerRow: DBType.PlayerRow = DB.databaseConnection.prepare(
+            "INSERT INTO player (user_id) VALUES (?) RETURNING *"
+        ).get(userId) as DBType.PlayerRow;
+        serverAssignStartingPlanets(playerRow);
+    });
+
+    try
+    {
+        transaction();
+        return true;
+    }
+    catch (error: unknown)
+    {
+        console.warn("⚠️:", error);
+        return false;
+    }
+}
+
+function claimPlanet(planetId: number, playerId: number, claimedAt: number, isStartingPlanet: boolean): void
+{
+    const updates: Partial<DBType.PlanetRow> =
+    {
+        owner_player_id: playerId,
+        claimed_at: claimedAt,
+        last_updated: claimedAt,
+    };
+
+    if (isStartingPlanet === true)
+    {
+        updates.size = AssociationMaps.STARTING_PLANET_SIZE;
+    }
+
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        serverCleanPlanet(planetId);
+        serverUpdatePlanetRow(planetId, updates);
+        serverUpdateAllPlanetData(planetId, AssociationMaps.STARTING_PLANET_DATA);
+    });
+    transaction();
+}
+
+function readPlanetRow(planetId: number): DBType.PlanetRow
+{
+    return DB.databaseConnection.prepare("SELECT * FROM planet WHERE id = ?").get(planetId) as DBType.PlanetRow;
+}
+
+function getPlanetsByOwner(playerId: number): DBType.PlanetRow[]
+{
+    return DB.databaseConnection.prepare(
+        "SELECT * FROM planet WHERE owner_player_id = ? ORDER BY claimed_at ASC, id ASC"
+    ).all(playerId) as DBType.PlanetRow[];
+}
+
+function getDynamicPlanetData(planetId: number): PlayerDataType.DynamicPlanetData
+{
+    return {
+        resourceQuantity: getDynamicPlanetResourceData(planetId),
+        buildingLevels: getDynamicPlanetBuildingData(planetId),
+        shipQuantity: getDynamicPlanetShipData(planetId),
+        queuedShipConstructionBatchs: getDynamicPlanetShipConstructionBatchData(planetId),
+    };
+}
+
+function getDynamicPlanetResourceData(planetId: number): Map<number, number>
+{
+    const resourceRows: DBType.PlanetResourceRow[] = DB.databaseConnection.prepare(
+        "SELECT planet_id, resource_type, resource_quantity FROM planet_resource WHERE planet_id = ?"
+    ).all(planetId) as DBType.PlanetResourceRow[];
+    const resourceQuantity: Map<number, number> = new Map<number, number>();
+    for (const resourceRow of resourceRows)
+    {
+        resourceQuantity.set(resourceRow.resource_type, resourceRow.resource_quantity);
+    }
+    return resourceQuantity;
+}
+
+function getDynamicPlanetBuildingData(planetId: number): Map<number, number>
+{
+    const buildingRows: DBType.PlanetBuildingRow[] = DB.databaseConnection.prepare(
+        "SELECT planet_id, building_type, building_level FROM planet_building WHERE planet_id = ?"
+    ).all(planetId) as DBType.PlanetBuildingRow[];
+    const buildingLevel: Map<number, number> = new Map<number, number>();
+    for (const buildingRow of buildingRows)
+    {
+        buildingLevel.set(buildingRow.building_type, buildingRow.building_level);
+    }
+    return buildingLevel;
+}
+
+function getDynamicPlanetShipData(planetId: number): Map<number, number>
+{
+    const shipRows: DBType.PlanetShipRow[] = DB.databaseConnection.prepare(
+        "SELECT planet_id, ship_type, ship_quantity FROM planet_ship WHERE planet_id = ?"
+    ).all(planetId) as DBType.PlanetShipRow[];
+    const shipQuantities: Map<number, number> = new Map<number, number>();
+    for (const shipRow of shipRows)
+    {
+        shipQuantities.set(shipRow.ship_type, shipRow.ship_quantity);
+    }
+    return shipQuantities;
+}
+
+function getDynamicPlanetShipConstructionBatchData(planetId: number): PlayerDataType.ShipConstructionBatch[]
+{
+    const shipConstructionRows: DBType.ShipConstructionRow[] = DB.databaseConnection.prepare(
+        "SELECT id, planet_id, batch_id, ship_type, ship_quantity FROM ship_construction WHERE planet_id = ? ORDER BY batch_id"
+    ).all(planetId) as DBType.ShipConstructionRow[];
+
+    const batchMap: Map<number, PlayerDataType.ShipConstructionBatch> = new Map<number, PlayerDataType.ShipConstructionBatch>();
+    const batches: PlayerDataType.ShipConstructionBatch[] = [];
+
+    for (const shipConstructionRow of shipConstructionRows)
+    {
+        const existingBatch: PlayerDataType.ShipConstructionBatch | undefined = batchMap.get(shipConstructionRow.batch_id);
+
+        if (existingBatch === undefined)
+        {
+            const newBatch: PlayerDataType.ShipConstructionBatch =
+            {
+                shipConstructionRows: [shipConstructionRow],
+                batchId: shipConstructionRow.batch_id,
+            };
+            batchMap.set(shipConstructionRow.batch_id, newBatch);
+            batches.push(newBatch);
+            continue;
+        }
+
+        existingBatch.shipConstructionRows.push(shipConstructionRow);
+    }
+
+    return batches;
+}
+
+function updateResourceQuantities(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        DB.databaseConnection.prepare("DELETE FROM planet_resource WHERE planet_id = ?").run(planetId);
+        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO planet_resource (planet_id, resource_type, resource_quantity) VALUES (?, ?, ?)"
+        );
+        for (const [resourceType, resourceQuantity] of dynamicPlanetData.resourceQuantity)
+        {
+            insertStatement.run(planetId, resourceType, resourceQuantity);
+        }
+    });
+    transaction();
+}
+
+function updateBuildingLevels(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        DB.databaseConnection.prepare("DELETE FROM planet_building WHERE planet_id = ?").run(planetId);
+        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO planet_building (planet_id, building_type, building_level) VALUES (?, ?, ?)"
+        );
+        for (const [buildingType, buildingLevel] of dynamicPlanetData.buildingLevels)
+        {
+            insertStatement.run(planetId, buildingType, buildingLevel);
+        }
+    });
+    transaction();
+}
+
+function updateShipConstructionBatchs(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        DB.databaseConnection.prepare("DELETE FROM ship_construction WHERE planet_id = ?").run(planetId);
+        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO ship_construction (planet_id, batch_id, ship_type, ship_quantity) VALUES (?, ?, ?, ?)"
+        );
+        for (const shipConstructionBatch of dynamicPlanetData.queuedShipConstructionBatchs)
+        {
+            for (const shipConstructionRow of shipConstructionBatch.shipConstructionRows)
+            {
+                insertStatement.run(
+                    planetId,
+                    shipConstructionRow.batch_id,
+                    shipConstructionRow.ship_type,
+                    shipConstructionRow.ship_quantity,
+                );
+            }
+        }
+    });
+    transaction();
+}
+
+function updateShipQuantities(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        DB.databaseConnection.prepare("DELETE FROM planet_ship WHERE planet_id = ?").run(planetId);
+        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO planet_ship (planet_id, ship_type, ship_quantity) VALUES (?, ?, ?)"
+        );
+        for (const [shipType, shipQuantity] of dynamicPlanetData.shipQuantity)
+        {
+            insertStatement.run(planetId, shipType, shipQuantity);
+        }
+    });
+    transaction();
+}
+
+function applyProgressToAllPlayers(time: number, serverData: ServerDataType.ServerData): void
+{
+    const playerRows: { id: number }[] = DB.databaseConnection.prepare("SELECT id FROM player").all() as { id: number }[];
+    for (const playerRow of playerRows)
+    {
+        ServerProgress.applyPlayerUpdate(playerRow.id, serverData, time);
+    }
+}
+
+function rescaleBuildingUpgradeTimes(rescaleFactor: number, now: number): void
+{
+    const activeBuildRows: { id: number; building_upgrade_completes_at: number }[] = DB.databaseConnection.prepare(
+        "SELECT id, building_upgrade_completes_at FROM planet WHERE building_upgrade_completes_at != 0"
+    ).all() as { id: number; building_upgrade_completes_at: number }[];
+
+    for (const buildRow of activeBuildRows)
+    {
+        const realMsRemaining: number = buildRow.building_upgrade_completes_at - now;
+        if (realMsRemaining <= 0)
+        {
+            continue;
+        }
+        const newCompletesAt: number = now + Math.floor(realMsRemaining * rescaleFactor);
+        serverUpdatePlanetRow(buildRow.id, { building_upgrade_completes_at: newCompletesAt });
+    }
+}
+
+function rescaleShipConstructionTimes(rescaleFactor: number, now: number): void
+{
+    const activeShipBatchRows: { id: number; ship_construction_batch_completes_at: number }[] = DB.databaseConnection.prepare(
+        "SELECT id, ship_construction_batch_completes_at FROM planet WHERE ship_construction_batch_completes_at != 0"
+    ).all() as { id: number; ship_construction_batch_completes_at: number }[];
+
+    for (const shipBatchRow of activeShipBatchRows)
+    {
+        const realMsRemaining: number = shipBatchRow.ship_construction_batch_completes_at - now;
+        if (realMsRemaining <= 0)
+        {
+            continue;
+        }
+        const newCompletesAt: number = now + Math.floor(realMsRemaining * rescaleFactor);
+        serverUpdatePlanetRow(shipBatchRow.id, { ship_construction_batch_completes_at: newCompletesAt });
+    }
+}
+
+//#endregion
+
+//#region Server logic
 
 function tryUpgradeBuildingLogic(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding>): BuyUpgradeResult
 {
@@ -636,7 +883,8 @@ function tryUpgradeBuildingLogic(playerId: number, serverData: ServerDataType.Se
         return { success: false, failureReason: "Upgrade already in progress.", playerStateResult: updatedPlayer };
     }
 
-    if (!Cost.canAffordUpgrade(relevantFullPlanetData, requestData.buildingType))
+    const canAffordUpgrade: boolean = BuildingData.canAffordUpgrade(relevantFullPlanetData, requestData.buildingType);
+    if (canAffordUpgrade === false)
     {
         return { success: false, failureReason: "Not enough resources.", playerStateResult: updatedPlayer };
     }
@@ -648,7 +896,7 @@ function tryUpgradeBuildingLogic(playerId: number, serverData: ServerDataType.Se
         return { success: false, failureReason: "Wrong building type to upgrade.", playerStateResult: updatedPlayer };
     }
 
-    const upgradeCost: Map<number, number> | null = Cost.computeBuildingUpgradeCost(currentBuildingLevel, requestData.buildingType);
+    const upgradeCost: Map<number, number> | null = BuildingData.computeBuildingUpgradeCost(currentBuildingLevel, requestData.buildingType);
     if (upgradeCost === null)
     {
         return { success: false, failureReason: "Wrong building type to upgrade.", playerStateResult: updatedPlayer };
@@ -656,7 +904,7 @@ function tryUpgradeBuildingLogic(playerId: number, serverData: ServerDataType.Se
 
     for (const [resourceType, resourceCost] of upgradeCost)
     {
-        subtractPlanetResource(relevantFullPlanetData, resourceType, resourceCost);
+        ResourceData.subtractPlanetResource(relevantFullPlanetData, resourceType, resourceCost);
     }
 
     const changedPlayerStateResult: PlayerDataType.PlayerData = DB.databaseConnection.transaction((): PlayerDataType.PlayerData =>
@@ -734,11 +982,11 @@ function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.ServerD
     const totalCost: Map<number, number> = ShipData.computeShipConstructionBatchCost(possibleRequestedShipQuantities);
     for (const [resourceType, resourceCost] of totalCost)
     {
-        subtractPlanetResource(relevantFullPlanetData, resourceType, resourceCost);
+        ResourceData.subtractPlanetResource(relevantFullPlanetData, resourceType, resourceCost);
     }
 
     const newestBatchId: number | undefined = relevantFullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs.at(-1)?.batchId;
-    const newBatchId: number = newestBatchId ? newestBatchId + 1 : 1;
+    const newBatchId: number = newestBatchId !== undefined ? newestBatchId + 1 : 1;
     const shipConstructionRows: DBType.ShipConstructionRow[] = [];
 
     for (const [shipType, shipQuantity] of possibleRequestedShipQuantities)
@@ -786,7 +1034,7 @@ function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.ServerD
     return { success: true, failureReason: null, playerStateResult: changedPlayerStateResult };
 }
 
-function bankAllPlayers(): void
+function applyProgressToAllPlayersAndRescaleEndTimes(): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
@@ -810,58 +1058,6 @@ function bankAllPlayers(): void
     transaction();
 }
 
-function createPlayer(userId: number): boolean
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        const playerRow: DBType.PlayerRow = DB.databaseConnection.prepare(
-            "INSERT INTO player (user_id) VALUES (?) RETURNING *"
-        ).get(userId) as DBType.PlayerRow;
-        serverAssignStartingPlanets(playerRow);
-    });
-
-    try
-    {
-        transaction();
-        return true;
-    }
-    catch (error: unknown)
-    {
-        console.warn("⚠️:", error);
-        return false;
-    }
-}
-
-function subtractPlanetResource(fullPlanetData: PlayerDataType.FullPlanetData, resourceType: number, amountToSubtract: number): void
-{
-    const currentResourceQuantity: number = ResourceData.getResourceQuantity(fullPlanetData, resourceType);
-    const newQuantity: number = Math.max(0, currentResourceQuantity - amountToSubtract);
-    ResourceData.setResourceQuantity(fullPlanetData, resourceType, newQuantity);
-}
-
-function claimPlanet(planetId: number, playerId: number, claimedAt: number, isStartingPlanet: boolean): void
-{
-    const updates: Partial<DBType.PlanetRow> =
-    {
-        owner_player_id: playerId,
-        claimed_at: claimedAt,
-        last_updated: claimedAt,
-    };
-
-    if (isStartingPlanet === true)
-    {
-        updates.size = AssociationMaps.STARTING_PLANET_SIZE;
-    }
-
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        serverCleanPlanet(planetId);
-        serverUpdatePlanetRow(planetId, updates);
-        serverUpdateAllPlanetData(planetId, AssociationMaps.STARTING_PLANET_DATA);
-    });
-    transaction();
-}
-
 function calculateRescaleFactor(oldServerData: ServerDataType.ServerData, newServerData: ServerDataType.ServerData): number | null
 {
     const newMultiplier: number = newServerData.config.time_multiplier;
@@ -878,219 +1074,6 @@ function calculateRescaleFactor(oldServerData: ServerDataType.ServerData, newSer
     }
 
     return (oldMultiplier / newMultiplier);
-}
-
-function applyProgressToAllPlayers(time: number, serverData: ServerDataType.ServerData): void
-{
-    const playerRows: { id: number }[] = DB.databaseConnection.prepare("SELECT id FROM player").all() as { id: number }[];
-    for (const playerRow of playerRows)
-    {
-        ServerProgress.applyPlayerUpdate(playerRow.id, serverData, time);
-    }
-}
-
-function rescaleBuildingUpgradeTimes(rescaleFactor: number, now: number): void
-{
-    const activeBuildRows: { id: number; building_upgrade_completes_at: number }[] = DB.databaseConnection.prepare(
-        "SELECT id, building_upgrade_completes_at FROM planet WHERE building_upgrade_completes_at != 0"
-    ).all() as { id: number; building_upgrade_completes_at: number }[];
-
-    for (const buildRow of activeBuildRows)
-    {
-        const realMsRemaining: number = buildRow.building_upgrade_completes_at - now;
-        if (realMsRemaining <= 0)
-        {
-            continue;
-        }
-        const newCompletesAt: number = now + Math.floor(realMsRemaining * rescaleFactor);
-        serverUpdatePlanetRow(buildRow.id, { building_upgrade_completes_at: newCompletesAt });
-    }
-}
-
-function rescaleShipConstructionTimes(rescaleFactor: number, now: number): void
-{
-    const activeShipBatchRows: { id: number; ship_construction_batch_completes_at: number }[] = DB.databaseConnection.prepare(
-        "SELECT id, ship_construction_batch_completes_at FROM planet WHERE ship_construction_batch_completes_at != 0"
-    ).all() as { id: number; ship_construction_batch_completes_at: number }[];
-
-    for (const shipBatchRow of activeShipBatchRows)
-    {
-        const realMsRemaining: number = shipBatchRow.ship_construction_batch_completes_at - now;
-        if (realMsRemaining <= 0)
-        {
-            continue;
-        }
-        const newCompletesAt: number = now + Math.floor(realMsRemaining * rescaleFactor);
-        serverUpdatePlanetRow(shipBatchRow.id, { ship_construction_batch_completes_at: newCompletesAt });
-    }
-}
-
-//#endregion
-
-//#region Private planet DB helpers
-
-function readPlanetRow(planetId: number): DBType.PlanetRow
-{
-    return DB.databaseConnection.prepare("SELECT * FROM planet WHERE id = ?").get(planetId) as DBType.PlanetRow;
-}
-
-function getPlanetsByOwner(playerId: number): DBType.PlanetRow[]
-{
-    return DB.databaseConnection.prepare(
-        "SELECT * FROM planet WHERE owner_player_id = ? ORDER BY claimed_at ASC, id ASC"
-    ).all(playerId) as DBType.PlanetRow[];
-}
-
-function getDynamicPlanetData(planetId: number): PlayerDataType.DynamicPlanetData
-{
-    return {
-        resourceQuantity: getDynamicPlanetResourceData(planetId),
-        buildingLevels: getDynamicPlanetBuildingData(planetId),
-        shipQuantity: getDynamicPlanetShipData(planetId),
-        queuedShipConstructionBatchs: getDynamicPlanetShipConstructionBatchData(planetId),
-    };
-}
-
-function getDynamicPlanetResourceData(planetId: number): Map<number, number>
-{
-    const resourceRows = DB.databaseConnection.prepare(
-        "SELECT planet_id, resource_type, resource_quantity FROM planet_resource WHERE planet_id = ?"
-    ).all(planetId) as DBType.PlanetResourceRow[];
-    const resourceQuantity: Map<number, number> = new Map<number, number>();
-    for (const resourceRow of resourceRows)
-    {
-        resourceQuantity.set(resourceRow.resource_type, resourceRow.resource_quantity);
-    }
-    return resourceQuantity;
-}
-
-function getDynamicPlanetBuildingData(planetId: number): Map<number, number>
-{
-    const buildingRows = DB.databaseConnection.prepare(
-        "SELECT planet_id, building_type, building_level FROM planet_building WHERE planet_id = ?"
-    ).all(planetId) as DBType.PlanetBuildingRow[];
-    const buildingLevel: Map<number, number> = new Map<number, number>();
-    for (const buildingRow of buildingRows)
-    {
-        buildingLevel.set(buildingRow.building_type, buildingRow.building_level);
-    }
-    return buildingLevel;
-}
-
-function getDynamicPlanetShipData(planetId: number): Map<number, number>
-{
-    const shipRows = DB.databaseConnection.prepare(
-        "SELECT planet_id, ship_type, ship_quantity FROM planet_ship WHERE planet_id = ?"
-    ).all(planetId) as DBType.PlanetShipRow[];
-    const shipQuantities: Map<number, number> = new Map<number, number>();
-    for (const shipRow of shipRows)
-    {
-        shipQuantities.set(shipRow.ship_type, shipRow.ship_quantity);
-    }
-    return shipQuantities;
-}
-
-function getDynamicPlanetShipConstructionBatchData(planetId: number): PlayerDataType.ShipConstructionBatch[]
-{
-    const shipConstructionRows = DB.databaseConnection.prepare(
-        "SELECT id, planet_id, batch_id, ship_type, ship_quantity FROM ship_construction WHERE planet_id = ? ORDER BY batch_id"
-    ).all(planetId) as DBType.ShipConstructionRow[];
-
-    const batchMap: Map<number, PlayerDataType.ShipConstructionBatch> = new Map<number, PlayerDataType.ShipConstructionBatch>();
-    const batches: PlayerDataType.ShipConstructionBatch[] = [];
-
-    for (const shipConstructionRow of shipConstructionRows)
-    {
-        const existingBatch: PlayerDataType.ShipConstructionBatch | undefined = batchMap.get(shipConstructionRow.batch_id);
-
-        if (existingBatch === undefined)
-        {
-            const newBatch: PlayerDataType.ShipConstructionBatch =
-            {
-                shipConstructionRows: [shipConstructionRow],
-                batchId: shipConstructionRow.batch_id,
-            };
-            batchMap.set(shipConstructionRow.batch_id, newBatch);
-            batches.push(newBatch);
-            continue;
-        }
-
-        existingBatch.shipConstructionRows.push(shipConstructionRow);
-    }
-
-    return batches;
-}
-
-function updateResourceQuantities(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        DB.databaseConnection.prepare("DELETE FROM planet_resource WHERE planet_id = ?").run(planetId);
-        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO planet_resource (planet_id, resource_type, resource_quantity) VALUES (?, ?, ?)"
-        );
-        for (const [resourceType, resourceQuantity] of dynamicPlanetData.resourceQuantity)
-        {
-            insertStatement.run(planetId, resourceType, resourceQuantity);
-        }
-    });
-    transaction();
-}
-
-function updateBuildingLevels(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        DB.databaseConnection.prepare("DELETE FROM planet_building WHERE planet_id = ?").run(planetId);
-        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO planet_building (planet_id, building_type, building_level) VALUES (?, ?, ?)"
-        );
-        for (const [buildingType, buildingLevel] of dynamicPlanetData.buildingLevels)
-        {
-            insertStatement.run(planetId, buildingType, buildingLevel);
-        }
-    });
-    transaction();
-}
-
-function updateShipConstructionBatches(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        DB.databaseConnection.prepare("DELETE FROM ship_construction WHERE planet_id = ?").run(planetId);
-        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO ship_construction (planet_id, batch_id, ship_type, ship_quantity) VALUES (?, ?, ?, ?)"
-        );
-        for (const shipConstructionBatch of dynamicPlanetData.queuedShipConstructionBatchs)
-        {
-            for (const shipConstructionRow of shipConstructionBatch.shipConstructionRows)
-            {
-                insertStatement.run(
-                    planetId,
-                    shipConstructionRow.batch_id,
-                    shipConstructionRow.ship_type,
-                    shipConstructionRow.ship_quantity,
-                );
-            }
-        }
-    });
-    transaction();
-}
-
-function updateShipQuantities(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        DB.databaseConnection.prepare("DELETE FROM planet_ship WHERE planet_id = ?").run(planetId);
-        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO planet_ship (planet_id, ship_type, ship_quantity) VALUES (?, ?, ?)"
-        );
-        for (const [shipType, shipQuantity] of dynamicPlanetData.shipQuantity)
-        {
-            insertStatement.run(planetId, shipType, shipQuantity);
-        }
-    });
-    transaction();
 }
 
 //#endregion

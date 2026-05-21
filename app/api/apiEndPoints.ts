@@ -62,7 +62,7 @@ type validEndpoint =
 }
 
 // no clue whats going on here, but allows to do : const registerResponse: ResponseForAction<typeof ActionRequest.Register>
-export type ActionRequestKey = keyof typeof ActionRequest;
+type ActionRequestKey = keyof typeof ActionRequest;
 type FindActionKeyByValueObject<TObject> =
 {
     [K in ActionRequestKey]: typeof ActionRequest[K] extends TObject ? K : never;
@@ -72,12 +72,11 @@ export type ResponseForAction<T extends typeof ActionRequest[ActionRequestKey]> 
 export type RequestForAction<T extends typeof ActionRequest[ActionRequestKey]> = ActionRequestMap[FindActionKeyByValueObject<T>];
 
 // no clue whats going on here, but allows to do : const clientRequest: ResponseForData<typeof DataRequest.UserInfo>
-export type DataRequestKey = keyof typeof DataRequest;
+type DataRequestKey = keyof typeof DataRequest;
 type FindDataKeyByValueObject<TObject> =
 {
     [K in DataRequestKey]: typeof DataRequest[K] extends TObject ? K : never;
 }[DataRequestKey];
 
 export type ResponseForData<T extends typeof DataRequest[DataRequestKey]> = DataResponseMap[FindDataKeyByValueObject<T>];
-export type RequestForData<T extends typeof DataRequest[DataRequestKey]> = DataResponseMap[FindDataKeyByValueObject<T>];
 //#endregion

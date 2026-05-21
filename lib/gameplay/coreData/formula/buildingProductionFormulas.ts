@@ -1,7 +1,7 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 
-export const buildingProductionPerHoursFunctionMap: Map<number, (currentUpgradeLevel: number, serverData: ServerDataType.ServerData | null) => Map<number, number>> = new Map
+export const buildingProductionRatePerHourFunctionMap: Map<number, (currentUpgradeLevel: number, serverData: ServerDataType.ServerData | null) => Map<number, number>> = new Map
 ([
 	[GameType.BUILDING_1, (currentUpgradeLevel: number, serverData: ServerDataType.ServerData | null): Map<number, number> => computeProductionRate_SimpleProductionBuilding(currentUpgradeLevel, BUILDING_1_DATA, serverData)],
 	[GameType.BUILDING_2, (currentUpgradeLevel: number, serverData: ServerDataType.ServerData | null): Map<number, number> => computeProductionRate_SimpleProductionBuilding(currentUpgradeLevel, BUILDING_2_DATA, serverData)],

@@ -1,11 +1,10 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
-import * as Cost from "@/lib/gameplay/cost";
 
 export type ExtraShipConstructionData =
 {
     currentShipyardLevel: number;
-    structuralIntegrity: number;
+    maxHealth: number;
 };
 
 export const shipConstructionDurationSecondsFunctionMap: Map<number, (extraConstructionData: ExtraShipConstructionData, serverData: ServerDataType.ServerData | null) => number> = new Map
@@ -28,7 +27,7 @@ function computeConstructionDurationSeconds_SimpleShip(extraConstructionData: Ex
 {
 	const timeMultiplier: number = serverData ? serverData.config.time_multiplier : 1;
     
-	const durationHours: number = extraConstructionData.structuralIntegrity / (data.divider * (extraConstructionData.currentShipyardLevel + 1));
+	const durationHours: number = extraConstructionData.maxHealth / (data.divider * (extraConstructionData.currentShipyardLevel + 1));
 
 	return Math.floor(durationHours * 3600 / timeMultiplier);
 }

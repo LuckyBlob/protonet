@@ -1,7 +1,6 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as DBType from "@/lib/db/dbTypes";
-import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 
 export const BUILDING_1_DATA: SimpleProductionBuildingCostData =
 {
@@ -51,7 +50,7 @@ export const STARTING_PLANET_DATA: PlayerDataType.DynamicPlanetData =
 	]),
 } as const;
 
-export const SHIP_STRUCTUAL_INTEGRITY: ReadonlyMap<number, number> = new Map<number, number>
+export const SHIP_MAX_HEALTH: ReadonlyMap<number, number> = new Map<number, number>
 ([
 	[GameType.SHIP_1, 4000],
 	[GameType.SHIP_2, 12000],

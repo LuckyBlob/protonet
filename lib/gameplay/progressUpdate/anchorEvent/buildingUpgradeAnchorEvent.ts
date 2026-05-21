@@ -13,17 +13,17 @@ export function findNextAnchorEvent(playerData: PlayerDataType.PlayerData): Anch
 {
     let nextTime: number | null = null;
     let nextFullPlanetDataIndex: number | null = null;
-    for (let Index = 0; Index < playerData.fullPlanetDatas.length; Index++)
+    for (let index = 0; index < playerData.fullPlanetDatas.length; index++)
     {
-        if (playerData.fullPlanetDatas[Index].planetRow.building_upgrade_completes_at === 0)
+        if (playerData.fullPlanetDatas[index].planetRow.building_upgrade_completes_at === 0)
         {
             continue;
         }
 
-        if (nextTime === null || playerData.fullPlanetDatas[Index].planetRow.building_upgrade_completes_at < nextTime)
+        if (nextTime === null || playerData.fullPlanetDatas[index].planetRow.building_upgrade_completes_at < nextTime)
         {
-            nextTime = playerData.fullPlanetDatas[Index].planetRow.building_upgrade_completes_at;
-            nextFullPlanetDataIndex = Index;
+            nextTime = playerData.fullPlanetDatas[index].planetRow.building_upgrade_completes_at;
+            nextFullPlanetDataIndex = index;
         }
     }
 

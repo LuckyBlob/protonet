@@ -8,9 +8,7 @@ export async function requestServerData<K extends keyof DataResponseMap>(dataReq
     try
     {
         const response: Response = await fetch(`/api/${dataRequest.endpoint}`);
-
         const parsed: unknown = await response.json();
-
         return handleServerDataResponse<K>(parsed, dataRequest.name);
     }
     catch (error: unknown)
@@ -38,6 +36,7 @@ function handleServerDataResponse<K extends keyof DataResponseMap>(parsed: unkno
     }
 
     const serverResponseData: DataResponseMap[K] = parsed as DataResponseMap[K];
+    // Use != instead of !== here to catch everything that's very weird.
     if (serverResponseData.error != null)
     {
         const responseFailure: DataResponseMap[K] =

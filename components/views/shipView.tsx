@@ -5,7 +5,7 @@ import { ReactElement } from "react";
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as HelperElements from "@/components/helperElements";
 
@@ -21,7 +21,7 @@ function renderBatchShipLines(batch: PlayerDataType.ShipConstructionBatch): Reac
 
     for (const shipConstructionRow of batch.shipConstructionRows)
     {
-        const shipName: string = GameType.SHIP_DISPLAY_NAMES.get(shipConstructionRow.ship_type) ?? `Ship ${shipConstructionRow.ship_type}`;
+        const shipName: string = ThingType.getSpecificThingName(ThingType.ship(shipConstructionRow.ship_type));
 
         lineElements.push(
             <div key={shipConstructionRow.ship_type} className="text-sm">
@@ -154,18 +154,12 @@ function renderShipViewLayout(selectedFullPlanetDataPredicted: PlayerDataType.Fu
 
 export function ShipView(props: ShipViewProps): ReactElement
 {
-    const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData | null = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-
-    if (selectedFullPlanetDataPredicted === null)
-    {
-        return <HelperElements.EmptyElement />;
-    }
-
     try
     {
+        const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
         return renderShipViewLayout(selectedFullPlanetDataPredicted);
     }
-    catch (error)
+    catch (error: unknown)
     {
         console.warn("⚠️:", error);
         return <HelperElements.EmptyElement />;

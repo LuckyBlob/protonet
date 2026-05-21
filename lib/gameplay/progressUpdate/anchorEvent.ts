@@ -19,6 +19,7 @@ export type AnchorEvent =
 
 export abstract class ProgressResolver
 {
+    // Keep server data param here even if unused for future ease when we will use it
     resolveAnchorEvent(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, anchorEvent: AnchorEvent): void
     {
         switch (anchorEvent.type)

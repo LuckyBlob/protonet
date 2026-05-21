@@ -12,7 +12,6 @@ import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTy
 import * as RequestType from "@/lib/networkRequests/requestTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
-import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 
@@ -120,7 +119,7 @@ function buildShipQuantityRequests(shipTypes: number[], requestedQuantities: Map
 //#region rendering helpers
 function renderShipImage(shipType: number): ReactElement
 {
-    const imagePath = getShipImagePath(shipType);
+    const imagePath: string = getShipImagePath(shipType);
     const element: ReactElement =
     (
         <div className="w-24 h-24 flex flex-col items-center justify-center text-center">
@@ -128,10 +127,14 @@ function renderShipImage(shipType: number): ReactElement
                 src={imagePath}
                 alt=""
                 className="w-24 h-24 object-contain"
-                onError={(e) => {
+                onError={(e) =>
+                {
                     e.currentTarget.style.display = "none";
-                    const fallback = e.currentTarget.nextElementSibling as HTMLElement | null;
-                    if (fallback) fallback.style.display = "flex";
+                    const fallback: HTMLElement | null = e.currentTarget.nextElementSibling as HTMLElement | null;
+                    if (fallback !== null)
+                    {
+                        fallback.style.display = "flex";
+                    }
                 }}
             />
             <div className="hidden flex-col items-center justify-center text-xs gap-1">
@@ -188,7 +191,7 @@ function renderQuantityInput(props: ShipyardViewProps, shipType: number, request
     {
         const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>) =>
         {
-            const parsedValue = Number.parseInt(e.target.value, 10);
+            const parsedValue: number = Number.parseInt(e.target.value, 10);
 
             if (Number.isNaN(parsedValue) || parsedValue < 0)
             {
@@ -249,9 +252,9 @@ function renderShipBuildRow(props: ShipyardViewProps, fullPlanetData: PlayerData
 
 function renderShipBuildRows(props: ShipyardViewProps, shipTypes: number[], fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, requestedQuantities: Map<number, number>, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
 {
-    const rowElements = shipTypes.map((shipType: number) =>
+    const rowElements: ReactElement[] = shipTypes.map((shipType: number) =>
     {
-        const requestedQuantity = requestedQuantities.get(shipType) ?? 0;
+        const requestedQuantity: number = requestedQuantities.get(shipType) ?? 0;
 
         return renderShipBuildRow(props, fullPlanetData, serverData, shipType, requestedQuantity, setRequestedQuantity);
     });
@@ -361,7 +364,7 @@ function renderBuildPreviewContent(fullPlanetData: PlayerDataType.FullPlanetData
 
 function renderBuildButton(hasRequestedData: boolean, onBuildAll: () => void): ReactElement | null
 {
-    if (!hasRequestedData)
+    if (hasRequestedData === false)
     {
         return null;
     }
@@ -430,14 +433,14 @@ function useRequestedQuantities(): RequestedQuantitiesState
 {
     const [requestedQuantities, setRequestedQuantitiesMap] = useState<Map<number, number>>(new Map<number, number>());
 
-    const setRequestedQuantity = (shipType: number, value: number) =>
+    const setRequestedQuantity = (shipType: number, value: number): void =>
     {
-        const updatedMap = new Map<number, number>(requestedQuantities);
+        const updatedMap: Map<number, number> = new Map<number, number>(requestedQuantities);
         updatedMap.set(shipType, value);
         setRequestedQuantitiesMap(updatedMap);
     };
 
-    const resetRequestedQuantities = () =>
+    const resetRequestedQuantities = (): void =>
     {
         setRequestedQuantitiesMap(new Map<number, number>());
     };
@@ -494,7 +497,7 @@ export function ShipyardView(props: ShipyardViewProps): ReactElement
         const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
         return renderShipyardBody(props, selectedFullPlanetDataPredicted, quantitiesState);
     }
-    catch (error)
+    catch (error: unknown)
     {
         console.warn("⚠️:", error);
         return <HelperElements.EmptyElement />;

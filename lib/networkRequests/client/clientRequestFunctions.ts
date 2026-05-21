@@ -11,7 +11,7 @@ import * as APIEndPoint from "@/app/api/apiEndPoints";
 
 //#region Player state helpers
 
-export async function setPlayerState(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): Promise<void>
+export function setPlayerState(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): void
 {
     const currentlySelectedPlanetId: number = SelectedPlanet.updateSelectedPlanetIdInStorage(psController, newPlayerData);
     const loadedPlayerState: PlayerDataType.PlayerState =
@@ -24,7 +24,7 @@ export async function setPlayerState(psController: PlayerDataType.PSController, 
     psController[1](loadedPlayerState);
 }
 
-export async function setPredictedPlayerState(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): Promise<void>
+export function setPredictedPlayerState(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): void
 {
     const currentlySelectedPlanetId: number = SelectedPlanet.updateSelectedPlanetIdInStorage(psController, newPlayerData);
     const loadedPlayerState: PlayerDataType.PlayerState =
@@ -49,6 +49,7 @@ export async function clientTryUserInfoRequest(): Promise<APIEndPoint.ResponseFo
 export async function clientTryPlayerDataRequest(psController: PlayerDataType.PSController): Promise<void>
 {
     const response: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.PlayerData> | null = await ServerRequest.requestServerData(APIEndPoint.DataRequest.PlayerData);
+    // Use != instead of !== here to catch everything that's very weird.
     if (response === null || response.serializedPlayerData == null)
     {
         throw new Error(`Failed to fetch player data.`);
@@ -60,6 +61,7 @@ export async function clientTryPlayerDataRequest(psController: PlayerDataType.PS
 export async function clientTryServerConfigRequest(sdsController: ServerDataType.SDSController): Promise<void>
 {
     const response: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.ServerConfig> | null = await ServerRequest.requestServerData(APIEndPoint.DataRequest.ServerConfig);
+    // Use != instead of !== here to catch everything that's very weird.
     if (response === null || response.serverData == null)
     {
         throw new Error(`Failed to fetch server data.`);
@@ -105,10 +107,12 @@ export async function clientTryRefreshServerRequest(clientDataStateResult: UseCl
         {
             throw new Error(response.error);
         }
+        // Use != instead of !== here to catch everything that's very weird.
         if (response.serializedPlayerData == null)
         {
             throw new Error(`Refresh server failed: Invalid player data.`);
         }
+        // Use != instead of !== here to catch everything that's very weird.
         if (response.serverData == null)
         {
             throw new Error(`Refresh server failed: Invalid server data.`);
@@ -131,6 +135,7 @@ export async function clientTryUpgradeBuildingRequest(psController: PlayerDataTy
         planetId: planetId,
     };
     const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.UpgradeBuilding, clientRequest);
+    // Use != instead of !== here to catch everything that's very weird.
     if (response.serializedPlayerData == null)
     {
         throw new Error(`Building upgrade failed for planetId ${planetId}: Invalid response from server.`);
@@ -147,6 +152,7 @@ export async function clientTryBuildShipsRequest(psController: PlayerDataType.PS
         shipQuantities: shipQuantities,
     };
     const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.BuildShips> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.BuildShips, clientRequest);
+    // Use != instead of !== here to catch everything that's very weird.
     if (response.serializedPlayerData == null)
     {
         throw new Error(`Build ships failed for planetId ${planetId}: Invalid response from server.`);

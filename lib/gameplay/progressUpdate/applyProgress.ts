@@ -2,7 +2,7 @@ import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
-import * as Production from "@/lib/gameplay/production";
+import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as ThingTypes from "@/lib/gameplay/coreData/type/thingTypes";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionBatchAnchorEvent"
@@ -35,7 +35,8 @@ export function updateResourcesToTime(playerData: PlayerDataType.PlayerData, ser
     }
 }
 
-function setUpdatedTimeStamp(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, time: number)
+// Keep server data param here even if unused for future ease when we will use it
+function setUpdatedTimeStamp(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, time: number): void
 {
     playerData.playerRow.last_updated = time;
     for (const fullPlanetData of playerData.fullPlanetDatas)
@@ -74,7 +75,7 @@ function getPredictedResourceQuantityAtTime(fullPlanetData: PlayerDataType.FullP
         return currentResourceQuantity;
     }
 
-    const productionRate: number = Production.getPlanetProductionRatePerSecond(fullPlanetData, resourceType, serverData);
+    const productionRate: number = BuildingData.getPlanetProductionRatePerSecond(fullPlanetData, resourceType, serverData);
     const resourceGained: number = productionRate * elapsedSeconds;
 
     const updatedResourceQuantity: number = currentResourceQuantity + resourceGained;

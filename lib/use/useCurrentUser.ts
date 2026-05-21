@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import * as DBType from "@/lib/db/dbTypes";
+import * as APIEndPoint from "@/app/api/apiEndPoints";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 
 export type CUController  = [CurrentUserResult, (value: CurrentUserResult) => void];
@@ -29,8 +30,9 @@ export function useCurrentUser(): CUController
 	{
 		const currentUser: () => Promise<void> = async () =>
 		{
-			const response = await ClientRequestFunctions.clientTryUserInfoRequest();
+			const response: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.UserInfo> | null = await ClientRequestFunctions.clientTryUserInfoRequest();
 
+    		// Use != instead of !== here to catch everything that's very weird.
 			if (response === null || response.userRow == null)
 			{
 				router.push("/login");

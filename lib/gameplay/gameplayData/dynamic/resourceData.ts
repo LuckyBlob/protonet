@@ -1,7 +1,7 @@
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as ThingTypes from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 
-// #region Resource Management
 export function setResourceQuantity(fullPlanetData: PlayerDataType.FullPlanetData, resourceType: number, value: number): void
 {
     ThingTypes.setSpecificThingValue(fullPlanetData, PlayerDataType.DataContext.ResourceQuantity, resourceType, value);
@@ -32,4 +32,10 @@ export function getResourceQuantities(fullPlanetData: PlayerDataType.FullPlanetD
 
     return resourceQuantities;
 }
-//#endregion
+
+export function subtractPlanetResource(fullPlanetData: PlayerDataType.FullPlanetData, resourceType: number, amountToSubtract: number): void
+{
+    const currentResourceQuantity: number = ResourceData.getResourceQuantity(fullPlanetData, resourceType);
+    const newQuantity: number = Math.max(0, currentResourceQuantity - amountToSubtract);
+    ResourceData.setResourceQuantity(fullPlanetData, resourceType, newQuantity);
+}

@@ -83,3 +83,22 @@ export type ShipConstructionRow   =
     ship_type: number;
     ship_quantity: number;
 };
+
+export type FleetMovementRow =
+{
+    id: number;
+    planet_origin_id: number;
+    planet_target_id: number;
+    fleet_action_type: number;
+    is_return_trip: number;
+    arrival_time: number;
+};
+
+export type FleetMovementShipRow =
+{
+    id: number;
+    planet_id: number;
+    fleet_id: number;
+    ship_type: number;
+    ship_quantity: number;
+};
