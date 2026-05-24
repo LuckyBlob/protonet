@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Protonet
 
-## Getting Started
+Protonet is a Next.js browser game prototype backed by SQLite. Players can register and log in, load shared server state, manage planets, upgrade buildings, and build ships from a single app that contains both the UI and the API routes.
 
-First, run the development server:
+## Project workflow
+
+- The app runs locally with `next dev` on **http://localhost:3001**.
+- Persistent game data lives in **`data/game.db`** and is ignored by git.
+- A fresh database is created from **`db/schema.sql`** with `npm run db:init`.
+- The initial world data is seeded with `npm run db:seed`.
+- Schema changes for an existing local database are applied with `npm run db:migrate`.
+
+## Developer quick start
 
 ```bash
+npm install
+mkdir -p data
+npm run db:init
+npm run db:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open **http://localhost:3001**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Useful commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the local development server on port 3001. |
+| `npm run build` | Build the production app. |
+| `npm run start` | Run the production server on port 3000. |
+| `npm run lint` | Run ESLint. |
+| `npm run db:init` | Create a new local SQLite database from the base schema and register existing migrations as applied. |
+| `npm run db:migrate` | Apply new SQL migrations to an existing local database and create a backup first. |
+| `npm run db:seed` | Seed the game world with the initial planet data. |
+| `npm run db:backfill` | Run the one-off data transfer/backfill script in `db/transfertData.ts`. |
 
-## Learn More
+## Notes for contributors
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- If you clone the repo fresh, create the `data/` directory before running database commands.
+- If you already have a local database and pull schema changes, run `npm run db:migrate` instead of `npm run db:init`.
+- If you need to reset your local game state, delete `data/game.db`, rerun `npm run db:init`, then rerun `npm run db:seed`.

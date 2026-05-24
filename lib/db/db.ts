@@ -1,7 +1,4 @@
 import Database from "better-sqlite3";
-import { join } from "path";
+import { createDatabaseConnection } from "@/lib/db/databaseConnection";
 
-const databaseFilePath: string = join(process.cwd(), "data", "game.db");
-
-export const databaseConnection: Database.Database = new Database(databaseFilePath);
-databaseConnection.pragma("foreign_keys = ON");
+export const databaseConnection: Database.Database = createDatabaseConnection();
