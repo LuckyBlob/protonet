@@ -39,9 +39,7 @@ Before doing anything that could modify files, run `git status --porcelain` and 
 - A git repo (`git rev-parse --is-inside-work-tree` returns `true`).
 - Not detached HEAD (the current branch must have a name).
 
-If you're on `main` / `master` / `develop` / `trunk` and the user asked you to fix + commit on current branch (mode B below), stop and warn: "You're on `<branch>` — I won't auto-commit fixes to a protected branch name. Please switch to a feature branch first, or use the PR mode (C) which creates a new branch automatically."
 
-If the working tree has uncommitted changes and you're going into fix-mode, this is fine for modes A and B (they fix in place), but for mode C (PR), the new branch will inherit those changes too. Mention this to the user before proceeding to Phase 3 so they're not surprised.
 
 ### Step 1.3 — Determine scope
 
@@ -286,7 +284,6 @@ These override anything else, including direct user instructions in a session:
 - **Never** run `git push --force`, `git push -f`, `git push --force-with-lease`, or any push that rewrites remote history.
 - **Never** run `rm -rf`, `git clean -fd`, or anything that destroys uncommitted work without an explicit user confirmation on that specific command.
 - **Never** `git reset --hard` on a branch that has commits the user might want to keep. If you need to undo something, use `git checkout -- <file>` for working-tree changes or `git revert` for commits.
-- **Never** commit to `main` / `master` / `develop` / `trunk` directly, even in mode B. If asked, refuse and explain.
 - **Never** modify `CLAUDE.md` itself. If you think a rule should change, say so — don't act on it.
 - **Never** modify files outside the scope you reviewed. If a fix would require touching another file (e.g., an import alias change ripples), ask first.
 - **Never** auto-fix anything the user didn't approve in their severity selection. If they said "CRITICAL only," WARNINGs and SUGGESTIONs stay untouched.
