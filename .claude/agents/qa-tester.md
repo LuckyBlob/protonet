@@ -1,6 +1,6 @@
 ---
-name: reviewLogic
-description: Inspect the code for problems in logic, miscalculations and gameplay elements. Invoke whenever Nicolas asks for it in claude code.
+name: qa-tester
+description: Inspect the code for bugs in all elements of the flow. Invoke whenever Nicolas asks for it in claude code.
 tools:
   - Read
   - Grep

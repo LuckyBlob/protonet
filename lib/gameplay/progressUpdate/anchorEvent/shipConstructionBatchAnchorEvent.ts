@@ -48,7 +48,7 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
     {
         fullPlanetData.planetRow.current_ship_construction_batch_id = 0;
         fullPlanetData.planetRow.ship_construction_batch_completes_at = 0;
-        console.warn("⚠️:", `Detected ship construction batch anchor event but had no queuedShipConstructionBatchs for planet id ${fullPlanetData.planetRow.id}`);
+        console.error("⚠️:", `Detected ship construction batch anchor event but had no queuedShipConstructionBatchs for planet id ${fullPlanetData.planetRow.id}`);
         return;
     }
 

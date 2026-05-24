@@ -16,24 +16,29 @@ import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData"
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
 import * as ServerProgress from "@/lib/gameplay/progressUpdate/server/serverProgress";
-import * as PlayerDataSerialization from "@/lib/helper/serialization";
+import * as Serialization from "@/lib/helper/serialization";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as APIEndPoint from "@/app/api/apiEndPoints";
-
+import * as ServerDynamicData from "@/lib/gameplay/gameplayData/dynamic/serverDynamicData";
+import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
+import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
+import * as ShipFuelConsumption from "@/lib/gameplay/coreData/formula/shipFuelConsumptionFormulas";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMovementDurationFormulas";
+import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
 //#region Types
 
-export type BuyUpgradeResult =
+type PlayerActionResult =
 {
     success: boolean;
     failureReason: string | null;
     playerStateResult: PlayerDataType.PlayerData;
 };
 
-export type BuildShipsResult =
+type PlayerStateActionResponse =
 {
-    success: boolean;
-    failureReason: string | null;
-    playerStateResult: PlayerDataType.PlayerData;
+    error: string | null;
+    serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
 
 //#endregion
@@ -86,7 +91,7 @@ export async function serverTryPlayerDataRequest(): Promise<NextResponse>
         return NextResponse.json(errorResponse, { status: 401 });
     }
 
-    let serializedPlayerData: PlayerDataSerialization.SerializedPlayerData;
+    let serializedPlayerData: Serialization.SerializedPlayerData;
     try
     {
         const player: DBType.PlayerRow | null = serverFindPlayerByUserId(user.id);
@@ -98,7 +103,7 @@ export async function serverTryPlayerDataRequest(): Promise<NextResponse>
 
         const serverData: ServerDataType.ServerData = ServerData.getServerData();
         const playerData: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(player.id, serverData, Date.now());
-        serializedPlayerData = PlayerDataSerialization.serializePlayerData(playerData);
+        serializedPlayerData = Serialization.serializePlayerData(playerData);
     }
     catch (error: unknown)
     {
@@ -323,106 +328,8 @@ export async function serverTryRefreshServerRequest(): Promise<NextResponse>
     return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RefreshServer>>(
     {
         error: null,
-        serializedPlayerData: PlayerDataSerialization.serializePlayerData(playerData),
+        serializedPlayerData: Serialization.serializePlayerData(playerData),
         serverData: serverData,
-    }, { status: 200 });
-}
-
-export async function serverTryUpgradeBuildingRequest(request: Request): Promise<NextResponse>
-{
-    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding> = await request.json();
-    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding> =
-    {
-        error: "Unknown error.",
-        serializedPlayerData: null,
-    };
-
-    const user: DBType.UserRow | null = await Auth.getCurrentUser();
-    if (user === null)
-    {
-        errorResponse.error = "Not logged in.";
-        return NextResponse.json(errorResponse, { status: 401 });
-    }
-
-    let serializedPlayerData: PlayerDataSerialization.SerializedPlayerData;
-    try
-    {
-        const player: DBType.PlayerRow | null = serverFindPlayerByUserId(user.id);
-        if (player === null)
-        {
-            errorResponse.error = "Player not found.";
-            return NextResponse.json(errorResponse, { status: 404 });
-        }
-
-        const serverData: ServerDataType.ServerData = ServerData.getServerData();
-        const result: BuyUpgradeResult = tryUpgradeBuildingLogic(player.id, serverData, clientRequest);
-        if (result.success === false)
-        {
-            errorResponse.error = result.failureReason;
-            return NextResponse.json(errorResponse, { status: 400 });
-        }
-
-        serializedPlayerData = PlayerDataSerialization.serializePlayerData(result.playerStateResult);
-    }
-    catch (error: unknown)
-    {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
-        return NextResponse.json(errorResponse, { status: 500 });
-    }
-
-    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding>>(
-    {
-        error: null,
-        serializedPlayerData: serializedPlayerData,
-    }, { status: 200 });
-}
-
-export async function serverTryBuildShipsRequest(request: Request): Promise<NextResponse>
-{
-    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips> = await request.json();
-    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.BuildShips> =
-    {
-        error: "Unknown error.",
-        serializedPlayerData: null,
-    };
-
-    const user: DBType.UserRow | null = await Auth.getCurrentUser();
-    if (user === null)
-    {
-        errorResponse.error = "Not logged in.";
-        return NextResponse.json(errorResponse, { status: 401 });
-    }
-
-    let serializedPlayerData: PlayerDataSerialization.SerializedPlayerData;
-    try
-    {
-        const player: DBType.PlayerRow | null = serverFindPlayerByUserId(user.id);
-        if (player === null)
-        {
-            errorResponse.error = "Player not found.";
-            return NextResponse.json(errorResponse, { status: 404 });
-        }
-
-        const serverData: ServerDataType.ServerData = ServerData.getServerData();
-        const result: BuildShipsResult = tryBuildShipsLogic(player.id, serverData, clientRequest);
-        if (result.success === false)
-        {
-            errorResponse.error = result.failureReason;
-            return NextResponse.json(errorResponse, { status: 400 });
-        }
-
-        serializedPlayerData = PlayerDataSerialization.serializePlayerData(result.playerStateResult);
-    }
-    catch (error: unknown)
-    {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
-        return NextResponse.json(errorResponse, { status: 500 });
-    }
-
-    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.BuildShips>>(
-    {
-        error: null,
-        serializedPlayerData: serializedPlayerData,
     }, { status: 200 });
 }
 
@@ -473,7 +380,7 @@ export function serverGetFullPlanetDatas(playerId: number): PlayerDataType.FullP
 
     for (const planetRow of planetRows)
     {
-        const dynamicPlanetData: PlayerDataType.DynamicPlanetData = getDynamicPlanetData(planetRow.id);
+        const dynamicPlanetData: PlayerDataType.DynamicPlanetData = ServerDynamicData.getDynamicPlanetData(planetRow.id);
         const fullPlanetData: PlayerDataType.FullPlanetData =
         {
             planetRow: planetRow,
@@ -513,50 +420,17 @@ export function serverUpdatePlanetRow(planetId: number, columnUpdates: Partial<D
     return result;
 }
 
-export function serverUpdatePlanetDataContext(planetId: number, dataContext: PlayerDataType.DataContext, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        switch (dataContext)
-        {
-            case PlayerDataType.DataContext.BuildingLevel:
-            {
-                updateBuildingLevels(planetId, dynamicPlanetData);
-                break;
-            }
-            case PlayerDataType.DataContext.ResourceQuantity:
-            {
-                updateResourceQuantities(planetId, dynamicPlanetData);
-                break;
-            }
-            case PlayerDataType.DataContext.ShipConstruction:
-            {
-                updateShipConstructionBatchs(planetId, dynamicPlanetData);
-                break;
-            }
-            case PlayerDataType.DataContext.ShipQuantity:
-            {
-                updateShipQuantities(planetId, dynamicPlanetData);
-                break;
-            }
-            default:
-                throw new Error(`UNREACHABLE: Dynamic data update function undefined for data context ${dataContext}.`);
-        }
-    });
-    transaction();
-}
-
 export function serverUpdateAllPlanetData(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): PlayerDataType.DynamicPlanetData
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
         for (const dataContext of PlayerData.getDataContexts())
         {
-            serverUpdatePlanetDataContext(planetId, dataContext, dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlanetDataContext(planetId, dataContext, dynamicPlanetData);
         }
     });
     transaction();
-    return getDynamicPlanetData(planetId);
+    return ServerDynamicData.getDynamicPlanetData(planetId);
 }
 
 export function serverAssignStartingPlanets(playerRow: DBType.PlayerRow): void
@@ -615,7 +489,7 @@ function createPlayer(userId: number): boolean
     }
     catch (error: unknown)
     {
-        console.warn("⚠️:", error);
+        console.error("⚠️:", error);
         return false;
     }
 }
@@ -655,165 +529,19 @@ function getPlanetsByOwner(playerId: number): DBType.PlanetRow[]
     ).all(playerId) as DBType.PlanetRow[];
 }
 
-function getDynamicPlanetData(planetId: number): PlayerDataType.DynamicPlanetData
+export function getFullPlanetDataByCoords(galaxy: number, system: number, slot: number): PlayerDataType.FullPlanetData | null
 {
-    return {
-        resourceQuantity: getDynamicPlanetResourceData(planetId),
-        buildingLevels: getDynamicPlanetBuildingData(planetId),
-        shipQuantity: getDynamicPlanetShipData(planetId),
-        queuedShipConstructionBatchs: getDynamicPlanetShipConstructionBatchData(planetId),
-    };
-}
+    const planetRow: DBType.PlanetRow | undefined = DB.databaseConnection.prepare(
+        "SELECT * FROM planet WHERE galaxy = ? AND system = ? AND slot = ?"
+    ).get(galaxy, system, slot) as DBType.PlanetRow | undefined;
 
-function getDynamicPlanetResourceData(planetId: number): Map<number, number>
-{
-    const resourceRows: DBType.PlanetResourceRow[] = DB.databaseConnection.prepare(
-        "SELECT planet_id, resource_type, resource_quantity FROM planet_resource WHERE planet_id = ?"
-    ).all(planetId) as DBType.PlanetResourceRow[];
-    const resourceQuantity: Map<number, number> = new Map<number, number>();
-    for (const resourceRow of resourceRows)
+    if (planetRow === undefined)
     {
-        resourceQuantity.set(resourceRow.resource_type, resourceRow.resource_quantity);
-    }
-    return resourceQuantity;
-}
-
-function getDynamicPlanetBuildingData(planetId: number): Map<number, number>
-{
-    const buildingRows: DBType.PlanetBuildingRow[] = DB.databaseConnection.prepare(
-        "SELECT planet_id, building_type, building_level FROM planet_building WHERE planet_id = ?"
-    ).all(planetId) as DBType.PlanetBuildingRow[];
-    const buildingLevel: Map<number, number> = new Map<number, number>();
-    for (const buildingRow of buildingRows)
-    {
-        buildingLevel.set(buildingRow.building_type, buildingRow.building_level);
-    }
-    return buildingLevel;
-}
-
-function getDynamicPlanetShipData(planetId: number): Map<number, number>
-{
-    const shipRows: DBType.PlanetShipRow[] = DB.databaseConnection.prepare(
-        "SELECT planet_id, ship_type, ship_quantity FROM planet_ship WHERE planet_id = ?"
-    ).all(planetId) as DBType.PlanetShipRow[];
-    const shipQuantities: Map<number, number> = new Map<number, number>();
-    for (const shipRow of shipRows)
-    {
-        shipQuantities.set(shipRow.ship_type, shipRow.ship_quantity);
-    }
-    return shipQuantities;
-}
-
-function getDynamicPlanetShipConstructionBatchData(planetId: number): PlayerDataType.ShipConstructionBatch[]
-{
-    const shipConstructionRows: DBType.ShipConstructionRow[] = DB.databaseConnection.prepare(
-        "SELECT id, planet_id, batch_id, ship_type, ship_quantity FROM ship_construction WHERE planet_id = ? ORDER BY batch_id"
-    ).all(planetId) as DBType.ShipConstructionRow[];
-
-    const batchMap: Map<number, PlayerDataType.ShipConstructionBatch> = new Map<number, PlayerDataType.ShipConstructionBatch>();
-    const batches: PlayerDataType.ShipConstructionBatch[] = [];
-
-    for (const shipConstructionRow of shipConstructionRows)
-    {
-        const existingBatch: PlayerDataType.ShipConstructionBatch | undefined = batchMap.get(shipConstructionRow.batch_id);
-
-        if (existingBatch === undefined)
-        {
-            const newBatch: PlayerDataType.ShipConstructionBatch =
-            {
-                shipConstructionRows: [shipConstructionRow],
-                batchId: shipConstructionRow.batch_id,
-            };
-            batchMap.set(shipConstructionRow.batch_id, newBatch);
-            batches.push(newBatch);
-            continue;
-        }
-
-        existingBatch.shipConstructionRows.push(shipConstructionRow);
+        return null;
     }
 
-    return batches;
-}
-
-function updateResourceQuantities(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        DB.databaseConnection.prepare("DELETE FROM planet_resource WHERE planet_id = ?").run(planetId);
-        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO planet_resource (planet_id, resource_type, resource_quantity) VALUES (?, ?, ?)"
-        );
-        for (const [resourceType, resourceQuantity] of dynamicPlanetData.resourceQuantity)
-        {
-            insertStatement.run(planetId, resourceType, resourceQuantity);
-        }
-    });
-    transaction();
-}
-
-function updateBuildingLevels(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        DB.databaseConnection.prepare("DELETE FROM planet_building WHERE planet_id = ?").run(planetId);
-        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO planet_building (planet_id, building_type, building_level) VALUES (?, ?, ?)"
-        );
-        for (const [buildingType, buildingLevel] of dynamicPlanetData.buildingLevels)
-        {
-            insertStatement.run(planetId, buildingType, buildingLevel);
-        }
-    });
-    transaction();
-}
-
-function updateShipConstructionBatchs(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        DB.databaseConnection.prepare("DELETE FROM ship_construction WHERE planet_id = ?").run(planetId);
-        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO ship_construction (planet_id, batch_id, ship_type, ship_quantity) VALUES (?, ?, ?, ?)"
-        );
-        for (const shipConstructionBatch of dynamicPlanetData.queuedShipConstructionBatchs)
-        {
-            for (const shipConstructionRow of shipConstructionBatch.shipConstructionRows)
-            {
-                insertStatement.run(
-                    planetId,
-                    shipConstructionRow.batch_id,
-                    shipConstructionRow.ship_type,
-                    shipConstructionRow.ship_quantity,
-                );
-            }
-        }
-    });
-    transaction();
-}
-
-function updateShipQuantities(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        DB.databaseConnection.prepare("DELETE FROM planet_ship WHERE planet_id = ?").run(planetId);
-        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO planet_ship (planet_id, ship_type, ship_quantity) VALUES (?, ?, ?)"
-        );
-        for (const [shipType, shipQuantity] of dynamicPlanetData.shipQuantity)
-        {
-            insertStatement.run(planetId, shipType, shipQuantity);
-        }
-    });
-    transaction();
-}
-
-function applyProgressToAllPlayers(time: number, serverData: ServerDataType.ServerData): void
-{
-    const playerRows: { id: number }[] = DB.databaseConnection.prepare("SELECT id FROM player").all() as { id: number }[];
-    for (const playerRow of playerRows)
-    {
-        ServerProgress.applyPlayerUpdate(playerRow.id, serverData, time);
-    }
+    const dynamicPlanetData: PlayerDataType.DynamicPlanetData = ServerDynamicData.getDynamicPlanetData(planetRow.id);
+    return { planetRow: planetRow, dynamicPlanetData: dynamicPlanetData };
 }
 
 function rescaleBuildingUpgradeTimes(rescaleFactor: number, now: number): void
@@ -856,7 +584,55 @@ function rescaleShipConstructionTimes(rescaleFactor: number, now: number): void
 
 //#region Server logic
 
-function tryUpgradeBuildingLogic(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding>): BuyUpgradeResult
+export async function handlePlayerStateActionRequest(logic: (playerId: number, serverData: ServerDataType.ServerData) => PlayerActionResult): Promise<NextResponse>
+{
+    const errorResponse: PlayerStateActionResponse =
+    {
+        error: "Unknown error.",
+        serializedPlayerData: null,
+    };
+
+    const user: DBType.UserRow | null = await Auth.getCurrentUser();
+    if (user === null)
+    {
+        errorResponse.error = "Not logged in.";
+        return NextResponse.json(errorResponse, { status: 401 });
+    }
+
+    let serializedPlayerData: Serialization.SerializedPlayerData;
+    try
+    {
+        const player: DBType.PlayerRow | null = serverFindPlayerByUserId(user.id);
+        if (player === null)
+        {
+            errorResponse.error = "Player not found.";
+            return NextResponse.json(errorResponse, { status: 404 });
+        }
+
+        const serverData: ServerDataType.ServerData = ServerData.getServerData();
+        const result: PlayerActionResult = logic(player.id, serverData);
+        if (result.success === false)
+        {
+            errorResponse.error = result.failureReason;
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        serializedPlayerData = Serialization.serializePlayerData(result.playerStateResult);
+    }
+    catch (error: unknown)
+    {
+        errorResponse.error = error instanceof Error ? error.message : String(error);
+        return NextResponse.json(errorResponse, { status: 500 });
+    }
+
+    return NextResponse.json(
+    {
+        error: null,
+        serializedPlayerData: serializedPlayerData,
+    }, { status: 200 });
+}
+
+export function tryUpgradeBuildingLogic(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding>): PlayerActionResult
 {
     const now: number = Date.now();
     const updatedPlayer: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
@@ -890,13 +666,13 @@ function tryUpgradeBuildingLogic(playerId: number, serverData: ServerDataType.Se
     }
 
     const currentBuildingLevel: number = BuildingData.getBuildingLevel(relevantFullPlanetData, requestData.buildingType);
-    const buildDurationSeconds: number | null = BuildingData.getBuildingUpgradeDurationSeconds(updatedPlayer, relevantFullPlanetData, serverData, requestData.buildingType);
+    const buildDurationSeconds: number | null = BuildingDuration.computeUpgradeDurationSeconds(currentBuildingLevel, requestData.buildingType, updatedPlayer, relevantFullPlanetData.planetRow.id, serverData);
     if (buildDurationSeconds === null)
     {
         return { success: false, failureReason: "Wrong building type to upgrade.", playerStateResult: updatedPlayer };
     }
 
-    const upgradeCost: Map<number, number> | null = BuildingData.computeBuildingUpgradeCost(currentBuildingLevel, requestData.buildingType);
+    const upgradeCost: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(currentBuildingLevel, requestData.buildingType);
     if (upgradeCost === null)
     {
         return { success: false, failureReason: "Wrong building type to upgrade.", playerStateResult: updatedPlayer };
@@ -907,7 +683,7 @@ function tryUpgradeBuildingLogic(playerId: number, serverData: ServerDataType.Se
         ResourceData.subtractPlanetResource(relevantFullPlanetData, resourceType, resourceCost);
     }
 
-    const changedPlayerStateResult: PlayerDataType.PlayerData = DB.databaseConnection.transaction((): PlayerDataType.PlayerData =>
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
         const buildCompletesAtMilliseconds: number = now + buildDurationSeconds * 1000;
         const updatedPlanetRow: DBType.PlanetRow = serverUpdatePlanetRow(relevantFullPlanetData.planetRow.id,
@@ -916,20 +692,26 @@ function tryUpgradeBuildingLogic(playerId: number, serverData: ServerDataType.Se
             building_being_upgraded: requestData.buildingType,
         });
 
-        serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, relevantFullPlanetData.dynamicPlanetData);
-        serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
 
-        updatedPlayer.fullPlanetDatas[relevantPlanetDataIndex].planetRow = updatedPlanetRow;
-        return { playerRow: updatedPlayer.playerRow, fullPlanetDatas: updatedPlayer.fullPlanetDatas };
+        const playerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        }
+        return playerActionResult;
     })();
 
-    return { success: true, failureReason: null, playerStateResult: changedPlayerStateResult };
+    return playerActionResult;
 }
 
-function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips>): BuildShipsResult
+export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips>): PlayerActionResult
 {
     const now: number = Date.now();
     const playerData: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+    const requestedShipQuantities: Map<number, number> = Serialization.deserializeNumberNumberMap(requestData.serializedShipQuantities);
 
     const relevantPlanetDataIndex: number = playerData.fullPlanetDatas.findIndex((fullPlanetData: PlayerDataType.FullPlanetData): boolean =>
     {
@@ -941,27 +723,15 @@ function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.ServerD
         return { success: false, failureReason: "Wrong planet to build ships.", playerStateResult: playerData };
     }
 
-    const relevantFullPlanetData: PlayerDataType.FullPlanetData = playerData.fullPlanetDatas[relevantPlanetDataIndex];
-
-    const requestedShipQuantities: Map<number, number> = new Map<number, number>();
-    for (const shipQuantityRequest of requestData.shipQuantities)
-    {
-        if (shipQuantityRequest.shipQuantity <= 0)
-        {
-            continue;
-        }
-        const existingQuantity: number = requestedShipQuantities.get(shipQuantityRequest.shipType) ?? 0;
-        requestedShipQuantities.set(shipQuantityRequest.shipType, existingQuantity + shipQuantityRequest.shipQuantity);
-    }
-
     if (requestedShipQuantities.size === 0)
     {
         return { success: false, failureReason: "No ships requested.", playerStateResult: playerData };
     }
 
-    for (const shipQuantityRequest of requestData.shipQuantities)
+    const relevantFullPlanetData: PlayerDataType.FullPlanetData = playerData.fullPlanetDatas[relevantPlanetDataIndex];
+    for (const [shipType, shipQuantity] of requestedShipQuantities)
     {
-        if (Requirement.getFailedShipBuildRequirements(playerData, shipQuantityRequest.shipType, relevantFullPlanetData.planetRow.id).length > 0)
+        if (Requirement.getFailedShipBuildRequirements(playerData, shipType, relevantFullPlanetData.planetRow.id).length > 0)
         {
             return { success: false, failureReason: "A ship doesn't meet requirements.", playerStateResult: playerData };
         }
@@ -1010,7 +780,7 @@ function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.ServerD
     relevantFullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs.push(newBatch);
 
     const isAlreadyConstructing: boolean = (relevantFullPlanetData.planetRow.ship_construction_batch_completes_at !== 0);
-    const changedPlayerStateResult: PlayerDataType.PlayerData = DB.databaseConnection.transaction((): PlayerDataType.PlayerData =>
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
         let updatedPlanetRow: DBType.PlanetRow = relevantFullPlanetData.planetRow;
 
@@ -1024,14 +794,161 @@ function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.ServerD
             });
         }
 
-        serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
-        serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, relevantFullPlanetData.dynamicPlanetData);
-
-        playerData.fullPlanetDatas[relevantPlanetDataIndex].planetRow = updatedPlanetRow;
-        return { playerRow: playerData.playerRow, fullPlanetDatas: playerData.fullPlanetDatas };
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, relevantFullPlanetData.dynamicPlanetData);
+        
+        const playerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        }
+        return playerActionResult;
     })();
 
-    return { success: true, failureReason: null, playerStateResult: changedPlayerStateResult };
+    return playerActionResult;
+}
+
+export function trySendFleetLogic(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.SendFleet>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+    const shipQuantities: Map<number, number> = Serialization.deserializeNumberNumberMap(requestData.serializedShipQuantities);
+    const transportedResourceQuantities: Map<number, number> = Serialization.deserializeNumberNumberMap(requestData.serializedResourceQuantities);
+
+    const originPlanetDataIndex: number = playerData.fullPlanetDatas.findIndex((fullPlanetData: PlayerDataType.FullPlanetData): boolean =>
+    {
+        return fullPlanetData.planetRow.id === requestData.originPlanetId;
+    });
+    if (originPlanetDataIndex === -1)
+    {
+        return { success: false, failureReason: "Origin planet is invalid.", playerStateResult: playerData };
+    }
+
+    const targetFullPlanetData: PlayerDataType.FullPlanetData | null = getFullPlanetDataByCoords(requestData.targetPlanetGalaxy, requestData.targetPlanetSystem, requestData.targetPlanetPosition);
+    if (targetFullPlanetData === null)
+    {
+        return { success: false, failureReason: "Target planet is invalid.", playerStateResult: playerData };
+    }
+    const originFullPlanetData: PlayerDataType.FullPlanetData = playerData.fullPlanetDatas[originPlanetDataIndex];
+
+    for (const [shipType, shipQuantity] of shipQuantities)
+    {
+        if (Requirement.getFailedFleetMovementRequirements(playerData, shipType, originFullPlanetData.planetRow.id).length > 0)
+        {
+            return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
+        }
+    }
+
+    const canExecuteFleetAction: boolean = FleetData.canExecuteFleetActionOnTargetPlanet(originFullPlanetData, targetFullPlanetData, shipQuantities, requestData.fleetAction);
+    if (canExecuteFleetAction === false)
+    {
+        return { success: false, failureReason: `Cannot execute fleet action ${requestData.fleetAction}.`, playerStateResult: playerData };
+    }
+
+    let fuelRequirements: Map<number, number>;
+    try
+    {
+        fuelRequirements = FleetData.calculateTotalFleetFuel(originFullPlanetData, targetFullPlanetData, shipQuantities, serverData);
+    }
+    catch (error: unknown)
+    {
+        const errorMessage: string = error instanceof Error ? error.message : String(error);
+        return { success: false, failureReason: `Fuel calculation problems: ${errorMessage}`, playerStateResult: playerData };
+    }
+
+    let fleetMovementDurationSeconds: number = 0;
+    try
+    {
+         fleetMovementDurationSeconds = FleetMovementDuration.computeFleetMovementDurationSeconds(originFullPlanetData, targetFullPlanetData, shipQuantities, serverData);
+    }
+    catch (error: unknown)
+    {
+        const errorMessage: string = error instanceof Error ? error.message : String(error);
+        return { success: false, failureReason: `Duration calculation problems: ${errorMessage}`, playerStateResult: playerData };
+    }
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
+        const canAffordFuel: boolean = ResourceData.hasResourceQuantities(originFullPlanetData, fuelRequirements);
+        if (canAffordFuel === false)
+        {
+            return { success: false, failureReason: `Not enough fuel.`, playerStateResult: playerData };
+        }
+
+        const canStoreFuel: boolean = FleetData.hasSpaceForFuel(shipQuantities, fuelRequirements);
+        if (canStoreFuel === false)
+        {
+            return { success: false, failureReason: `Not enough space for fuel.`, playerStateResult: playerData };
+        }
+
+        const hasShips: boolean = ShipData.hasShipQuantities(originFullPlanetData, shipQuantities);
+        if (hasShips === false)
+        {
+            return { success: false, failureReason: `Not enough ships.`, playerStateResult: playerData };
+        }
+
+        const arrivalTime: number = now + (fleetMovementDurationSeconds * 1000);
+        const actualTransportedResources: Map<number, number> = new Map<number, number>(FleetData.clampResoucesToAddToFleet(shipQuantities, fuelRequirements, transportedResourceQuantities));
+
+        const fleetMovementShipRows: DBType.FleetMovementShipRow[] = [];
+        for (const [shipType, shipQuantity] of shipQuantities)
+        {
+            const fleetMovementShipRow: DBType.FleetMovementShipRow =
+            {
+                fleet_id: -1, // will be set on the update
+                ship_type: shipType,
+                ship_quantity: ShipData.subtractPlanetShip(originFullPlanetData, shipType, shipQuantity),
+            };
+            fleetMovementShipRows.push(fleetMovementShipRow);
+        }
+        const fleetMovementResourceRows: DBType.FleetMovementResourceRow[] = [];
+        for (const [resourceType, resourceQuantity] of actualTransportedResources)
+        {
+            const fleetMovementResourceRow: DBType.FleetMovementResourceRow =
+            {
+                fleet_id: -1, // will be set on the update
+                resource_type: resourceType,
+                resource_quantity: ResourceData.subtractPlanetResource(originFullPlanetData, resourceType, resourceQuantity),
+            };
+            fleetMovementResourceRows.push(fleetMovementResourceRow);
+        }
+        const fleetMovementRow: DBType.FleetMovementRow =
+        {
+            id: -1, // will be set on the update
+            seed: Math.random() * 0x7FFFFFFF, //random is float, SQLite takes ints, 0x7FFFFFFF is 2^31 - 1
+            player_origin_id: playerData.playerRow.id,
+            planet_origin_id: originFullPlanetData.planetRow.id,
+            player_target_id: targetFullPlanetData.planetRow.owner_player_id,
+            planet_target_id: targetFullPlanetData.planetRow.id,
+            departure_time: now,
+            arrival_time: arrivalTime,
+            is_return_trip: 0,
+            fleet_action_type: requestData.fleetAction,
+        };
+        const newFleetMovement: PlayerDataType.FleetMovement =
+        {
+            fleetMovementRow: fleetMovementRow,
+            fleetMovementShipRows: fleetMovementShipRows,
+            fleetMovementResourceRows: fleetMovementResourceRows,
+            resolutionState: PlayerDataType.FleetMovementResolution.Unresolved,
+        }
+        originFullPlanetData.dynamicPlanetData.futureFleetArrivals.push(newFleetMovement);
+    
+        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, originFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipQuantity, originFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, PlayerDataType.DataContext.FutureFleetArrivals, originFullPlanetData.dynamicPlanetData);
+
+        const playerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        }
+        return playerActionResult;
+    })();
+
+    return playerActionResult;
 }
 
 function applyProgressToAllPlayersAndRescaleEndTimes(): void
@@ -1076,4 +993,12 @@ function calculateRescaleFactor(oldServerData: ServerDataType.ServerData, newSer
     return (oldMultiplier / newMultiplier);
 }
 
+export function applyProgressToAllPlayers(time: number, serverData: ServerDataType.ServerData): void
+{
+    const playerRows: { id: number }[] = DB.databaseConnection.prepare("SELECT id FROM player").all() as { id: number }[];
+    for (const playerRow of playerRows)
+    {
+        ServerProgress.applyPlayerUpdate(playerRow.id, serverData, time);
+    }
+}
 //#endregion

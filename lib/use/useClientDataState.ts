@@ -36,7 +36,7 @@ export function useClientDataState(enabled: boolean): ClientDataStateResult
 			}
 			catch (error: unknown)
 			{
-				console.warn("⚠️:", error);
+				console.error("⚠️:", error);
 				lsController[1]({ isLoading: true });
 			}
 		};

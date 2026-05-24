@@ -1,15 +1,18 @@
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 
-export function getVariableFromContext<T extends PlayerDataType.DataContext>(data: PlayerDataType.DynamicPlanetData, variable: T): PlayerDataType.DynamicPlanetData[typeof PlayerDataType.DataContextToVariableNameMap[T]]
+type VariableNameMapType = typeof PlayerDataType.DataContextToVariableNameMap;
+type TargetPropertyName<T extends PlayerDataType.DataContext> = Extract<VariableNameMapType[T], keyof PlayerDataType.DynamicPlanetData>;
+export function getVariableFromContext<T extends PlayerDataType.DataContext>(data: PlayerDataType.DynamicPlanetData, variable: T): PlayerDataType.DynamicPlanetData[TargetPropertyName<T>]
 {
-	const propertyKey: typeof PlayerDataType.DataContextToVariableNameMap[T] = PlayerDataType.DataContextToVariableNameMap[variable];
+    const propertyKey: TargetPropertyName<T> = PlayerDataType.DataContextToVariableNameMap[variable] as TargetPropertyName<T>;
     
     if (propertyKey === undefined)
-	{
+    {
         throw new Error(`UNREACHABLE: Mismatch DynamicPlanetData: fill DataContext and DataContextToVariableNameMap.`);
     }
 
-    return data[propertyKey] as PlayerDataType.DynamicPlanetData[typeof PlayerDataType.DataContextToVariableNameMap[T]];
+    // 3. This will now compile cleanly because TargetPropertyName<T> is guaranteed to be a valid key
+    return data[propertyKey] as PlayerDataType.DynamicPlanetData[TargetPropertyName<T>];
 }
 
 export function getDataContexts(): PlayerDataType.DataContext[]

@@ -1,6 +1,6 @@
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as ThingTypes from "@/lib/gameplay/coreData/type/thingTypes";
-import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
+import * as MathHelp from "@/lib/helper/mathHelp";
 
 export function setResourceQuantity(fullPlanetData: PlayerDataType.FullPlanetData, resourceType: number, value: number): void
 {
@@ -33,9 +33,35 @@ export function getResourceQuantities(fullPlanetData: PlayerDataType.FullPlanetD
     return resourceQuantities;
 }
 
-export function subtractPlanetResource(fullPlanetData: PlayerDataType.FullPlanetData, resourceType: number, amountToSubtract: number): void
+export function hasResourceQuantities(fullPlanetData: PlayerDataType.FullPlanetData, resourceQuantities: Map<number, number>): boolean
 {
-    const currentResourceQuantity: number = ResourceData.getResourceQuantity(fullPlanetData, resourceType);
-    const newQuantity: number = Math.max(0, currentResourceQuantity - amountToSubtract);
-    ResourceData.setResourceQuantity(fullPlanetData, resourceType, newQuantity);
+    return MathHelp.hasQuantities(resourceQuantities, (type: number): number | undefined => { return getResourceQuantity(fullPlanetData, type) });
+}
+
+export function subtractPlanetResources(fullPlanetData: PlayerDataType.FullPlanetData, resourceQuantities: Map<number, number>): Map<number, number>
+{
+    return MathHelp.subtractQuantities(resourceQuantities,
+                                      (type: number): number | undefined => { return getResourceQuantity(fullPlanetData, type) },
+                                      (type: number, value: number): void => { setResourceQuantity(fullPlanetData, type, value) });
+}
+
+export function subtractPlanetResource(fullPlanetData: PlayerDataType.FullPlanetData, resourceType: number, amountToSubtract: number): number
+{
+    return MathHelp.subtractQuantity(resourceType, amountToSubtract,
+                                    (type: number): number | undefined => { return getResourceQuantity(fullPlanetData, type) },
+                                    (type: number, value: number): void => { setResourceQuantity(fullPlanetData, type, value) });
+}
+
+export function addPlanetResources(fullPlanetData: PlayerDataType.FullPlanetData, resourceQuantities: Map<number, number>): Map<number, number>
+{
+    return MathHelp.addQuantities(resourceQuantities,
+                                 (type: number): number | undefined => { return getResourceQuantity(fullPlanetData, type) },
+                                 (type: number, value: number): void => { setResourceQuantity(fullPlanetData, type, value) });
+}
+
+export function addPlanetResource(fullPlanetData: PlayerDataType.FullPlanetData, resourceType: number, amountToSubtract: number): number
+{
+    return MathHelp.addQuantity(resourceType, amountToSubtract,
+                               (type: number): number | undefined => { return getResourceQuantity(fullPlanetData, type) },
+                               (type: number, value: number): void => { setResourceQuantity(fullPlanetData, type, value) });
 }

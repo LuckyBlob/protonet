@@ -6,22 +6,91 @@ import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData"
 import * as ThingTypes from "@/lib/gameplay/coreData/type/thingTypes";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionBatchAnchorEvent"
+import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
+import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
 
-export function applyProgressToPlayerData(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, now: number, progressResolver: AnchorEvent.ProgressResolver): PlayerDataType.PlayerData
+export abstract class PlayerProgressApplier
+{
+    abstract applyPlayerProgressAtTime(sourcePlayerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, targetPlayerId: number, time: number): PlayerDataType.PlayerData | null;
+
+    getNextAnchorEvent(playerData: PlayerDataType.PlayerData): AnchorEvent.AnchorEvent | null
+    {
+        const anchorEvents: (AnchorEvent.AnchorEvent | null)[] = [];
+        anchorEvents.push(BuildingUpgrade.findNextAnchorEvent(playerData));
+        anchorEvents.push(ShipConstruction.findNextAnchorEvent(playerData));
+        anchorEvents.push(FleetArrival.findNextAnchorEvent(playerData));
+        
+        let nextAnchorEvent: AnchorEvent.AnchorEvent | null = null;
+        for (const anchorEvent of anchorEvents)
+        {
+            if (anchorEvent === null)
+            {
+                continue;
+            }
+
+            if (nextAnchorEvent === null || nextAnchorEvent.time > anchorEvent.time)
+            {
+                nextAnchorEvent = anchorEvent;
+            }
+        }
+        
+        if (nextAnchorEvent !== null)
+        {
+            nextAnchorEvent.resolver = this;
+        }
+
+        return nextAnchorEvent;
+    }
+
+    // Keep server data param here even if unused for future ease when we will use it
+    resolveAnchorEvent(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
+    {
+        switch (anchorEvent.type)
+        {
+            case AnchorEvent.AnchorEventType.BuildingUpgrade:
+            {
+                BuildingUpgrade.resolveAnchorEvent(playerData, serverData, anchorEvent);
+                break;
+            }
+            case AnchorEvent.AnchorEventType.ShipConstructionBatch:
+            {
+                ShipConstruction.resolveAnchorEvent(playerData, serverData, anchorEvent);
+                break;
+            }
+            case AnchorEvent.AnchorEventType.FleetArrival:
+            {
+                FleetArrival.resolveAnchorEvent(playerData, serverData, anchorEvent);
+                break;
+            }
+            default:
+                throw new Error(`UNREACHABLE: Missing clientProgess AnchorEventType case: ${anchorEvent.type}`);
+        }
+    }
+
+    updateResourcesToTime(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, time: number): void
+    {
+        updateResourcesToTime(playerData, serverData, time);
+    }
+
+    abstract getOriginFleetPlayerData(playerData: PlayerDataType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
+    abstract getTargetFleetPlayerData(playerData: PlayerDataType.PlayerData, anchorEvent: AnchorEvent.AnchorEvent) : FleetData.FleetPlayerData | null;
+}
+
+export function applyProgressToPlayerData(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, now: number, playerProgressResolver: PlayerProgressApplier): PlayerDataType.PlayerData
 {
     const modifiedPlayerData: PlayerDataType.PlayerData = structuredClone(playerData);
 
-    let nextAnchorEvent: AnchorEvent.AnchorEvent | null = getNextAnchorEvent(modifiedPlayerData);
+    let nextAnchorEvent: AnchorEvent.AnchorEvent | null = playerProgressResolver.getNextAnchorEvent(modifiedPlayerData);
     while (nextAnchorEvent !== null && nextAnchorEvent.time < now)
     {
-        progressResolver.updateResourcesToTime(modifiedPlayerData, serverData, nextAnchorEvent.time);
-        progressResolver.resolveAnchorEvent(modifiedPlayerData, serverData, nextAnchorEvent);
+        playerProgressResolver.updateResourcesToTime(modifiedPlayerData, serverData, nextAnchorEvent.time);
+        playerProgressResolver.resolveAnchorEvent(modifiedPlayerData, serverData, nextAnchorEvent);
         setUpdatedTimeStamp(modifiedPlayerData, serverData, nextAnchorEvent.time);
         
-        nextAnchorEvent = getNextAnchorEvent(modifiedPlayerData);
+        nextAnchorEvent = playerProgressResolver.getNextAnchorEvent(modifiedPlayerData);
     }
 
-    progressResolver.updateResourcesToTime(modifiedPlayerData, serverData, now);
+    playerProgressResolver.updateResourcesToTime(modifiedPlayerData, serverData, now);
     setUpdatedTimeStamp(modifiedPlayerData, serverData, now);
 
     return modifiedPlayerData;
@@ -81,27 +150,4 @@ function getPredictedResourceQuantityAtTime(fullPlanetData: PlayerDataType.FullP
     const updatedResourceQuantity: number = currentResourceQuantity + resourceGained;
 
     return updatedResourceQuantity;
-}
-
-function getNextAnchorEvent(playerData: PlayerDataType.PlayerData): AnchorEvent.AnchorEvent | null
-{
-    const anchorEvents: (AnchorEvent.AnchorEvent | null)[] = [];
-    anchorEvents.push(BuildingUpgrade.findNextAnchorEvent(playerData));
-    anchorEvents.push(ShipConstruction.findNextAnchorEvent(playerData));
-    
-    let nextAnchorEvent: AnchorEvent.AnchorEvent | null = null;
-    for (const anchorEvent of anchorEvents)
-    {
-        if (anchorEvent === null)
-        {
-            continue;
-        }
-
-        if (nextAnchorEvent === null || nextAnchorEvent.time > anchorEvent.time)
-        {
-            nextAnchorEvent = anchorEvent;
-        }
-    }
-
-    return nextAnchorEvent;
 }

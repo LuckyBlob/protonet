@@ -7,11 +7,37 @@ import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buil
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionBatchAnchorEvent"
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 import * as DB from "@/lib/db/db";
-import * as DBType from "@/lib/db/dbTypes";
 import * as ServerRequestFunctions from "@/lib/networkRequests/server/serverRequestFunctions";
+import * as ServerProgress from "@/lib/gameplay/progressUpdate/server/serverProgress";
+import * as ServerDynamicData from "@/lib/gameplay/gameplayData/dynamic/serverDynamicData";
+import * as ServerFleetAction from "@/lib/gameplay/progressUpdate/server/serverFleetActions";
+import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
+import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
+import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
 
-class ServerProgressResolver extends AnchorEvent.ProgressResolver
+class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
 {
+    applyPlayerProgressAtTime(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, targetPlayerId: number, time: number): PlayerDataType.PlayerData | null
+    {
+        const updatedPlayerData: PlayerDataType.PlayerData =(playerData.playerRow.id !== targetPlayerId) ? ServerRequestFunctions.serverGetPlayerData(targetPlayerId) : playerData;
+        const updatedTargetPlayerData: PlayerDataType.PlayerData = ApplyProgress.applyProgressToPlayerData(updatedPlayerData, serverData, time, this);
+
+        // Technically, we have already set the last_updated values, but do it now at the end to be sure. This is on purpose.
+        updatedTargetPlayerData.playerRow = ServerRequestFunctions.serverUpdatePlayerColumns(updatedPlayerData.playerRow.id,
+        {
+            last_updated: updatedTargetPlayerData.playerRow.last_updated,
+        });
+
+        for (const fullPlanetData of updatedTargetPlayerData.fullPlanetDatas)
+        {
+            ServerRequestFunctions.serverUpdatePlanetRow(fullPlanetData.planetRow.id,
+            {
+                last_updated: fullPlanetData.planetRow.last_updated,
+            });
+        }
+        return updatedTargetPlayerData;
+    }
+
     resolveAnchorEvent(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
     {
         super.resolveAnchorEvent(playerData, serverData, anchorEvent);
@@ -26,6 +52,11 @@ class ServerProgressResolver extends AnchorEvent.ProgressResolver
             case AnchorEvent.AnchorEventType.ShipConstructionBatch:
             {
                 resolveShipBatchConstructionAnchorEventToDB(playerData, serverData, anchorEvent);
+                break;
+            }
+            case AnchorEvent.AnchorEventType.FleetArrival:
+            {
+                resolveFleetArrivalAnchorEventToDB(playerData, serverData, anchorEvent)
                 break;
             }
             default:
@@ -43,10 +74,59 @@ class ServerProgressResolver extends AnchorEvent.ProgressResolver
             {
                 last_updated: time,
             });
-            ServerRequestFunctions.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, fullPlanetData.dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, fullPlanetData.dynamicPlanetData);
         }
     }
+
+    getOriginFleetPlayerData(playerData: PlayerDataType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
+    {
+        if (anchorEvent.fleetMovement.fleetMovementRow.player_origin_id === null)
+        {
+            return null;
+        }
+
+        const needsToGetDataFromDB: boolean = playerData.playerRow.id !== anchorEvent.fleetMovement.fleetMovementRow.player_origin_id;
+        const originPlayerData: PlayerDataType.PlayerData = needsToGetDataFromDB ? ServerRequestFunctions.serverGetPlayerData(anchorEvent.fleetMovement.fleetMovementRow.player_origin_id) : playerData;
+        const associatedFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(originPlayerData.fullPlanetDatas, anchorEvent.fleetMovement.fleetMovementRow.planet_origin_id);
+        if (associatedFullPlanetData === null)
+        {
+            throw new Error(`⚠️: Can get full planet data for origin fleet.`); 
+        }
+
+        const fleetPlayerData: FleetData.FleetPlayerData =
+        {
+            playerData: originPlayerData,
+            fullPlanetData: associatedFullPlanetData,
+        }
+
+        return fleetPlayerData;
+    }
+    
+    getTargetFleetPlayerData(playerData: PlayerDataType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
+    {
+        if (anchorEvent.fleetMovement.fleetMovementRow.player_target_id === null)
+        {
+            return null;
+        }
+
+        const needsToGetDataFromDB: boolean = playerData.playerRow.id !== anchorEvent.fleetMovement.fleetMovementRow.player_target_id;
+        const targetPlayerData: PlayerDataType.PlayerData = needsToGetDataFromDB ? ServerRequestFunctions.serverGetPlayerData(anchorEvent.fleetMovement.fleetMovementRow.player_target_id) : playerData;
+        const associatedFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(targetPlayerData.fullPlanetDatas, anchorEvent.fleetMovement.fleetMovementRow.planet_target_id);
+        if (associatedFullPlanetData === null)
+        {
+            throw new Error(`⚠️: Can get full planet data for origin fleet.`); 
+        }
+
+        const fleetPlayerData: FleetData.FleetPlayerData =
+        {
+            playerData: targetPlayerData,
+            fullPlanetData: associatedFullPlanetData,
+        }
+
+        return fleetPlayerData;
+    }
 }
+
 
 function resolveBuildingUpgradeAnchorEventToDB(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
 {
@@ -60,7 +140,7 @@ function resolveBuildingUpgradeAnchorEventToDB(playerData: PlayerDataType.Player
             building_upgrade_completes_at: 0,
             building_being_upgraded: 0,
         });
-        ServerRequestFunctions.serverUpdatePlanetDataContext(newPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, newPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(newPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, newPlanetData.dynamicPlanetData);
     });
 
     transaction();
@@ -78,8 +158,18 @@ function resolveShipBatchConstructionAnchorEventToDB(playerData: PlayerDataType.
             ship_construction_batch_completes_at: newPlanetData.planetRow.ship_construction_batch_completes_at,
             current_ship_construction_batch_id: newPlanetData.planetRow.current_ship_construction_batch_id,
         });
-        ServerRequestFunctions.serverUpdatePlanetDataContext(newPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, newPlanetData.dynamicPlanetData);
-        ServerRequestFunctions.serverUpdatePlanetDataContext(newPlanetData.planetRow.id, PlayerDataType.DataContext.ShipQuantity, newPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(newPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, newPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(newPlanetData.planetRow.id, PlayerDataType.DataContext.ShipQuantity, newPlanetData.dynamicPlanetData);
+    });
+
+    transaction();
+}
+
+function resolveFleetArrivalAnchorEventToDB(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        ServerFleetAction.resolveFleetMovementAtTargetToDB(playerData, serverData, anchorEvent);
     });
 
     transaction();
@@ -99,21 +189,11 @@ function applyPlayerUpdateInner(playerId: number, serverData: ServerDataType.Ser
 {
     const playerData: PlayerDataType.PlayerData = ServerRequestFunctions.serverGetPlayerData(playerId);
 
-    const serverProgressResolver: ServerProgressResolver = new ServerProgressResolver();
-    const updatedPlayerData: PlayerDataType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, now, serverProgressResolver);
-
-    // Technically, we have already set the last_updated values, but do it now at the end to be sure. This is on purpose.
-    updatedPlayerData.playerRow = ServerRequestFunctions.serverUpdatePlayerColumns(playerId,
+    const serverProgressResolver: ServerPlayerProgressResolver = new ServerPlayerProgressResolver();
+    const updatedPlayerData: PlayerDataType.PlayerData | null = serverProgressResolver.applyPlayerProgressAtTime(playerData, serverData, playerData.playerRow.id, now);
+    if (updatedPlayerData === null)
     {
-        last_updated: updatedPlayerData.playerRow.last_updated,
-    });
-
-    for (const fullPlanetData of updatedPlayerData.fullPlanetDatas)
-    {
-        ServerRequestFunctions.serverUpdatePlanetRow(fullPlanetData.planetRow.id,
-        {
-            last_updated: fullPlanetData.planetRow.last_updated,
-        });
+        throw new Error(`UNREACHABLE: Player progress resolver returned null for player ID ${playerId}`);
     }
 
     return updatedPlayerData;

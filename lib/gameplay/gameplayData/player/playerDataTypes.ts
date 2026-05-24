@@ -28,6 +28,7 @@ export type DynamicPlanetData =
 	buildingLevels: Map<ThingType.SpecificThing, number>;
 	shipQuantity: Map<ThingType.SpecificThing, number>,
 	queuedShipConstructionBatchs: ShipConstructionBatch[];
+	futureFleetArrivals: FleetMovement[];
 };
 export const EmptyPlanetData: DynamicPlanetData =
 {
@@ -35,6 +36,7 @@ export const EmptyPlanetData: DynamicPlanetData =
 	buildingLevels: new Map<ThingType.SpecificThing, number>(),
 	shipQuantity: new Map<ThingType.SpecificThing, number>(),
 	queuedShipConstructionBatchs: [],
+	futureFleetArrivals: [],
 
 } as const;
 
@@ -44,6 +46,7 @@ export const DataContext =
 	BuildingLevel: 2,
 	ShipQuantity: 3,
 	ShipConstruction: 4,
+	FutureFleetArrivals: 5,
 } as const;
 export type DataContext = typeof DataContext[keyof typeof DataContext];
 export const DataContextToVariableNameMap =
@@ -52,6 +55,7 @@ export const DataContextToVariableNameMap =
     [DataContext.BuildingLevel]: "buildingLevels",
     [DataContext.ShipQuantity]: "shipQuantity",
     [DataContext.ShipConstruction]: "queuedShipConstructionBatchs",
+    [DataContext.FutureFleetArrivals]: "futureFleetArrivals",
 } as const;
 
 export type FullPlanetData =
@@ -65,6 +69,22 @@ export type ShipConstructionBatch =
 	shipConstructionRows: DBType.ShipConstructionRow[];
 	batchId: number;
 }
+
+export type FleetMovement = 
+{
+	fleetMovementRow: DBType.FleetMovementRow;
+	fleetMovementShipRows: DBType.FleetMovementShipRow[];
+	fleetMovementResourceRows: DBType.FleetMovementResourceRow[];
+	resolutionState: FleetMovementResolution;
+}
+export type FleetMovementResolution = typeof FleetMovementResolution[keyof typeof FleetMovementResolution];
+export const FleetMovementResolution =
+{
+    Unresolved: 1,
+    Resolved: 2,
+    ResolveResultUnknown: 3,
+    Invalid: 4,
+} as const;
 
 export function isPlayerData(value: PlayerData | FullPlanetData): value is PlayerData
 {

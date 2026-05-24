@@ -10,6 +10,7 @@ export const Thing =
 	Ship: 3,
     BuildingUpgrade: 4,
     ShipBatchConstruction: 5,
+    FleetMovement: 6,
 } as const;
 export type Thing = typeof Thing[keyof typeof Thing];
 
@@ -20,6 +21,7 @@ export const THING_DISPLAY_NAMES: ReadonlyMap<Thing, string> = new Map
     [Thing.Ship, "Ship"],
     [Thing.BuildingUpgrade, "BuildingUpgrade"],
     [Thing.ShipBatchConstruction, "ShipBatchConstruction"],
+    [Thing.FleetMovement, "FleetMovement"],
 ]);
 
 const THING_DEFINITIONS: ReadonlyMap<Thing, ThingDefinition> = new Map
@@ -48,7 +50,12 @@ const THING_DEFINITIONS: ReadonlyMap<Thing, ThingDefinition> = new Map
     {
         specificThingDisplayNames: GameType.SHIP_DISPLAY_NAMES,
         contexts: [PlayerDataType.DataContext.ShipConstruction],
-    }]
+    }],
+    [Thing.FleetMovement,
+    {
+        specificThingDisplayNames: GameType.SHIP_DISPLAY_NAMES,
+        contexts: [PlayerDataType.DataContext.FutureFleetArrivals],
+    }],
 ]);
 
 export type SpecificThingType =
@@ -118,6 +125,11 @@ export function getThingValues(fullPlanetData: PlayerDataType.FullPlanetData, da
 		throw new Error("ShipConstruction context does not have specific things that have a value... yet.");
 	}
 
+    if (dataContext === PlayerDataType.DataContext.FutureFleetArrivals)
+	{
+		throw new Error("FutureFleetArrivals context does not have specific things that have a value... yet.");
+	}
+
 	return PlayerData.getVariableFromContext(fullPlanetData.dynamicPlanetData, dataContext);
 }
 
@@ -127,6 +139,12 @@ export function setSpecificThingValue(fullPlanetData: PlayerDataType.FullPlanetD
 	{
 		throw new Error("ShipConstruction context is not supported for type setters since it doesnt have specific things.");
 	}
+
+    if (dataContext === PlayerDataType.DataContext.FutureFleetArrivals)
+	{
+		throw new Error("FutureFleetArrivals context is not supported for type setters since it doesnt have specific things.");
+	}
+
 
 	const specificThingValueMap: Map<SpecificThing, number> = PlayerData.getVariableFromContext(fullPlanetData.dynamicPlanetData, dataContext);
 

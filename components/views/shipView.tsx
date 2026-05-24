@@ -161,7 +161,7 @@ export function ShipView(props: ShipViewProps): ReactElement
     }
     catch (error: unknown)
     {
-        console.warn("⚠️:", error);
+        console.error("⚠️:", error);
         return <HelperElements.EmptyElement />;
     }
 }

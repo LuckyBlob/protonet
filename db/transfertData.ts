@@ -20,7 +20,7 @@ for (const player of allPlayers)
 	}
 	catch (error: unknown)
 	{
-		console.warn("⚠️ Failed:", error); 
+		console.error("⚠️ Failed:", error); 
 	}
 }
 

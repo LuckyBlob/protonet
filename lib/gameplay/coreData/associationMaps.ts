@@ -2,43 +2,67 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as DBType from "@/lib/db/dbTypes";
 
-export const BUILDING_1_DATA: SimpleProductionBuildingCostData =
+export type ProductionStats =
 {
-	baseCostMap: new Map<number, number>
-	([
-		[GameType.RESOURCE_1, 60],
-		[GameType.RESOURCE_2, 15],
-	]),
-	growthFactor: 1.5,
+    minProductionPerHour: number;
+    productionFactor: number;
+	exponentBase: number,
 };
-export const BUILDING_2_DATA: SimpleProductionBuildingCostData =
+export const BuildingCostFunctionType =
 {
-	baseCostMap: new Map<number, number>
-	([
-		[GameType.RESOURCE_1, 48],
-		[GameType.RESOURCE_2, 24],
-	]),
-	growthFactor: 1.6,
-};
-export const BUILDING_3_DATA: ExponentialBuildingCostData =
+    SimpleProduction: 1,
+    Exponential: 2,
+} as const;
+export type BuildingCostFunctionType = typeof BuildingCostFunctionType[keyof typeof BuildingCostFunctionType];
+export type BuildingStats =
 {
-	baseCostMap: new Map<number, number>
-	([
-		[GameType.RESOURCE_1, 400],
-		[GameType.RESOURCE_2, 200],
-	]),
-	exponentBase: 2,
+	costFunctionType: BuildingCostFunctionType;
+	productionStats: Map<number, ProductionStats> | null;
+	baseCost: Map<number, number>;
 };
-export const BUILDING_4_DATA: ExponentialBuildingCostData =
-{
-	baseCostMap: new Map<number, number>
-	([
-		[GameType.RESOURCE_1, 400],
-		[GameType.RESOURCE_2, 120],
-	]),
-	exponentBase: 2,
-};
-
+export const BUILDING_STATS: ReadonlyMap<number, BuildingStats> = new Map<number, BuildingStats>
+([
+    [GameType.BUILDING_1, {
+		costFunctionType: BuildingCostFunctionType.SimpleProduction,
+		productionStats: new Map<number, ProductionStats>([
+			[GameType.RESOURCE_1, 
+			{
+				minProductionPerHour: 30,
+				productionFactor: 30,
+				exponentBase: 1.1,
+			}]]),
+		baseCost: new Map<number, number>([
+			[GameType.RESOURCE_1, 60],
+			[GameType.RESOURCE_2, 15],
+		]),}],
+    [GameType.BUILDING_2, {
+		costFunctionType: BuildingCostFunctionType.SimpleProduction,
+		productionStats: new Map<number, ProductionStats>([
+			[GameType.RESOURCE_1, 
+			{
+				minProductionPerHour: 30,
+				productionFactor: 30,
+				exponentBase: 1.1,
+			}]]),
+		baseCost: new Map<number, number>([
+			[GameType.RESOURCE_1, 48],
+			[GameType.RESOURCE_2, 24],
+		]),}],
+	[GameType.BUILDING_3, {
+		costFunctionType: BuildingCostFunctionType.Exponential,
+		productionStats: null,
+		baseCost: new Map<number, number>([
+			[GameType.RESOURCE_1, 400],
+			[GameType.RESOURCE_2, 200],
+		]),}],
+	[GameType.BUILDING_4, {
+		costFunctionType: BuildingCostFunctionType.Exponential,
+		productionStats: null,
+		baseCost: new Map<number, number>([
+			[GameType.RESOURCE_1, 400],
+			[GameType.RESOURCE_2, 120],
+		]),}],
+]);
 
 export const STARTING_PLANET_DATA: PlayerDataType.DynamicPlanetData =
 {
@@ -50,26 +74,37 @@ export const STARTING_PLANET_DATA: PlayerDataType.DynamicPlanetData =
 	]),
 } as const;
 
-export const SHIP_MAX_HEALTH: ReadonlyMap<number, number> = new Map<number, number>
+export type ShipStats =
+{
+	maxHealth: number;
+	speed: number;
+	space: number;
+	baseFuelConsumption: Map<number, number>;
+	costMap: Map<number, number>;
+};
+export const SHIP_STATS: ReadonlyMap<number, ShipStats> = new Map<number, ShipStats>
 ([
-	[GameType.SHIP_1, 4000],
-	[GameType.SHIP_2, 12000],
+    [GameType.SMALL_TRANSPORT, {
+		maxHealth: 4000,
+		space: 5000,
+		speed: 5000,
+		baseFuelConsumption: new Map<number, number>([
+			[GameType.RESOURCE_3, 20]]),
+		costMap: new Map<number, number>([
+			[GameType.RESOURCE_1, 2000],
+			[GameType.RESOURCE_2, 2000],
+		]),}],
+    [GameType.LARGE_TRANSPORT, {
+		maxHealth: 12000,
+		space: 25000,
+		speed: 7500,
+		baseFuelConsumption: new Map<number, number>([
+			[GameType.RESOURCE_3, 50]]),
+		costMap: new Map<number, number>([
+			[GameType.RESOURCE_1, 6000],
+			[GameType.RESOURCE_2, 6000],
+		]),}],
 ]);
-
-export const SHIP_COST: ReadonlyMap<number, Map<number, number>> = new Map<number, Map<number, number>>
-([
-	[GameType.SHIP_1, new Map<number, number>
-	([
-		[GameType.RESOURCE_1, 2000],
-		[GameType.RESOURCE_2, 2000],
-	])],
-	[GameType.SHIP_2, new Map<number, number>
-	([
-		[GameType.RESOURCE_1, 6000],
-		[GameType.RESOURCE_2, 6000],
-	])],
-]);
-
 export const STARTING_PLANET_SIZE: number = 163;
 
 export const CLEAN_PLANET: Partial<DBType.PlanetRow> =
@@ -80,17 +115,3 @@ export const CLEAN_PLANET: Partial<DBType.PlanetRow> =
 	ship_construction_batch_completes_at: 0,
 	current_ship_construction_batch_id: 0,
 };
-
-//#region Building Cost Production Types
-export type SimpleProductionBuildingCostData =
-{
-	baseCostMap: Map<number, number>;
-	growthFactor: number;
-};
-
-export type ExponentialBuildingCostData =
-{
-	baseCostMap: Map<number, number>;
-	exponentBase: number;
-};
-//#endregion

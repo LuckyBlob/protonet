@@ -1,11 +1,15 @@
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
-import * as ShipConstructionFormulas from "@/lib/gameplay/coreData/formula/shipConstructionFormulas";
+import * as ShipConstruction from "@/lib/gameplay/coreData/formula/shipConstructionFormulas";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as APIEndPoint from "@/app/api/apiEndPoints";
+import * as ShipFuelConsumption from "@/lib/gameplay/coreData/formula/shipFuelConsumptionFormulas";
+import * as RequestType from "@/lib/networkRequests/requestTypes";
+import * as MathHelp from "@/lib/helper/mathHelp";
 
 // #region Ship Management
 export function setShipQuantity(fullPlanetData: PlayerDataType.FullPlanetData, shipType: number, value: number): void
@@ -40,6 +44,40 @@ function getShipQuantitiesForConstructionBatch(shipConstructionbatch: PlayerData
 	return shipQuantities;
 }
 
+export function hasShipQuantities(fullPlanetData: PlayerDataType.FullPlanetData, shipQuantities: Map<number, number>): boolean
+{
+	return MathHelp.hasQuantities(shipQuantities, (type: number): number | undefined => { return getShipQuantity(fullPlanetData, type) });
+}
+
+export function subtractPlanetShips(fullPlanetData: PlayerDataType.FullPlanetData, shipQuantities: Map<number, number>): Map<number, number>
+{
+	return MathHelp.subtractQuantities(shipQuantities,
+									  (type: number): number | undefined => { return getShipQuantity(fullPlanetData, type) },
+									  (type: number, value: number): void => { setShipQuantity(fullPlanetData, type, value) });
+}
+
+export function subtractPlanetShip(fullPlanetData: PlayerDataType.FullPlanetData, shipType: number, amountToSubtract: number): number
+{
+	return MathHelp.subtractQuantity(shipType, amountToSubtract,
+									(type: number): number | undefined => { return getShipQuantity(fullPlanetData, type) },
+									(type: number, value: number): void => { setShipQuantity(fullPlanetData, type, value) });
+}
+
+export function addPlanetShips(fullPlanetData: PlayerDataType.FullPlanetData, shipQuantities: Map<number, number>): Map<number, number>
+{
+	return MathHelp.addQuantities(shipQuantities,
+								 (type: number): number | undefined => { return getShipQuantity(fullPlanetData, type) },
+								 (type: number, value: number): void => { setShipQuantity(fullPlanetData, type, value) });
+}
+
+export function addPlanetShip(fullPlanetData: PlayerDataType.FullPlanetData, shipType: number, amountToSubtract: number): number
+{
+	return MathHelp.addQuantity(shipType, amountToSubtract,
+							   (type: number): number | undefined => { return getShipQuantity(fullPlanetData, type) },
+							   (type: number, value: number): void => { setShipQuantity(fullPlanetData, type, value) });
+}
+
+
 export function computeShipConstructionBatchDurationSeconds(shipConstructionbatch: PlayerDataType.ShipConstructionBatch, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData): number
 {
 	const shipQuantities: Map<number, number> = getShipQuantitiesForConstructionBatch(shipConstructionbatch);
@@ -50,27 +88,8 @@ export function computeShipConstructionBatchDurationSeconds(shipConstructionbatc
 
 export function getShipConstructionDurationSeconds(shipType: number, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData): number | null
 {
-	try
-	{
-		const shipConstructionDurationSecondsFunction: ((extraConstructionData: ShipConstructionFormulas.ExtraShipConstructionData, serverData: ServerDataType.ServerData | null) => number) | undefined = ShipConstructionFormulas.shipConstructionDurationSecondsFunctionMap.get(shipType);
-		if (shipConstructionDurationSecondsFunction === undefined)
-		{
-			return null;
-		}
-
-		const extraShipConstructionData: ShipConstructionFormulas.ExtraShipConstructionData =
-		{
-			currentShipyardLevel: BuildingData.getBuildingLevel(fullPlanetData, GameType.SHIPYARD_BUILDING_TYPE),
-			maxHealth: AssociationMaps.SHIP_MAX_HEALTH.get(shipType) ?? 0,
-		}
-
-		return shipConstructionDurationSecondsFunction(extraShipConstructionData, serverData);
-	}
-	catch (error: unknown)
-	{
-		console.warn("⚠️:", error); 
-		return null;
-	}
+	const currentShipyardLevel: number = BuildingData.getBuildingLevel(fullPlanetData, GameType.SHIPYARD_BUILDING_TYPE);
+	return ShipConstruction.computeConstructionDurationSeconds(shipType, currentShipyardLevel, serverData);
 }
 
 export function computeShipQuantitiesConstructionDurationSeconds(shipQuantities: Map<number, number>, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData): number
@@ -92,7 +111,7 @@ export function computeShipQuantitiesConstructionDurationSeconds(shipQuantities:
 
 export function getSingleShipCost(shipType: number): Map<number, number> | null
 {
-	const singleShipCost: Map<number, number> | undefined = AssociationMaps.SHIP_COST.get(shipType);
+	const singleShipCost: Map<number, number> | undefined = AssociationMaps.SHIP_STATS.get(shipType)?.costMap;
 	if (singleShipCost === undefined)
 	{
 		return null;

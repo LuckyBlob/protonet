@@ -3,29 +3,33 @@ import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTy
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
+import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
+import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 
-export const buildingUpgradeDurationSecondsFunctionMap: Map<number, (currentUpgradeLevel: number, buildingType: number, playerData: PlayerDataType.PlayerData, planetId: number, serverData: ServerDataType.ServerData | null) => number> = new Map
-([
-	[GameType.BUILDING_1, (currentUpgradeLevel: number, buildingType: number, playerData: PlayerDataType.PlayerData, planetId: number, serverData: ServerDataType.ServerData | null): number => computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel, BUILDING_GENERIC_DATA, buildingType, playerData, planetId, serverData)],
-	[GameType.BUILDING_2, (currentUpgradeLevel: number, buildingType: number, playerData: PlayerDataType.PlayerData, planetId: number, serverData: ServerDataType.ServerData | null): number => computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel, BUILDING_GENERIC_DATA, buildingType, playerData, planetId, serverData)],
-	[GameType.SHIPYARD_BUILDING_TYPE, (currentUpgradeLevel: number, buildingType: number, playerData: PlayerDataType.PlayerData, planetId: number, serverData: ServerDataType.ServerData | null): number => computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel, BUILDING_GENERIC_DATA, buildingType, playerData, planetId, serverData)],
-	[GameType.ROBOTIC_FACTORY_TYPE, (currentUpgradeLevel: number, buildingType: number, playerData: PlayerDataType.PlayerData, planetId: number, serverData: ServerDataType.ServerData | null): number => computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel, BUILDING_GENERIC_DATA, buildingType, playerData, planetId, serverData)],
-]);
+const BASE_DIVIDER: number = 2500;
 
-type SimpleBuildingUpgradeDurationData =
+export function computeUpgradeDurationSeconds(currentUpgradeLevel: number, buildingType: number, playerData: PlayerDataType.PlayerData, planetId: number, serverData: ServerDataType.ServerData | null): number | null
 {
-	divider: number;
-};
+    try
+    {
+        const buildingStats: AssociationMaps.BuildingStats | undefined = AssociationMaps.BUILDING_STATS.get(buildingType);
+        if (buildingStats === undefined)
+        {
+            throw new Error(`⚠️: Building type ${buildingType} has no building stats.`); 
+        }
+        return computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel, buildingStats, buildingType, playerData, planetId, serverData);
+    }
+    catch (error: unknown)
+    {
+		console.error("⚠️ Failed:", error); 
+        return null;
+    }
+}
 
-const BUILDING_GENERIC_DATA: SimpleBuildingUpgradeDurationData =
-{
-	divider: 2500,
-};
-
-function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: number, data: SimpleBuildingUpgradeDurationData, buildingType: number, playerData: PlayerDataType.PlayerData, planetId: number, serverData: ServerDataType.ServerData | null): number
+function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: number, buildingStats: AssociationMaps.BuildingStats, buildingType: number, playerData: PlayerDataType.PlayerData, planetId: number, serverData: ServerDataType.ServerData | null): number
 {
 	const timeMultiplier: number = serverData ? serverData.config.time_multiplier : 1;
-    const nextUpgradeCostMap: Map<number, number> | null = BuildingData.computeBuildingUpgradeCost(currentUpgradeLevel, buildingType);
+    const nextUpgradeCostMap: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(currentUpgradeLevel, buildingType);
     if (nextUpgradeCostMap === null)
     {
         throw new Error(`Building type ${buildingType} has no cost and thus no construction duration.`);
@@ -41,7 +45,7 @@ function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: numbe
     const fullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, planetId);
     const roboticFactoryLevel: number = fullPlanetData === null ? 0 : BuildingData.getBuildingLevel(fullPlanetData, GameType.ROBOTIC_FACTORY_TYPE);
 
-    const durationHours: number = totalCost / (data.divider * (1 + roboticFactoryLevel));
+    const durationHours: number = totalCost / (BASE_DIVIDER * (1 + roboticFactoryLevel));
 	const durationSeconds: number = durationHours * 3600;
 
 	return Math.floor(durationSeconds / timeMultiplier);

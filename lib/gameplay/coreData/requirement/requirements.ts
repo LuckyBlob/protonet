@@ -13,6 +13,11 @@ export function getFailedShipBuildRequirements(playerData: PlayerDataType.Player
     return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.ShipBatchConstruction, shipType);
 }
 
+export function getFailedFleetMovementRequirements(playerData: PlayerDataType.PlayerData, shipType: number, planetId: number): RequirementType.Requirement[]
+{
+    return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.FleetMovement, shipType);
+}
+
 export function getRequirementDescriptions(failedRequirements: RequirementType.Requirement[], playerData: PlayerDataType.PlayerData, planetId: number): string[]
 {
     const descriptions: string[] = [];

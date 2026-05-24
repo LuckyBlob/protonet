@@ -9,7 +9,6 @@ import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequ
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
-import * as RequestType from "@/lib/networkRequests/requestTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
@@ -88,31 +87,6 @@ function buildRequestedQuantitiesMap(shipTypes: number[], requestedQuantities: M
     }
 
     return requestedMap;
-}
-
-function buildShipQuantityRequests(shipTypes: number[], requestedQuantities: Map<number, number>): RequestType.ShipQuantityRequest[]
-{
-    const shipQuantityRequests: RequestType.ShipQuantityRequest[] = [];
-
-    for (const shipType of shipTypes)
-    {
-        const requestedQuantity: number = requestedQuantities.get(shipType) ?? 0;
-
-        if (requestedQuantity <= 0)
-        {
-            continue;
-        }
-
-        const newShipQuantityRequest: RequestType.ShipQuantityRequest =
-        {
-            shipType: shipType,
-            shipQuantity: requestedQuantity,
-        };
-
-        shipQuantityRequests.push(newShipQuantityRequest);
-    }
-
-    return shipQuantityRequests;
 }
 //#endregion
 
@@ -452,18 +426,11 @@ function useRequestedQuantities(): RequestedQuantitiesState
     };
 }
 
-function makeBuildAllHandler(props: ShipyardViewProps, fullPlanetData: PlayerDataType.FullPlanetData, shipTypes: number[], requestedQuantities: Map<number, number>, resetRequestedQuantities: () => void): () => void
+function createBuildShipsHandler(props: ShipyardViewProps, fullPlanetData: PlayerDataType.FullPlanetData, requestedQuantities: Map<number, number>, resetRequestedQuantities: () => void): () => void
 {
     return () =>
     {
-        const shipQuantityRequests: RequestType.ShipQuantityRequest[] = buildShipQuantityRequests(shipTypes, requestedQuantities);
-
-        if (shipQuantityRequests.length === 0)
-        {
-            return;
-        }
-
-        ClientRequestFunctions.clientTryBuildShipsRequest(props.clientDataStateResult.psController, fullPlanetData.planetRow.id, shipQuantityRequests);
+        ClientRequestFunctions.clientTryBuildShipsRequest(props.clientDataStateResult.psController, fullPlanetData.planetRow.id, requestedQuantities);
         resetRequestedQuantities();
     };
 }
@@ -477,7 +444,7 @@ function renderShipyardBody(props: ShipyardViewProps, fullPlanetData: PlayerData
     const requestedMap: Map<number, number> = buildRequestedQuantitiesMap(shipTypes, quantitiesState.requestedQuantities);
     const hasRequestedData: boolean = requestedMap.size > 0;
 
-    const onBuildAll: () => void = makeBuildAllHandler(props, fullPlanetData, shipTypes, quantitiesState.requestedQuantities, quantitiesState.resetRequestedQuantities);
+    const onBuildAll: () => void = createBuildShipsHandler(props, fullPlanetData, requestedMap, quantitiesState.resetRequestedQuantities);
 
     const countdownLine: ReactElement | null = renderConstructionCountdownLine(fullPlanetData);
     const previewContent: ReactElement | null = renderBuildPreviewContent(fullPlanetData, serverData, requestedMap);
@@ -499,7 +466,7 @@ export function ShipyardView(props: ShipyardViewProps): ReactElement
     }
     catch (error: unknown)
     {
-        console.warn("⚠️:", error);
+        console.error("⚠️:", error);
         return <HelperElements.EmptyElement />;
     }
 }

@@ -1,5 +1,5 @@
 import * as DBType from "@/lib/db/dbTypes";
-import * as PlayerDataSerialization from "@/lib/helper/serialization";
+import * as Serialization from "@/lib/helper/serialization";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 
@@ -18,7 +18,7 @@ export type UserRowRequest = BaseServerResponse &
 
 export type PlayerDataRequest = BaseServerResponse &
 {
-	serializedPlayerData: PlayerDataSerialization.SerializedPlayerData | null;
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
 
 export type ServerDataStateRequest = BaseServerResponse &
@@ -51,7 +51,7 @@ export type BaseAuthenticationServerResponse = BaseServerResponse &
 
 export type RefreshServer_ServerResponse = BaseServerResponse &
 {
-	serializedPlayerData: PlayerDataSerialization.SerializedPlayerData | null;
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
 	serverData: ServerDataType.ServerData | null;
 }
 
@@ -62,21 +62,31 @@ export type BuildingUpgrade_ClientRequest = BaseClientRequest &
 };
 export type BuildingUpgrade_ServerResponse = BaseServerResponse &
 {
-	serializedPlayerData: PlayerDataSerialization.SerializedPlayerData | null;
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
 
-export type ShipQuantityRequest =
-{
-	shipType: number;
-	shipQuantity: number;
-};
 export type BuildShips_ClientRequest = BaseClientRequest &
 {
 	planetId: number;
-	shipQuantities: ShipQuantityRequest[];
+	serializedShipQuantities: Serialization.SerializedNumberNumberMap;
 };
 export type BuildShips_ServerResponse = BaseServerResponse &
 {
-	serializedPlayerData: PlayerDataSerialization.SerializedPlayerData | null;
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
+export type SendFleet_ClientRequest = BaseClientRequest &
+{
+	originPlanetId: number;
+	targetPlanetGalaxy: number;
+	targetPlanetSystem: number;
+	targetPlanetPosition: number;
+	fleetAction: number;
+	serializedShipQuantities: Serialization.SerializedNumberNumberMap;
+	serializedResourceQuantities: Serialization.SerializedNumberNumberMap
+};
+export type SendFleet_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
 //#endregion

@@ -9,8 +9,9 @@ export const ActionRequest =
     Register: { endpoint: "authentication/register", name: "Register" },
     Logout:   { endpoint: "authentication/logout",   name: "Logout" },
     RefreshServer:   { endpoint: "refreshServerData",   name: "RefreshServer" },
-    UpgradeBuilding:   { endpoint: "buy/buildingLevel",   name: "UpgradeBuilding" },
-    BuildShips:   { endpoint: "buy/ships",   name: "BuildShips" },
+    UpgradeBuilding:   { endpoint: "buy/upgradeBuilding",   name: "UpgradeBuilding" },
+    BuildShips:   { endpoint: "buy/buildShips",   name: "BuildShips" },
+    SendFleet:   { endpoint: "buy/sendFleet",   name: "SendFleet" },
 } as const satisfies Record<string, validEndpoint>;
 export interface ActionRequestMap
 {
@@ -20,6 +21,7 @@ export interface ActionRequestMap
     RefreshServer: null;
     UpgradeBuilding: RequestType.BuildingUpgrade_ClientRequest;
     BuildShips: RequestType.BuildShips_ClientRequest;
+    SendFleet: RequestType.SendFleet_ClientRequest;
 }
 export interface ActionResponseMap
 {
@@ -29,6 +31,7 @@ export interface ActionResponseMap
     RefreshServer: RequestType.RefreshServer_ServerResponse;
     UpgradeBuilding: RequestType.BuildingUpgrade_ServerResponse;
     BuildShips: RequestType.BuildShips_ServerResponse;
+    SendFleet: RequestType.SendFleet_ServerResponse;
 }
 //#endregion
 

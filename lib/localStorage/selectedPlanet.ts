@@ -66,7 +66,7 @@ function getRelevantSelectedPlanetId(fullPlanetDatas: PlayerDataType.FullPlanetD
 {
     if (fullPlanetDatas.length === 0)
     {
-		throw Error(`Player has no planets!`);
+		throw new Error(`Player has no planets!`);
 	}
 
     if (candidateId === null)
@@ -81,13 +81,13 @@ export function getSelectedFullPlanetDataPredicted(playerState: PlayerDataType.P
 {
     if (playerState === undefined || playerState.predictedDBData === undefined)
     {
-        throw Error(`Player state or player predicted state is invalid for selected planet data.`);
+        throw new Error(`Player state or player predicted state is invalid for selected planet data.`);
     }
 
     const fullPlanetDatas: PlayerDataType.FullPlanetData[] | undefined = playerState.predictedDBData.fullPlanetDatas;
     if (fullPlanetDatas === undefined || fullPlanetDatas.length === 0)
     {
-        throw Error(`Player state or player predicted state is invalid for selected planet data.`);
+        throw new Error(`Player state or player predicted state is invalid for selected planet data.`);
     }
 
     const resolvedId: number = getRelevantSelectedPlanetId(fullPlanetDatas, playerState.selectedPlanetId);

@@ -8,6 +8,28 @@ import * as DBType from "@/lib/db/dbTypes";
 // accidentally NextResponse.json() a raw PlayerData (with Maps), the compiler
 // rejects it.
 
+//#region Generic
+export type SerializedNumberNumberMap =
+{
+	serializedMap: [number, number][];
+};
+export function serializeNumberNumberMap(map: Map<number, number>): SerializedNumberNumberMap
+{
+	const serialized: SerializedNumberNumberMap =
+	{
+		serializedMap: [...map],
+	};
+
+	return serialized;
+}
+export function deserializeNumberNumberMap(serialized: SerializedNumberNumberMap): Map<number, number>
+{
+	const map: Map<number, number> = new Map<number, number>(serialized.serializedMap);
+
+	return map;
+}
+//#region 
+
 //#region Planet Data
 type SerializedDynamicPlanetData =
 {
@@ -15,6 +37,7 @@ type SerializedDynamicPlanetData =
 	buildingLevels: [number, number][];
 	shipQuantity: [number, number][];
 	queuedShipConstructionBatchs: PlayerDataType.ShipConstructionBatch[];
+	futureFleetArrivals: PlayerDataType.FleetMovement[];
 };
 
 type SerializedFullPlanetData =
@@ -34,6 +57,7 @@ function serializeFullPlanetData(fullPlanetData: PlayerDataType.FullPlanetData):
 			buildingLevels: [...fullPlanetData.dynamicPlanetData.buildingLevels],
 			shipQuantity: [...fullPlanetData.dynamicPlanetData.shipQuantity],
 			queuedShipConstructionBatchs: [...fullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs],
+			futureFleetArrivals: [...fullPlanetData.dynamicPlanetData.futureFleetArrivals],
 		},
 	};
 
@@ -75,6 +99,7 @@ function deserializeFullPlanetData(serialized: SerializedFullPlanetData): Player
 			buildingLevels: new Map<number, number>(serialized.dynamicPlanetData.buildingLevels),
 			shipQuantity: new Map<number, number>(serialized.dynamicPlanetData.shipQuantity),
 			queuedShipConstructionBatchs: serialized.dynamicPlanetData.queuedShipConstructionBatchs,
+			futureFleetArrivals: serialized.dynamicPlanetData.futureFleetArrivals,
 		},
 	};
 

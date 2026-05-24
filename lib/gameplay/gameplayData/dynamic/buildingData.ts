@@ -1,10 +1,11 @@
-import * as BuildingDurationFormulas from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
+import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
+import * as BuildingProduction from "@/lib/gameplay/coreData/formula/buildingProductionFormulas";
+import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
+import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
-import * as BuildingProductionFormulas from "@/lib/gameplay/coreData/formula/buildingProductionFormulas";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
-import * as BuildingCostFormula from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 
 export function setBuildingLevel(fullPlanetData: PlayerDataType.FullPlanetData, buildingType: number, value: number): void
 {
@@ -22,26 +23,6 @@ export function getBuildingLevelMap(fullPlanetData: PlayerDataType.FullPlanetDat
     return ThingType.getThingValues(fullPlanetData, PlayerDataType.DataContext.BuildingLevel);
 }
 
-export function getBuildingUpgradeDurationSeconds(playerData: PlayerDataType.PlayerData, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, buildingType: number): number | null
-{
-    try
-    {
-        const upgradeDurationSecondsFunction: ((currentUpgradeLevel: number, buildingType: number, playerData: PlayerDataType.PlayerData, planetId: number, serverData: ServerDataType.ServerData | null) => number) | undefined = BuildingDurationFormulas.buildingUpgradeDurationSecondsFunctionMap.get(buildingType);
-        if (upgradeDurationSecondsFunction === undefined)
-        {
-            return null;
-        }
-        
-        const currentBuildingUpgradeLevel: number = getBuildingLevel(fullPlanetData, buildingType);
-        return upgradeDurationSecondsFunction(currentBuildingUpgradeLevel, buildingType, playerData, fullPlanetData.planetRow.id, serverData);
-    }
-    catch (error: unknown)
-    {
-		console.warn("⚠️:", error); 
-        return null;
-    }
-}
-
 export function getPlanetProductionRatePerSecond(fullPlanetData: PlayerDataType.FullPlanetData, resourceType: number, serverData: ServerDataType.ServerData): number
 {
 	const buildingLevelMap: Map<number, number> = getBuildingLevelMap(fullPlanetData);
@@ -53,12 +34,16 @@ function computeProductionRatePerHourForResource(resourceType: number, serverDat
 {
 	let totalResourceTypeProductionRatePerHour: number = 0;
 
-	for (const [buildingType, resourceTypeProductionRatePerHourFunction] of BuildingProductionFormulas.buildingProductionRatePerHourFunctionMap)
+	for (const buildingType of AssociationMaps.BUILDING_STATS.keys())
 	{
 		const currentLevel: number = buildingLevelMap.get(buildingType) ?? 0;
-		const resourceTypeProductionRatePerHourMap: Map<number, number> = resourceTypeProductionRatePerHourFunction(currentLevel, serverData);
-		const resourceTypeProductionRatePerHour: number | undefined = resourceTypeProductionRatePerHourMap.get(resourceType);
+		const productionRatePerHourMap: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(buildingType, currentLevel, serverData);
+		if (productionRatePerHourMap === null)
+		{
+			continue;
+		}
 
+		const resourceTypeProductionRatePerHour: number | undefined = productionRatePerHourMap.get(resourceType);
 		if (resourceTypeProductionRatePerHour === undefined)
 		{
 			continue;
@@ -70,22 +55,10 @@ function computeProductionRatePerHourForResource(resourceType: number, serverDat
 	return totalResourceTypeProductionRatePerHour;
 }
 
-export function computeBuildingUpgradeCost(currentUpgradeLevel: number, buildingType: number): Map<number, number> | null
-{
-	const costFunction: ((currentUpgradeLevel: number) => Map<number, number>) | undefined = BuildingCostFormula.buildingCostFunctionMap.get(buildingType);
-	if (costFunction === undefined)
-	{
-		console.warn("⚠️:", `Building type ${buildingType} has no calculatable cost.`); 
-		return null;
-	}
-
-	return costFunction(currentUpgradeLevel);
-}
-
 export function canAffordUpgrade(fullPlanetData: PlayerDataType.FullPlanetData, buildingType: number): boolean
 {
 	const currentUpgradeLevel: number = getBuildingLevel(fullPlanetData, buildingType);
-	const nextUpgradeCostMap: Map<number, number> | null = computeBuildingUpgradeCost(currentUpgradeLevel, buildingType);
+	const nextUpgradeCostMap: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(currentUpgradeLevel, buildingType);
 	if (nextUpgradeCostMap === null)
 	{
 	    return false;
@@ -108,11 +81,10 @@ function getProductionBuildingTypeArrayForResourceType(resourceType: number): nu
 {
 	const productionBuildingTypeArray: number[] = [];
 
-	for (const [buildingType, productionFunction] of BuildingProductionFormulas.buildingProductionRatePerHourFunctionMap)
+	for (const buildingType of AssociationMaps.BUILDING_STATS.keys())
 	{
-		const productionMap: Map<number, number> = productionFunction(1, null);
-
-		if (productionMap.has(resourceType) === true)
+		const productionMap: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(buildingType, 1, null);
+		if (productionMap !== null && productionMap.has(resourceType) === true)
 		{
 			productionBuildingTypeArray.push(buildingType);
 		}

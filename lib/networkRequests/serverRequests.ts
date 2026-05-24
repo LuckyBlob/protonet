@@ -18,7 +18,7 @@ export async function requestServerData<K extends keyof DataResponseMap>(dataReq
             error: `Unknown ${dataRequest.name} error.`,
         } as DataResponseMap[K]
 
-		console.warn("⚠️:", error); 
+		console.error("⚠️:", error); 
         return responseFailure;
     }
 }
@@ -83,7 +83,7 @@ export async function requestServerAction<K extends keyof ActionResponseMap>(act
             error: `Unknown ${actionRequest.name} error.`,
         }
 
-		console.warn("⚠️:", error); 
+		console.error("⚠️:", error); 
         return responseFailure as ActionResponseMap[K];
     }
 }

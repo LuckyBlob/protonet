@@ -1,33 +1,51 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 
-export const buildingCostFunctionMap: Map<number, (currentUpgradeLevel: number) => Map<number, number>> = new Map
-([
-	[GameType.BUILDING_1, (currentUpgradeLevel: number): Map<number, number> => computeBuildingUpgradeCost_SimpleProductionBuilding(currentUpgradeLevel, AssociationMaps.BUILDING_1_DATA)],
-	[GameType.BUILDING_2, (currentUpgradeLevel: number): Map<number, number> => computeBuildingUpgradeCost_SimpleProductionBuilding(currentUpgradeLevel, AssociationMaps.BUILDING_2_DATA)],
-	[GameType.SHIPYARD_BUILDING_TYPE, (currentUpgradeLevel: number): Map<number, number> => computeBuildingUpgradeCost_ExponentialCostBuilding(currentUpgradeLevel, AssociationMaps.BUILDING_3_DATA)],
-	[GameType.ROBOTIC_FACTORY_TYPE, (currentUpgradeLevel: number): Map<number, number> => computeBuildingUpgradeCost_ExponentialCostBuilding(currentUpgradeLevel, AssociationMaps.BUILDING_4_DATA)],
-]);
+const BASE_GROWTH_FACTOR: number = 1.6;
+const BASE_EXPONENT: number = 2;
 
-function computeBuildingUpgradeCost_SimpleProductionBuilding(currentUpgradeLevel: number, simpleProductionBuildingCostData: AssociationMaps.SimpleProductionBuildingCostData): Map<number, number>
+export function computeBuildingUpgradeCost(currentUpgradeLevel: number, buildingType: number): Map<number, number> | null
+{
+	const buildingStats: AssociationMaps.BuildingStats | undefined = AssociationMaps.BUILDING_STATS.get(buildingType);
+	if (buildingStats === undefined)
+	{
+		console.error("⚠️:", `Building type ${buildingType} has no calculatable cost.`); 
+		return null;
+	}
+
+	switch (buildingStats.costFunctionType)
+	{
+		case AssociationMaps.BuildingCostFunctionType.SimpleProduction:
+		{
+			return computeBuildingUpgradeCost_SimpleProductionBuilding(currentUpgradeLevel, buildingStats);
+		}
+		case AssociationMaps.BuildingCostFunctionType.Exponential:
+		{
+			return computeBuildingUpgradeCost_ExponentialCostBuilding(currentUpgradeLevel, buildingStats);
+		}
+		default:
+			return null;
+	}
+}
+function computeBuildingUpgradeCost_SimpleProductionBuilding(currentUpgradeLevel: number, buildingStats: AssociationMaps.BuildingStats): Map<number, number>
 {
 	const costMap: Map<number, number> = new Map<number, number>();
 
-	for (const [resourceType, baseResourceCost] of simpleProductionBuildingCostData.baseCostMap)
+	for (const [resourceType, baseResourceCost] of buildingStats.baseCost)
 	{
-		costMap.set(resourceType, Math.floor(baseResourceCost * Math.pow(simpleProductionBuildingCostData.growthFactor, currentUpgradeLevel)));
+		costMap.set(resourceType, Math.floor(baseResourceCost * Math.pow(BASE_GROWTH_FACTOR, currentUpgradeLevel)));
 	}
 
 	return costMap;
 }
 
-function computeBuildingUpgradeCost_ExponentialCostBuilding(currentUpgradeLevel: number, exponentialBuildingCostData: AssociationMaps.ExponentialBuildingCostData): Map<number, number>
+function computeBuildingUpgradeCost_ExponentialCostBuilding(currentUpgradeLevel: number, buildingStats: AssociationMaps.BuildingStats): Map<number, number>
 {
 	const costMap: Map<number, number> = new Map<number, number>();
 
-	for (const [resourceType, baseResourceCost] of exponentialBuildingCostData.baseCostMap)
+	for (const [resourceType, baseResourceCost] of buildingStats.baseCost)
 	{
-		costMap.set(resourceType, Math.floor(baseResourceCost * Math.pow(exponentialBuildingCostData.exponentBase, currentUpgradeLevel)));
+		costMap.set(resourceType, Math.floor(baseResourceCost * Math.pow(BASE_EXPONENT, currentUpgradeLevel)));
 	}
 
 	return costMap;
