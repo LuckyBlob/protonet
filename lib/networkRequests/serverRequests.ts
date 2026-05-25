@@ -1,9 +1,9 @@
 "use client";
 
 import * as RequestType from "@/lib/networkRequests/requestTypes";
-import { DataResponseMap, ActionResponseMap, ActionRequestMap } from "@/app/api/apiEndPoints"
+import * as APIEndPoint from "@/app/api/apiEndPoints"
 
-export async function requestServerData<K extends keyof DataResponseMap>(dataRequest: { name: K; endpoint: string }): Promise<DataResponseMap[K] | null>
+export async function requestServerData<K extends keyof APIEndPoint.DataResponseMap>(dataRequest: { name: K; endpoint: string }): Promise<APIEndPoint.DataResponseMap[K] | null>
 {
     try
     {
@@ -13,36 +13,36 @@ export async function requestServerData<K extends keyof DataResponseMap>(dataReq
     }
     catch (error: unknown)
     {
-        const responseFailure: DataResponseMap[K] =
+        const responseFailure: APIEndPoint.DataResponseMap[K] =
         {
             error: `Unknown ${dataRequest.name} error.`,
-        } as DataResponseMap[K]
+        } as APIEndPoint.DataResponseMap[K]
 
 		console.error("⚠️:", error); 
         return responseFailure;
     }
 }
 
-function handleServerDataResponse<K extends keyof DataResponseMap>(parsed: unknown, actionName: string): DataResponseMap[K]
+function handleServerDataResponse<K extends keyof APIEndPoint.DataResponseMap>(parsed: unknown, actionName: string): APIEndPoint.DataResponseMap[K]
 {
     if ((parsed === null) || (typeof parsed !== "object"))
     {
-        const responseFailure: DataResponseMap[K] =
+        const responseFailure: APIEndPoint.DataResponseMap[K] =
         {
             error: `Unknown ${actionName} error.`,
-        } as DataResponseMap[K];
+        } as APIEndPoint.DataResponseMap[K];
 
         return responseFailure;
     }
 
-    const serverResponseData: DataResponseMap[K] = parsed as DataResponseMap[K];
+    const serverResponseData: APIEndPoint.DataResponseMap[K] = parsed as APIEndPoint.DataResponseMap[K];
     // Use != instead of !== here to catch everything that's very weird.
     if (serverResponseData.error != null)
     {
-        const responseFailure: DataResponseMap[K] =
+        const responseFailure: APIEndPoint.DataResponseMap[K] =
         {
             error: serverResponseData.error,
-        } as DataResponseMap[K];
+        } as APIEndPoint.DataResponseMap[K];
 
         return responseFailure;
     }
@@ -50,7 +50,7 @@ function handleServerDataResponse<K extends keyof DataResponseMap>(parsed: unkno
     return serverResponseData;
 }
 
-export async function requestServerAction<K extends keyof ActionResponseMap>(actionRequest: { name: K; endpoint: string }, clientRequest: ActionRequestMap[K]): Promise<ActionResponseMap[K]>
+export async function requestServerAction<K extends keyof APIEndPoint.ActionResponseMap>(actionRequest: { name: K; endpoint: string }, clientRequest: APIEndPoint.ActionRequestMap[K]): Promise<APIEndPoint.ActionResponseMap[K]>
 {
     try
     {
@@ -69,7 +69,7 @@ export async function requestServerAction<K extends keyof ActionResponseMap>(act
                 error: `${actionRequest.name} failed: HTTP ${response.status}: ${errorText}`,
             };
 
-            return responseFailure as ActionResponseMap[K];
+            return responseFailure as APIEndPoint.ActionResponseMap[K];
         }
 
         const parsed: unknown = await response.json();
@@ -84,11 +84,11 @@ export async function requestServerAction<K extends keyof ActionResponseMap>(act
         }
 
 		console.error("⚠️:", error); 
-        return responseFailure as ActionResponseMap[K];
+        return responseFailure as APIEndPoint.ActionResponseMap[K];
     }
 }
 
-function handleServerActionResponse<K extends keyof ActionResponseMap>(parsed: unknown, actionName: string): ActionResponseMap[K]
+function handleServerActionResponse<K extends keyof APIEndPoint.ActionResponseMap>(parsed: unknown, actionName: string): APIEndPoint.ActionResponseMap[K]
 {
     if ((parsed === null) || (typeof parsed !== "object"))
     {
@@ -97,10 +97,12 @@ function handleServerActionResponse<K extends keyof ActionResponseMap>(parsed: u
             error: `Unknown ${actionName} error.`,
         }
 
-        return responseFailure as ActionResponseMap[K];
+        return responseFailure as APIEndPoint.ActionResponseMap[K];
     }
 
-    const serverResponseData: ActionResponseMap[K] = parsed as ActionResponseMap[K];
+    const serverResponseData: APIEndPoint.ActionResponseMap[K] = parsed as APIEndPoint.ActionResponseMap[K];
+    
+    // Use != instead of !== here to catch everything that's very weird.
     if (serverResponseData.error != null)
     {
         const responseFailure: RequestType.BaseServerResponse =
@@ -108,7 +110,7 @@ function handleServerActionResponse<K extends keyof ActionResponseMap>(parsed: u
             error: serverResponseData.error,
         }
 
-        return responseFailure as ActionResponseMap[K];
+        return responseFailure as APIEndPoint.ActionResponseMap[K];
     }
 
     return serverResponseData;

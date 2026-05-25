@@ -1,5 +1,7 @@
 "use client";
 
+import { ReactElement } from "react";
+
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
@@ -43,7 +45,7 @@ function getBuildingImagePath(buildingType: number, level: number): string
 	return `/buildings/buildingType_${buildingType}/${tier}.png`;
 }
 
-function renderCostLine(nextCostMap: Map<number, number>): React.ReactElement
+function renderCostLine(nextCostMap: Map<number, number>): ReactElement
 {
 	const parts: string[] = [];
 
@@ -56,7 +58,7 @@ function renderCostLine(nextCostMap: Map<number, number>): React.ReactElement
 	return <span>{parts.join(" / ")}</span>;
 }
 
-function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData, buildingType: number): React.ReactElement
+function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData, buildingType: number): ReactElement
 {
 	const playerData: PlayerDataType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 	const planetId: number = selectedFullPlanetDataPredicted.planetRow.id;
@@ -95,11 +97,11 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 		ClientRequestFunctions.clientTryUpgradeBuildingRequest(props.clientDataStateResult.psController, planetId, buildingType);
 	};
 
-	const levelLine: React.ReactElement = isThisBuildingUpgrading === true
+	const levelLine: ReactElement = isThisBuildingUpgrading === true
 		? <div className="text-sm">{"Level"} {currentLevel} {"->"} {"Level"} {currentLevel + 1}</div>
 		: <div className="text-sm">Level {currentLevel}</div>;
 
-	const actionElement: React.ReactElement = isThisBuildingUpgrading === true
+	const actionElement: ReactElement = isThisBuildingUpgrading === true
 		? (
 			<div className="w-full px-4 py-2 bg-yellow-600 text-white rounded text-center">
 				<div className="font-bold">Building</div>
@@ -127,7 +129,7 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 			</button>
 		);
 
-	const cardElement: React.ReactElement =
+	const cardElement: ReactElement =
 	(
 		<div key={buildingType} className="border border-gray-400 rounded p-4 w-64 flex flex-col items-center gap-2">
 			<div className="w-full h-32 flex flex-col items-center justify-center text-center">
@@ -159,18 +161,18 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 	return cardElement;
 }
 
-export function UpgradeView(props: UpgradeViewProps): React.ReactElement
+export function UpgradeView(props: UpgradeViewProps): ReactElement
 {
 	try
 	{
 		const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 
-		const cardElements: React.ReactElement[] = ThingType.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: number): React.ReactElement =>
+		const cardElements: ReactElement[] = ThingType.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: number): ReactElement =>
 		{
 			return renderBuildingCard(props, selectedFullPlanetDataPredicted, buildingType);
 		});
 
-		const upgradeViewElement: React.ReactElement =
+		const upgradeViewElement: ReactElement =
 		(
 			<div className="flex flex-row flex-wrap justify-center gap-4 p-4">
 				{cardElements}

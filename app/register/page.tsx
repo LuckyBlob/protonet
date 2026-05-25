@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ReactElement, ReactNode } from "react";
 
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
+import * as APIEndPoint from "@/app/api/apiEndPoints";
 
 export default function RegisterPage()
 {
@@ -20,20 +22,30 @@ export default function RegisterPage()
 
 	const handleSubmit: () => Promise<void> = async () =>
 	{
-		const response = await ClientRequestFunctions.clientTryRegisterRequest(usernameState[0], passwordState[0]);
-		if (response.error !== null)
+		try
 		{
-			setError(response.error);
+			const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register> | null = await ClientRequestFunctions.clientTryRegisterRequest(usernameState[0], passwordState[0]);
+			router.push("/");
+		}
+		catch (error: unknown)
+		{
+			if (error instanceof Error)
+			{
+            	setError(error.message);
+        	}
+			else
+			{
+            	setError("An unexpected error occurred");
+        	}
 			return;
 		}
-		router.push("/");
 	};
 
-	const errorElement: React.ReactElement | null = errorState[0] !== null
+	const errorElement: ReactElement | null = errorState[0] !== null
 		? <div className="text-red-500">{errorState[0]}</div>
 		: null;
 
-	const pageElement: React.ReactElement =
+	const pageElement: ReactElement =
 	(
 		<main className="p-8 flex flex-col gap-4 max-w-md">
 			<h1 className="text-2xl font-bold">Register</h1>

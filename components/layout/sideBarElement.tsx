@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation";
-import React from "react";
+import { ReactElement } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
@@ -15,11 +15,11 @@ type SideBarProps =
 	onRefreshServerData: (clientDataStateResult: UseClientDataState.ClientDataStateResult) => void;
 };
 
-export function SideBarElement(props: SideBarProps): React.ReactElement
+export function SideBarElement(props: SideBarProps): ReactElement
 {
 	const navButtonClass: string = "px-4 py-1 text-center hover:bg-white/10 rounded transition-colors";
 
-	const adminSection: React.ReactElement | null = props.cuController[0].user!.admin_level === 0
+	const adminSection: ReactElement | null = props.cuController[0].user!.admin_level === 0
 	    ?
 	    (
 	        <button
@@ -31,7 +31,7 @@ export function SideBarElement(props: SideBarProps): React.ReactElement
 	    )
 	    : null;
 
-	const sideBarElement: React.ReactElement =
+	const sideBarElement: ReactElement =
 	(
 	    <div className="w-[200px] bg-black/50 text-white pt-[300px] pb-8 px-4 flex flex-col items-center min-h-screen">
 	        <div className="text-sm text-gray-300 mb-12">

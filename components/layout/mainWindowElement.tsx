@@ -1,9 +1,10 @@
+import { ReactElement } from "react";
+
 import * as GameView from "@/components/views/gameView";
 import * as StatsView from "@/components/views/statsView";
 import * as UpgradeView from "@/components/views/upgradeView";
 import * as ShipyardView from "@/components/views/shipyardView";
 import * as ShipView from "@/components/views/shipView";
-
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
 
@@ -13,7 +14,7 @@ type MainWindowProps =
 	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
-export function MainWindowElement(props: MainWindowProps): React.ReactElement
+export function MainWindowElement(props: MainWindowProps): ReactElement
 {
 	if (props.cvController[0] === "game")
 	{

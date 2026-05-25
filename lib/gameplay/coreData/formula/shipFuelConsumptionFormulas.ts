@@ -25,7 +25,7 @@ export function computeFuelConsumption(shipQuantities: Map<number, number>, dist
 
 function computeFuelConsumption_Base(shipQuantities: Map<number, number>, distance: number, speed: number, serverData: ServerDataType.ServerData | null): Map<number, number>
 {
-	let totalBaseCost: Map<number, number> = new Map<number, number>();
+	const totalBaseCost: Map<number, number> = new Map<number, number>();
 	for (const [shipType, shipQuantity] of shipQuantities)
 	{
 		const shipStats: AssociationMaps.ShipStats | undefined = AssociationMaps.SHIP_STATS.get(shipType);

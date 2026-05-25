@@ -166,7 +166,7 @@ function getFailedRequirementsInternal(playerData: PlayerDataType.PlayerData, pl
     const requirements: RequirementType.Requirement[] = getRequirements(thingType, specificThing);
     return requirements.filter((requirement: RequirementType.Requirement): boolean =>
     {
-        return !meetsSingleRequirement(playerData, planetId, requirement);
+        return meetsSingleRequirement(playerData, planetId, requirement) === false;
     });
 }
 
@@ -183,7 +183,7 @@ function describeSingleRequirement(playerData: PlayerDataType.PlayerData, planet
 
         const thingValueGetter: number = thingRequirement.valueGetter(playerData, planetId);
         const threshold: number = resolveValueToNumber(thingRequirement.value, thingRequirement.operator);
-        const opStr: string = operatorToString(thingRequirement.operator);
+        const operatorString: string = operatorToString(thingRequirement.operator);
         const thingName: string | undefined = ThingType.THING_DISPLAY_NAMES.get(thingRequirement.thingType);
 
         if (thingName === undefined)
@@ -191,7 +191,7 @@ function describeSingleRequirement(playerData: PlayerDataType.PlayerData, planet
             throw new Error(`UNREACHABLE: No display name for Thing ${thingRequirement.thingType}`);
         }
 
-        return `Total ${thingName} ${opStr} ${threshold} (current: ${thingValueGetter})`;
+        return `Total ${thingName} ${operatorString} ${threshold} (current: ${thingValueGetter})`;
     }
 
     if (requirement.specificThingRequirement !== undefined)
@@ -207,9 +207,9 @@ function describeSingleRequirement(playerData: PlayerDataType.PlayerData, planet
         const specificName: string = ThingType.getSpecificThingName({ thingType: specificThingRequirement.thingType, specificThingType: specificThingRequirement.specificThingType });
         const specificThingValueGetter: number = specificThingRequirement.valueGetter(playerData, planetId);
         const threshold: number = resolveValueToNumber(specificThingRequirement.value, specificThingRequirement.operator);
-        const opStr: string = operatorToString(specificThingRequirement.operator);
+        const operatorString: string = operatorToString(specificThingRequirement.operator);
 
-        return `${specificName} ${opStr} ${threshold} (current: ${specificThingValueGetter})`;
+        return `${specificName} ${operatorString} ${threshold} (current: ${specificThingValueGetter})`;
     }
 
     return null;

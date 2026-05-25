@@ -1,8 +1,10 @@
 "use client";
 
-export function EmptyElement(): React.ReactElement
+import { ReactElement, ReactNode } from "react";
+
+export function EmptyElement(): ReactElement
 {
-	const emptyElement: React.ReactElement =
+	const emptyElement: ReactElement =
 	(
 		<div></div>
 	);

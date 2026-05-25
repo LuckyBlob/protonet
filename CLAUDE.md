@@ -4,6 +4,9 @@ These standards are extracted from the existing codebase. Match them exactly whe
 
 ## Formatting
 
+### Semicolons - Always require semicolons
+Always require semi colons when possible.
+
 ### Braces — Allman style, always
 Opening brace on its own line, even for single-statement bodies. **No K&R braces anywhere.**
 
@@ -37,6 +40,7 @@ return costParts;
 
 ### Inline object/array literals
 When assigning a multi-line object or array literal to a typed variable, the `=` ends the line and the `{` or `(` starts the next line. Same Allman style as control flow.
+In the return { ... }, it's required to have the { follow the return on the same line as it wont compile, so accept that.
 
 ```ts
 const fleetPlayerData: FleetData.FleetPlayerData =
@@ -56,7 +60,7 @@ const element: ReactElement =
 ## Types and declarations
 
 ### `type` over `interface`
-Use `type` for everything. `interface` is only used for the three response-map indirection types in `apiEndPoints.ts`. Don't introduce new `interface` declarations elsewhere.
+Use `type` for everything unless absolutly necessary.
 
 ### Explicit type annotations on every local variable
 Every `const` and `let` gets an explicit type, even when inference would work. This is non-negotiable — it's how the codebase reads.
@@ -99,7 +103,7 @@ Each enum-like family has a parallel `*_DISPLAY_NAMES: ReadonlyMap<...>` constan
 ## Variables
 
 ### `const` by default
-`let` is used only when reassignment is genuinely needed (~30 uses in the entire codebase vs. ~740 `const`). Don't reach for `let` to "set a default and maybe overwrite it."
+`let` is used only when reassignment is genuinely needed. Don't reach for `let` to "set a default and maybe overwrite it."
 
 ### Prefer local variables to clarify code
 Extract intermediate values into named, typed locals even when they're used once. The goal is readability, not minimal LOC.

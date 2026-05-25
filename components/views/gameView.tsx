@@ -1,5 +1,7 @@
 "use client";
 
+import { ReactElement } from "react";
+
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 
 type GameViewProps =
@@ -7,9 +9,9 @@ type GameViewProps =
 	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
-export function GameView(props: GameViewProps): React.ReactElement
+export function GameView(props: GameViewProps): ReactElement
 {
-	const gameViewElement: React.ReactElement =
+	const gameViewElement: ReactElement =
 	(
 		<div>
 			Future cool image.

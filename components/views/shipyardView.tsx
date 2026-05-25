@@ -14,14 +14,14 @@ import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 
-const PREVIEW_MAX_SHIP_LINES = 7;
-const PREVIEW_MAX_RESOURCE_LINES = 7;
-const PREVIEW_TEXT_LINE_HEIGHT_PX = 20;
-const PREVIEW_TOTAL_TIME_LINE_PX = 20;
-const PREVIEW_COUNTDOWN_LINE_PX = 20;
-const PREVIEW_BUTTON_PX = 40;
-const PREVIEW_BOX_VERTICAL_PADDING_PX = 32;
-const PREVIEW_STACK_GAPS_PX = 32;
+const PREVIEW_MAX_SHIP_LINES: number = 7;
+const PREVIEW_MAX_RESOURCE_LINES: number = 7;
+const PREVIEW_TEXT_LINE_HEIGHT_PX: number = 20;
+const PREVIEW_TOTAL_TIME_LINE_PX: number = 20;
+const PREVIEW_COUNTDOWN_LINE_PX: number = 20;
+const PREVIEW_BUTTON_PX: number = 40;
+const PREVIEW_BOX_VERTICAL_PADDING_PX: number = 32;
+const PREVIEW_STACK_GAPS_PX: number = 32;
 
 const PREVIEW_RESERVE_HEIGHT_PX =
     (PREVIEW_MAX_SHIP_LINES * PREVIEW_TEXT_LINE_HEIGHT_PX)
@@ -151,7 +151,7 @@ function renderQuantityInput(props: ShipyardViewProps, shipType: number, request
     {
         const requirements: string[] = Requirement.getRequirementDescriptions(failedShipRequirements, playerData, planetId);
 
-        element =
+        const element: ReactElement =
         (
             <div>
                 {requirements.map((requirement: string) =>
@@ -160,10 +160,12 @@ function renderQuantityInput(props: ShipyardViewProps, shipType: number, request
                 })}
             </div>
         );
+
+        return element;
     }
     else
     {
-        const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>) =>
+        const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>): void =>
         {
             const parsedValue: number = Number.parseInt(e.target.value, 10);
 
@@ -176,7 +178,7 @@ function renderQuantityInput(props: ShipyardViewProps, shipType: number, request
             setRequestedQuantity(shipType, parsedValue);
         };
 
-        element =
+        const element: ReactElement =
         (
             <input
                 type="number"
@@ -186,9 +188,9 @@ function renderQuantityInput(props: ShipyardViewProps, shipType: number, request
                 className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-24"
             />
         );
-    }
 
-    return element;
+        return element;
+    }
 }
 
 function renderShipBuildRow(props: ShipyardViewProps, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, shipType: number, requestedQuantity: number, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
@@ -336,17 +338,20 @@ function renderBuildPreviewContent(fullPlanetData: PlayerDataType.FullPlanetData
     return element;
 }
 
-function renderBuildButton(hasRequestedData: boolean, onBuildAll: () => void): ReactElement | null
+function renderBuildButton(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, requestedMap: Map<number, number>, hasRequestedData: boolean, onBuildAll: () => void): ReactElement | null
 {
     if (hasRequestedData === false)
     {
         return null;
     }
+    
+    const buildableQuantities: Map<number, number> = ShipData.computeMaxAffordableShipQuantities(fullPlanetData, requestedMap);
 
     const element: ReactElement =
     (
         <button
             onClick={onBuildAll}
+			disabled={buildableQuantities.size === 0}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
             Build all
@@ -448,7 +453,7 @@ function renderShipyardBody(props: ShipyardViewProps, fullPlanetData: PlayerData
 
     const countdownLine: ReactElement | null = renderConstructionCountdownLine(fullPlanetData);
     const previewContent: ReactElement | null = renderBuildPreviewContent(fullPlanetData, serverData, requestedMap);
-    const buildButton: ReactElement | null = renderBuildButton(hasRequestedData, onBuildAll);
+    const buildButton: ReactElement | null = renderBuildButton(fullPlanetData, serverData, requestedMap, hasRequestedData, onBuildAll);
     const previewSlot: ReactElement = renderPreviewSlot(previewContent, buildButton);
     const buildRowElements: ReactElement = renderShipBuildRows(props, shipTypes, fullPlanetData, serverData, quantitiesState.requestedQuantities, quantitiesState.setRequestedQuantity);
 

@@ -46,7 +46,7 @@ export function canExecuteFleetActionOnTargetPlanet(originPlanetData: PlayerData
 				return false;
 			}
 
-			return false;
+			return true;
 		}
 		case GameType.FLEET_ACTION_COLLECT:
 		{

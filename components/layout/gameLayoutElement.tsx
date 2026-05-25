@@ -1,15 +1,17 @@
+import { ReactElement, ReactNode } from "react";
+
 import * as BackgroundElement from "@/components/layout/backgroundElement";
 
 type GameLayoutProps =
 {
-	sideBar: React.ReactNode;
-	topBar: React.ReactNode;
-	mainWindow: React.ReactNode;
+	sideBar: ReactNode;
+	topBar: ReactNode;
+	mainWindow: ReactNode;
 };
 
-export function GameLayoutElement(props: GameLayoutProps): React.ReactElement
+export function GameLayoutElement(props: GameLayoutProps): ReactElement
 {
-	const layoutElement: React.ReactElement =
+	const layoutElement: ReactElement =
 	(
 		<BackgroundElement.BackgroundElement>
 			<div className="min-h-screen flex">

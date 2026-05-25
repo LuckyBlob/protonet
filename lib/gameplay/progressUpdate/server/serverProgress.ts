@@ -19,7 +19,7 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
 {
     applyPlayerProgressAtTime(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, targetPlayerId: number, time: number): PlayerDataType.PlayerData | null
     {
-        const updatedPlayerData: PlayerDataType.PlayerData =(playerData.playerRow.id !== targetPlayerId) ? ServerRequestFunctions.serverGetPlayerData(targetPlayerId) : playerData;
+        const updatedPlayerData: PlayerDataType.PlayerData = (playerData.playerRow.id !== targetPlayerId) ? ServerRequestFunctions.serverGetPlayerData(targetPlayerId) : playerData;
         const updatedTargetPlayerData: PlayerDataType.PlayerData = ApplyProgress.applyProgressToPlayerData(updatedPlayerData, serverData, time, this);
 
         // Technically, we have already set the last_updated values, but do it now at the end to be sure. This is on purpose.

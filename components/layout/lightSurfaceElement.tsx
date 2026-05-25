@@ -1,11 +1,13 @@
+import { ReactElement, ReactNode } from "react";
+
 type ChildrenProps =
 {
-	children: React.ReactNode;
+	children: ReactNode;
 };
 
-export function LightSurfaceElement(props: ChildrenProps): React.ReactElement
+export function LightSurfaceElement(props: ChildrenProps): ReactElement
 {
-	const lightSurfaceElement: React.ReactElement =
+	const lightSurfaceElement: ReactElement =
 	(
 		<div className="surface-light min-h-screen flex flex-col">
 			{props.children}

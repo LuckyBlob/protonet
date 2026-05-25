@@ -1,8 +1,10 @@
+import { ReactElement } from "react";
+
 import * as BackgroundElement from "@/components/layout/backgroundElement";
 
-export function LoadingElement(): React.ReactElement
+export function LoadingElement(): ReactElement
 {
-	const loadingElement: React.ReactElement =
+	const loadingElement: ReactElement =
 	(
 		<BackgroundElement.BackgroundElement>
 			<main>

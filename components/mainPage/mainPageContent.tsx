@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { ReactElement } from "react";
 
 import * as GameLayoutElement from "@/components/layout/gameLayoutElement";
 import * as MainWindowElement from "@/components/layout/mainWindowElement";
@@ -11,6 +12,7 @@ import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequ
 import * as UseCurrentView from "@/lib/use/useCurrentView";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser";
+import * as APIEndPoint from "@/app/api/apiEndPoints";
 
 type MainPageContentProps =
 {
@@ -19,11 +21,11 @@ type MainPageContentProps =
 	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
-export function MainPageContent(props: MainPageContentProps): React.ReactElement
+export function MainPageContent(props: MainPageContentProps): ReactElement
 {
 	const router: ReturnType<typeof useRouter> = useRouter();
 
-	const mainPageContent: React.ReactElement =
+	const mainPageContent: ReactElement =
 	(
 		<GameLayoutElement.GameLayoutElement
             sideBar={
@@ -58,8 +60,8 @@ export function MainPageContent(props: MainPageContentProps): React.ReactElement
 
 export async function handleLogout(router: ReturnType<typeof useRouter>): Promise<void>
 {
-    const response = await ClientRequestFunctions.clientTryLogoutRequest();
-    if (response.error !== null)
+    const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout> | null = await ClientRequestFunctions.clientTryLogoutRequest();
+    if (response === null)
     {
         return;
     }

@@ -13,7 +13,7 @@ export const ActionRequest =
     BuildShips:   { endpoint: "buy/buildShips",   name: "BuildShips" },
     SendFleet:   { endpoint: "buy/sendFleet",   name: "SendFleet" },
 } as const satisfies Record<string, validEndpoint>;
-export interface ActionRequestMap
+export type ActionRequestMap = 
 {
     Login: RequestType.BaseAuthenticationClientRequest;
     Register: RequestType.BaseAuthenticationClientRequest;
@@ -23,7 +23,7 @@ export interface ActionRequestMap
     BuildShips: RequestType.BuildShips_ClientRequest;
     SendFleet: RequestType.SendFleet_ClientRequest;
 }
-export interface ActionResponseMap
+export type ActionResponseMap = 
 {
     Login: RequestType.BaseAuthenticationServerResponse;
     Register: RequestType.BaseAuthenticationServerResponse;
@@ -44,7 +44,7 @@ export const DataRequest =
     AllPlanets: { endpoint: "planets/all",       name: "AllPlanets" },
     OwnedPlanets: { endpoint: "planets/owned",       name: "OwnedPlanets" },
 } as const satisfies Record<string, validEndpoint>;
-export interface DataResponseMap
+export type DataResponseMap = 
 {
     UserInfo: RequestType.UserRowRequest;
     PlayerData: RequestType.PlayerDataRequest;

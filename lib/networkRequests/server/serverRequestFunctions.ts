@@ -299,6 +299,7 @@ export async function serverTryRefreshServerRequest(): Promise<NextResponse>
         return NextResponse.json(errorResponse, { status: 401 });
     }
 
+    // must be power admin (0) for this action
     if (user.admin_level !== 0)
     {
         errorResponse.error = "Forbidden.";

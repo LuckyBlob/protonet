@@ -80,7 +80,18 @@ export async function clientTryLoginRequest(username: string, password: string):
         username: username,
         password: password,
     };
-    return ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Login, clientRequest);
+    const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Login> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Login, clientRequest);
+    if (response.error !== null)
+    {
+        throw new Error(response.error);
+    }
+
+    // Use != instead of !== here to catch everything that's very weird.
+    if (response.username == null)
+    {
+        throw new Error(`Logout server failed: Invalid player data.`);
+    }
+    return response;
 }
 
 export async function clientTryRegisterRequest(username: string, password: string): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register>>
@@ -90,12 +101,45 @@ export async function clientTryRegisterRequest(username: string, password: strin
         username: username,
         password: password,
     };
-    return ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Register, clientRequest);
+
+    const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Register, clientRequest);
+    if (response.error !== null)
+    {
+        throw new Error(response.error);
+    }
+
+    // Use != instead of !== here to catch everything that's very weird.
+    if (response.username == null)
+    {
+        throw new Error(`Logout server failed: Invalid player data.`);
+    }
+
+    return response;
 }
 
-export async function clientTryLogoutRequest(): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout>>
+export async function clientTryLogoutRequest(): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout> | null>
 {
-    return ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Logout, null);
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Logout, null);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.username == null)
+        {
+            throw new Error(`Logout server failed: Invalid player data.`);
+        }
+
+        return response;
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+        return null;
+    }
 }
 
 export async function clientTryRefreshServerRequest(clientDataStateResult: UseClientDataState.ClientDataStateResult): Promise<void>
@@ -134,14 +178,27 @@ export async function clientTryUpgradeBuildingRequest(psController: PlayerDataTy
         buildingType: buildingType,
         planetId: planetId,
     };
-    const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.UpgradeBuilding, clientRequest);
-    // Use != instead of !== here to catch everything that's very weird.
-    if (response.serializedPlayerData == null)
+
+    try
     {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.UpgradeBuilding, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
         throw new Error(`Building upgrade failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
     }
-    const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
-    await setPlayerState(psController, playerData);
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
 }
 
 export async function clientTryBuildShipsRequest(psController: PlayerDataType.PSController, planetId: number, shipQuantities: Map<number, number>): Promise<void>
@@ -151,14 +208,27 @@ export async function clientTryBuildShipsRequest(psController: PlayerDataType.PS
         planetId: planetId,
         serializedShipQuantities: Serialization.serializeNumberNumberMap(shipQuantities),
     };
-    const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.BuildShips> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.BuildShips, clientRequest);
-    // Use != instead of !== here to catch everything that's very weird.
-    if (response.serializedPlayerData == null)
+
+    try
     {
-        throw new Error(`Build ships failed for planetId ${planetId}: Invalid response from server.`);
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.BuildShips> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.BuildShips, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Build ships failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
     }
-    const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
-    await setPlayerState(psController, playerData);
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
 }
 
 //#endregion

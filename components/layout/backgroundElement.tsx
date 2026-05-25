@@ -1,11 +1,13 @@
+import { ReactElement, ReactNode } from "react";
+
 type ChildrenProps =
 {
-	children: React.ReactNode;
+	children: ReactNode;
 };
 
-export function BackgroundElement(props: ChildrenProps): React.ReactElement
+export function BackgroundElement(props: ChildrenProps): ReactElement
 {
-	const backgroundElement: React.ReactElement =
+	const backgroundElement: ReactElement =
 	(
 		<div
 			className="surface-dark min-h-screen flex flex-col bg-center bg-repeat"

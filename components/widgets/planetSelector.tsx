@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ReactElement, ReactNode } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
@@ -9,7 +10,7 @@ type PlanetSelectorProps =
 	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
-export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
+export function PlanetSelector(props: PlanetSelectorProps): ReactElement
 {
 	const isOpenState: [boolean, (value: boolean) => void] = useState<boolean>(false);
 	const isOpen: boolean = isOpenState[0];
@@ -38,7 +39,7 @@ export function PlanetSelector(props: PlanetSelectorProps): React.ReactElement
 		? `(${selectedFullPlanetData.planetRow.slot}:${selectedFullPlanetData.planetRow.system}:${selectedFullPlanetData.planetRow.galaxy})`
 		: "...";
 
-	const selectorElement: React.ReactElement =
+	const selectorElement: ReactElement =
 	(
 		<div className="relative inline-block">
 			<button

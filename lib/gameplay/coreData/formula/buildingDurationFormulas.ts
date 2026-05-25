@@ -28,7 +28,7 @@ export function computeUpgradeDurationSeconds(currentUpgradeLevel: number, build
 
 function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: number, buildingStats: AssociationMaps.BuildingStats, buildingType: number, playerData: PlayerDataType.PlayerData, planetId: number, serverData: ServerDataType.ServerData | null): number
 {
-	const timeMultiplier: number = serverData ? serverData.config.time_multiplier : 1;
+	const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
     const nextUpgradeCostMap: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(currentUpgradeLevel, buildingType);
     if (nextUpgradeCostMap === null)
     {

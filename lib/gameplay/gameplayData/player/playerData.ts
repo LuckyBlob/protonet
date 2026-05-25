@@ -29,8 +29,8 @@ export function getFullPlanetDataForId(fullPlanetDatas: PlayerDataType.FullPlane
 
     if (matchingPlanet !== undefined)
     {
-        return matchingPlanet
+        return matchingPlanet;
     }
 
-    return null
+    return null;
 }

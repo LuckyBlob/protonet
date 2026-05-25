@@ -28,7 +28,7 @@ function computeProductionRate_SimpleProductionBuilding(currentLevel: number, bu
         return null;
     }
     const productionMap: Map<number, number> = new Map<number, number>();
-    const timeMultiplier: number = serverData ? serverData.config.time_multiplier : 1;
+    const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
 
     for (const [resourceType, perResourceProductionStats] of productionStats)
     {

@@ -23,7 +23,7 @@ export function computeConstructionDurationSeconds(shipType: number, currentShip
 
 function computeConstructionDurationSeconds_SimpleShip(currentShipyardLevel: number, maxHealth: number, data: SimpleShipConstructionDurationData, serverData: ServerDataType.ServerData | null): number
 {
-    const timeMultiplier: number = serverData ? serverData.config.time_multiplier : 1;
+    const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
     const durationHours: number = maxHealth / (data.divider * (currentShipyardLevel + 1));
     return Math.floor(durationHours * 3600 / timeMultiplier);
 }

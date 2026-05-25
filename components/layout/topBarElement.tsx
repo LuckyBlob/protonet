@@ -1,3 +1,5 @@
+import { ReactElement } from "react";
+
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
@@ -10,18 +12,18 @@ import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData"
 type TopBarProps =
 {
 	clientDataStateResult: UseClientDataState.ClientDataStateResult;
-	planetSelector: React.ReactElement;
+	planetSelector: ReactElement;
 };
 
-function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, remainingMs: number): React.ReactElement
+function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, remainingMs: number): ReactElement
 {
 	const resourceName: string = ThingType.getSpecificThingName(ThingType.resource(resourceDisplayValues.resourceType));
 
-	const buildLineElement: React.ReactElement | null = resourceDisplayValues.affectedByCurrentBuild === true
+	const buildLineElement: ReactElement | null = resourceDisplayValues.affectedByCurrentBuild === true
 		? <div className="text-sm">({TimeFormat.formatRemainingTimeMs(remainingMs)})</div>
 		: null;
 
-	const cardElement: React.ReactElement =
+	const cardElement: ReactElement =
 	(
 		<div key={resourceDisplayValues.resourceType} className="flex flex-col items-center gap-1 border border-gray-400 rounded px-6 py-2">
 			<div className="font-bold">{resourceName} {":"} {Math.floor(resourceDisplayValues.resource)}</div>
@@ -33,7 +35,7 @@ function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, 
 	return cardElement;
 }
 
-export function TopBarElement(props: TopBarProps): React.ReactElement
+export function TopBarElement(props: TopBarProps): ReactElement
 {
 	const resourceTypes: number[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
 
@@ -43,12 +45,12 @@ export function TopBarElement(props: TopBarProps): React.ReactElement
 
 		const remainingMs: number = displayValues.buildCompletesAt - Date.now();
 
-		const cardElements: React.ReactElement[] = displayValues.resourceDisplayValues.map((resourceDisplayValues: PlanetResourceDisplayValues): React.ReactElement =>
+		const cardElements: ReactElement[] = displayValues.resourceDisplayValues.map((resourceDisplayValues: PlanetResourceDisplayValues): ReactElement =>
 		{
 			return renderResourceCard(resourceDisplayValues, remainingMs);
 		});
 
-		const topBarElement: React.ReactElement =
+		const topBarElement: ReactElement =
 		(
 			<div className="bg-black/50 text-white py-3 px-4 flex items-start">
 				<div className="flex items-center">
