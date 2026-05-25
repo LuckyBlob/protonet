@@ -2,19 +2,19 @@ export const GALAXY_COUNT: number = 2;
 export const SYSTEM_COUNT: number = 20;
 export const SLOT_COUNT: number = 5;
 
-export const BUILDING_1: number = 1; // prod resource 1
-export const BUILDING_2: number = 2; // prod resource 1
-export const BUILDING_3: number = 3; // shipyard
-export const SHIPYARD_BUILDING_TYPE: number = BUILDING_3;
-export const BUILDING_4: number = 4; // Robotic factory
-export const ROBOTIC_FACTORY_TYPE: number = BUILDING_4;
+export const BUILDING_RESOURCE_PRODUCTION_1: number = 1; // prod resource 1
+export const BUILDING_RESOURCE_PRODUCTION_2: number = 2; // prod resource 1
+export const BUILDING_SHIPYARD: number = 3; // shipyard
+export const BUILDING_ROBOTIC_FACTORY: number = 4; // Robotic factory
+export const BUILDING_RESOURCE_PRODUCTION_3: number = 5; // prod resource 3
 
 export const BUILDING_DISPLAY_NAMES: ReadonlyMap<number, string> = new Map<number, string>
 ([
-    [BUILDING_1, "Iron Mine"],
-    [BUILDING_2, "Crystal Mine"],
-    [SHIPYARD_BUILDING_TYPE, "Shipyard"],
-    [ROBOTIC_FACTORY_TYPE, "Robotics Factory"],
+    [BUILDING_RESOURCE_PRODUCTION_1, "Iron Mine"],
+    [BUILDING_RESOURCE_PRODUCTION_2, "Crystal Mine"],
+    [BUILDING_SHIPYARD, "Shipyard"],
+    [BUILDING_ROBOTIC_FACTORY, "Robotics Factory"],
+    [BUILDING_RESOURCE_PRODUCTION_3, "Deuterium Synthesizer"],
 ]);
 
 export const RESOURCE_1: number = 1;
@@ -25,7 +25,7 @@ export const RESOURCE_DISPLAY_NAMES: ReadonlyMap<number, string> = new Map<numbe
 ([
     [RESOURCE_1, "Iron"],
     [RESOURCE_2, "Crystal"],
-    [RESOURCE_3, "Fuel"],
+    [RESOURCE_3, "Deuterium"],
 ]);
 
 export const SMALL_TRANSPORT: number = 1;

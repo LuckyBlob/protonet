@@ -8,6 +8,13 @@ const COEFFICIENT: number = 10;
 const SPEED_NUMERATOR: number = 3500;
 const DISTANCE_FACTOR: number = 10;
 
+export function computeFleetMovementDurationSecondsFromAddresses(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: ServerDataType.ServerData | null): number
+{
+	const distance: number = GameType.getDistance(originAddress, targetAddress);
+	const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(shipQuantities);
+	return computeFleetMovementDurationSeconds_Base(distance, speed, serverData);
+}
+
 export function computeFleetMovementDurationSeconds(originFullPlanetData: PlayerDataType.FullPlanetData, targetFullPlanetData: PlayerDataType.FullPlanetData, shipQuantities: Map<number, number>, serverData: ServerDataType.ServerData | null): number
 {
 	const originAddress: GameType.PlanetAddress = 
@@ -29,5 +36,6 @@ export function computeFleetMovementDurationSeconds(originFullPlanetData: Player
 
 function computeFleetMovementDurationSeconds_Base(distance: number, speed: number, serverData: ServerDataType.ServerData | null): number
 {
-	return COEFFICIENT + SPEED_NUMERATOR * Math.sqrt((DISTANCE_FACTOR * distance) / speed);
+	const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
+	return Math.floor((COEFFICIENT + SPEED_NUMERATOR * Math.sqrt((DISTANCE_FACTOR * distance) / speed)) / timeMultiplier);
 }

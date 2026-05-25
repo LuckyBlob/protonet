@@ -100,9 +100,15 @@ export function canExecuteFleetActionOnTargetPlanet(originPlanetData: PlayerData
 
 export function calculateShipQuantitiesLowestMovementSpeed(shipQuantities: Map<number, number>): number
 {
+	let bFoundData: boolean = false;
 	let lowestSpeed: number = Number.MAX_SAFE_INTEGER;
 	for (const [shipType, shipQuantity] of shipQuantities)
 	{
+		if (shipQuantity === 0)
+		{
+			continue;
+		}
+
 		const shipStats: AssociationMaps.ShipStats | undefined = AssociationMaps.SHIP_STATS.get(shipType);
 		if (shipStats === undefined)
 		{
@@ -111,8 +117,14 @@ export function calculateShipQuantitiesLowestMovementSpeed(shipQuantities: Map<n
 
 		if (lowestSpeed > shipStats.speed)
 		{
+			bFoundData = true;
 			lowestSpeed = shipStats.speed;
 		}
+	}
+
+	if (bFoundData === false)
+	{
+		throw new Error(`⚠️: Trying to find ship quantities speed with no ships.`); 
 	}
 
 	return lowestSpeed;
@@ -147,7 +159,7 @@ export function hasSpaceForFuel(shipQuantities: Map<number, number>, fuelRequire
     const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
     const totalSpace: number = calculateTotalFleetSpace(shipQuantities);
 
-    return totalFuel < totalSpace;
+    return totalFuel <= totalSpace;
 }
 
 export function clampResoucesToAddToFleet(shipQuantities: Map<number, number>, fuelRequirements: Map<number, number>, transportedResourceQuantities: Map<number, number>): Map<number, number>
@@ -204,7 +216,17 @@ function resolveStationAction(playerData: PlayerDataType.PlayerData, fleetMoveme
 
 	if (targetFullPlanetData === undefined)
 	{
-		throw new Error(`Didnt find our own planet when stationning ${fleetMovement.fleetMovementRow.planet_target_id} for player ${playerData.playerRow.id}.`)
+		throw new Error(`Didnt find target planet when stationning ${fleetMovement.fleetMovementRow.planet_target_id} for player ${playerData.playerRow.id}.`)
+	}
+
+	const originFullPlanetData: PlayerDataType.FullPlanetData | undefined = playerData.fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData) => 
+	{
+		return fullPlanetData.planetRow.id === fleetMovement.fleetMovementRow.planet_origin_id;
+	});
+
+	if (originFullPlanetData === undefined)
+	{
+		throw new Error(`Didnt find origin planet when stationning ${fleetMovement.fleetMovementRow.planet_target_id} for player ${playerData.playerRow.id}.`)
 	}
 
 	for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)
@@ -218,6 +240,7 @@ function resolveStationAction(playerData: PlayerDataType.PlayerData, fleetMoveme
 	}
 
 	FleetData.removeFleetMovement(playerData, fleetMovement.fleetMovementRow.id, targetFullPlanetData.planetRow.id);
+	FleetData.removeFleetMovement(playerData, fleetMovement.fleetMovementRow.id, originFullPlanetData.planetRow.id);
 	fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.Resolved;
 }
 

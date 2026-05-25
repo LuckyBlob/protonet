@@ -88,7 +88,7 @@ export function computeShipConstructionBatchDurationSeconds(shipConstructionbatc
 
 export function getShipConstructionDurationSeconds(shipType: number, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData): number | null
 {
-	const currentShipyardLevel: number = BuildingData.getBuildingLevel(fullPlanetData, GameType.SHIPYARD_BUILDING_TYPE);
+	const currentShipyardLevel: number = BuildingData.getBuildingLevel(fullPlanetData, GameType.BUILDING_SHIPYARD);
 	return ShipConstruction.computeConstructionDurationSeconds(shipType, currentShipyardLevel, serverData);
 }
 

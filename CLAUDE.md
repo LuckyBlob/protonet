@@ -95,7 +95,7 @@ export const RequirementOperator =
 export type RequirementOperator = typeof RequirementOperator[keyof typeof RequirementOperator];
 ```
 
-`Thing`, `DataContext`, `AnchorEventType`, `FleetMovementResolution` all follow this. Member-access form is `Thing.Ship`, not bare constants — except for game-content enums (`BUILDING_1`, `RESOURCE_1`, `SMALL_TRANSPORT`) which stay as top-level `SCREAMING_SNAKE_CASE` exports for legacy clarity.
+`Thing`, `DataContext`, `AnchorEventType`, `FleetMovementResolution` all follow this. Member-access form is `Thing.Ship`, not bare constants — except for game-content enums (`BUILDING_RESOURCE_PRODUCTION_1`, `RESOURCE_1`, `SMALL_TRANSPORT`) which stay as top-level `SCREAMING_SNAKE_CASE` exports for legacy clarity.
 
 ### Display names live in `ReadonlyMap`
 Each enum-like family has a parallel `*_DISPLAY_NAMES: ReadonlyMap<...>` constant. Add to both when adding a new variant.
@@ -229,7 +229,7 @@ Never relative imports between top-level folders.
 | Functions | `camelCase`, verb-first | `getDistance`, `computeBuildingUpgradeCost`, `applyPlayerUpdate`, `resolveAnchorEvent`, `renderShipImage`, `buildSingleShipCostParts` |
 | Local variables | `camelCase` | `nextAnchorEvent`, `costParts` |
 | File-local constants | `SCREAMING_SNAKE_CASE` | `BASE_GROWTH_FACTOR`, `PREVIEW_MAX_SHIP_LINES` |
-| Exported game-content constants | `SCREAMING_SNAKE_CASE` | `BUILDING_1`, `SHIPYARD_BUILDING_TYPE` |
+| Exported game-content constants | `SCREAMING_SNAKE_CASE` | `BUILDING_RESOURCE_PRODUCTION_1`, `BUILDING_SHIPYARD` |
 | Enum-like object keys | `PascalCase` | `Thing.Ship`, `RequirementOperator.Equal` |
 | DB row fields | `snake_case` | `building_upgrade_completes_at`, `ship_construction_batch_completes_at` |
 | DB row types | `PascalCase` with `Row` suffix | `PlayerRow`, `ShipConstructionRow`, `FleetMovementRow` |

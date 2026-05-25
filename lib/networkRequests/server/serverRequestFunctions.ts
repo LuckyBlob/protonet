@@ -397,7 +397,7 @@ export function serverGetFullPlanetDatas(playerId: number): PlayerDataType.FullP
 export function serverFindAllPlanetsPublic(): DBType.PublicPlanetRow[]
 {
     const planetRows: DBType.PublicPlanetRow[] = DB.databaseConnection.prepare(
-        "SELECT id, slot, system, galaxy, owner_player_id FROM planet ORDER BY galaxy ASC, system ASC, slot ASC"
+        "SELECT id, slot, system, galaxy, owner_player_id FROM planet WHERE owner_player_id IS NOT NULL ORDER BY galaxy ASC, system ASC, slot ASC"
     ).all() as DBType.PublicPlanetRow[];
     return planetRows;
 }
@@ -564,6 +564,27 @@ function rescaleBuildingUpgradeTimes(rescaleFactor: number, now: number): void
     }
 }
 
+function rescaleFleetMovementTimes(rescaleFactor: number, now: number): void
+{
+    const activeFleetRows: { id: number; arrival_time: number }[] = DB.databaseConnection.prepare(
+        "SELECT id, arrival_time FROM fleet_movement WHERE arrival_time > ?"
+    ).all(now) as { id: number; arrival_time: number }[];
+
+    for (const fleetRow of activeFleetRows)
+    {
+        const realMsRemaining: number = fleetRow.arrival_time - now;
+        if (realMsRemaining <= 0)
+        {
+            continue;
+        }
+
+        const newArrivalTime: number = now + Math.floor(realMsRemaining * rescaleFactor);
+        DB.databaseConnection.prepare(
+            "UPDATE fleet_movement SET arrival_time = ? WHERE id = ?"
+        ).run(newArrivalTime, fleetRow.id);
+    }
+}
+
 function rescaleShipConstructionTimes(rescaleFactor: number, now: number): void
 {
     const activeShipBatchRows: { id: number; ship_construction_batch_completes_at: number }[] = DB.databaseConnection.prepare(
@@ -682,7 +703,15 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: ServerData
 
     for (const [resourceType, resourceCost] of upgradeCost)
     {
-        ResourceData.subtractPlanetResource(relevantFullPlanetData, resourceType, resourceCost);
+        try
+        {
+            ResourceData.subtractPlanetResource(relevantFullPlanetData, resourceType, resourceCost);
+        }
+        catch (error: unknown)
+        {
+            const errorMessage: string = error instanceof Error ? error.message : String(error);
+            return { success: false, failureReason: `Failed to substract planet resources for building upgrade.`, playerStateResult: updatedPlayer };
+        }
     }
 
     const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
@@ -754,7 +783,15 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
     const totalCost: Map<number, number> = ShipData.computeShipConstructionBatchCost(possibleRequestedShipQuantities);
     for (const [resourceType, resourceCost] of totalCost)
     {
-        ResourceData.subtractPlanetResource(relevantFullPlanetData, resourceType, resourceCost);
+        try
+        {
+            ResourceData.subtractPlanetResource(relevantFullPlanetData, resourceType, resourceCost);
+        }
+        catch (error: unknown)
+        {
+            const errorMessage: string = error instanceof Error ? error.message : String(error);
+            return { success: false, failureReason: `Failed to substract planet resources for building upgrade.`, playerStateResult: playerData };
+        }
     }
 
     const newestBatchId: number | undefined = relevantFullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs.at(-1)?.batchId;
@@ -836,6 +873,11 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
 
     for (const [shipType, shipQuantity] of shipQuantities)
     {
+        if (shipQuantity === 0)
+		{
+			continue;
+		}
+
         if (Requirement.getFailedFleetMovementRequirements(playerData, shipType, originFullPlanetData.planetRow.id).length > 0)
         {
             return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
@@ -919,24 +961,39 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
         const fleetMovementShipRows: DBType.FleetMovementShipRow[] = [];
         for (const [shipType, shipQuantity] of shipQuantities)
         {
+            if (shipQuantity === 0)
+            {
+                continue;
+            }
+
+            ShipData.subtractPlanetShip(originFullPlanetData, shipType, shipQuantity);
             const fleetMovementShipRow: DBType.FleetMovementShipRow =
             {
                 fleet_id: -1, // will be set on the update
                 ship_type: shipType,
-                ship_quantity: ShipData.subtractPlanetShip(originFullPlanetData, shipType, shipQuantity),
+                ship_quantity: shipQuantity,
             };
             fleetMovementShipRows.push(fleetMovementShipRow);
         }
         const fleetMovementResourceRows: DBType.FleetMovementResourceRow[] = [];
         for (const [resourceType, resourceQuantity] of actualTransportedResources)
         {
-            const fleetMovementResourceRow: DBType.FleetMovementResourceRow =
+            try
             {
-                fleet_id: -1, // will be set on the update
-                resource_type: resourceType,
-                resource_quantity: ResourceData.subtractPlanetResource(originFullPlanetData, resourceType, resourceQuantity),
-            };
-            fleetMovementResourceRows.push(fleetMovementResourceRow);
+                ResourceData.subtractPlanetResource(originFullPlanetData, resourceType, resourceQuantity);
+                const fleetMovementResourceRow: DBType.FleetMovementResourceRow =
+                {
+                    fleet_id: -1, // will be set on the update
+                    resource_type: resourceType,
+                    resource_quantity: resourceQuantity,
+                };
+                fleetMovementResourceRows.push(fleetMovementResourceRow);
+            }
+            catch (error: unknown)
+            {
+                const errorMessage: string = error instanceof Error ? error.message : String(error);
+                return { success: false, failureReason: `Failed to substract planet resources for fleet`, playerStateResult: playerData };
+            }
         }
         const fleetMovementRow: DBType.FleetMovementRow =
         {
@@ -996,6 +1053,7 @@ function applyProgressToAllPlayersAndRescaleEndTimes(): void
 
         rescaleBuildingUpgradeTimes(rescaleFactor, now);
         rescaleShipConstructionTimes(rescaleFactor, now);
+        rescaleFleetMovementTimes(rescaleFactor, now);
     });
     transaction();
 }

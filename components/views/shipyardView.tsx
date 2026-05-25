@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent, ReactElement } from "react";
+import { useState, useEffect, ChangeEvent, ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
@@ -477,6 +477,13 @@ function renderShipyardBody(props: ShipyardViewProps, fullPlanetDataPredicted: P
 export function ShipyardView(props: ShipyardViewProps): ReactElement
 {
     const quantitiesState: HelperElement.RequestedQuantitiesState = HelperElement.useRequestedQuantities();
+    const selectedPlanetId: number = props.clientDataStateResult.psController[0].selectedPlanetId;
+
+    useEffect((): void =>
+    {
+        quantitiesState.resetRequestedQuantities();
+    }, [selectedPlanetId]);
+
     try
     {
         const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);

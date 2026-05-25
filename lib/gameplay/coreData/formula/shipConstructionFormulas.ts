@@ -25,5 +25,5 @@ function computeConstructionDurationSeconds_SimpleShip(currentShipyardLevel: num
 {
     const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
     const durationHours: number = maxHealth / (data.divider * (currentShipyardLevel + 1));
-    return Math.floor(durationHours * 3600 / timeMultiplier);
+    return durationHours * 3600 / timeMultiplier;
 }
