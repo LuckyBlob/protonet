@@ -71,6 +71,7 @@ export const STARTING_PLANET_DATA: PlayerDataType.DynamicPlanetData =
 	([
 		[GameType.RESOURCE_1, 2000],
 		[GameType.RESOURCE_2, 500],
+		[GameType.RESOURCE_3, 1000],
 	]),
 } as const;
 

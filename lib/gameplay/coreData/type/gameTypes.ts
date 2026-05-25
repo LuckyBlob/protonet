@@ -25,6 +25,7 @@ export const RESOURCE_DISPLAY_NAMES: ReadonlyMap<number, string> = new Map<numbe
 ([
     [RESOURCE_1, "Iron"],
     [RESOURCE_2, "Crystal"],
+    [RESOURCE_3, "Fuel"],
 ]);
 
 export const SMALL_TRANSPORT: number = 1;
