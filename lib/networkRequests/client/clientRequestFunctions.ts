@@ -8,6 +8,8 @@ import * as Serialization from "@/lib/helper/serialization";
 import * as ServerRequest from "@/lib/networkRequests/serverRequests";
 import * as RequestType from "@/lib/networkRequests/requestTypes";
 import * as APIEndPoint from "@/app/api/apiEndPoints";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import { LargeNumberLike } from "node:crypto";
 
 //#region Player state helpers
 
@@ -231,4 +233,44 @@ export async function clientTryBuildShipsRequest(psController: PlayerDataType.PS
     }
 }
 
+export async function clientTrySendFleetRequest(psController: PlayerDataType.PSController, originPlanetId: number, targetPlanetAddress: GameType.PlanetAddress, fleetAction: number, shipQuantities: Map<number, number>, resourceQuantities: Map<number, number>): Promise<string | null>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.SendFleet> =
+    {
+        originPlanetId: originPlanetId,
+        targetPlanetGalaxy: targetPlanetAddress.galaxy,
+        targetPlanetSystem: targetPlanetAddress.system,
+        targetPlanetPosition: targetPlanetAddress.slot,
+        fleetAction: fleetAction,
+        serializedShipQuantities: Serialization.serializeNumberNumberMap(shipQuantities),
+        serializedResourceQuantities: Serialization.serializeNumberNumberMap(resourceQuantities),
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.SendFleet> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.SendFleet, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Send fleet failed for planetId ${originPlanetId}: Invalid response from server.`);
+        }
+
+        const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+        return null;
+    }
+    catch (error: unknown)
+    {
+        if (error instanceof Error)
+        {
+            return error.message;
+        }
+
+        return String(error);
+    }
+}
 //#endregion

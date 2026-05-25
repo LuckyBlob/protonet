@@ -57,23 +57,6 @@ export function canExecuteFleetActionOnTargetPlanet(originPlanetData: PlayerData
 	}
 }
 
-export function calculateFleetMovementDistance(originPlanetData: PlayerDataType.FullPlanetData, targetPlanetData: PlayerDataType.FullPlanetData): number
-{
-	const originAddress: GameType.PlanetAddress = 
-	{
-		galaxy: originPlanetData.planetRow.galaxy,
-		system: originPlanetData.planetRow.system,
-		slot: originPlanetData.planetRow.slot,
-	}
-	const targetAddress: GameType.PlanetAddress = 
-	{
-		galaxy: targetPlanetData.planetRow.galaxy,
-		system: targetPlanetData.planetRow.system,
-		slot: targetPlanetData.planetRow.slot,
-	}
-	return GameType.getDistance(originAddress, targetAddress);
-}
-
 export function calculateShipQuantitiesLowestMovementSpeed(shipQuantities: Map<number, number>): number
 {
 	let lowestSpeed: number = Number.MAX_SAFE_INTEGER;
@@ -94,10 +77,10 @@ export function calculateShipQuantitiesLowestMovementSpeed(shipQuantities: Map<n
 	return lowestSpeed;
 }
 
-export function calculateTotalFleetFuel(originPlanetData: PlayerDataType.FullPlanetData, targetPlanetData: PlayerDataType.FullPlanetData, shipQuantities: Map<number, number>, serverData: ServerDataType.ServerData): Map<number, number>
+export function calculateTotalFleetFuel(from: GameType.PlanetAddress, to: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: ServerDataType.ServerData): Map<number, number>
 {
-	const distance: number = calculateFleetMovementDistance(originPlanetData, targetPlanetData);
-	const speed: number = calculateShipQuantitiesLowestMovementSpeed(shipQuantities);
+	const distance: number = GameType.getDistance(from, to);
+	const speed: number = 10;
 	return ShipFuelConsumption.computeFuelConsumption(shipQuantities, distance, speed, serverData);
 }
 

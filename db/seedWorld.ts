@@ -1,5 +1,6 @@
 import { databaseConnection } from "@/lib/db/db";
 import Database from "better-sqlite3";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 
 type SlotSizeRange =
 {
@@ -15,10 +16,6 @@ const SLOT_SIZE_RANGES: SlotSizeRange[] =
 	{ min: 75,  max: 125 },  // slot 4
 	{ min: 60,  max: 90  },  // slot 5
 ];
-
-const GALAXY_COUNT: number = 2;
-const SYSTEM_COUNT: number = 20;
-const SLOT_COUNT: number = 5;
 
 function rollSizeForSlot(slot: number): number
 {
@@ -45,11 +42,11 @@ function seedWorld(): void
 
 	const transaction: Database.Transaction = databaseConnection.transaction(() =>
 	{
-		for (let galaxy: number = 1; galaxy <= GALAXY_COUNT; galaxy++)
+		for (let galaxy: number = 1; galaxy <= GameType.GALAXY_COUNT; galaxy++)
 		{
-			for (let system: number = 1; system <= SYSTEM_COUNT; system++)
+			for (let system: number = 1; system <= GameType.SYSTEM_COUNT; system++)
 			{
-				for (let slot: number = 1; slot <= SLOT_COUNT; slot++)
+				for (let slot: number = 1; slot <= GameType.SLOT_COUNT; slot++)
 				{
 					const size: number = rollSizeForSlot(slot);
 					insertStatement.run(slot, system, galaxy, size);
@@ -60,7 +57,7 @@ function seedWorld(): void
 
 	transaction();
 
-	console.log(`Seeded ${GALAXY_COUNT * SYSTEM_COUNT * SLOT_COUNT} planets.`);
+	console.log(`Seeded ${GameType.GALAXY_COUNT * GameType.SYSTEM_COUNT * GameType.SLOT_COUNT} planets.`);
 }
 
 seedWorld();

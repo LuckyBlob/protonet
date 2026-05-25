@@ -89,7 +89,7 @@ export const SHIP_STATS: ReadonlyMap<number, ShipStats> = new Map<number, ShipSt
 		space: 5000,
 		speed: 5000,
 		baseFuelConsumption: new Map<number, number>([
-			[GameType.RESOURCE_3, 20]]),
+			[GameType.RESOURCE_3, 10]]),
 		costMap: new Map<number, number>([
 			[GameType.RESOURCE_1, 2000],
 			[GameType.RESOURCE_2, 2000],

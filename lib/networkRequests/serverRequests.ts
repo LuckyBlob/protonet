@@ -64,9 +64,24 @@ export async function requestServerAction<K extends keyof APIEndPoint.ActionResp
         if (response.ok === false)
         {
             const errorText: string = await response.text();
+            let errorMessage: string = `Unknown ${actionRequest.name} error.`;
+
+            try
+            {
+                const parsedError: unknown = JSON.parse(errorText);
+                if ((parsedError !== null) && (typeof parsedError === "object") && (typeof (parsedError as { error?: unknown }).error === "string"))
+                {
+                    errorMessage = (parsedError as { error: string }).error;
+                }
+            }
+            catch
+            {
+                // Body wasn't JSON; keep default message.
+            }
+
             const responseFailure: RequestType.BaseServerResponse =
             {
-                error: `${actionRequest.name} failed: HTTP ${response.status}: ${errorText}`,
+                error: errorMessage,
             };
 
             return responseFailure as APIEndPoint.ActionResponseMap[K];

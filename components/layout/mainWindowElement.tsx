@@ -4,7 +4,7 @@ import * as GameView from "@/components/views/gameView";
 import * as StatsView from "@/components/views/statsView";
 import * as UpgradeView from "@/components/views/upgradeView";
 import * as ShipyardView from "@/components/views/shipyardView";
-import * as ShipView from "@/components/views/shipView";
+import * as FleetView from "@/components/views/fleetView";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
 
@@ -31,9 +31,9 @@ export function MainWindowElement(props: MainWindowProps): ReactElement
 		return <ShipyardView.ShipyardView clientDataStateResult={props.clientDataStateResult} />;
 	}
 
-	if (props.cvController[0] === "ships")
+	if (props.cvController[0] === "fleets")
 	{
-		return <ShipView.ShipView clientDataStateResult={props.clientDataStateResult} />;
+		return <FleetView.FleetView clientDataStateResult={props.clientDataStateResult} />;
 	}
 
 	if (props.cvController[0] === "stats")

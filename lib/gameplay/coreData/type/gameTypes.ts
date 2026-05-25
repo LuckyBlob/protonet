@@ -1,3 +1,6 @@
+export const GALAXY_COUNT: number = 2;
+export const SYSTEM_COUNT: number = 20;
+export const SLOT_COUNT: number = 5;
 
 export const BUILDING_1: number = 1; // prod resource 1
 export const BUILDING_2: number = 2; // prod resource 1

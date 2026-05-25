@@ -13,6 +13,7 @@ import * as HelperElements from "@/components/helperElements";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
+import * as HelperElement from "@/components/helperElements";
 
 const PREVIEW_MAX_SHIP_LINES: number = 7;
 const PREVIEW_MAX_RESOURCE_LINES: number = 7;
@@ -37,20 +38,7 @@ type ShipyardViewProps =
     clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
-type RequestedQuantitiesState =
-{
-    requestedQuantities: Map<number, number>;
-    setRequestedQuantity: (shipType: number, value: number) => void;
-    resetRequestedQuantities: () => void;
-};
-
 //#region pure helpers
-
-function getShipImagePath(shipType: number): string
-{
-    return `/ships/${shipType}.png`;
-}
-
 function buildSingleShipCostParts(shipType: number): string[]
 {
     const singleCostMap: Map<number, number> | null = ShipData.getSingleShipCost(shipType);
@@ -91,54 +79,6 @@ function buildRequestedQuantitiesMap(shipTypes: number[], requestedQuantities: M
 //#endregion
 
 //#region rendering helpers
-function renderShipImage(shipType: number): ReactElement
-{
-    const imagePath: string = getShipImagePath(shipType);
-    const element: ReactElement =
-    (
-        <div className="w-24 h-24 flex flex-col items-center justify-center text-center">
-            <img
-                src={imagePath}
-                alt=""
-                className="w-24 h-24 object-contain"
-                onError={(e) =>
-                {
-                    e.currentTarget.style.display = "none";
-                    const fallback: HTMLElement | null = e.currentTarget.nextElementSibling as HTMLElement | null;
-                    if (fallback !== null)
-                    {
-                        fallback.style.display = "flex";
-                    }
-                }}
-            />
-            <div className="hidden flex-col items-center justify-center text-xs gap-1">
-                <span>[Image]</span>
-            </div>
-        </div>
-    );
-
-    return element;
-}
-
-function renderConstructionCountdownLine(fullPlanetData: PlayerDataType.FullPlanetData): ReactElement | null
-{
-    const remainingMs: number | null = ShipData.getShipConstructionBatchRemainingMs(fullPlanetData);
-
-    if (remainingMs === null)
-    {
-        return null;
-    }
-
-    const element: ReactElement =
-    (
-        <div className="text-sm font-semibold text-yellow-400 whitespace-nowrap inline-block">
-            Next ship batch construction ends in: {TimeFormat.formatRemainingTimeMs(remainingMs)}
-        </div>
-    );
-
-    return element;
-}
-
 function renderQuantityInput(props: ShipyardViewProps, shipType: number, requestedQuantity: number, fullPlanetData: PlayerDataType.FullPlanetData, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
 {
     const playerData: PlayerDataType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
@@ -204,7 +144,7 @@ function renderShipBuildRow(props: ShipyardViewProps, fullPlanetData: PlayerData
     (
         <div key={shipType} className="flex flex-row items-center border border-gray-400 rounded">
             <div className="flex items-center justify-center px-4 py-3 border-r border-gray-400">
-                {renderShipImage(shipType)}
+                {HelperElement.renderShipImage(shipType)}
             </div>
 
             <div className="flex flex-col px-4 py-3 border-r border-gray-400 min-w-[200px]">
@@ -243,6 +183,102 @@ function renderShipBuildRows(props: ShipyardViewProps, shipTypes: number[], full
     );
 
     return element;
+}
+
+function renderActiveConstructionSection(selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData): ReactElement
+{
+    const queuedBatchs: PlayerDataType.ShipConstructionBatch[] = selectedFullPlanetDataPredicted.dynamicPlanetData.queuedShipConstructionBatchs;
+
+    if (queuedBatchs.length === 0)
+    {
+        const emptyElement: ReactElement =
+        (
+            <div className="border border-gray-400 rounded px-6 py-4 text-sm text-center w-full">
+                No ship construction in progress.
+            </div>
+        );
+
+        return emptyElement;
+    }
+
+    const completesAt: number = selectedFullPlanetDataPredicted.planetRow.ship_construction_batch_completes_at;
+    const remainingMs: number = (completesAt - Date.now());
+
+    const rowElements: ReactElement[] = queuedBatchs.map((batch: PlayerDataType.ShipConstructionBatch, batchIndex: number): ReactElement =>
+    {
+        return renderBatchRow(batch, batchIndex, remainingMs);
+    });
+
+    const element: ReactElement =
+    (
+        <div className="flex flex-col gap-2 w-full">
+            {rowElements}
+        </div>
+    );
+
+    return element;
+}
+
+function renderBatchRow(batch: PlayerDataType.ShipConstructionBatch, batchIndex: number, remainingMs: number): ReactElement
+{
+    const isActiveBatch: boolean = (batchIndex === 0);
+    const timerElement: ReactElement = renderBatchTimer(isActiveBatch, remainingMs);
+
+    const element: ReactElement =
+    (
+        <div key={batch.batchId} className="flex flex-row border border-gray-400 rounded w-full h-24">
+            <div className="flex flex-col gap-1 px-6 py-3 border-r border-gray-400 flex-1 min-w-[160px] overflow-y-auto">
+                {renderBatchShipLines(batch)}
+            </div>
+            <div className="flex items-center justify-center px-6 py-3 w-[140px] shrink-0">
+                {timerElement}
+            </div>
+        </div>
+    );
+
+    return element;
+}
+
+function renderBatchTimer(isActiveBatch: boolean, remainingMs: number): ReactElement
+{
+    if (isActiveBatch === true)
+    {
+        const activeElement: ReactElement =
+        (
+            <div className="text-sm font-semibold text-yellow-400">
+                {TimeFormat.formatRemainingTimeMs(remainingMs)}
+            </div>
+        );
+
+        return activeElement;
+    }
+
+    const idleElement: ReactElement =
+    (
+        <div className="text-sm text-gray-400">
+            nothing
+        </div>
+    );
+
+    return idleElement;
+}
+
+function renderBatchShipLines(batch: PlayerDataType.ShipConstructionBatch): ReactElement[]
+{
+    const lineElements: ReactElement[] = [];
+
+    for (const shipConstructionRow of batch.shipConstructionRows)
+    {
+        const shipName: string = ThingType.getSpecificThingName(ThingType.ship(shipConstructionRow.ship_type));
+
+        lineElements.push(
+            <div key={shipConstructionRow.ship_type} className="text-sm">
+                {shipName} / {shipConstructionRow.ship_quantity}
+            </div>
+        );
+    }
+
+    return lineElements;
 }
 
 function renderBuildableShipLines(buildableQuantities: Map<number, number>): ReactElement
@@ -361,7 +397,7 @@ function renderBuildButton(fullPlanetData: PlayerDataType.FullPlanetData, server
     return element;
 }
 
-function renderShipyardLayout(previewSlot: ReactElement, buildRowElements: ReactElement, countdownLine: ReactElement | null): ReactElement
+function renderShipyardLayout(previewSlot: ReactElement, buildRowElements: ReactElement, activeConstructionElements: ReactElement): ReactElement
 {
     const element: ReactElement =
     (
@@ -373,19 +409,20 @@ function renderShipyardLayout(previewSlot: ReactElement, buildRowElements: React
                 {previewSlot}
             </div>
 
-            <div className="relative flex flex-col gap-2 items-center">
-                {countdownLine && (
-                    <div
-                        className="absolute text-sm font-semibold text-yellow-400 whitespace-nowrap z-20"
-                        style={{
-                            transform: 'translateY(-100%)',
-                            top: '-12px'
-                        }}
-                    >
-                        {countdownLine}
+            <div className="w-full flex flex-col items-center pt-4">
+                <div className="flex flex-row items-stretch justify-center gap-8">
+                    <div className="flex flex-col gap-2 min-w-[320px]">
+                        <div className="relative flex flex-col gap-2 items-center">
+                            {buildRowElements}
+                        </div>
                     </div>
-                )}
-                {buildRowElements}
+
+                    <div className="w-px bg-gray-400 self-stretch my-0" />
+
+                    <div className="flex flex-col gap-2 min-w-[320px]">
+                        {activeConstructionElements}
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -408,29 +445,6 @@ function renderPreviewSlot(previewContent: ReactElement | null, buildButton: Rea
 //#endregion
 
 //#region state + handlers
-function useRequestedQuantities(): RequestedQuantitiesState
-{
-    const [requestedQuantities, setRequestedQuantitiesMap] = useState<Map<number, number>>(new Map<number, number>());
-
-    const setRequestedQuantity = (shipType: number, value: number): void =>
-    {
-        const updatedMap: Map<number, number> = new Map<number, number>(requestedQuantities);
-        updatedMap.set(shipType, value);
-        setRequestedQuantitiesMap(updatedMap);
-    };
-
-    const resetRequestedQuantities = (): void =>
-    {
-        setRequestedQuantitiesMap(new Map<number, number>());
-    };
-
-    return {
-        requestedQuantities,
-        setRequestedQuantity,
-        resetRequestedQuantities,
-    };
-}
-
 function createBuildShipsHandler(props: ShipyardViewProps, fullPlanetData: PlayerDataType.FullPlanetData, requestedQuantities: Map<number, number>, resetRequestedQuantities: () => void): () => void
 {
     return () =>
@@ -441,7 +455,7 @@ function createBuildShipsHandler(props: ShipyardViewProps, fullPlanetData: Playe
 }
 //#endregion
 
-function renderShipyardBody(props: ShipyardViewProps, fullPlanetData: PlayerDataType.FullPlanetData, quantitiesState: RequestedQuantitiesState): ReactElement
+function renderShipyardBody(props: ShipyardViewProps, fullPlanetDataPredicted: PlayerDataType.FullPlanetData, quantitiesState: HelperElement.RequestedQuantitiesState): ReactElement
 {
     const serverData: ServerDataType.ServerData = props.clientDataStateResult.sdsController[0];
     const shipTypes: number[] = ThingType.getAllSpecificThings(ThingType.Thing.Ship);
@@ -449,21 +463,20 @@ function renderShipyardBody(props: ShipyardViewProps, fullPlanetData: PlayerData
     const requestedMap: Map<number, number> = buildRequestedQuantitiesMap(shipTypes, quantitiesState.requestedQuantities);
     const hasRequestedData: boolean = requestedMap.size > 0;
 
-    const onBuildAll: () => void = createBuildShipsHandler(props, fullPlanetData, requestedMap, quantitiesState.resetRequestedQuantities);
+    const onBuildAll: () => void = createBuildShipsHandler(props, fullPlanetDataPredicted, requestedMap, quantitiesState.resetRequestedQuantities);
 
-    const countdownLine: ReactElement | null = renderConstructionCountdownLine(fullPlanetData);
-    const previewContent: ReactElement | null = renderBuildPreviewContent(fullPlanetData, serverData, requestedMap);
-    const buildButton: ReactElement | null = renderBuildButton(fullPlanetData, serverData, requestedMap, hasRequestedData, onBuildAll);
+    const previewContent: ReactElement | null = renderBuildPreviewContent(fullPlanetDataPredicted, serverData, requestedMap);
+    const buildButton: ReactElement | null = renderBuildButton(fullPlanetDataPredicted, serverData, requestedMap, hasRequestedData, onBuildAll);
     const previewSlot: ReactElement = renderPreviewSlot(previewContent, buildButton);
-    const buildRowElements: ReactElement = renderShipBuildRows(props, shipTypes, fullPlanetData, serverData, quantitiesState.requestedQuantities, quantitiesState.setRequestedQuantity);
+    const buildRowElements: ReactElement = renderShipBuildRows(props, shipTypes, fullPlanetDataPredicted, serverData, quantitiesState.requestedQuantities, quantitiesState.setRequestedQuantity);
+    const activeConstructionElements: ReactElement = renderActiveConstructionSection(fullPlanetDataPredicted);
 
-    return renderShipyardLayout(previewSlot, buildRowElements, countdownLine);
+    return renderShipyardLayout(previewSlot, buildRowElements, activeConstructionElements);
 }
 
 export function ShipyardView(props: ShipyardViewProps): ReactElement
 {
-    const quantitiesState: RequestedQuantitiesState = useRequestedQuantities();
-
+    const quantitiesState: HelperElement.RequestedQuantitiesState = HelperElement.useRequestedQuantities();
     try
     {
         const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);

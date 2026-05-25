@@ -850,7 +850,19 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
     let fuelRequirements: Map<number, number>;
     try
     {
-        fuelRequirements = FleetData.calculateTotalFleetFuel(originFullPlanetData, targetFullPlanetData, shipQuantities, serverData);
+        const originAddress: GameType.PlanetAddress = 
+        {
+            galaxy: originFullPlanetData.planetRow.galaxy,
+            system: originFullPlanetData.planetRow.system,
+            slot: originFullPlanetData.planetRow.slot,
+        }
+        const targetAddress: GameType.PlanetAddress = 
+        {
+            galaxy: targetFullPlanetData.planetRow.galaxy,
+            system: targetFullPlanetData.planetRow.system,
+            slot: targetFullPlanetData.planetRow.slot,
+        }
+        fuelRequirements = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, shipQuantities, serverData);
     }
     catch (error: unknown)
     {

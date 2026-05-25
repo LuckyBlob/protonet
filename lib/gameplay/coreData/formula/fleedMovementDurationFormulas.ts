@@ -10,7 +10,19 @@ const DISTANCE_FACTOR: number = 10;
 
 export function computeFleetMovementDurationSeconds(originFullPlanetData: PlayerDataType.FullPlanetData, targetFullPlanetData: PlayerDataType.FullPlanetData, shipQuantities: Map<number, number>, serverData: ServerDataType.ServerData | null): number
 {
-	const distance: number = FleetData.calculateFleetMovementDistance(originFullPlanetData, targetFullPlanetData);
+	const originAddress: GameType.PlanetAddress = 
+	{
+		galaxy: originFullPlanetData.planetRow.galaxy,
+		system: originFullPlanetData.planetRow.system,
+		slot: originFullPlanetData.planetRow.slot,
+	}
+	const targetAddress: GameType.PlanetAddress = 
+	{
+		galaxy: targetFullPlanetData.planetRow.galaxy,
+		system: targetFullPlanetData.planetRow.system,
+		slot: targetFullPlanetData.planetRow.slot,
+	}
+	const distance: number = GameType.getDistance(originAddress, targetAddress);
     const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(shipQuantities);
 	return computeFleetMovementDurationSeconds_Base(distance, speed, serverData);
 }
