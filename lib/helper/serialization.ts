@@ -70,6 +70,7 @@ export type SerializedPlayerData =
 {
 	playerRow: DBType.PlayerRow;
 	fullPlanetDatas: SerializedFullPlanetData[];
+	publicPlanetRows: DBType.PublicPlanetRow[];
 };
 
 export function serializePlayerData(playerData: PlayerDataType.PlayerData): SerializedPlayerData
@@ -83,6 +84,7 @@ export function serializePlayerData(playerData: PlayerDataType.PlayerData): Seri
 	{
 		playerRow: playerData.playerRow,
 		fullPlanetDatas: serializedFullPlanetDatas,
+		publicPlanetRows: playerData.publicPlanetRows,
 	};
 
 	return serialized;
@@ -117,6 +119,7 @@ export function deserializePlayerData(serialized: SerializedPlayerData): PlayerD
 	{
 		playerRow: serialized.playerRow,
 		fullPlanetDatas: fullPlanetDatas,
+		publicPlanetRows: serialized.publicPlanetRows,
 	};
 
 	return playerData;

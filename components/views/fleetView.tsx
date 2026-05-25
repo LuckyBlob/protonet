@@ -15,6 +15,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as MathHelp from "@/lib/helper/mathHelp";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
+import * as DBType from "@/lib/db/dbTypes";
 
 type FleetViewProps =
 {
@@ -282,7 +283,6 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
     const setSelectedAction: (value: number) => void = data.fleetActionState[1];
 
     const totalShipsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedShipQuantitiesState.requestedQuantities);
-    const isSendDisabled: boolean = (totalShipsRequested === 0);
 
     const targetPlanetAddress: GameType.PlanetAddress =
     {
@@ -290,6 +290,29 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
         system: data.systemIdState[0],
         slot: data.slotIdState[0],
     }
+
+    const targetPublicRow: DBType.PublicPlanetRow | undefined = props.clientDataStateResult.psController[0].dbData.publicPlanetRows.find((row: DBType.PublicPlanetRow): boolean =>
+    {
+        return (
+            (row.galaxy === targetPlanetAddress.galaxy) &&
+            (row.system === targetPlanetAddress.system) &&
+            (row.slot === targetPlanetAddress.slot)
+        );
+    });
+
+    const targetOwnerPlayerId: number | null = targetPublicRow?.owner_player_id ?? null;
+
+    const validActionIds: number[] = Array.from(GameType.FLEET_ACTION_NAMES.keys()).filter((actionId: number): boolean =>
+    {
+        return FleetData.canExecuteFleetActionOnTargetAddress(data.fullPlanetData, targetOwnerPlayerId, data.requestedShipQuantitiesState.requestedQuantities, actionId);
+    });
+
+    const isSelectedActionValid: boolean = validActionIds.includes(selectedAction);
+    const isSamePlanet: boolean =
+        (data.fullPlanetData.planetRow.galaxy === data.galaxyIdState[0]) &&
+        (data.fullPlanetData.planetRow.system === data.systemIdState[0]) &&
+        (data.fullPlanetData.planetRow.slot === data.slotIdState[0]);
+    const isSendDisabled: boolean = (totalShipsRequested === 0) || (isSelectedActionValid === false) || (isSamePlanet === true);
 
     const handleChange = (e: ChangeEvent<HTMLSelectElement>): void =>
     {
@@ -301,10 +324,10 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
     const handleSendFleet = async (): Promise<void> =>
     {
         const errorMessage: string | null = await ClientRequestFunctions.clientTrySendFleetRequest(
-            props.clientDataStateResult.psController, 
+            props.clientDataStateResult.psController,
             data.fullPlanetData.planetRow.id,
             targetPlanetAddress,
-            data.fleetActionState[0],
+            selectedAction,
             data.requestedShipQuantitiesState.requestedQuantities,
             data.requestedResourceQuantitiesState.requestedQuantities);
 
@@ -316,8 +339,10 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
         ? <div className="text-sm font-normal text-red-400 whitespace-nowrap">{sendError}</div>
         : null;
 
-    const optionElements: ReactElement[] = Array.from(GameType.FLEET_ACTION_NAMES.entries()).map(([actionId, actionName]: [number, string]) =>
+    const optionElements: ReactElement[] = validActionIds.map((actionId: number): ReactElement =>
     {
+        const actionName: string = GameType.FLEET_ACTION_NAMES.get(actionId) ?? "";
+
         const optionElement: ReactElement =
         (
             <option key={actionId} value={actionId}>
@@ -328,6 +353,10 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
         return optionElement;
     });
 
+    const placeholderOption: ReactElement | null = (isSelectedActionValid === false)
+        ? <option key="none" value="" disabled>-- Select an action --</option>
+        : null;
+
     const element: ReactElement =
     (
         <div className="flex flex-col items-center gap-2">
@@ -336,10 +365,11 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
             </div>
             <div className="flex flex-row items-center gap-2">
                 <select
-                    value={selectedAction}
+                    value={isSelectedActionValid ? selectedAction : ""}
                     onChange={handleChange}
                     className="border border-gray-400 px-2 py-1 rounded bg-white text-black"
                 >
+                    {placeholderOption}
                     {optionElements}
                 </select>
 

@@ -8,6 +8,7 @@ import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
+import * as DBType from "@/lib/db/dbTypes";
 
 export type FleetPlayerData =
 {
@@ -21,8 +22,59 @@ export type FleetPlayerDataPair =
     target: FleetPlayerData | null,
 }
 
+export function canExecuteFleetActionOnTargetAddress(originPlanetData: PlayerDataType.FullPlanetData, targetPlanetOwnedPlayerId: number | null, shipQuantities: Map<number, number>, fleetAction: number): boolean
+{
+    switch (fleetAction)
+    {
+        case GameType.FLEET_ACTION_STATION:
+        {
+            if (targetPlanetOwnedPlayerId === null)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        case GameType.FLEET_ACTION_TRANSPORT:
+        {
+            return false;
+        }
+        case GameType.FLEET_ACTION_COLONIZE:
+        {
+            const colonyShipQuantityRequest: number | undefined = shipQuantities.get(GameType.COLONY_SHIP);
+            if ((colonyShipQuantityRequest === undefined) || (colonyShipQuantityRequest === 0))
+            {
+                return false;
+            }
+
+            // Target must be unclaimed: either unknown to us (no public row), or known but ownerless.
+            if (targetPlanetOwnedPlayerId !== null)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        case GameType.FLEET_ACTION_COLLECT:
+        {
+            return false; // not implemented yet
+        }
+        default:
+        {
+            throw new Error(`UNREACHABLE: No name found for fleet action ${fleetAction}`);
+        }
+    }
+}
+
 export function canExecuteFleetActionOnTargetPlanet(originPlanetData: PlayerDataType.FullPlanetData, targetPlanetData: PlayerDataType.FullPlanetData, shipQuantities: Map<number, number>, fleetAction: number): boolean
 {
+	const canExecuteActionWithPublicInfo: boolean = canExecuteFleetActionOnTargetAddress(originPlanetData, targetPlanetData.planetRow.owner_player_id, shipQuantities, fleetAction) 
+	if (canExecuteActionWithPublicInfo === false)
+	{
+		return false;
+	}
+
+	// do extra server checks if needed
 	switch (fleetAction)
 	{
 		case GameType.FLEET_ACTION_STATION:
@@ -31,26 +83,15 @@ export function canExecuteFleetActionOnTargetPlanet(originPlanetData: PlayerData
 		}
 		case GameType.FLEET_ACTION_TRANSPORT:
 		{
-			return false;
+			return true;
 		}
 		case GameType.FLEET_ACTION_COLONIZE:
 		{
-			const colonyShipQuantityRequest: number | undefined = shipQuantities.get(GameType.COLONY_SHIP);
-			if (colonyShipQuantityRequest === undefined || colonyShipQuantityRequest === 0)
-			{
-				return false;
-			}
-
-			if (targetPlanetData.planetRow.owner_player_id !== null)
-			{
-				return false;
-			}
-
 			return true;
 		}
 		case GameType.FLEET_ACTION_COLLECT:
 		{
-			return false;
+			return true;
 		}
 		default:
         	throw new Error(`UNREACHABLE: No name found for fleet action ${fleetAction}`);

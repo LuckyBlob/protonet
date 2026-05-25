@@ -360,6 +360,7 @@ export function serverGetPlayerData(playerId: number): PlayerDataType.PlayerData
     {
         playerRow: serverGetPlayerRow(playerId),
         fullPlanetDatas: serverGetFullPlanetDatas(playerId),
+        publicPlanetRows: serverFindAllPlanetsPublic(),
     };
     return playerData;
 }
@@ -847,21 +848,32 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
         return { success: false, failureReason: `Cannot execute fleet action ${requestData.fleetAction}.`, playerStateResult: playerData };
     }
 
+    const originAddress: GameType.PlanetAddress = 
+    {
+        galaxy: originFullPlanetData.planetRow.galaxy,
+        system: originFullPlanetData.planetRow.system,
+        slot: originFullPlanetData.planetRow.slot,
+    }
+    const targetAddress: GameType.PlanetAddress = 
+    {
+        galaxy: targetFullPlanetData.planetRow.galaxy,
+        system: targetFullPlanetData.planetRow.system,
+        slot: targetFullPlanetData.planetRow.slot,
+    }
+
+    const isSamePlanet: boolean =
+        (originAddress.galaxy === targetAddress.galaxy) &&
+        (originAddress.system === targetAddress.system) &&
+        (originAddress.slot === targetAddress.slot);
+
+    if (isSamePlanet === true)
+    {
+        return { success: false, failureReason: `Fleet action must have a different target than origin planet.`, playerStateResult: playerData };
+    }
+
     let fuelRequirements: Map<number, number>;
     try
     {
-        const originAddress: GameType.PlanetAddress = 
-        {
-            galaxy: originFullPlanetData.planetRow.galaxy,
-            system: originFullPlanetData.planetRow.system,
-            slot: originFullPlanetData.planetRow.slot,
-        }
-        const targetAddress: GameType.PlanetAddress = 
-        {
-            galaxy: targetFullPlanetData.planetRow.galaxy,
-            system: targetFullPlanetData.planetRow.system,
-            slot: targetFullPlanetData.planetRow.slot,
-        }
         fuelRequirements = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, shipQuantities, serverData);
     }
     catch (error: unknown)

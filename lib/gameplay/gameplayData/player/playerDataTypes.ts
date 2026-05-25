@@ -5,6 +5,7 @@ export type PlayerData =
 {
 	playerRow: DBType.PlayerRow;
 	fullPlanetDatas: FullPlanetData[];
+	publicPlanetRows: DBType.PublicPlanetRow[];
 };
 
 export type PSController  = [PlayerState, (value: PlayerState) => void];
