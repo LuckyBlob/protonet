@@ -38,7 +38,7 @@ export const BUILDING_STATS: ReadonlyMap<number, BuildingStats> = new Map<number
     [GameType.BUILDING_2, {
 		costFunctionType: BuildingCostFunctionType.SimpleProduction,
 		productionStats: new Map<number, ProductionStats>([
-			[GameType.RESOURCE_1, 
+			[GameType.RESOURCE_2,
 			{
 				minProductionPerHour: 30,
 				productionFactor: 30,
