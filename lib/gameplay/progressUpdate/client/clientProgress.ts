@@ -1,7 +1,6 @@
 "use client";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"

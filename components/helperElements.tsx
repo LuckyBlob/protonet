@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ReactElement, ReactNode, ChangeEvent } from "react";
+import { useState, ReactElement, ChangeEvent } from "react";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 
 export function EmptyElement(): ReactElement

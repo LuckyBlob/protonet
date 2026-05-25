@@ -1,6 +1,5 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
-import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
 

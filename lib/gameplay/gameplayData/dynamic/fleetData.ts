@@ -8,7 +8,6 @@ import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
-import * as DBType from "@/lib/db/dbTypes";
 
 export type FleetPlayerData =
 {

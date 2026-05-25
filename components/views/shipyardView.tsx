@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent, ReactElement } from "react";
+import { ChangeEvent, ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";

@@ -1,4 +1,3 @@
-import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 
 const BASE_GROWTH_FACTOR: number = 1.6;

@@ -22,7 +22,6 @@ import * as APIEndPoint from "@/app/api/apiEndPoints";
 import * as ServerDynamicData from "@/lib/gameplay/gameplayData/dynamic/serverDynamicData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
-import * as ShipFuelConsumption from "@/lib/gameplay/coreData/formula/shipFuelConsumptionFormulas";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMovementDurationFormulas";
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";

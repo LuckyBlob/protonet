@@ -1,4 +1,3 @@
-import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 

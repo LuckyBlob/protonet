@@ -6,9 +6,6 @@ import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData"
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
-import * as APIEndPoint from "@/app/api/apiEndPoints";
-import * as ShipFuelConsumption from "@/lib/gameplay/coreData/formula/shipFuelConsumptionFormulas";
-import * as RequestType from "@/lib/networkRequests/requestTypes";
 import * as MathHelp from "@/lib/helper/mathHelp";
 
 // #region Ship Management
