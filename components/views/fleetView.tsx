@@ -17,6 +17,7 @@ import * as MathHelp from "@/lib/helper/mathHelp";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as DBType from "@/lib/db/dbTypes";
 import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMovementDurationFormulas";
+import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 
 type FleetViewProps =
 {
@@ -295,22 +296,14 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
 
 function renderFleetMaxResource(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const originAddress: GameType.PlanetAddress = 
-    {
-        galaxy: data.fullPlanetData.planetRow.galaxy,
-        system: data.fullPlanetData.planetRow.system,
-        slot: data.fullPlanetData.planetRow.slot,
-    }
+    const originAddress: GameType.PlanetAddress = PlayerData.getPlanetAddress(data.fullPlanetData);
     const targetAddress: GameType.PlanetAddress = 
     {
         galaxy: data.galaxyIdState[0],
         system: data.systemIdState[0],
         slot: data.slotIdState[0],
     }
-    const fuelRequirements: Map<number, number> = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
-    const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
-    const totalSpace: number = FleetData.calculateTotalFleetSpace(data.requestedShipQuantitiesState.requestedQuantities);
-    const availableSpace: number = Math.max(totalSpace - totalFuel, 0);
+    const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
     const totalShipsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedShipQuantitiesState.requestedQuantities);
 
     let travelTimeElement: ReactElement | null = null;
@@ -331,7 +324,7 @@ function renderFleetMaxResource(props: FleetViewProps, data: FleetViewData): Rea
     (
         <div className="flex flex-col items-center gap-1">
             <div className="text-sm font-normal text-white whitespace-nowrap inline-block">
-                Fuel cost: {totalFuel}, available space: {availableSpace}
+                Fuel cost: {fuelSpaceData.totalFuel}, available space: {fuelSpaceData.availableSpace}
             </div>
             {travelTimeElement}
         </div>
@@ -365,21 +358,14 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: number, dat
 
     const resourceName: string = ThingType.getSpecificThingName(ThingType.resource(resourceType));
     const ownedResourceQuantity: number = Math.floor(ResourceData.getResourceQuantity(data.fullPlanetData, resourceType));
-    const originAddress: GameType.PlanetAddress = 
-    {
-        galaxy: data.fullPlanetData.planetRow.galaxy,
-        system: data.fullPlanetData.planetRow.system,
-        slot: data.fullPlanetData.planetRow.slot,
-    }
+    const originAddress: GameType.PlanetAddress = PlayerData.getPlanetAddress(data.fullPlanetData);
     const targetAddress: GameType.PlanetAddress = 
     {
         galaxy: data.galaxyIdState[0],
         system: data.systemIdState[0],
         slot: data.slotIdState[0],
     }
-    const fuelRequirements: Map<number, number> = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
-    const totalSpace: number = FleetData.calculateTotalFleetSpace(data.requestedShipQuantitiesState.requestedQuantities);
-    const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
+    const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
 
     let otherResourcesRequested: number = 0;
     for (const [otherType, otherQty] of data.requestedResourceQuantitiesState.requestedQuantities)
@@ -390,7 +376,7 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: number, dat
         }
     }
 
-    const availableSpaceForThisResource: number = Math.max(totalSpace - totalFuel - otherResourcesRequested, 0);
+    const availableSpaceForThisResource: number = Math.max(fuelSpaceData.availableSpace - otherResourcesRequested, 0);
     const maxResourcePossible: number = Math.min(ownedResourceQuantity, availableSpaceForThisResource);
 
     const handleFillMax = (): void =>
@@ -450,10 +436,19 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
     });
 
     const isSelectedActionValid: boolean = validActionIds.includes(selectedAction);
-    const isSamePlanet: boolean =
-        (data.fullPlanetData.planetRow.galaxy === data.galaxyIdState[0]) &&
-        (data.fullPlanetData.planetRow.system === data.systemIdState[0]) &&
-        (data.fullPlanetData.planetRow.slot === data.slotIdState[0]);
+    const originAddress: GameType.PlanetAddress =
+    {
+        galaxy: data.fullPlanetData.planetRow.galaxy,
+        system: data.fullPlanetData.planetRow.system,
+        slot: data.fullPlanetData.planetRow.slot,
+    }
+    const targetAddress: GameType.PlanetAddress =
+    {
+        galaxy: data.galaxyIdState[0],
+        system: data.systemIdState[0],
+        slot: data.slotIdState[0],
+    }
+    const isSamePlanet: boolean = GameType.isSameAddress(originAddress, targetAddress);
     const isSendDisabled: boolean = (totalShipsRequested === 0) || (isSelectedActionValid === false) || (isSamePlanet === true);
 
     const handleChange = (e: ChangeEvent<HTMLSelectElement>): void =>

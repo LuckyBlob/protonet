@@ -658,47 +658,41 @@ export async function handlePlayerStateActionRequest(logic: (playerId: number, s
 export function tryUpgradeBuildingLogic(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding>): PlayerActionResult
 {
     const now: number = Date.now();
-    const updatedPlayer: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+    const playerData: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
 
-    const relevantPlanetDataIndex: number = updatedPlayer.fullPlanetDatas.findIndex((fullPlanetData: PlayerDataType.FullPlanetData): boolean =>
+    const relevantFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, requestData.planetId);
+    if (relevantFullPlanetData === null)
     {
-        return fullPlanetData.planetRow.id === requestData.planetId;
-    });
-
-    if (relevantPlanetDataIndex === -1)
-    {
-        return { success: false, failureReason: "Wrong planet to upgrade building.", playerStateResult: updatedPlayer };
+        return { success: false, failureReason: "Wrong planet to upgrade building.", playerStateResult: playerData };
     }
 
-    const relevantFullPlanetData: PlayerDataType.FullPlanetData = updatedPlayer.fullPlanetDatas[relevantPlanetDataIndex];
-
-    if (Requirement.getFailedBuildingUpgradeRequirements(updatedPlayer, requestData.buildingType, relevantFullPlanetData.planetRow.id).length > 0)
+    if (Requirement.getFailedBuildingUpgradeRequirements(playerData, requestData.buildingType, relevantFullPlanetData.planetRow.id).length > 0)
     {
-        return { success: false, failureReason: "Building doesnt meet requirements.", playerStateResult: updatedPlayer };
+        return { success: false, failureReason: "Building doesnt meet requirements.", playerStateResult: playerData };
     }
 
     if (relevantFullPlanetData.planetRow.building_upgrade_completes_at !== 0)
     {
-        return { success: false, failureReason: "Upgrade already in progress.", playerStateResult: updatedPlayer };
+        return { success: false, failureReason: "Upgrade already in progress.", playerStateResult: playerData };
     }
 
     const canAffordUpgrade: boolean = BuildingData.canAffordUpgrade(relevantFullPlanetData, requestData.buildingType);
     if (canAffordUpgrade === false)
     {
-        return { success: false, failureReason: "Not enough resources.", playerStateResult: updatedPlayer };
+        return { success: false, failureReason: "Not enough resources.", playerStateResult: playerData };
     }
 
     const currentBuildingLevel: number = BuildingData.getBuildingLevel(relevantFullPlanetData, requestData.buildingType);
-    const buildDurationSeconds: number | null = BuildingDuration.computeUpgradeDurationSeconds(currentBuildingLevel, requestData.buildingType, updatedPlayer, relevantFullPlanetData.planetRow.id, serverData);
+    const buildDurationSeconds: number | null = BuildingDuration.computeUpgradeDurationSeconds(currentBuildingLevel, requestData.buildingType, playerData, relevantFullPlanetData.planetRow.id, serverData);
     if (buildDurationSeconds === null)
     {
-        return { success: false, failureReason: "Wrong building type to upgrade.", playerStateResult: updatedPlayer };
+        return { success: false, failureReason: "Wrong building type to upgrade.", playerStateResult: playerData };
     }
 
     const upgradeCost: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(currentBuildingLevel, requestData.buildingType);
     if (upgradeCost === null)
     {
-        return { success: false, failureReason: "Wrong building type to upgrade.", playerStateResult: updatedPlayer };
+        return { success: false, failureReason: "Wrong building type to upgrade.", playerStateResult: playerData };
     }
 
     for (const [resourceType, resourceCost] of upgradeCost)
@@ -710,7 +704,7 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: ServerData
         catch (error: unknown)
         {
             const errorMessage: string = error instanceof Error ? error.message : String(error);
-            return { success: false, failureReason: `Failed to substract planet resources for building upgrade.`, playerStateResult: updatedPlayer };
+            return { success: false, failureReason: `Failed to substract planet resources for building upgrade.`, playerStateResult: playerData };
         }
     }
 
@@ -744,12 +738,8 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
     const playerData: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
     const requestedShipQuantities: Map<number, number> = Serialization.deserializeNumberNumberMap(requestData.serializedShipQuantities);
 
-    const relevantPlanetDataIndex: number = playerData.fullPlanetDatas.findIndex((fullPlanetData: PlayerDataType.FullPlanetData): boolean =>
-    {
-        return fullPlanetData.planetRow.id === requestData.planetId;
-    });
-
-    if (relevantPlanetDataIndex === -1)
+    const relevantFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, requestData.planetId);
+    if (relevantFullPlanetData === null)
     {
         return { success: false, failureReason: "Wrong planet to build ships.", playerStateResult: playerData };
     }
@@ -759,7 +749,6 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
         return { success: false, failureReason: "No ships requested.", playerStateResult: playerData };
     }
 
-    const relevantFullPlanetData: PlayerDataType.FullPlanetData = playerData.fullPlanetDatas[relevantPlanetDataIndex];
     for (const [shipType, shipQuantity] of requestedShipQuantities)
     {
         if (Requirement.getFailedShipBuildRequirements(playerData, shipType, relevantFullPlanetData.planetRow.id).length > 0)
@@ -790,7 +779,7 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
         catch (error: unknown)
         {
             const errorMessage: string = error instanceof Error ? error.message : String(error);
-            return { success: false, failureReason: `Failed to substract planet resources for building upgrade.`, playerStateResult: playerData };
+            return { success: false, failureReason: `Failed to substract planet resources for ship contruction.`, playerStateResult: playerData };
         }
     }
 
@@ -855,13 +844,10 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
     const shipQuantities: Map<number, number> = Serialization.deserializeNumberNumberMap(requestData.serializedShipQuantities);
     const transportedResourceQuantities: Map<number, number> = Serialization.deserializeNumberNumberMap(requestData.serializedResourceQuantities);
 
-    const originPlanetDataIndex: number = playerData.fullPlanetDatas.findIndex((fullPlanetData: PlayerDataType.FullPlanetData): boolean =>
+    const originFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, requestData.originPlanetId);
+    if (originFullPlanetData === null)
     {
-        return fullPlanetData.planetRow.id === requestData.originPlanetId;
-    });
-    if (originPlanetDataIndex === -1)
-    {
-        return { success: false, failureReason: "Origin planet is invalid.", playerStateResult: playerData };
+        return { success: false, failureReason: "Wrong planet to send fleet from.", playerStateResult: playerData };
     }
 
     const targetFullPlanetData: PlayerDataType.FullPlanetData | null = getFullPlanetDataByCoords(requestData.targetPlanetGalaxy, requestData.targetPlanetSystem, requestData.targetPlanetPosition);
@@ -869,7 +855,6 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
     {
         return { success: false, failureReason: "Target planet is invalid.", playerStateResult: playerData };
     }
-    const originFullPlanetData: PlayerDataType.FullPlanetData = playerData.fullPlanetDatas[originPlanetDataIndex];
 
     for (const [shipType, shipQuantity] of shipQuantities)
     {
@@ -890,24 +875,10 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
         return { success: false, failureReason: `Cannot execute fleet action ${requestData.fleetAction}.`, playerStateResult: playerData };
     }
 
-    const originAddress: GameType.PlanetAddress = 
-    {
-        galaxy: originFullPlanetData.planetRow.galaxy,
-        system: originFullPlanetData.planetRow.system,
-        slot: originFullPlanetData.planetRow.slot,
-    }
-    const targetAddress: GameType.PlanetAddress = 
-    {
-        galaxy: targetFullPlanetData.planetRow.galaxy,
-        system: targetFullPlanetData.planetRow.system,
-        slot: targetFullPlanetData.planetRow.slot,
-    }
+    const originAddress: GameType.PlanetAddress = PlayerData.getPlanetAddress(originFullPlanetData);
+    const targetAddress: GameType.PlanetAddress = PlayerData.getPlanetAddress(targetFullPlanetData);
 
-    const isSamePlanet: boolean =
-        (originAddress.galaxy === targetAddress.galaxy) &&
-        (originAddress.system === targetAddress.system) &&
-        (originAddress.slot === targetAddress.slot);
-
+    const isSamePlanet: boolean = GameType.isSameAddress(originAddress, targetAddress);
     if (isSamePlanet === true)
     {
         return { success: false, failureReason: `Fleet action must have a different target than origin planet.`, playerStateResult: playerData };

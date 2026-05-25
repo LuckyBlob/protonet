@@ -258,3 +258,13 @@ export function removeFleetMovement(playerData: PlayerDataType.PlayerData, fleet
   	}
 	return fullPlanetData;
 }
+
+export function computeFleetFuelAndSpace(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: ServerDataType.ServerData): { totalFuel: number, availableSpace: number }
+{
+	const fuelRequirements: Map<number, number> = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, shipQuantities, serverData);
+	const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
+	const totalSpace: number = FleetData.calculateTotalFleetSpace(shipQuantities);
+	const availableSpace: number = Math.max(totalSpace - totalFuel, 0);
+
+	return { totalFuel: totalFuel, availableSpace: availableSpace };
+}

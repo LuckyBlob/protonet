@@ -3,6 +3,7 @@ import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTy
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
+import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 
 const COEFFICIENT: number = 10;
 const SPEED_NUMERATOR: number = 3500;
@@ -17,18 +18,9 @@ export function computeFleetMovementDurationSecondsFromAddresses(originAddress: 
 
 export function computeFleetMovementDurationSeconds(originFullPlanetData: PlayerDataType.FullPlanetData, targetFullPlanetData: PlayerDataType.FullPlanetData, shipQuantities: Map<number, number>, serverData: ServerDataType.ServerData | null): number
 {
-	const originAddress: GameType.PlanetAddress = 
-	{
-		galaxy: originFullPlanetData.planetRow.galaxy,
-		system: originFullPlanetData.planetRow.system,
-		slot: originFullPlanetData.planetRow.slot,
-	}
-	const targetAddress: GameType.PlanetAddress = 
-	{
-		galaxy: targetFullPlanetData.planetRow.galaxy,
-		system: targetFullPlanetData.planetRow.system,
-		slot: targetFullPlanetData.planetRow.slot,
-	}
+	const originAddress: GameType.PlanetAddress = PlayerData.getPlanetAddress(originFullPlanetData);
+	const targetAddress: GameType.PlanetAddress = PlayerData.getPlanetAddress(targetFullPlanetData);
+
 	const distance: number = GameType.getDistance(originAddress, targetAddress);
     const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(shipQuantities);
 	return computeFleetMovementDurationSeconds_Base(distance, speed, serverData);

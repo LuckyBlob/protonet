@@ -84,3 +84,8 @@ export function getDistance(origin: PlanetAddress, target: PlanetAddress): numbe
 
     return 0;
 }
+
+export function isSameAddress(origin: PlanetAddress, target: PlanetAddress): boolean
+{
+    return (origin.galaxy === target.galaxy) && (origin.system === target.system) && (origin.slot === target.slot)
+}

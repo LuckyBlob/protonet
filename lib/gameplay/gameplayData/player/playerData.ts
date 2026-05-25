@@ -1,4 +1,5 @@
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 
 type VariableNameMapType = typeof PlayerDataType.DataContextToVariableNameMap;
 type TargetPropertyName<T extends PlayerDataType.DataContext> = Extract<VariableNameMapType[T], keyof PlayerDataType.DynamicPlanetData>;
@@ -33,4 +34,16 @@ export function getFullPlanetDataForId(fullPlanetDatas: PlayerDataType.FullPlane
     }
 
     return null;
+}
+
+export function getPlanetAddress(fullPlanetData: PlayerDataType.FullPlanetData)
+{
+    const planetAddress: GameType.PlanetAddress = 
+    {
+        galaxy: fullPlanetData.planetRow.galaxy,
+        system: fullPlanetData.planetRow.system,
+        slot: fullPlanetData.planetRow.slot,
+    }
+
+    return planetAddress;
 }

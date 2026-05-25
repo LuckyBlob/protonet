@@ -201,8 +201,7 @@ function renderActiveConstructionSection(selectedFullPlanetDataPredicted: Player
         return emptyElement;
     }
 
-    const completesAt: number = selectedFullPlanetDataPredicted.planetRow.ship_construction_batch_completes_at;
-    const remainingMs: number = (completesAt - Date.now());
+    const remainingMs: number = ShipData.getShipConstructionBatchRemainingMs(selectedFullPlanetDataPredicted) ?? 0;
 
     const rowElements: ReactElement[] = queuedBatchs.map((batch: PlayerDataType.ShipConstructionBatch, batchIndex: number): ReactElement =>
     {

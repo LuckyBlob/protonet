@@ -114,7 +114,7 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
         const associatedFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(targetPlayerData.fullPlanetDatas, anchorEvent.fleetMovement.fleetMovementRow.planet_target_id);
         if (associatedFullPlanetData === null)
         {
-            throw new Error(`⚠️: Can get full planet data for origin fleet.`); 
+            throw new Error(`⚠️: Can get full planet data for target fleet.`); 
         }
 
         const fleetPlayerData: FleetData.FleetPlayerData =

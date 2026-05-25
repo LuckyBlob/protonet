@@ -14,6 +14,7 @@ import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
+import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
 
 type UpgradeViewProps =
 {
@@ -80,7 +81,6 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 
 	const imagePath: string = getBuildingImagePath(buildingType, currentLevel);
 
-
 	const isThisBuildingUpgrading: boolean = (
 		(selectedFullPlanetDataPredicted.planetRow.building_being_upgraded === buildingType) &&
 		(selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at !== 0)
@@ -89,7 +89,7 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 	const failedHidingRequirements: RequirementType.Requirement[] = failedRequirements.filter((requirement: RequirementType.Requirement): boolean => requirement.hideDataWhenRequirementFailed === true);
 	const hidingDescriptions: string[] = Requirement.getRequirementDescriptions(failedHidingRequirements, playerData, planetId);
 
-	const remainingMs: number = selectedFullPlanetDataPredicted.planetRow.building_upgrade_completes_at - Date.now();
+	const remainingMs: number = BuildingUpgradeData.getBuildingUpgradeRemainingMs(selectedFullPlanetDataPredicted) ?? 0;
 	const canAfford: boolean = BuildingData.canAffordUpgrade(selectedFullPlanetDataPredicted, buildingType);
 
 	const handleBuyUpgrade: () => void = () =>
