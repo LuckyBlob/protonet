@@ -42,6 +42,7 @@ function seedWorld(): void
 
 	const transaction: Database.Transaction = databaseConnection.transaction(() =>
 	{
+		// if you change the order here, change getPlanetAddressFromId
 		for (let galaxy: number = 1; galaxy <= GameType.GALAXY_COUNT; galaxy++)
 		{
 			for (let system: number = 1; system <= GameType.SYSTEM_COUNT; system++)

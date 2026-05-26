@@ -1033,6 +1033,8 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
             };
             fleetMovementShipRows.push(fleetMovementShipRow);
         }
+        
+        ResourceData.subtractPlanetResources(originFullPlanetData, fuelRequirements);
         const fleetMovementResourceRows: DBType.FleetMovementResourceRow[] = [];
         for (const [resourceType, resourceQuantity] of actualTransportedResources)
         {

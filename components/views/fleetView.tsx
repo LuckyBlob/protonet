@@ -39,14 +39,8 @@ type FleetViewData =
 //#region rendering helpers
 function formatPlanetAddress(planetId: number, publicPlanetRows: DBType.PublicPlanetRow[]): string
 {
-    const publicPlanetRow: DBType.PublicPlanetRow | undefined = publicPlanetRows.find((row: DBType.PublicPlanetRow): boolean => row.id === planetId);
-
-    if (publicPlanetRow === undefined)
-    {
-        return "?:?:?";
-    }
-
-    return `${publicPlanetRow.slot}:${publicPlanetRow.system}:${publicPlanetRow.galaxy}`;
+    const planetAddress: GameType.PlanetAddress = PlayerData.getPlanetAddressFromId(planetId);
+    return `${planetAddress.slot}:${planetAddress.system}:${planetAddress.galaxy}`;
 }
 
 function renderFleetMovementRow(fleetMovement: PlayerDataType.FleetMovement, publicPlanetRows: DBType.PublicPlanetRow[]): ReactElement
@@ -62,52 +56,45 @@ function renderFleetMovementRow(fleetMovement: PlayerDataType.FleetMovement, pub
     }
     const arrivalTime: number = fleetMovementRow.started_at + fleetMovementRow.duration_at_start_time;
     const remainingMs: number = arrivalTime - Date.now();
-    if (remainingMs < 0 && fleetMovement.resolutionState === PlayerDataType.FleetMovementResolution.ResolveResultUnknown)
-    {
-        const element: ReactElement =
-        (
-            <div key={fleetMovementRow.id} className="border border-gray-400 rounded px-4 py-2 text-sm text-white w-full">
-                <div>{originAddress} → {targetAddress}</div>
+    const isUnknownResult = remainingMs < 0 && fleetMovement.resolutionState === PlayerDataType.FleetMovementResolution.ResolveResultUnknown;
+
+    const element: ReactElement =
+    (
+        <div key={fleetMovementRow.id} className="border border-gray-400 rounded px-4 py-2 text-sm text-white w-full">
+            <div>{originAddress} → {targetAddress}</div>
+            {isUnknownResult ?
+            (
                 <div className="text-sm font-semibold text-yellow-400">Unknown result.</div>
-            </div>
-        );
-
-        return element;
-    }
-    else
-    {
-        const formattedRemainingTime: string = TimeFormat.formatRemainingTimeMs(remainingMs);
-
-        const element: ReactElement =
-        (
-            <div key={fleetMovementRow.id} className="border border-gray-400 rounded px-4 py-2 text-sm text-white w-full">
-                <div>{originAddress} → {targetAddress}</div>
+            ) : (
+            <>
                 <div>{actionName}{isReturnTrip ? " (return)" : ""}</div>
-                <div className="text-gray-400">{formattedRemainingTime}</div>
-            </div>
-        );
+                <div className="text-gray-400">
+                    {TimeFormat.formatRemainingTimeMs(remainingMs)}
+                </div>
+            </>
+            )}
+        </div>
+    );
 
-        return element;
-    }
+    return element;
 }
 
 function renderFleetMovementsSection(props: FleetViewProps): ReactElement
 {
+    const fullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
     const playerData: PlayerDataType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
+    
     const publicPlanetRows: DBType.PublicPlanetRow[] = playerData.publicPlanetRows;
 
     const seenFleetIds: Set<number> = new Set<number>();
     const allFleetMovements: PlayerDataType.FleetMovement[] = [];
 
-    for (const fullPlanetData of playerData.fullPlanetDatas)
+    for (const fleetMovement of fullPlanetDataPredicted.dynamicPlanetData.futureFleetArrivals)
     {
-        for (const fleetMovement of fullPlanetData.dynamicPlanetData.futureFleetArrivals)
+        if (seenFleetIds.has(fleetMovement.fleetMovementRow.id) === false)
         {
-            if (seenFleetIds.has(fleetMovement.fleetMovementRow.id) === false)
-            {
-                seenFleetIds.add(fleetMovement.fleetMovementRow.id);
-                allFleetMovements.push(fleetMovement);
-            }
+            seenFleetIds.add(fleetMovement.fleetMovementRow.id);
+            allFleetMovements.push(fleetMovement);
         }
     }
 

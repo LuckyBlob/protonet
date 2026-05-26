@@ -18,7 +18,7 @@ export function setResourceQuantities(fullPlanetData: PlayerDataType.FullPlanetD
 export function getResourceQuantity(fullPlanetData: PlayerDataType.FullPlanetData, resourceType: number): number
 {
     const resourceQuantities: Map<ThingTypes.SpecificThing, number> = ThingTypes.getThingValues(fullPlanetData, PlayerDataType.DataContext.ResourceQuantity);
-    return resourceQuantities.get(resourceType) ?? 0;
+    return Math.floor(resourceQuantities.get(resourceType) ?? 0);
 }
 
 export function getResourceQuantities(fullPlanetData: PlayerDataType.FullPlanetData): Map<number, number>

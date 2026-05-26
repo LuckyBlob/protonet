@@ -28,6 +28,20 @@ export function hasShipQuantities(fullPlanetData: PlayerDataType.FullPlanetData,
 	return MathHelp.hasQuantities(shipQuantities, (type: number): number | undefined => { return getShipQuantity(fullPlanetData, type) });
 }
 
+export function hasShips(fullPlanetData: PlayerDataType.FullPlanetData): boolean
+{
+	const shipQuantities: Map<ThingType.SpecificThing, number> = ThingType.getThingValues(fullPlanetData, PlayerDataType.DataContext.ShipQuantity);
+	for (const [shipType, shipQuantity] of shipQuantities)
+	{
+		if (shipQuantity > 0)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 export function subtractPlanetShips(fullPlanetData: PlayerDataType.FullPlanetData, shipQuantities: Map<number, number>): Map<number, number>
 {
 	return MathHelp.subtractQuantities(shipQuantities,
