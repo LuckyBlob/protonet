@@ -9,7 +9,6 @@ import * as ServerRequest from "@/lib/networkRequests/serverRequests";
 import * as RequestType from "@/lib/networkRequests/requestTypes";
 import * as APIEndPoint from "@/app/api/apiEndPoints";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import { LargeNumberLike } from "node:crypto";
 
 //#region Player state helpers
 
@@ -105,6 +104,7 @@ export async function clientTryRegisterRequest(username: string, password: strin
     };
 
     const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Register, clientRequest);
+
     if (response.error !== null)
     {
         throw new Error(response.error);

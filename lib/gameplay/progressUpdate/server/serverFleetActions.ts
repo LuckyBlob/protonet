@@ -27,7 +27,7 @@ export function resolveFleetMovementAtTargetToDB(playerData: PlayerDataType.Play
     {
         case GameType.FLEET_ACTION_STATION:
         {
-            resolveStationActionToDB(resolvedData.data.target, resolvedData.event.fleetMovement, resolvedData.data);
+            resolveStationActionToDB(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement, resolvedData.data);
             return;
         }
         default:
@@ -37,16 +37,24 @@ export function resolveFleetMovementAtTargetToDB(playerData: PlayerDataType.Play
     }
 }
 
-function resolveStationActionToDB(targetPlayerData: FleetData.FleetPlayerData | null, fleetMovement: PlayerDataType.FleetMovement, fleetPlayerDataPair: FleetData.FleetPlayerDataPair): void
+function resolveStationActionToDB(originPlayerData: FleetData.FleetPlayerData | null, targetPlayerData: FleetData.FleetPlayerData | null, fleetMovement: PlayerDataType.FleetMovement, fleetPlayerDataPair: FleetData.FleetPlayerDataPair): void
 {
     if (targetPlayerData === null)
     {
         throw new Error(`⚠️: Target is null when writing station action to DB.`); 
     }
+    if (originPlayerData === null)
+    {
+        throw new Error(`⚠️: Origin is null when writing station action to DB.`); 
+    }
 
+    // Either we sent it and we didn't know about the target locally
+    // or we received it and we didn't know about the origin locally
     if (fleetMovement.resolutionState === PlayerDataType.FleetMovementResolution.ResolveResultUnknown)
     {
         FleetData.resolveFleetMovementAtTarget(targetPlayerData.playerData, fleetMovement, fleetPlayerDataPair);
+        // Make sure we remove from the origin too (we didnt if we are unknown). We dont need to update the DB since theres only one row for both.
+        FleetData.removeFleetMovement(originPlayerData.playerData, fleetMovement.fleetMovementRow.id, fleetMovement.fleetMovementRow.planet_origin_id);
     }
 
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
@@ -64,13 +72,13 @@ function deleteFleetMovementFromDB(originPlayerData: FleetData.FleetPlayerData |
 {
     if (originPlayerData !== null)
     {
-        const updatedFPlanetData: PlayerDataType.FullPlanetData = FleetData.removeFleetMovement(originPlayerData.playerData, fleetMovement.fleetMovementRow.id, originPlayerData.fullPlanetData.planetRow.id);
-        ServerDynamicData.serverUpdatePlanetDataContext(updatedFPlanetData.planetRow.id, PlayerDataType.DataContext.FutureFleetArrivals, updatedFPlanetData.dynamicPlanetData);
+        const updatedFullPlanetData: PlayerDataType.FullPlanetData = FleetData.removeFleetMovement(originPlayerData.playerData, fleetMovement.fleetMovementRow.id, originPlayerData.fullPlanetData.planetRow.id);
+        ServerDynamicData.serverUpdatePlanetDataContext(updatedFullPlanetData.planetRow.id, PlayerDataType.DataContext.FutureFleetArrivals, updatedFullPlanetData.dynamicPlanetData);
     }
 
     if (targetPlayerData !== null)
     {
-        const updatedFPlanetData: PlayerDataType.FullPlanetData = FleetData.removeFleetMovement(targetPlayerData.playerData, fleetMovement.fleetMovementRow.id, targetPlayerData.fullPlanetData.planetRow.id);
-        ServerDynamicData.serverUpdatePlanetDataContext(updatedFPlanetData.planetRow.id, PlayerDataType.DataContext.FutureFleetArrivals, updatedFPlanetData.dynamicPlanetData);
+        const updatedFullPlanetData: PlayerDataType.FullPlanetData = FleetData.removeFleetMovement(targetPlayerData.playerData, fleetMovement.fleetMovementRow.id, targetPlayerData.fullPlanetData.planetRow.id);
+        ServerDynamicData.serverUpdatePlanetDataContext(updatedFullPlanetData.planetRow.id, PlayerDataType.DataContext.FutureFleetArrivals, updatedFullPlanetData.dynamicPlanetData);
     }
 }

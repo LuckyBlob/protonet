@@ -2,9 +2,6 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 
-const DISTANCE_DIVIDER: number = 35000;
-const SPEED_DIVIDER: number = 100;
-
 type BaseFuelConsumptionData =
 {
 	costDistanceDivider: number;
@@ -49,7 +46,7 @@ function computeFuelConsumption_Base(shipQuantities: Map<number, number>, distan
 
 	for (const [ressourceType, totalBaseResourceCost] of totalBaseCost)
 	{
-		const finalCost: number = 1 + Math.round((totalBaseResourceCost * distance / DISTANCE_DIVIDER) * Math.pow(speed / SPEED_DIVIDER + 1, 2));
+		const finalCost: number = 1 + Math.round((totalBaseResourceCost * distance / BASE_FUEL_CONSUMPTION_DATA.costDistanceDivider) * Math.pow(speed / BASE_FUEL_CONSUMPTION_DATA.speedDivider + 1, BASE_FUEL_CONSUMPTION_DATA.exponent));
 		totalBaseCost.set(ressourceType, finalCost);
 	}
 

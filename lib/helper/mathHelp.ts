@@ -13,7 +13,7 @@ export function hasQuantities(testQuantities: Map<number, number>, values: (type
 {
     for (const [type, quantity] of testQuantities)
     {
-        const currentResourceQuantity: number | undefined = values(quantity); 
+        const currentResourceQuantity: number | undefined = values(type); 
         if (currentResourceQuantity === undefined)
         {
             return false;

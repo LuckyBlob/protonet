@@ -10,48 +10,43 @@ export type FleetArrivalAnchorEvent = AnchorEvent.AnchorEvent &
 
 export function findNextAnchorEvent(playerData: PlayerDataType.PlayerData): AnchorEvent.AnchorEvent | null
 {
-    let nextTime: number | null = null;
-    let bestFleetMovement: PlayerDataType.FleetMovement | null = null;
-    for (let planetIndex = 0; planetIndex < playerData.fullPlanetDatas.length; planetIndex++)
+    const getItems = (planet: PlayerDataType.FullPlanetData): PlayerDataType.FleetMovement[] =>
     {
-        if (playerData.fullPlanetDatas[planetIndex].dynamicPlanetData.futureFleetArrivals.length === 0)
+        return planet.dynamicPlanetData.futureFleetArrivals;
+    };
+    const getTime = (event: PlayerDataType.FleetMovement): number | null =>
+    {
+        if (event.resolutionState === PlayerDataType.FleetMovementResolution.ResolveResultUnknown)
         {
-            continue;
+            // pending until resolved
+            return null;
+        }
+
+        if (event.fleetMovementRow.started_at === null)
+        {
+            return null;
+        }
+
+        if (event.fleetMovementRow.duration_at_start_time === null)
+        {
+            throw new Error(`UNREACHABLE: ...`);
         }
         
-        for (const fleetMovement of playerData.fullPlanetDatas[planetIndex].dynamicPlanetData.futureFleetArrivals)
-        {
-            if (fleetMovement.resolutionState === PlayerDataType.FleetMovementResolution.ResolveResultUnknown)
-            {
-                //pending until reload.
-                continue;
-            }
-            
-            if (nextTime === null || fleetMovement.fleetMovementRow.arrival_time < nextTime)
-            {
-                nextTime = fleetMovement.fleetMovementRow.arrival_time;
-                bestFleetMovement = fleetMovement;
-            }
-        }
-    }
-
-    if (nextTime === null)
-    {
-        return null;
-    }
-
-    if (bestFleetMovement === null)
-    {
-        throw new Error(`⚠️: Found next time but not next fleet movement for fleet arrival anchor event.`); 
-    }
-
-    const nextEvent: FleetArrivalAnchorEvent =
-    {
-        type: AnchorEvent.AnchorEventType.FleetArrival,
-        time: nextTime,
-        fleetMovement: bestFleetMovement,
+        return event.fleetMovementRow.started_at + event.fleetMovementRow.duration_at_start_time;
     };
-    return nextEvent;
+    const buildEvent = (event: PlayerDataType.FleetMovement, time: number): AnchorEvent.AnchorEvent =>
+    {
+        const newEvent: FleetArrivalAnchorEvent =
+        {
+            type: AnchorEvent.AnchorEventType.FleetArrival,
+            time: time,
+            fleetMovement: event,
+        };
+
+        return newEvent;
+    };
+
+    return AnchorEvent.findNextAnchorEvent(playerData, getItems, getTime, buildEvent);
 }
 
 export function resolveFleetArrivalData(playerData: PlayerDataType.PlayerData, anchorEvent: AnchorEvent.AnchorEvent): { event: FleetArrivalAnchorEvent, data: FleetData.FleetPlayerDataPair }
@@ -79,6 +74,15 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
     }
     const resolvedData: { event: FleetArrivalAnchorEvent, data: FleetData.FleetPlayerDataPair } = resolveFleetArrivalData(playerData, anchorEvent);
 
+    if (resolvedData.event.fleetMovement.fleetMovementRow.started_at === null)
+    {
+        throw new Error(`⚠️: Resolving fleet event with no started time.`); 
+    }
+    if (resolvedData.event.fleetMovement.fleetMovementRow.duration_at_start_time === null)
+    {
+        throw new Error(`⚠️: Resolving fleet event with no duration at start time.`); 
+    }
+
     // this code takes care of the "client" part AKA the data in the structures
     if (resolvedData.event.fleetMovement.fleetMovementRow.is_return_trip === 1)
     {
@@ -91,7 +95,9 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
         {
             if (resolvedData.event.fleetMovement.fleetMovementRow.player_target_id !== null)
             {
-                anchorEvent.resolver.applyPlayerProgressAtTime(playerData, serverData, resolvedData.event.fleetMovement.fleetMovementRow.player_target_id, resolvedData.event.fleetMovement.fleetMovementRow.arrival_time);
+                const arrivalTime: number =  resolvedData.event.fleetMovement.fleetMovementRow.started_at + resolvedData.event.fleetMovement.fleetMovementRow.duration_at_start_time;
+
+                anchorEvent.resolver.applyPlayerProgressAtTime(playerData, serverData, resolvedData.event.fleetMovement.fleetMovementRow.player_target_id, arrivalTime);
             }
         }
             

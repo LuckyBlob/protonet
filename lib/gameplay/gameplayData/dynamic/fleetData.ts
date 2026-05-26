@@ -100,9 +100,15 @@ export function canExecuteFleetActionOnTargetPlanet(originPlanetData: PlayerData
 
 export function calculateShipQuantitiesLowestMovementSpeed(shipQuantities: Map<number, number>): number
 {
+	let bFoundData: boolean = false;
 	let lowestSpeed: number = Number.MAX_SAFE_INTEGER;
 	for (const [shipType, shipQuantity] of shipQuantities)
 	{
+		if (shipQuantity === 0)
+		{
+			continue;
+		}
+
 		const shipStats: AssociationMaps.ShipStats | undefined = AssociationMaps.SHIP_STATS.get(shipType);
 		if (shipStats === undefined)
 		{
@@ -111,8 +117,14 @@ export function calculateShipQuantitiesLowestMovementSpeed(shipQuantities: Map<n
 
 		if (lowestSpeed > shipStats.speed)
 		{
+			bFoundData = true;
 			lowestSpeed = shipStats.speed;
 		}
+	}
+
+	if (bFoundData === false)
+	{
+		throw new Error(`⚠️: Trying to find ship quantities speed with no ships.`); 
 	}
 
 	return lowestSpeed;
@@ -147,7 +159,7 @@ export function hasSpaceForFuel(shipQuantities: Map<number, number>, fuelRequire
     const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
     const totalSpace: number = calculateTotalFleetSpace(shipQuantities);
 
-    return totalFuel < totalSpace;
+    return totalFuel <= totalSpace;
 }
 
 export function clampResoucesToAddToFleet(shipQuantities: Map<number, number>, fuelRequirements: Map<number, number>, transportedResourceQuantities: Map<number, number>): Map<number, number>
@@ -171,7 +183,6 @@ export function clampResoucesToAddToFleet(shipQuantities: Map<number, number>, f
     return resourcesActuallyOnBoard;
 }
 
-// client side only
 export function resolveFleetMovementAtTarget(playerData: PlayerDataType.PlayerData, fleetMovement: PlayerDataType.FleetMovement, fleetPlayerDataPair: FleetPlayerDataPair): void
 {
 	switch (fleetMovement.fleetMovementRow.fleet_action_type)
@@ -204,8 +215,15 @@ function resolveStationAction(playerData: PlayerDataType.PlayerData, fleetMoveme
 
 	if (targetFullPlanetData === undefined)
 	{
-		throw new Error(`Didnt find our own planet when stationning ${fleetMovement.fleetMovementRow.planet_target_id} for player ${playerData.playerRow.id}.`)
+		throw new Error(`Didnt find target planet when stationning ${fleetMovement.fleetMovementRow.planet_target_id} for player ${playerData.playerRow.id}.`)
 	}
+
+	// Origin planet only exists in our data if we also sent the fleet. If the fleet came from another player,
+	// the origin belongs to them and won't be found here — that's fine, their data is updated separately.
+	const originFullPlanetData: PlayerDataType.FullPlanetData | undefined = playerData.fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData) =>
+	{
+		return fullPlanetData.planetRow.id === fleetMovement.fleetMovementRow.planet_origin_id;
+	});
 
 	for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)
 	{
@@ -218,6 +236,10 @@ function resolveStationAction(playerData: PlayerDataType.PlayerData, fleetMoveme
 	}
 
 	FleetData.removeFleetMovement(playerData, fleetMovement.fleetMovementRow.id, targetFullPlanetData.planetRow.id);
+	if (originFullPlanetData !== undefined)
+	{
+		FleetData.removeFleetMovement(playerData, fleetMovement.fleetMovementRow.id, originFullPlanetData.planetRow.id);
+	}
 	fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.Resolved;
 }
 
@@ -234,4 +256,14 @@ export function removeFleetMovement(playerData: PlayerDataType.PlayerData, fleet
 		fullPlanetData.dynamicPlanetData.futureFleetArrivals.splice(index, 1);
   	}
 	return fullPlanetData;
+}
+
+export function computeFleetFuelAndSpace(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: ServerDataType.ServerData): { totalFuel: number, availableSpace: number }
+{
+	const fuelRequirements: Map<number, number> = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, shipQuantities, serverData);
+	const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
+	const totalSpace: number = FleetData.calculateTotalFleetSpace(shipQuantities);
+	const availableSpace: number = Math.max(totalSpace - totalFuel, 0);
+
+	return { totalFuel: totalFuel, availableSpace: availableSpace };
 }

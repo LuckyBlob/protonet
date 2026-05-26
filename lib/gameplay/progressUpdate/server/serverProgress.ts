@@ -4,7 +4,7 @@ import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
-import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionBatchAnchorEvent"
+import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent"
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 import * as DB from "@/lib/db/db";
 import * as ServerRequestFunctions from "@/lib/networkRequests/server/serverRequestFunctions";
@@ -49,9 +49,9 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
                 resolveBuildingUpgradeAnchorEventToDB(playerData, serverData, anchorEvent);
                 break;
             }
-            case AnchorEvent.AnchorEventType.ShipConstructionBatch:
+            case AnchorEvent.AnchorEventType.ShipConstruction:
             {
-                resolveShipBatchConstructionAnchorEventToDB(playerData, serverData, anchorEvent);
+                resolveShipConstructionAnchorEventToDB(playerData, serverData, anchorEvent);
                 break;
             }
             case AnchorEvent.AnchorEventType.FleetArrival:
@@ -114,7 +114,7 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
         const associatedFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(targetPlayerData.fullPlanetDatas, anchorEvent.fleetMovement.fleetMovementRow.planet_target_id);
         if (associatedFullPlanetData === null)
         {
-            throw new Error(`⚠️: Can get full planet data for origin fleet.`); 
+            throw new Error(`⚠️: Can get full planet data for target fleet.`); 
         }
 
         const fleetPlayerData: FleetData.FleetPlayerData =
@@ -127,39 +127,37 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
     }
 }
 
-
 function resolveBuildingUpgradeAnchorEventToDB(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
 {
     const buildingAnchorEvent: BuildingUpgrade.BuildingUpgradeAnchorEvent = anchorEvent as BuildingUpgrade.BuildingUpgradeAnchorEvent;
-    const newPlanetData: PlayerDataType.FullPlanetData = playerData.fullPlanetDatas[buildingAnchorEvent.fullPlanetDataIndex];
+    const fullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, buildingAnchorEvent.event.buildingUpgradeRow.planet_id);
+    if (fullPlanetData === null)
+    {
+        throw new Error(`⚠️: Cant get full planet data for building upgrade.`);
+    }
 
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        ServerRequestFunctions.serverUpdatePlanetRow(newPlanetData.planetRow.id,
-        {
-            building_upgrade_completes_at: 0,
-            building_being_upgraded: 0,
-        });
-        ServerDynamicData.serverUpdatePlanetDataContext(newPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, newPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingUpgrade, fullPlanetData.dynamicPlanetData);
     });
 
     transaction();
 }
 
-function resolveShipBatchConstructionAnchorEventToDB(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
+function resolveShipConstructionAnchorEventToDB(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
 {
-    const shipConstructionBatchAnchorEvent: ShipConstruction.ShipConstructionBatchAnchorEvent = anchorEvent as ShipConstruction.ShipConstructionBatchAnchorEvent;
-    const newPlanetData: PlayerDataType.FullPlanetData = playerData.fullPlanetDatas[shipConstructionBatchAnchorEvent.fullPlanetDataIndex];
+    const shipConstructionAnchorEvent: ShipConstruction.ShipConstructionAnchorEvent = anchorEvent as ShipConstruction.ShipConstructionAnchorEvent;
+    const fullPlanetData: PlayerDataType.FullPlanetData | null= PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, shipConstructionAnchorEvent.event.shipConstructionRow.planet_id);
+    if (fullPlanetData === null)
+    {
+        throw new Error(`⚠️: Cant get full planet data for ship construction.`);
+    }
 
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        ServerRequestFunctions.serverUpdatePlanetRow(newPlanetData.planetRow.id,
-        {
-            ship_construction_batch_completes_at: newPlanetData.planetRow.ship_construction_batch_completes_at,
-            current_ship_construction_batch_id: newPlanetData.planetRow.current_ship_construction_batch_id,
-        });
-        ServerDynamicData.serverUpdatePlanetDataContext(newPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, newPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(newPlanetData.planetRow.id, PlayerDataType.DataContext.ShipQuantity, newPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipQuantity, fullPlanetData.dynamicPlanetData);
     });
 
     transaction();

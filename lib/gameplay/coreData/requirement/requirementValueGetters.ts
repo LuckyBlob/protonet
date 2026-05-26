@@ -2,6 +2,7 @@ import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTy
 import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
+import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
 
 function getFullPlanetData(playerData: PlayerDataType.PlayerData, planetId: number): PlayerDataType.FullPlanetData
 {
@@ -18,7 +19,7 @@ export function isAnyBuildingUpgradeInProgress(): RequirementType.ThingValueGett
     return (playerData: PlayerDataType.PlayerData, planetId: number): number =>
     {
         const fullPlanetData: PlayerDataType.FullPlanetData = getFullPlanetData(playerData, planetId);
-        return (fullPlanetData.planetRow.building_upgrade_completes_at !== 0) ? 1 : 0;
+        return fullPlanetData.dynamicPlanetData.buildingUpgrades.length > 0 ? 1 : 0;
     };
 }
 
@@ -36,10 +37,8 @@ export function isSpecificBuildingBeingUpgraded(buildingType: number): Requireme
     return (playerData: PlayerDataType.PlayerData, planetId: number): number =>
     {
         const fullPlanetData: PlayerDataType.FullPlanetData = getFullPlanetData(playerData, planetId);
-        const isUpgrading: boolean = (
-            (fullPlanetData.planetRow.building_being_upgraded === buildingType) &&
-            (fullPlanetData.planetRow.building_upgrade_completes_at !== 0)
-        );
+        ;
+        const isUpgrading: boolean = BuildingUpgradeData.isBuildingTypeCurrentlyUpgrading(fullPlanetData, buildingType);
         return isUpgrading ? 1 : 0;
     };
 }

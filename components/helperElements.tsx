@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, ReactElement, ReactNode, ChangeEvent } from "react";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
@@ -60,7 +60,16 @@ export function useRequestedQuantities(): RequestedQuantitiesState
 	const setRequestedQuantity = (shipType: number, value: number): void =>
 	{
 		const updatedMap: Map<number, number> = new Map<number, number>(requestedQuantities);
-		updatedMap.set(shipType, value);
+
+		if (value <= 0)
+		{
+			updatedMap.delete(shipType);
+		}
+		else
+		{
+			updatedMap.set(shipType, value);
+		}
+
 		setRequestedQuantitiesMap(updatedMap);
 	};
 

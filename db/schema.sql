@@ -50,8 +50,8 @@ CREATE TABLE planet
 	last_updated INTEGER NOT NULL DEFAULT 0,
 	building_upgrade_completes_at INTEGER NOT NULL DEFAULT 0,
 	building_being_upgraded INTEGER NOT NULL DEFAULT 0,
-  ship_construction_batch_completes_at INTEGER NOT NULL DEFAULT 0,
-	current_ship_construction_batch_id INTEGER NOT NULL DEFAULT 0,
+  ship_construction_completes_at INTEGER NOT NULL DEFAULT 0,
+	current_ship_construction_id INTEGER NOT NULL DEFAULT 0,
 	UNIQUE (slot, system, galaxy),
 	FOREIGN KEY (owner_player_id) REFERENCES player(id) ON DELETE SET NULL
 );
@@ -93,12 +93,43 @@ CREATE TABLE IF NOT EXISTS ship_construction
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     planet_id INTEGER NOT NULL,
-    batch_id INTEGER NOT NULL,
-    ship_type INTEGER NOT NULL,
-    ship_quantity INTEGER NOT NULL,
+    requested_at INTEGER NOT NULL DEFAULT 0,
+    duration_at_request_time INTEGER NOT NULL DEFAULT 0,
+    duration_at_start_time INTEGER,
+    started_at INTEGER,
+    current_ship_construction_ship_row_id INTEGER,
     FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
 );
-CREATE INDEX IF NOT EXISTS idx_ship_construction_batch ON ship_construction(batch_id);
+CREATE TABLE IF NOT EXISTS ship_construction_ship
+(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ship_construction_id INTEGER NOT NULL,
+    ship_type INTEGER NOT NULL,
+    ship_quantity INTEGER NOT NULL,
+    FOREIGN KEY (ship_construction_id) REFERENCES ship_construction(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_ship_construction_ship_construction ON ship_construction_ship(ship_construction_id);
+
+CREATE TABLE IF NOT EXISTS building_upgrade
+(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    planet_id INTEGER NOT NULL,
+    requested_at INTEGER NOT NULL DEFAULT 0,
+    duration_at_request_time INTEGER NOT NULL DEFAULT 0,
+    duration_at_start_time INTEGER,
+    started_at INTEGER,
+    current_building_upgrade_building_row_id INTEGER,
+    FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_building_upgrade_planet ON building_upgrade(planet_id);
+
+CREATE TABLE IF NOT EXISTS building_upgrade_building
+(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    building_upgrade_id INTEGER NOT NULL,
+    building_type INTEGER NOT NULL,
+    FOREIGN KEY (building_upgrade_id) REFERENCES building_upgrade(id) ON DELETE CASCADE
+);
 
 CREATE TABLE IF NOT EXISTS fleet_movement
 (
@@ -108,16 +139,17 @@ CREATE TABLE IF NOT EXISTS fleet_movement
     planet_origin_id INTEGER NOT NULL,
     player_target_id INTEGER,
     planet_target_id INTEGER NOT NULL,
-    departure_time INTEGER NOT NULL,
-    arrival_time INTEGER NOT NULL,
     is_return_trip INTEGER NOT NULL DEFAULT 0,
     fleet_action_type INTEGER NOT NULL,
+    requested_at INTEGER NOT NULL DEFAULT 0,
+    duration_at_request_time INTEGER NOT NULL DEFAULT 0,
+    duration_at_start_time INTEGER,
+    started_at INTEGER,
     FOREIGN KEY (player_origin_id) REFERENCES player(id) ON DELETE CASCADE,
     FOREIGN KEY (player_target_id) REFERENCES player(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_fleet_movement_origin ON fleet_movement(planet_origin_id);
 CREATE INDEX IF NOT EXISTS idx_fleet_movement_target ON fleet_movement(planet_target_id);
-CREATE INDEX IF NOT EXISTS idx_fleet_movement_arrival ON fleet_movement(arrival_time);
 
 CREATE TABLE IF NOT EXISTS fleet_movement_ship
 (

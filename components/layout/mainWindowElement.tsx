@@ -5,6 +5,7 @@ import * as StatsView from "@/components/views/statsView";
 import * as UpgradeView from "@/components/views/upgradeView";
 import * as ShipyardView from "@/components/views/shipyardView";
 import * as FleetView from "@/components/views/fleetView";
+import * as PlanetView from "@/components/views/planetView";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
 
@@ -39,6 +40,11 @@ export function MainWindowElement(props: MainWindowProps): ReactElement
 	if (props.cvController[0] === "stats")
 	{
 		return <StatsView.StatsView clientDataStateResult={props.clientDataStateResult} />;
+	}
+
+	if (props.cvController[0] === "planets")
+	{
+		return <PlanetView.PlanetView clientDataStateResult={props.clientDataStateResult} />;
 	}
 
 	return <div>Unknown view</div>;

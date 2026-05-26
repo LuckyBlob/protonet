@@ -6,6 +6,7 @@ export type PlayerData =
 	playerRow: DBType.PlayerRow;
 	fullPlanetDatas: FullPlanetData[];
 	publicPlanetRows: DBType.PublicPlanetRow[];
+	publicPlayerRows: DBType.PublicPlayerRow[];
 };
 
 export type PSController  = [PlayerState, (value: PlayerState) => void];
@@ -28,16 +29,18 @@ export type DynamicPlanetData =
 	resourceQuantity: Map<ThingType.SpecificThing, number>;
 	buildingLevels: Map<ThingType.SpecificThing, number>;
 	shipQuantity: Map<ThingType.SpecificThing, number>,
-	queuedShipConstructionBatchs: ShipConstructionBatch[];
+	shipConstructions: ShipConstruction[];
 	futureFleetArrivals: FleetMovement[];
+	buildingUpgrades: BuildingUpgrade[];
 };
 export const EmptyPlanetData: DynamicPlanetData =
 {
 	resourceQuantity: new Map<ThingType.SpecificThing, number>(),
 	buildingLevels: new Map<ThingType.SpecificThing, number>(),
 	shipQuantity: new Map<ThingType.SpecificThing, number>(),
-	queuedShipConstructionBatchs: [],
+	shipConstructions: [],
 	futureFleetArrivals: [],
+	buildingUpgrades: [],
 
 } as const;
 
@@ -48,6 +51,7 @@ export const DataContext =
 	ShipQuantity: 3,
 	ShipConstruction: 4,
 	FutureFleetArrivals: 5,
+	BuildingUpgrade: 6,
 } as const;
 export type DataContext = typeof DataContext[keyof typeof DataContext];
 export const DataContextToVariableNameMap =
@@ -55,8 +59,9 @@ export const DataContextToVariableNameMap =
     [DataContext.ResourceQuantity]: "resourceQuantity",
     [DataContext.BuildingLevel]: "buildingLevels",
     [DataContext.ShipQuantity]: "shipQuantity",
-    [DataContext.ShipConstruction]: "queuedShipConstructionBatchs",
+    [DataContext.ShipConstruction]: "shipConstructions",
     [DataContext.FutureFleetArrivals]: "futureFleetArrivals",
+    [DataContext.BuildingUpgrade]: "buildingUpgrades",
 } as const;
 
 export type FullPlanetData =
@@ -65,19 +70,25 @@ export type FullPlanetData =
 	dynamicPlanetData: DynamicPlanetData;
 };
 
-export type ShipConstructionBatch = 
+export type ShipConstruction =
 {
-	shipConstructionRows: DBType.ShipConstructionRow[];
-	batchId: number;
-}
+	shipConstructionRow: DBType.ShipConstructionRow;
+	shipConstructionShipRows: DBType.ShipConstructionShipRow[];
+};
 
-export type FleetMovement = 
+export type BuildingUpgrade =
+{
+	buildingUpgradeRow: DBType.BuildingUpgradeRow;
+	buildingUpgradeBuildingRows: DBType.BuildingUpgradeBuildingRow[];
+};
+
+export type FleetMovement =
 {
 	fleetMovementRow: DBType.FleetMovementRow;
 	fleetMovementShipRows: DBType.FleetMovementShipRow[];
 	fleetMovementResourceRows: DBType.FleetMovementResourceRow[];
 	resolutionState: FleetMovementResolution;
-}
+};
 export type FleetMovementResolution = typeof FleetMovementResolution[keyof typeof FleetMovementResolution];
 export const FleetMovementResolution =
 {

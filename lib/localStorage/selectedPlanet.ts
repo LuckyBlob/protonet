@@ -13,7 +13,7 @@ export function updateSelectedPlanetIdInStorage(psController: PlayerDataType.PSC
         return currentlySelectedPlanetId;
     }
 
-    writeStoredSelectedPlanetId(currentlySelectedPlanetId);
+    writeStoredSelectedPlanetId(getRelevantSelectedPlanetId(newPlayerData.fullPlanetDatas, currentlySelectedPlanetId));
     return currentlySelectedPlanetId;
 }
 

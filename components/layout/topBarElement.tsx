@@ -8,6 +8,7 @@ import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
+import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
 
 type TopBarProps =
 {
@@ -15,11 +16,11 @@ type TopBarProps =
 	planetSelector: ReactElement;
 };
 
-function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, remainingMs: number): ReactElement
+function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, remainingMs: number | null): ReactElement
 {
 	const resourceName: string = ThingType.getSpecificThingName(ThingType.resource(resourceDisplayValues.resourceType));
 
-	const buildLineElement: ReactElement | null = resourceDisplayValues.affectedByCurrentBuild === true
+	const buildLineElement: ReactElement | null = (resourceDisplayValues.affectedByCurrentBuild === true && remainingMs !== null)
 		? <div className="text-sm">({TimeFormat.formatRemainingTimeMs(remainingMs)})</div>
 		: null;
 
@@ -43,11 +44,9 @@ export function TopBarElement(props: TopBarProps): ReactElement
 	{
 		const displayValues: PlanetDisplayValues = getPlanetDisplayValues(props.clientDataStateResult, resourceTypes);
 
-		const remainingMs: number = displayValues.buildCompletesAt - Date.now();
-
 		const cardElements: ReactElement[] = displayValues.resourceDisplayValues.map((resourceDisplayValues: PlanetResourceDisplayValues): ReactElement =>
 		{
-			return renderResourceCard(resourceDisplayValues, remainingMs);
+			return renderResourceCard(resourceDisplayValues, displayValues.remainingBuildingUpgradeMs);
 		});
 
 		const topBarElement: ReactElement =
@@ -82,7 +81,7 @@ export type PlanetResourceDisplayValues =
 export type PlanetDisplayValues =
 {
 	resourceDisplayValues: PlanetResourceDisplayValues[];
-	buildCompletesAt: number;
+	remainingBuildingUpgradeMs: number | null;
 };
 
 export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState.ClientDataStateResult, resourceTypes: number[]): PlanetDisplayValues
@@ -90,9 +89,7 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 	const now: number = Date.now();
 
 	const fullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(clientDataStateResult.psController[0]);
-	const buildCompletesAt: number = fullPlanetDataPredicted.planetRow.building_upgrade_completes_at;
-	const isBuilding: boolean = buildCompletesAt !== 0;
-	const buildingBeingUpgraded: number = fullPlanetDataPredicted.planetRow.building_being_upgraded;
+	const buildingBeingUpgraded: number | null = BuildingUpgradeData.getBuildingTypeCurrentlyUpgrading(fullPlanetDataPredicted);
 
 	const resourceDisplayValues: PlanetResourceDisplayValues[] = [];
 
@@ -103,7 +100,7 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 		const productionRatePerSecond: number = BuildingData.getPlanetProductionRatePerSecond(fullPlanetDataPredicted, resourceType, clientDataStateResult.sdsController[0]);
 		const productionRatePerHour: number = productionRatePerSecond * 3600;
 
-		const affectedByCurrentBuild: boolean = (isBuilding === true) && (BuildingData.doesBuildingProduceResource(buildingBeingUpgraded, resourceType) === true);
+		const affectedByCurrentBuild: boolean = (buildingBeingUpgraded !== null) && (BuildingData.doesBuildingProduceResource(buildingBeingUpgraded, resourceType) === true);
 
 		const singleResourceDisplayValues: PlanetResourceDisplayValues =
 		{
@@ -119,7 +116,7 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 	const displayValues: PlanetDisplayValues =
 	{
 		resourceDisplayValues: resourceDisplayValues,
-		buildCompletesAt: buildCompletesAt,
+		remainingBuildingUpgradeMs: BuildingUpgradeData.getBuildingUpgradeRemainingMs(fullPlanetDataPredicted),
 	};
 
 	return displayValues;

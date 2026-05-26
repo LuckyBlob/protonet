@@ -43,7 +43,7 @@ function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: numbe
     }
     
     const fullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, planetId);
-    const roboticFactoryLevel: number = fullPlanetData === null ? 0 : BuildingData.getBuildingLevel(fullPlanetData, GameType.ROBOTIC_FACTORY_TYPE);
+    const roboticFactoryLevel: number = fullPlanetData === null ? 0 : BuildingData.getBuildingLevel(fullPlanetData, GameType.BUILDING_ROBOTIC_FACTORY);
 
     const durationHours: number = totalCost / (BASE_DIVIDER * (1 + roboticFactoryLevel));
 	const durationSeconds: number = durationHours * 3600;

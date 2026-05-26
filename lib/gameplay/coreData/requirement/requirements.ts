@@ -10,7 +10,7 @@ export function getFailedBuildingUpgradeRequirements(playerData: PlayerDataType.
 
 export function getFailedShipBuildRequirements(playerData: PlayerDataType.PlayerData, shipType: number, planetId: number): RequirementType.Requirement[]
 {
-    return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.ShipBatchConstruction, shipType);
+    return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.ShipConstruction, shipType);
 }
 
 export function getFailedFleetMovementRequirements(playerData: PlayerDataType.PlayerData, shipType: number, planetId: number): RequirementType.Requirement[]
