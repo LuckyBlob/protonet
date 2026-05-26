@@ -14,6 +14,8 @@ import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as HelperElement from "@/components/helperElements";
+import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipConstructionData";
+import * as DBType from "@/lib/db/dbTypes";
 
 const PREVIEW_MAX_SHIP_LINES: number = 7;
 const PREVIEW_MAX_RESOURCE_LINES: number = 7;
@@ -41,7 +43,7 @@ type ShipyardViewProps =
 //#region pure helpers
 function buildSingleShipCostParts(shipType: number): string[]
 {
-    const singleCostMap: Map<number, number> | null = ShipData.getSingleShipCost(shipType);
+    const singleCostMap: Map<number, number> | null = ShipConstructionData.getSingleShipCost(shipType);
 
     if (singleCostMap === null)
     {
@@ -137,7 +139,7 @@ function renderShipBuildRow(props: ShipyardViewProps, fullPlanetData: PlayerData
 {
     const shipName: string = ThingType.getSpecificThingName(ThingType.ship(shipType));
     const ownedQuantity: number = ShipData.getShipQuantity(fullPlanetData, shipType);
-    const singleDurationSeconds: number = ShipData.getShipConstructionDurationSeconds(shipType, fullPlanetData, serverData) ?? 0;
+    const singleDurationSeconds: number = ShipConstructionData.getShipConstructionDurationSeconds(shipType, fullPlanetData, serverData) ?? 0;
     const costParts: string[] = buildSingleShipCostParts(shipType);
 
     const element: ReactElement =
@@ -185,11 +187,32 @@ function renderShipBuildRows(props: ShipyardViewProps, shipTypes: number[], full
     return element;
 }
 
-function renderActiveConstructionSection(selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData): ReactElement
+function renderActiveConstructionHeader(shipConstruction: PlayerDataType.ShipConstruction): ReactElement | null
 {
-    const queuedBatchs: PlayerDataType.ShipConstructionBatch[] = selectedFullPlanetDataPredicted.dynamicPlanetData.queuedShipConstructionBatchs;
+    const currentShipRow: DBType.ShipConstructionShipRow | undefined = shipConstruction.shipConstructionShipRows.find(
+        (row: DBType.ShipConstructionShipRow): boolean => row.id === shipConstruction.shipConstructionRow.current_ship_construction_ship_row_id
+    );
 
-    if (queuedBatchs.length === 0)
+    if (currentShipRow === undefined)
+    {
+        return null;
+    }
+
+    const currentShipName: string = ThingType.getSpecificThingName(ThingType.ship(currentShipRow.ship_type));
+
+    const element: ReactElement =
+    (
+        <div className="text-xs font-semibold text-yellow-400">Building: {currentShipName}</div>
+    );
+
+    return element;
+}
+
+function renderActiveConstructionSection(selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData): ReactElement
+{
+    const shipConstructions: PlayerDataType.ShipConstruction[] = selectedFullPlanetDataPredicted.dynamicPlanetData.shipConstructions;
+
+    if (shipConstructions.length === 0)
     {
         const emptyElement: ReactElement =
         (
@@ -201,11 +224,32 @@ function renderActiveConstructionSection(selectedFullPlanetDataPredicted: Player
         return emptyElement;
     }
 
-    const remainingMs: number = ShipData.getShipConstructionBatchRemainingMs(selectedFullPlanetDataPredicted) ?? 0;
+    const sortedConstructions: PlayerDataType.ShipConstruction[] = [...shipConstructions].sort(
+        (a: PlayerDataType.ShipConstruction, b: PlayerDataType.ShipConstruction): number =>
+        {
+            const aIsStarted: boolean = a.shipConstructionRow.started_at !== null;
+            const bIsStarted: boolean = b.shipConstructionRow.started_at !== null;
 
-    const rowElements: ReactElement[] = queuedBatchs.map((batch: PlayerDataType.ShipConstructionBatch, batchIndex: number): ReactElement =>
+            if (aIsStarted === true && bIsStarted === false)
+            {
+                return -1;
+            }
+
+            if (aIsStarted === false && bIsStarted === true)
+            {
+                return 1;
+            }
+
+            return 0;
+        }
+    );
+
+    const remainingMs: number = ShipConstructionData.getShipConstructionRemainingMs(selectedFullPlanetDataPredicted) ?? 0;
+
+    const rowElements: ReactElement[] = sortedConstructions.map((shipConstruction: PlayerDataType.ShipConstruction, index: number): ReactElement =>
     {
-        return renderBatchRow(batch, batchIndex, remainingMs);
+        const isActive: boolean = index === 0 && shipConstruction.shipConstructionRow.started_at !== null;
+        return renderRow(selectedFullPlanetDataPredicted, shipConstruction, serverData, isActive, remainingMs);
     });
 
     const element: ReactElement =
@@ -218,16 +262,17 @@ function renderActiveConstructionSection(selectedFullPlanetDataPredicted: Player
     return element;
 }
 
-function renderBatchRow(batch: PlayerDataType.ShipConstructionBatch, batchIndex: number, remainingMs: number): ReactElement
+function renderRow(fullPlanetData: PlayerDataType.FullPlanetData, shipConstruction: PlayerDataType.ShipConstruction, serverData: ServerDataType.ServerData, isActive: boolean, remainingMs: number): ReactElement
 {
-    const isActiveBatch: boolean = (batchIndex === 0);
-    const timerElement: ReactElement = renderBatchTimer(isActiveBatch, remainingMs);
+    const headerElement: ReactElement | null = isActive === true ? renderActiveConstructionHeader(shipConstruction) : null;
+    const timerElement: ReactElement = renderTimer(isActive, remainingMs, shipConstruction.shipConstructionRow.duration_at_request_time);
 
     const element: ReactElement =
     (
-        <div key={batch.batchId} className="flex flex-row border border-gray-400 rounded w-full h-24">
+        <div key={shipConstruction.shipConstructionRow.id} className="flex flex-row border border-gray-400 rounded w-full h-24">
             <div className="flex flex-col gap-1 px-6 py-3 border-r border-gray-400 flex-1 min-w-[160px] overflow-y-auto">
-                {renderBatchShipLines(batch)}
+                {headerElement}
+                {renderShipLines(fullPlanetData, shipConstruction, serverData)}
             </div>
             <div className="flex items-center justify-center px-6 py-3 w-[140px] shrink-0">
                 {timerElement}
@@ -238,9 +283,9 @@ function renderBatchRow(batch: PlayerDataType.ShipConstructionBatch, batchIndex:
     return element;
 }
 
-function renderBatchTimer(isActiveBatch: boolean, remainingMs: number): ReactElement
+function renderTimer(isActive: boolean, remainingMs: number, durationAtRequestTimeMs: number): ReactElement
 {
-    if (isActiveBatch === true)
+    if (isActive === true)
     {
         const activeElement: ReactElement =
         (
@@ -254,30 +299,53 @@ function renderBatchTimer(isActiveBatch: boolean, remainingMs: number): ReactEle
 
     const idleElement: ReactElement =
     (
-        <div className="text-sm text-gray-400">
-            nothing
+        <div className="flex flex-col items-center text-xs text-gray-400 text-center">
+            <div>Total at request:</div>
+            <div>{TimeFormat.formatRemainingTimeMs(durationAtRequestTimeMs)}</div>
         </div>
     );
 
     return idleElement;
 }
 
-function renderBatchShipLines(batch: PlayerDataType.ShipConstructionBatch): ReactElement[]
+function renderShipLines(fullPlanetData: PlayerDataType.FullPlanetData, shipConstruction: PlayerDataType.ShipConstruction, serverData: ServerDataType.ServerData): ReactElement[]
 {
+    const sortedRows: DBType.ShipConstructionShipRow[] = buildSortedShipRows(fullPlanetData, shipConstruction, serverData);
     const lineElements: ReactElement[] = [];
 
-    for (const shipConstructionRow of batch.shipConstructionRows)
+    for (const shipRow of sortedRows)
     {
-        const shipName: string = ThingType.getSpecificThingName(ThingType.ship(shipConstructionRow.ship_type));
+        const shipName: string = ThingType.getSpecificThingName(ThingType.ship(shipRow.ship_type));
 
         lineElements.push(
-            <div key={shipConstructionRow.ship_type} className="text-sm">
-                {shipName} / {shipConstructionRow.ship_quantity}
+            <div key={shipRow.ship_type} className="text-sm">
+                {shipName} x {shipRow.ship_quantity}
             </div>
         );
     }
 
     return lineElements;
+}
+
+function buildSortedShipRows(fullPlanetData: PlayerDataType.FullPlanetData, shipConstruction: PlayerDataType.ShipConstruction, serverData: ServerDataType.ServerData): DBType.ShipConstructionShipRow[]
+{
+    const sortedRows: DBType.ShipConstructionShipRow[] = [];
+    let startAtIndex: number | null = null;
+
+    while (true)
+    {
+        const nextIndex: number | null = ShipConstructionData.getNextShipConstructionShipRowIndex(fullPlanetData, shipConstruction, serverData, startAtIndex);
+
+        if (nextIndex === null)
+        {
+            break;
+        }
+
+        sortedRows.push(shipConstruction.shipConstructionShipRows[nextIndex]);
+        startAtIndex = nextIndex + 1;
+    }
+
+    return sortedRows;
 }
 
 function renderBuildableShipLines(buildableQuantities: Map<number, number>): ReactElement
@@ -339,7 +407,7 @@ function renderBuildPreviewContent(fullPlanetData: PlayerDataType.FullPlanetData
         return null;
     }
 
-    const buildableQuantities: Map<number, number> = ShipData.computeMaxAffordableShipQuantities(fullPlanetData, requestedMap);
+    const buildableQuantities: Map<number, number> = ShipConstructionData.computeMaxAffordableShipQuantities(fullPlanetData, requestedMap);
 
     if (buildableQuantities.size === 0)
     {
@@ -350,8 +418,8 @@ function renderBuildPreviewContent(fullPlanetData: PlayerDataType.FullPlanetData
         );
     }
 
-    const totalDurationSeconds: number = ShipData.computeShipQuantitiesConstructionDurationSeconds(buildableQuantities, fullPlanetData, serverData);
-    const totalCost: Map<number, number> = ShipData.computeShipConstructionBatchCost(buildableQuantities);
+    const totalDurationSeconds: number = ShipConstructionData.computeShipQuantitiesConstructionDurationSeconds(buildableQuantities, fullPlanetData, serverData);
+    const totalCost: Map<number, number> = ShipConstructionData.computeShipConstructionCost(buildableQuantities);
 
     const element: ReactElement =
     (
@@ -380,7 +448,7 @@ function renderBuildButton(fullPlanetData: PlayerDataType.FullPlanetData, server
         return null;
     }
     
-    const buildableQuantities: Map<number, number> = ShipData.computeMaxAffordableShipQuantities(fullPlanetData, requestedMap);
+    const buildableQuantities: Map<number, number> = ShipConstructionData.computeMaxAffordableShipQuantities(fullPlanetData, requestedMap);
 
     const element: ReactElement =
     (
@@ -468,7 +536,7 @@ function renderShipyardBody(props: ShipyardViewProps, fullPlanetDataPredicted: P
     const buildButton: ReactElement | null = renderBuildButton(fullPlanetDataPredicted, serverData, requestedMap, hasRequestedData, onBuildAll);
     const previewSlot: ReactElement = renderPreviewSlot(previewContent, buildButton);
     const buildRowElements: ReactElement = renderShipBuildRows(props, shipTypes, fullPlanetDataPredicted, serverData, quantitiesState.requestedQuantities, quantitiesState.setRequestedQuantity);
-    const activeConstructionElements: ReactElement = renderActiveConstructionSection(fullPlanetDataPredicted);
+    const activeConstructionElements: ReactElement = renderActiveConstructionSection(fullPlanetDataPredicted, serverData);
 
     return renderShipyardLayout(previewSlot, buildRowElements, activeConstructionElements);
 }

@@ -1,4 +1,4 @@
-import { useRouter } from "next/navigation";
+﻿import { useRouter } from "next/navigation";
 import { ReactElement } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
@@ -44,6 +44,7 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	            <button onClick={() => props.cvController[1]("upgrades")} className={navButtonClass}>Upgrades</button>
 	            <button onClick={() => props.cvController[1]("shipyard")} className={navButtonClass}>Shipyard</button>
 	            <button onClick={() => props.cvController[1]("fleets")} className={navButtonClass}>Fleets</button>
+	            <button onClick={() => props.cvController[1]("planets")} className={navButtonClass}>Planets</button>
 	            <button onClick={() => props.cvController[1]("stats")} className={navButtonClass}>Stats</button>
 	        </div>
 

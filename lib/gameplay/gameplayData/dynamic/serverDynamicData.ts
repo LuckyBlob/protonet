@@ -3,6 +3,11 @@ import Database from "better-sqlite3";
 import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
 import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipConstructionData";
+import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
+import * as ServerRequestFunctions from "@/lib/networkRequests/server/serverRequestFunctions";
+import * as ServerData from "@/lib/gameplay/gameplayData/server/serverData"
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 
 export function serverUpdatePlanetDataContext(planetId: number, dataContext: PlayerDataType.DataContext, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
 {
@@ -27,12 +32,17 @@ export function serverUpdatePlanetDataContext(planetId: number, dataContext: Pla
             }
             case PlayerDataType.DataContext.ShipConstruction:
             {
-                updateShipConstructionBatchs(planetId, dynamicPlanetData);
+                updateShipConstructions(planetId, dynamicPlanetData);
                 break;
             }
             case PlayerDataType.DataContext.FutureFleetArrivals:
             {
                 updateFutureFleetArrivals(planetId, dynamicPlanetData);
+                break;
+            }
+            case PlayerDataType.DataContext.BuildingUpgrade:
+            {
+                updateBuildingUpgrades(planetId, dynamicPlanetData);
                 break;
             }
             default:
@@ -48,8 +58,9 @@ export function getDynamicPlanetData(planetId: number): PlayerDataType.DynamicPl
         resourceQuantity: getDynamicPlanetResourceData(planetId),
         buildingLevels: getDynamicPlanetBuildingData(planetId),
         shipQuantity: getDynamicPlanetShipData(planetId),
-        queuedShipConstructionBatchs: getDynamicPlanetShipConstructionBatchData(planetId),
+        shipConstructions: getDynamicPlanetShipConstructionData(planetId),
         futureFleetArrivals: getDynamicPlanetFutureFleetArrivalData(planetId),
+        buildingUpgrades: getDynamicPlanetBuildingUpgradeData(planetId),
     };
 }
 
@@ -92,35 +103,61 @@ export function getDynamicPlanetShipData(planetId: number): Map<number, number>
     return shipQuantities;
 }
 
-export function getDynamicPlanetShipConstructionBatchData(planetId: number): PlayerDataType.ShipConstructionBatch[]
+export function getDynamicPlanetShipConstructionData(planetId: number): PlayerDataType.ShipConstruction[]
 {
-    const shipConstructionRows: DBType.ShipConstructionRow[] = DB.databaseConnection.prepare(
-        "SELECT id, planet_id, batch_id, ship_type, ship_quantity FROM ship_construction WHERE planet_id = ? ORDER BY batch_id"
-    ).all(planetId) as DBType.ShipConstructionRow[];
-
-    const batchMap: Map<number, PlayerDataType.ShipConstructionBatch> = new Map<number, PlayerDataType.ShipConstructionBatch>();
-    const batches: PlayerDataType.ShipConstructionBatch[] = [];
-
-    for (const shipConstructionRow of shipConstructionRows)
+    return DB.databaseConnection.transaction((): PlayerDataType.ShipConstruction[] =>
     {
-        const existingBatch: PlayerDataType.ShipConstructionBatch | undefined = batchMap.get(shipConstructionRow.batch_id);
+        const shipConstructions: PlayerDataType.ShipConstruction[] = [];
 
-        if (existingBatch === undefined)
+        const shipConstructionRows: DBType.ShipConstructionRow[] = DB.databaseConnection.prepare(
+            "SELECT * FROM ship_construction WHERE planet_id = ? ORDER BY id"
+        ).all(planetId) as DBType.ShipConstructionRow[];
+
+        for (const shipConstructionRow of shipConstructionRows)
         {
-            const newBatch: PlayerDataType.ShipConstructionBatch =
+            const shipConstructionShipRows: DBType.ShipConstructionShipRow[] = DB.databaseConnection.prepare(
+                "SELECT * FROM ship_construction_ship WHERE ship_construction_id = ?"
+            ).all(shipConstructionRow.id) as DBType.ShipConstructionShipRow[];
+
+            const newShipConstruction: PlayerDataType.ShipConstruction =
             {
-                shipConstructionRows: [shipConstructionRow],
-                batchId: shipConstructionRow.batch_id,
+                shipConstructionRow: shipConstructionRow,
+                shipConstructionShipRows: shipConstructionShipRows,
             };
-            batchMap.set(shipConstructionRow.batch_id, newBatch);
-            batches.push(newBatch);
-            continue;
+            shipConstructions.push(newShipConstruction);
         }
 
-        existingBatch.shipConstructionRows.push(shipConstructionRow);
-    }
+        return shipConstructions;
+    })();
+}
 
-    return batches;
+export function getDynamicPlanetBuildingUpgradeData(planetId: number): PlayerDataType.BuildingUpgrade[]
+{
+    return DB.databaseConnection.transaction((): PlayerDataType.BuildingUpgrade[] =>
+    {
+        const buildingUpgrades: PlayerDataType.BuildingUpgrade[] = [];
+
+        const buildingUpgradeRows: DBType.BuildingUpgradeRow[] = DB.databaseConnection.prepare(
+            "SELECT * FROM building_upgrade WHERE planet_id = ?"
+        ).all(planetId) as DBType.BuildingUpgradeRow[];
+
+        for (const buildingUpgradeRow of buildingUpgradeRows)
+        {
+            const buildingUpgradeBuildingRows: DBType.BuildingUpgradeBuildingRow[] = DB.databaseConnection.prepare(
+                "SELECT * FROM building_upgrade_building WHERE building_upgrade_id = ?"
+            ).all(buildingUpgradeRow.id) as DBType.BuildingUpgradeBuildingRow[];
+
+            const newBuildingUpgrade: PlayerDataType.BuildingUpgrade =
+            {
+                buildingUpgradeRow: buildingUpgradeRow,
+                buildingUpgradeBuildingRows: buildingUpgradeBuildingRows,
+            };
+
+            buildingUpgrades.push(newBuildingUpgrade);
+        }
+
+        return buildingUpgrades;
+    })();
 }
 
 export function getDynamicPlanetFutureFleetArrivalData(planetId: number): PlayerDataType.FleetMovement[]
@@ -208,24 +245,144 @@ function updateShipQuantities(planetId: number, dynamicPlanetData: PlayerDataTyp
     transaction();
 }
 
-function updateShipConstructionBatchs(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateShipConstructions(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
         DB.databaseConnection.prepare("DELETE FROM ship_construction WHERE planet_id = ?").run(planetId);
+        // On delete cascade will delete ship_construction_ship rows
         const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO ship_construction (planet_id, batch_id, ship_type, ship_quantity) VALUES (?, ?, ?, ?)"
+            "INSERT INTO ship_construction (planet_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_ship_construction_ship_row_id) VALUES (?, ?, ?, ?, ?, ?) RETURNING id"
         );
-        for (const shipConstructionBatch of dynamicPlanetData.queuedShipConstructionBatchs)
+        const insertShipStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO ship_construction_ship (ship_construction_id, ship_type, ship_quantity) VALUES (?, ?, ?) RETURNING id"
+        );
+
+        if (dynamicPlanetData.shipConstructions.length === 0)
         {
-            for (const shipConstructionRow of shipConstructionBatch.shipConstructionRows)
+            return;
+        }
+
+        // Read and get all the new IDs.
+        for (const shipConstruction of dynamicPlanetData.shipConstructions)
+        {
+            const shipConstructionRow: DBType.ShipConstructionRow = shipConstruction.shipConstructionRow;
+            const constructionIdResult: { id: number } = insertStatement.get(
+                planetId,
+                shipConstructionRow.requested_at,
+                shipConstructionRow.duration_at_request_time,
+                shipConstructionRow.duration_at_start_time,
+                shipConstructionRow.started_at,
+                shipConstructionRow.current_ship_construction_ship_row_id,
+            ) as { id: number };
+
+            shipConstructionRow.id = constructionIdResult.id;
+
+            let firstShipConstructionShipRowId: number | null = null;
+            for (const shipConstructionShipRow of shipConstruction.shipConstructionShipRows)
             {
-                insertStatement.run(
-                    planetId,
-                    shipConstructionRow.batch_id,
-                    shipConstructionRow.ship_type,
-                    shipConstructionRow.ship_quantity,
-                );
+                const shipRowIdResult: { id: number } = insertShipStatement.get(
+                    shipConstructionRow.id,
+                    shipConstructionShipRow.ship_type,
+                    shipConstructionShipRow.ship_quantity,
+                ) as { id: number };
+
+                const oldShipRowId: number = shipConstructionShipRow.id;
+                shipConstructionShipRow.id = shipRowIdResult.id;
+
+                if (oldShipRowId !== -1)
+                {
+                    // if we were pointing to the old ship row id, update to the new one
+                    if (shipConstructionRow.current_ship_construction_ship_row_id === oldShipRowId)
+                    {
+                        shipConstructionRow.current_ship_construction_ship_row_id = shipConstructionShipRow.id;
+                        DB.databaseConnection.prepare(
+                            "UPDATE ship_construction SET current_ship_construction_ship_row_id = ? WHERE id = ?"
+                        ).run(shipConstructionShipRow.id, shipConstructionRow.id);
+                    }
+                }
+                else
+                {
+                    if (firstShipConstructionShipRowId === null)
+                    {
+                        firstShipConstructionShipRowId = shipConstructionShipRow.id;
+                        shipConstructionRow.current_ship_construction_ship_row_id = firstShipConstructionShipRowId;
+                        DB.databaseConnection.prepare(
+                            "UPDATE ship_construction SET current_ship_construction_ship_row_id = ? WHERE id = ?"
+                        ).run(firstShipConstructionShipRowId, shipConstructionRow.id);
+                    }
+                }
+            }
+        }
+    });
+    transaction();
+}
+
+function updateBuildingUpgrades(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        DB.databaseConnection.prepare("DELETE FROM building_upgrade WHERE planet_id = ?").run(planetId);
+        // On delete cascade will delete building_upgrade_building rows
+        const insertUpgradeStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO building_upgrade (planet_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_building_upgrade_building_row_id) VALUES (?, ?, ?, ?, ?, ?) RETURNING id"
+        );
+        const insertBuildingStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO building_upgrade_building (building_upgrade_id, building_type) VALUES (?, ?) RETURNING id"
+        );
+
+        if (dynamicPlanetData.buildingUpgrades.length === 0)
+        {
+            return;
+        }
+
+        for (const buildingUpgrade of dynamicPlanetData.buildingUpgrades)
+        {
+            const buildingUpgradeRow: DBType.BuildingUpgradeRow = buildingUpgrade.buildingUpgradeRow;
+            const upgradeIdResult: { id: number } = insertUpgradeStatement.get(
+                planetId,
+                buildingUpgradeRow.requested_at,
+                buildingUpgradeRow.duration_at_request_time,
+                buildingUpgradeRow.duration_at_start_time,
+                buildingUpgradeRow.started_at,
+                buildingUpgradeRow.current_building_upgrade_building_row_id,
+            ) as { id: number };
+
+            buildingUpgradeRow.id = upgradeIdResult.id;
+
+            let firstBuildingUpgradeBuildingRowId: number | null = null;
+            for (const buildingUpgradeBuildingRow of buildingUpgrade.buildingUpgradeBuildingRows)
+            {
+                const buildingRowIdResult: { id: number } = insertBuildingStatement.get(
+                    buildingUpgradeRow.id,
+                    buildingUpgradeBuildingRow.building_type,
+                ) as { id: number };
+
+                const oldBuildingRowId: number = buildingUpgradeBuildingRow.id;
+                buildingUpgradeBuildingRow.id = buildingRowIdResult.id;
+
+                if (oldBuildingRowId !== -1)
+                {
+                    // if we were pointing to the old building row id, update to the new one
+                    if (buildingUpgradeRow.current_building_upgrade_building_row_id === oldBuildingRowId)
+                    {
+                        buildingUpgradeRow.current_building_upgrade_building_row_id = buildingUpgradeBuildingRow.id;
+                        DB.databaseConnection.prepare(
+                            "UPDATE building_upgrade SET current_building_upgrade_building_row_id = ? WHERE id = ?"
+                        ).run(buildingUpgradeBuildingRow.id, buildingUpgradeRow.id);
+                    }
+                }
+                else
+                {
+                    if (firstBuildingUpgradeBuildingRowId === null)
+                    {
+                        firstBuildingUpgradeBuildingRowId = buildingUpgradeBuildingRow.id;
+                        buildingUpgradeRow.current_building_upgrade_building_row_id = firstBuildingUpgradeBuildingRowId;
+                        DB.databaseConnection.prepare(
+                            "UPDATE building_upgrade SET current_building_upgrade_building_row_id = ? WHERE id = ?"
+                        ).run(firstBuildingUpgradeBuildingRowId, buildingUpgradeRow.id);
+                    }
+                }
             }
         }
     });
@@ -239,7 +396,7 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: PlayerDa
         DB.databaseConnection.prepare("DELETE FROM fleet_movement WHERE planet_origin_id = ? OR planet_target_id = ?").run(planetId, planetId);
         // On delete cascade will delete the ship rows and resource rows
         const fleetMovementStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO fleet_movement VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
+            "INSERT INTO fleet_movement (seed, player_origin_id, planet_origin_id, player_target_id, planet_target_id, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
         );
         const fleetMovementShipStatement: Database.Statement = DB.databaseConnection.prepare(
             "INSERT INTO fleet_movement_ship VALUES (?, ?, ?)"
@@ -256,10 +413,12 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: PlayerDa
                 fleetMovement.fleetMovementRow.planet_origin_id,
                 fleetMovement.fleetMovementRow.player_target_id,
                 fleetMovement.fleetMovementRow.planet_target_id,
-                fleetMovement.fleetMovementRow.departure_time,
-                fleetMovement.fleetMovementRow.arrival_time,
                 fleetMovement.fleetMovementRow.is_return_trip,
                 fleetMovement.fleetMovementRow.fleet_action_type,
+                fleetMovement.fleetMovementRow.requested_at,
+                fleetMovement.fleetMovementRow.duration_at_request_time,
+                fleetMovement.fleetMovementRow.duration_at_start_time,
+                fleetMovement.fleetMovementRow.started_at,
             ) as { id: number };
             
             for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)

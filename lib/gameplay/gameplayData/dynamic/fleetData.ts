@@ -183,7 +183,6 @@ export function clampResoucesToAddToFleet(shipQuantities: Map<number, number>, f
     return resourcesActuallyOnBoard;
 }
 
-// client side only
 export function resolveFleetMovementAtTarget(playerData: PlayerDataType.PlayerData, fleetMovement: PlayerDataType.FleetMovement, fleetPlayerDataPair: FleetPlayerDataPair): void
 {
 	switch (fleetMovement.fleetMovementRow.fleet_action_type)
@@ -219,15 +218,12 @@ function resolveStationAction(playerData: PlayerDataType.PlayerData, fleetMoveme
 		throw new Error(`Didnt find target planet when stationning ${fleetMovement.fleetMovementRow.planet_target_id} for player ${playerData.playerRow.id}.`)
 	}
 
-	const originFullPlanetData: PlayerDataType.FullPlanetData | undefined = playerData.fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData) => 
+	// Origin planet only exists in our data if we also sent the fleet. If the fleet came from another player,
+	// the origin belongs to them and won't be found here — that's fine, their data is updated separately.
+	const originFullPlanetData: PlayerDataType.FullPlanetData | undefined = playerData.fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData) =>
 	{
 		return fullPlanetData.planetRow.id === fleetMovement.fleetMovementRow.planet_origin_id;
 	});
-
-	if (originFullPlanetData === undefined)
-	{
-		throw new Error(`Didnt find origin planet when stationning ${fleetMovement.fleetMovementRow.planet_target_id} for player ${playerData.playerRow.id}.`)
-	}
 
 	for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)
 	{
@@ -240,7 +236,10 @@ function resolveStationAction(playerData: PlayerDataType.PlayerData, fleetMoveme
 	}
 
 	FleetData.removeFleetMovement(playerData, fleetMovement.fleetMovementRow.id, targetFullPlanetData.planetRow.id);
-	FleetData.removeFleetMovement(playerData, fleetMovement.fleetMovementRow.id, originFullPlanetData.planetRow.id);
+	if (originFullPlanetData !== undefined)
+	{
+		FleetData.removeFleetMovement(playerData, fleetMovement.fleetMovementRow.id, originFullPlanetData.planetRow.id);
+	}
 	fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.Resolved;
 }
 

@@ -36,8 +36,9 @@ type SerializedDynamicPlanetData =
 	resourceQuantity: [number, number][];
 	buildingLevels: [number, number][];
 	shipQuantity: [number, number][];
-	queuedShipConstructionBatchs: PlayerDataType.ShipConstructionBatch[];
+	shipConstructions: PlayerDataType.ShipConstruction[];
 	futureFleetArrivals: PlayerDataType.FleetMovement[];
+	buildingUpgrades: PlayerDataType.BuildingUpgrade[];
 };
 
 type SerializedFullPlanetData =
@@ -56,8 +57,9 @@ function serializeFullPlanetData(fullPlanetData: PlayerDataType.FullPlanetData):
 			resourceQuantity: [...fullPlanetData.dynamicPlanetData.resourceQuantity],
 			buildingLevels: [...fullPlanetData.dynamicPlanetData.buildingLevels],
 			shipQuantity: [...fullPlanetData.dynamicPlanetData.shipQuantity],
-			queuedShipConstructionBatchs: [...fullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs],
+			shipConstructions: [...fullPlanetData.dynamicPlanetData.shipConstructions],
 			futureFleetArrivals: [...fullPlanetData.dynamicPlanetData.futureFleetArrivals],
+			buildingUpgrades: [...fullPlanetData.dynamicPlanetData.buildingUpgrades],
 		},
 	};
 
@@ -71,6 +73,7 @@ export type SerializedPlayerData =
 	playerRow: DBType.PlayerRow;
 	fullPlanetDatas: SerializedFullPlanetData[];
 	publicPlanetRows: DBType.PublicPlanetRow[];
+	publicPlayerRows: DBType.PublicPlayerRow[];
 };
 
 export function serializePlayerData(playerData: PlayerDataType.PlayerData): SerializedPlayerData
@@ -85,6 +88,7 @@ export function serializePlayerData(playerData: PlayerDataType.PlayerData): Seri
 		playerRow: playerData.playerRow,
 		fullPlanetDatas: serializedFullPlanetDatas,
 		publicPlanetRows: playerData.publicPlanetRows,
+		publicPlayerRows: playerData.publicPlayerRows,
 	};
 
 	return serialized;
@@ -100,8 +104,9 @@ function deserializeFullPlanetData(serialized: SerializedFullPlanetData): Player
 			resourceQuantity: new Map<number, number>(serialized.dynamicPlanetData.resourceQuantity),
 			buildingLevels: new Map<number, number>(serialized.dynamicPlanetData.buildingLevels),
 			shipQuantity: new Map<number, number>(serialized.dynamicPlanetData.shipQuantity),
-			queuedShipConstructionBatchs: serialized.dynamicPlanetData.queuedShipConstructionBatchs,
+			shipConstructions: serialized.dynamicPlanetData.shipConstructions,
 			futureFleetArrivals: serialized.dynamicPlanetData.futureFleetArrivals,
+			buildingUpgrades: serialized.dynamicPlanetData.buildingUpgrades ?? [],
 		},
 	};
 
@@ -120,6 +125,7 @@ export function deserializePlayerData(serialized: SerializedPlayerData): PlayerD
 		playerRow: serialized.playerRow,
 		fullPlanetDatas: fullPlanetDatas,
 		publicPlanetRows: serialized.publicPlanetRows,
+		publicPlayerRows: serialized.publicPlayerRows,
 	};
 
 	return playerData;

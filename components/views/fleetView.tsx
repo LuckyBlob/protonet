@@ -56,19 +56,39 @@ function renderFleetMovementRow(fleetMovement: PlayerDataType.FleetMovement, pub
     const targetAddress: string = formatPlanetAddress(fleetMovementRow.planet_target_id, publicPlanetRows);
     const actionName: string = GameType.FLEET_ACTION_NAMES.get(fleetMovementRow.fleet_action_type) ?? `Unknown (${fleetMovementRow.fleet_action_type})`;
     const isReturnTrip: boolean = fleetMovementRow.is_return_trip === 1;
-    const remainingMs: number = fleetMovementRow.arrival_time - Date.now();
-    const formattedRemainingTime: string = TimeFormat.formatRemainingTimeMs(remainingMs);
+    if (fleetMovementRow.started_at === null || fleetMovementRow.duration_at_start_time === null)
+    {
+        throw new Error(`Fleet movement ${fleetMovementRow.id} has no started_at or duration_at_start_time.`);
+    }
+    const arrivalTime: number = fleetMovementRow.started_at + fleetMovementRow.duration_at_start_time;
+    const remainingMs: number = arrivalTime - Date.now();
+    if (remainingMs < 0 && fleetMovement.resolutionState === PlayerDataType.FleetMovementResolution.ResolveResultUnknown)
+    {
+        const element: ReactElement =
+        (
+            <div key={fleetMovementRow.id} className="border border-gray-400 rounded px-4 py-2 text-sm text-white w-full">
+                <div>{originAddress} → {targetAddress}</div>
+                <div className="text-sm font-semibold text-yellow-400">Unknown result.</div>
+            </div>
+        );
 
-    const element: ReactElement =
-    (
-        <div key={fleetMovementRow.id} className="border border-gray-400 rounded px-4 py-2 text-sm text-white w-full">
-            <div>{originAddress} → {targetAddress}</div>
-            <div>{actionName}{isReturnTrip ? " (return)" : ""}</div>
-            <div className="text-gray-400">{formattedRemainingTime}</div>
-        </div>
-    );
+        return element;
+    }
+    else
+    {
+        const formattedRemainingTime: string = TimeFormat.formatRemainingTimeMs(remainingMs);
 
-    return element;
+        const element: ReactElement =
+        (
+            <div key={fleetMovementRow.id} className="border border-gray-400 rounded px-4 py-2 text-sm text-white w-full">
+                <div>{originAddress} → {targetAddress}</div>
+                <div>{actionName}{isReturnTrip ? " (return)" : ""}</div>
+                <div className="text-gray-400">{formattedRemainingTime}</div>
+            </div>
+        );
+
+        return element;
+    }
 }
 
 function renderFleetMovementsSection(props: FleetViewProps): ReactElement

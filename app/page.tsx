@@ -15,7 +15,6 @@ export default function Home()
 	const clientDataStateResult: UseClientDataState.ClientDataStateResult = UseClientDataState.useClientDataState(cuController[0].user !== null);
 	const cvController: UseCurrentView.CVController = UseCurrentView.useCurrentView();
 
-
 	UseAnimationTimer.useAnimationTimer(clientDataStateResult);
 
 	if (MainPageContent.shouldShowLoading(cuController, clientDataStateResult))

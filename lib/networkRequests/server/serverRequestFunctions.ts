@@ -26,6 +26,8 @@ import * as ShipFuelConsumption from "@/lib/gameplay/coreData/formula/shipFuelCo
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMovementDurationFormulas";
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
+import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipConstructionData";
+import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
 //#region Types
 
 type PlayerActionResult =
@@ -354,6 +356,14 @@ export function serverGetPlayerRow(playerId: number): DBType.PlayerRow
     return playerRow;
 }
 
+export function serverGetPublicPlayerRows(): DBType.PublicPlayerRow[]
+{
+    const publicPlayerRows: DBType.PublicPlayerRow[] = DB.databaseConnection.prepare(
+        "SELECT player.id, users.username FROM player JOIN users ON player.user_id = users.id"
+    ).all() as DBType.PublicPlayerRow[];
+    return publicPlayerRows;
+}
+
 export function serverGetPlayerData(playerId: number): PlayerDataType.PlayerData
 {
     const playerData: PlayerDataType.PlayerData =
@@ -361,8 +371,26 @@ export function serverGetPlayerData(playerId: number): PlayerDataType.PlayerData
         playerRow: serverGetPlayerRow(playerId),
         fullPlanetDatas: serverGetFullPlanetDatas(playerId),
         publicPlanetRows: serverFindAllPlanetsPublic(),
+        publicPlayerRows: serverGetPublicPlayerRows(),
     };
     return playerData;
+}
+
+export function serverGetFullPlanetData(planetId: number): PlayerDataType.FullPlanetData
+{
+    const planetRow: DBType.PlanetRow = DB.databaseConnection.prepare(
+        "SELECT * FROM planet WHERE id = ?"
+    ).get(planetId) as DBType.PlanetRow;
+
+    const dynamicPlanetData: PlayerDataType.DynamicPlanetData = ServerDynamicData.getDynamicPlanetData(planetId);
+
+    const fullPlanetData: PlayerDataType.FullPlanetData =
+    {
+        planetRow: planetRow,
+        dynamicPlanetData: dynamicPlanetData,
+    };
+
+    return fullPlanetData;
 }
 
 export function serverUpdatePlayerColumns(playerId: number, columnUpdates: Partial<DBType.PlayerRow>): DBType.PlayerRow
@@ -548,58 +576,69 @@ export function getFullPlanetDataByCoords(galaxy: number, system: number, slot: 
 
 function rescaleBuildingUpgradeTimes(rescaleFactor: number, now: number): void
 {
-    const activeBuildRows: { id: number; building_upgrade_completes_at: number }[] = DB.databaseConnection.prepare(
-        "SELECT id, building_upgrade_completes_at FROM planet WHERE building_upgrade_completes_at != 0"
-    ).all() as { id: number; building_upgrade_completes_at: number }[];
+    const activeUpgradeRows: { id: number; started_at: number; duration_at_start_time: number }[] = DB.databaseConnection.prepare(
+        "SELECT id, started_at, duration_at_start_time FROM building_upgrade WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL"
+    ).all() as { id: number; started_at: number; duration_at_start_time: number }[];
 
-    for (const buildRow of activeBuildRows)
+    for (const upgradeRow of activeUpgradeRows)
     {
-        const realMsRemaining: number = buildRow.building_upgrade_completes_at - now;
+        const completesAt: number = upgradeRow.started_at + upgradeRow.duration_at_start_time;
+        const realMsRemaining: number = completesAt - now;
+
         if (realMsRemaining <= 0)
         {
             continue;
         }
-        const newCompletesAt: number = now + Math.floor(realMsRemaining * rescaleFactor);
-        serverUpdatePlanetRow(buildRow.id, { building_upgrade_completes_at: newCompletesAt });
+
+        const newDurationAtStartTime: number = (now - upgradeRow.started_at) + Math.floor(realMsRemaining * rescaleFactor);
+        DB.databaseConnection.prepare(
+            "UPDATE building_upgrade SET duration_at_start_time = ? WHERE id = ?"
+        ).run(newDurationAtStartTime, upgradeRow.id);
     }
 }
 
 function rescaleFleetMovementTimes(rescaleFactor: number, now: number): void
 {
-    const activeFleetRows: { id: number; arrival_time: number }[] = DB.databaseConnection.prepare(
-        "SELECT id, arrival_time FROM fleet_movement WHERE arrival_time > ?"
-    ).all(now) as { id: number; arrival_time: number }[];
+    const activeFleetRows: { id: number; started_at: number; duration_at_start_time: number }[] = DB.databaseConnection.prepare(
+        "SELECT id, started_at, duration_at_start_time FROM fleet_movement WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL AND (started_at + duration_at_start_time) > ?"
+    ).all(now) as { id: number; started_at: number; duration_at_start_time: number }[];
 
     for (const fleetRow of activeFleetRows)
     {
-        const realMsRemaining: number = fleetRow.arrival_time - now;
+        const completesAt: number = fleetRow.started_at + fleetRow.duration_at_start_time;
+        const realMsRemaining: number = completesAt - now;
         if (realMsRemaining <= 0)
         {
             continue;
         }
 
-        const newArrivalTime: number = now + Math.floor(realMsRemaining * rescaleFactor);
+        const newDurationAtStartTime: number = (now - fleetRow.started_at) + Math.floor(realMsRemaining * rescaleFactor);
         DB.databaseConnection.prepare(
-            "UPDATE fleet_movement SET arrival_time = ? WHERE id = ?"
-        ).run(newArrivalTime, fleetRow.id);
+            "UPDATE fleet_movement SET duration_at_start_time = ? WHERE id = ?"
+        ).run(newDurationAtStartTime, fleetRow.id);
     }
 }
 
 function rescaleShipConstructionTimes(rescaleFactor: number, now: number): void
 {
-    const activeShipBatchRows: { id: number; ship_construction_batch_completes_at: number }[] = DB.databaseConnection.prepare(
-        "SELECT id, ship_construction_batch_completes_at FROM planet WHERE ship_construction_batch_completes_at != 0"
-    ).all() as { id: number; ship_construction_batch_completes_at: number }[];
+    const activeConstructionRows: { id: number; started_at: number; duration_at_start_time: number }[] = DB.databaseConnection.prepare(
+        "SELECT id, started_at, duration_at_start_time FROM ship_construction WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL"
+    ).all() as { id: number; started_at: number; duration_at_start_time: number }[];
 
-    for (const shipBatchRow of activeShipBatchRows)
+    for (const constructionRow of activeConstructionRows)
     {
-        const realMsRemaining: number = shipBatchRow.ship_construction_batch_completes_at - now;
+        const completesAt: number = constructionRow.started_at + constructionRow.duration_at_start_time;
+        const realMsRemaining: number = completesAt - now;
+
         if (realMsRemaining <= 0)
         {
             continue;
         }
-        const newCompletesAt: number = now + Math.floor(realMsRemaining * rescaleFactor);
-        serverUpdatePlanetRow(shipBatchRow.id, { ship_construction_batch_completes_at: newCompletesAt });
+
+        const newDurationAtStartTime: number = (now - constructionRow.started_at) + Math.floor(realMsRemaining * rescaleFactor);
+        DB.databaseConnection.prepare(
+            "UPDATE ship_construction SET duration_at_start_time = ? WHERE id = ?"
+        ).run(newDurationAtStartTime, constructionRow.id);
     }
 }
 
@@ -671,11 +710,6 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: ServerData
         return { success: false, failureReason: "Building doesnt meet requirements.", playerStateResult: playerData };
     }
 
-    if (relevantFullPlanetData.planetRow.building_upgrade_completes_at !== 0)
-    {
-        return { success: false, failureReason: "Upgrade already in progress.", playerStateResult: playerData };
-    }
-
     const canAffordUpgrade: boolean = BuildingData.canAffordUpgrade(relevantFullPlanetData, requestData.buildingType);
     if (canAffordUpgrade === false)
     {
@@ -708,17 +742,58 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: ServerData
         }
     }
 
+    const newBuildingUpgradeBuildingRows: DBType.BuildingUpgradeBuildingRow[] = [];
+    const newBuildingUpgradeBuildingRow: DBType.BuildingUpgradeBuildingRow = 
+    {
+        id: -1,
+        building_upgrade_id: -1,
+        building_type: requestData.buildingType,
+    }
+    newBuildingUpgradeBuildingRows.push(newBuildingUpgradeBuildingRow);
+    const newBuildingUpgradeRow: DBType.BuildingUpgradeRow = 
+    {
+        id: -1,
+        planet_id: relevantFullPlanetData.planetRow.id,
+        requested_at: now,
+        duration_at_request_time: buildDurationSeconds * 1000,
+        duration_at_start_time: null,
+        started_at: null,
+        current_building_upgrade_building_row_id: -1,
+    };
+    const newBuildingUpgrade: PlayerDataType.BuildingUpgrade =
+    {
+        buildingUpgradeRow: newBuildingUpgradeRow,
+        buildingUpgradeBuildingRows: newBuildingUpgradeBuildingRows,
+    };
+
+    const index: number | null = BuildingUpgradeData.getNextBuildingUpgradeBuildingRowIndex(playerData, relevantFullPlanetData, newBuildingUpgrade, serverData);
+    if (index === null)
+    {
+        throw new Error("Failed to get first building upgrade building row.");
+    }
+    // swap the first upgrade building row to start building to ensure it's in first place.
+    [newBuildingUpgrade.buildingUpgradeBuildingRows[0], newBuildingUpgrade.buildingUpgradeBuildingRows[index]] = [newBuildingUpgrade.buildingUpgradeBuildingRows[index], newBuildingUpgrade.buildingUpgradeBuildingRows[0]];
+    const firstBuildingUpgradeBuildingRow: DBType.BuildingUpgradeBuildingRow = newBuildingUpgrade.buildingUpgradeBuildingRows[0];
+
+    // No constructions? Means we can start this one right away.
+    if (relevantFullPlanetData.dynamicPlanetData.buildingUpgrades.length === 0)
+    {
+        newBuildingUpgrade.buildingUpgradeRow.started_at = now;
+        const firstUpgradeTimeSeconds: number | null = BuildingUpgradeData.getBuildingUpgradeDurationSeconds(playerData, firstBuildingUpgradeBuildingRow.building_type, relevantFullPlanetData, serverData);
+        if (firstUpgradeTimeSeconds === null)
+        {
+            throw new Error("First firstBuildingUpgradeBuildingRow cant be null.");
+        }
+
+        newBuildingUpgrade.buildingUpgradeRow.duration_at_start_time = firstUpgradeTimeSeconds * 1000;
+    }
+    relevantFullPlanetData.dynamicPlanetData.buildingUpgrades.push(newBuildingUpgrade);
+
     const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
-        const buildCompletesAtMilliseconds: number = now + buildDurationSeconds * 1000;
-        const updatedPlanetRow: DBType.PlanetRow = serverUpdatePlanetRow(relevantFullPlanetData.planetRow.id,
-        {
-            building_upgrade_completes_at: buildCompletesAtMilliseconds,
-            building_being_upgraded: requestData.buildingType,
-        });
-
         ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, relevantFullPlanetData.dynamicPlanetData);
         ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingUpgrade, relevantFullPlanetData.dynamicPlanetData);
 
         const playerActionResult: PlayerActionResult =
         {
@@ -757,19 +832,19 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
         }
     }
 
-    const possibleRequestedShipQuantities: Map<number, number> = ShipData.computeMaxAffordableShipQuantities(relevantFullPlanetData, requestedShipQuantities);
+    const possibleRequestedShipQuantities: Map<number, number> = ShipConstructionData.computeMaxAffordableShipQuantities(relevantFullPlanetData, requestedShipQuantities);
     if (possibleRequestedShipQuantities.size === 0)
     {
         return { success: false, failureReason: "Not enough resources.", playerStateResult: playerData };
     }
 
-    const batchDurationSeconds: number = ShipData.computeShipQuantitiesConstructionDurationSeconds(possibleRequestedShipQuantities, relevantFullPlanetData, serverData);
-    if (batchDurationSeconds <= 0)
+    const shipConstructionDurationSeconds: number = ShipConstructionData.computeShipQuantitiesConstructionDurationSeconds(possibleRequestedShipQuantities, relevantFullPlanetData, serverData);
+    if (shipConstructionDurationSeconds <= 0)
     {
         return { success: false, failureReason: "Invalid ship construction duration.", playerStateResult: playerData };
     }
 
-    const totalCost: Map<number, number> = ShipData.computeShipConstructionBatchCost(possibleRequestedShipQuantities);
+    const totalCost: Map<number, number> = ShipConstructionData.computeShipConstructionCost(possibleRequestedShipQuantities);
     for (const [resourceType, resourceCost] of totalCost)
     {
         try
@@ -783,45 +858,58 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
         }
     }
 
-    const newestBatchId: number | undefined = relevantFullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs.at(-1)?.batchId;
-    const newBatchId: number = newestBatchId !== undefined ? newestBatchId + 1 : 1;
-    const shipConstructionRows: DBType.ShipConstructionRow[] = [];
-
+    const newShipConstructionShipRows: DBType.ShipConstructionShipRow[] = [];
     for (const [shipType, shipQuantity] of possibleRequestedShipQuantities)
     {
-        const shipConstructionRow: DBType.ShipConstructionRow =
+        const newShipConstructionShipRow: DBType.ShipConstructionShipRow =
         {
-            id: 0,
-            planet_id: relevantFullPlanetData.planetRow.id,
-            batch_id: newBatchId,
+            id: -1,
+            ship_construction_id: -1,
             ship_type: shipType,
             ship_quantity: shipQuantity,
         };
-        shipConstructionRows.push(shipConstructionRow);
+        newShipConstructionShipRows.push(newShipConstructionShipRow);
     }
-
-    const newBatch: PlayerDataType.ShipConstructionBatch =
+    const newShipConstructionRow: DBType.ShipConstructionRow = 
     {
-        shipConstructionRows: shipConstructionRows,
-        batchId: newBatchId,
+        id: -1,
+        planet_id: relevantFullPlanetData.planetRow.id,
+        requested_at: now,
+        duration_at_request_time: shipConstructionDurationSeconds * 1000,
+        duration_at_start_time: null,
+        started_at: null,
+        current_ship_construction_ship_row_id: -1,
     };
-    relevantFullPlanetData.dynamicPlanetData.queuedShipConstructionBatchs.push(newBatch);
-
-    const isAlreadyConstructing: boolean = (relevantFullPlanetData.planetRow.ship_construction_batch_completes_at !== 0);
-    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    const newShipConstruction: PlayerDataType.ShipConstruction =
     {
-        let updatedPlanetRow: DBType.PlanetRow = relevantFullPlanetData.planetRow;
+        shipConstructionRow: newShipConstructionRow,
+        shipConstructionShipRows: newShipConstructionShipRows,
+    };
+    const index: number | null = ShipConstructionData.getNextShipConstructionShipRowIndex(relevantFullPlanetData, newShipConstruction, serverData);
+    if (index === null)
+    {
+        throw new Error("Failed to get first ship construction ship row.");
+    }
+    // swap the first construction ship row to start building to ensure it'S in first place.
+    [newShipConstruction.shipConstructionShipRows[0], newShipConstruction.shipConstructionShipRows[index]] = [newShipConstruction.shipConstructionShipRows[index], newShipConstruction.shipConstructionShipRows[0]];
+    const firstConstructionShipRow: DBType.ShipConstructionShipRow = newShipConstruction.shipConstructionShipRows[0];
 
-        if (isAlreadyConstructing === false)
+    // No constructions? Means we can start this one right away, otherwise it will be in queue and start when the previous ones are done.
+    if (relevantFullPlanetData.dynamicPlanetData.shipConstructions.length === 0)
+    {
+        newShipConstruction.shipConstructionRow.started_at = now;
+        const firstConstructionTimeSeconds: number | null = ShipConstructionData.getShipConstructionDurationSeconds(firstConstructionShipRow.ship_type, relevantFullPlanetData, serverData);
+        if (firstConstructionTimeSeconds === null)
         {
-            const completesAtMilliseconds: number = now + batchDurationSeconds * 1000;
-            updatedPlanetRow = serverUpdatePlanetRow(relevantFullPlanetData.planetRow.id,
-            {
-                ship_construction_batch_completes_at: completesAtMilliseconds,
-                current_ship_construction_batch_id: newBatchId,
-            });
+            throw new Error("First firstConstructionTime cant be null.");
         }
 
+        newShipConstruction.shipConstructionRow.duration_at_start_time = firstConstructionTimeSeconds * 1000;
+    }
+
+    relevantFullPlanetData.dynamicPlanetData.shipConstructions.push(newShipConstruction);
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
         ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
         ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, relevantFullPlanetData.dynamicPlanetData);
         
@@ -926,7 +1014,6 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
             return { success: false, failureReason: `Not enough ships.`, playerStateResult: playerData };
         }
 
-        const arrivalTime: number = now + (fleetMovementDurationSeconds * 1000);
         const actualTransportedResources: Map<number, number> = new Map<number, number>(FleetData.clampResoucesToAddToFleet(shipQuantities, fuelRequirements, transportedResourceQuantities));
 
         const fleetMovementShipRows: DBType.FleetMovementShipRow[] = [];
@@ -974,10 +1061,12 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
             planet_origin_id: originFullPlanetData.planetRow.id,
             player_target_id: targetFullPlanetData.planetRow.owner_player_id,
             planet_target_id: targetFullPlanetData.planetRow.id,
-            departure_time: now,
-            arrival_time: arrivalTime,
             is_return_trip: 0,
             fleet_action_type: requestData.fleetAction,
+            requested_at: now,
+            duration_at_request_time: fleetMovementDurationSeconds * 1000,
+            duration_at_start_time: fleetMovementDurationSeconds * 1000,
+            started_at: now,
         };
         const newFleetMovement: PlayerDataType.FleetMovement =
         {

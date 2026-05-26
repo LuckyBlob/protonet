@@ -9,7 +9,7 @@ export const Thing =
 	Building: 2,
 	Ship: 3,
     BuildingUpgrade: 4,
-    ShipBatchConstruction: 5,
+    ShipConstruction: 5,
     FleetMovement: 6,
 } as const;
 export type Thing = typeof Thing[keyof typeof Thing];
@@ -20,7 +20,7 @@ export const THING_DISPLAY_NAMES: ReadonlyMap<Thing, string> = new Map
     [Thing.Building, "Building"],
     [Thing.Ship, "Ship"],
     [Thing.BuildingUpgrade, "BuildingUpgrade"],
-    [Thing.ShipBatchConstruction, "ShipBatchConstruction"],
+    [Thing.ShipConstruction, "ShipConstruction"],
     [Thing.FleetMovement, "FleetMovement"],
 ]);
 
@@ -46,7 +46,7 @@ const THING_DEFINITIONS: ReadonlyMap<Thing, ThingDefinition> = new Map
         specificThingDisplayNames: GameType.BUILDING_DISPLAY_NAMES,
         contexts: [PlayerDataType.DataContext.BuildingLevel],
     }],
-    [Thing.ShipBatchConstruction,
+    [Thing.ShipConstruction,
     {
         specificThingDisplayNames: GameType.SHIP_DISPLAY_NAMES,
         contexts: [PlayerDataType.DataContext.ShipConstruction],
@@ -130,6 +130,11 @@ export function getThingValues(fullPlanetData: PlayerDataType.FullPlanetData, da
 		throw new Error("FutureFleetArrivals context does not have specific things that have a value... yet.");
 	}
 
+    if (dataContext === PlayerDataType.DataContext.BuildingUpgrade)
+	{
+		throw new Error("BuildingUpgrade context does not have specific things that have a value... yet.");
+	}
+
 	return PlayerData.getVariableFromContext(fullPlanetData.dynamicPlanetData, dataContext);
 }
 
@@ -145,6 +150,10 @@ export function setSpecificThingValue(fullPlanetData: PlayerDataType.FullPlanetD
 		throw new Error("FutureFleetArrivals context is not supported for type setters since it doesnt have specific things.");
 	}
 
+    if (dataContext === PlayerDataType.DataContext.BuildingUpgrade)
+	{
+		throw new Error("BuildingUpgrade context is not supported for type setters since it doesnt have specific things.");
+	}
 
 	const specificThingValueMap: Map<SpecificThing, number> = PlayerData.getVariableFromContext(fullPlanetData.dynamicPlanetData, dataContext);
 

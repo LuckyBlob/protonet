@@ -129,8 +129,4 @@ export const STARTING_PLANET_SIZE: number = 163;
 export const CLEAN_PLANET: Partial<DBType.PlanetRow> =
 {
 	owner_player_id: null,
-	building_upgrade_completes_at: 0,
-	building_being_upgraded: 0,
-	ship_construction_batch_completes_at: 0,
-	current_ship_construction_batch_id: 0,
 };

@@ -97,7 +97,7 @@ Default scope: a **deep pass** on the listed priority flows + a **shallow pass**
    - All of the above checks applied to it
 
 5. **Anchor event resolution** (both sides):
-   - For each anchor event type (BuildingUpgrade, ShipConstructionBatch, FleetArrival, and any others):
+   - For each anchor event type (BuildingUpgrade, ShipConstruction, FleetArrival, and any others):
      - **Client-side**: when the event resolves during a client tick, what state does it update in `predictedDBData`? Is the update consistent with what the server will write?
      - **Server-side**: when the server reconciles past `now` and resolves the event, what DB writes happen? Are they all inside a transaction? Are all the affected rows updated, or just some?
    - Look specifically for: client predicting one thing but server writing another (a desync source); resolution that updates some fields but not `last_updated`; events resolved out of chronological order; events that should fire-and-forget but linger; events whose resolution depends on stale data.

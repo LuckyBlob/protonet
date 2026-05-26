@@ -104,6 +104,7 @@ export async function clientTryRegisterRequest(username: string, password: strin
     };
 
     const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Register, clientRequest);
+
     if (response.error !== null)
     {
         throw new Error(response.error);

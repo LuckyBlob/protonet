@@ -72,7 +72,7 @@ export const REQUIREMENT_MAP: RequirementMap = new Map
             },
         }]],
     ])],
-    [ThingType.Thing.ShipBatchConstruction, new Map<ThingType.SpecificThing, RequirementType.Requirement[]>([
+    [ThingType.Thing.ShipConstruction, new Map<ThingType.SpecificThing, RequirementType.Requirement[]>([
         [GameType.SMALL_TRANSPORT, [
             {
                 hideDataWhenRequirementFailed: true,

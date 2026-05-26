@@ -36,6 +36,7 @@ export type PlanetResourceRow =
 	resource_type: number;
 	resource_quantity: number;
 };
+
 export type PlanetBuildingRow =
 {
 	planet_id: number;
@@ -56,8 +57,8 @@ export type PlanetRow =
 	last_updated: number;
 	building_upgrade_completes_at: number;
 	building_being_upgraded: number;
-	ship_construction_batch_completes_at: number;
-	current_ship_construction_batch_id: number;
+	ship_construction_completes_at: number;
+	current_ship_construction_id: number;
 };
 
 export type PublicPlanetRow =
@@ -69,20 +70,54 @@ export type PublicPlanetRow =
 	owner_player_id: number;
 };
 
-export type PlanetShipRow  =
+export type PublicPlayerRow =
+{
+	id: number;
+	username: string;
+};
+
+export type PlanetShipRow =
 {
     planet_id: number;
     ship_type: number;
     ship_quantity: number;
 };
 
-export type ShipConstructionRow   =
+export type ShipConstructionRow =
 {
     id: number;
     planet_id: number;
-    batch_id : number;
+    requested_at: number;
+    duration_at_request_time: number;
+    duration_at_start_time: number | null;
+    started_at: number | null;
+	current_ship_construction_ship_row_id: number | null;
+};
+
+export type ShipConstructionShipRow =
+{
+    id: number,
+	ship_construction_id: number;
     ship_type: number;
     ship_quantity: number;
+};
+
+export type BuildingUpgradeRow =
+{
+    id: number;
+    planet_id: number;
+    requested_at: number;
+    duration_at_request_time: number;
+    duration_at_start_time: number | null;
+    started_at: number | null;
+	current_building_upgrade_building_row_id: number | null;
+};
+
+export type BuildingUpgradeBuildingRow =
+{
+    id: number;
+    building_upgrade_id: number;
+    building_type: number;
 };
 
 export type FleetMovementRow =
@@ -93,10 +128,12 @@ export type FleetMovementRow =
     planet_origin_id: number;
     player_target_id: number | null; // == 0 for colonizing
     planet_target_id: number;
-    departure_time: number;
-    arrival_time: number;
     is_return_trip: number;
     fleet_action_type: number;
+    requested_at: number;
+    duration_at_request_time: number;
+    duration_at_start_time: number | null;
+    started_at: number | null;
 };
 
 export type FleetMovementShipRow =

@@ -9,7 +9,9 @@
       "WebFetch(domain:en.m.wikipedia.org)",
       "Bash(Get-ChildItem -Path \"D:\\\\Claude\\\\WebsiteProject\\\\protonet\" -Recurse -Directory)",
       "Bash(Select-Object -First 30)",
-      "PowerShell(Get-ChildItem -Path \"D:\\\\Claude\\\\WebsiteProject\\\\protonet\" -Recurse -Directory | Select-Object -First 30 | ForEach-Object { $_.FullName })"
+      "PowerShell(Get-ChildItem -Path \"D:\\\\Claude\\\\WebsiteProject\\\\protonet\" -Recurse -Directory | Select-Object -First 30 | ForEach-Object { $_.FullName })",
+      "Bash(npx tsc *)",
+      "PowerShell(netstat -ano)"
     ]
   }
 }

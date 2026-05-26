@@ -111,14 +111,14 @@ Ensure local variables are named clearly by what they represent, do not abreviat
 
 ```ts
 // Yes
-const remainingMs: number | null = ShipData.getShipConstructionBatchRemainingMs(fullPlanetData);
+const remainingMs: number | null = ShipData.getShipConstructionRemainingMs(fullPlanetData);
 if (remainingMs === null)
 {
     return null;
 }
 
 // Not
-if (ShipData.getShipConstructionBatchRemainingMs(fullPlanetData) === null) { return null; }
+if (ShipData.getShipConstructionRemainingMs(fullPlanetData) === null) { return null; }
 ```
 
 ### Build the return value, then return it
@@ -174,9 +174,9 @@ switch (anchorEvent.type)
         resolveBuildingUpgradeAnchorEventToDB(...);
         break;
     }
-    case AnchorEvent.AnchorEventType.ShipConstructionBatch:
+    case AnchorEvent.AnchorEventType.ShipConstruction:
     {
-        resolveShipBatchConstructionAnchorEventToDB(...);
+        resolveShipConstructionAnchorEventToDB(...);
         break;
     }
     default:
@@ -231,7 +231,7 @@ Never relative imports between top-level folders.
 | File-local constants | `SCREAMING_SNAKE_CASE` | `BASE_GROWTH_FACTOR`, `PREVIEW_MAX_SHIP_LINES` |
 | Exported game-content constants | `SCREAMING_SNAKE_CASE` | `BUILDING_RESOURCE_PRODUCTION_1`, `BUILDING_SHIPYARD` |
 | Enum-like object keys | `PascalCase` | `Thing.Ship`, `RequirementOperator.Equal` |
-| DB row fields | `snake_case` | `building_upgrade_completes_at`, `ship_construction_batch_completes_at` |
+| DB row fields | `snake_case` | `building_upgrade_completes_at`, `ship_construction_completes_at` |
 | DB row types | `PascalCase` with `Row` suffix | `PlayerRow`, `ShipConstructionRow`, `FleetMovementRow` |
 
 ### Verb prefixes have meaning

@@ -5,7 +5,7 @@ import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData"
 import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as ThingTypes from "@/lib/gameplay/coreData/type/thingTypes";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
-import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionBatchAnchorEvent"
+import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent"
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
 
@@ -52,7 +52,7 @@ export abstract class PlayerProgressApplier
                 BuildingUpgrade.resolveAnchorEvent(playerData, serverData, anchorEvent);
                 break;
             }
-            case AnchorEvent.AnchorEventType.ShipConstructionBatch:
+            case AnchorEvent.AnchorEventType.ShipConstruction:
             {
                 ShipConstruction.resolveAnchorEvent(playerData, serverData, anchorEvent);
                 break;
