@@ -36,7 +36,7 @@ export function getFullPlanetDataForId(fullPlanetDatas: PlayerDataType.FullPlane
     return null;
 }
 
-export function getPlanetAddress(fullPlanetData: PlayerDataType.FullPlanetData)
+export function getPlanetAddress(fullPlanetData: PlayerDataType.FullPlanetData): GameType.PlanetAddress
 {
     const planetAddress: GameType.PlanetAddress = 
     {
@@ -45,5 +45,21 @@ export function getPlanetAddress(fullPlanetData: PlayerDataType.FullPlanetData)
         slot: fullPlanetData.planetRow.slot,
     }
 
+    return planetAddress;
+}
+
+// based on the order of seedWorld
+export function getPlanetAddressFromId(planetId: number): GameType.PlanetAddress
+{
+    const slotsPerSystem = GameType.SLOT_COUNT;
+    const slotsPerGalaxy = GameType.SYSTEM_COUNT * GameType.SLOT_COUNT;
+    const zeroBasedId = planetId - 1;
+
+    const planetAddress: GameType.PlanetAddress = 
+    {
+        galaxy: Math.floor(zeroBasedId / slotsPerGalaxy) + 1,
+        system: Math.floor((zeroBasedId % slotsPerGalaxy) / slotsPerSystem) + 1,
+        slot: (zeroBasedId % slotsPerSystem) + 1,
+    }
     return planetAddress;
 }

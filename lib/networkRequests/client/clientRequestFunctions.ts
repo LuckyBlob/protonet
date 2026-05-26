@@ -53,7 +53,8 @@ export async function clientTryPlayerDataRequest(psController: PlayerDataType.PS
     // Use != instead of !== here to catch everything that's very weird.
     if (response === null || response.serializedPlayerData == null)
     {
-        throw new Error(`Failed to fetch player data.`);
+        const serverError: string = response === null ? "no response" : (response.error ?? "no error message");
+        throw new Error(`Failed to fetch player data: ${serverError}`);
     }
     const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
     await setPlayerState(psController, playerData);

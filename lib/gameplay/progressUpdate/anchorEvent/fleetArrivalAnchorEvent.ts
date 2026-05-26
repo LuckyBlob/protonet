@@ -29,7 +29,7 @@ export function findNextAnchorEvent(playerData: PlayerDataType.PlayerData): Anch
 
         if (event.fleetMovementRow.duration_at_start_time === null)
         {
-            throw new Error(`UNREACHABLE: ...`);
+            throw new Error(`UNREACHABLE: find next fleet arrival anchor event start time.`);
         }
         
         return event.fleetMovementRow.started_at + event.fleetMovementRow.duration_at_start_time;
@@ -86,7 +86,7 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
     // this code takes care of the "client" part AKA the data in the structures
     if (resolvedData.event.fleetMovement.fleetMovementRow.is_return_trip === 1)
     {
-
+        FleetData.resolveFleetMovementReturnTrip(playerData, resolvedData.event.fleetMovement, resolvedData.data, serverData);
     }
     else
     {
@@ -101,7 +101,7 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
             }
         }
             
-        FleetData.resolveFleetMovementAtTarget(playerData, resolvedData.event.fleetMovement, resolvedData.data);
+        FleetData.resolveFleetMovementAtTarget(playerData, resolvedData.event.fleetMovement, resolvedData.data, serverData);
 
         // We might not be returning, be might as well just carpet bomb this since if we arent, well just be deleted anyway in the server version
         resolvedData.event.fleetMovement.fleetMovementRow.is_return_trip = 1;

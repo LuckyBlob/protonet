@@ -187,6 +187,15 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): Player
                 fleetMovementResourceRows: fleetMovementResourceRows,
                 resolutionState: PlayerDataType.FleetMovementResolution.Unresolved,
             }
+            
+            if (newFleetMovement.fleetMovementRow.is_return_trip)
+            {
+                if (newFleetMovement.fleetMovementRow.planet_target_id === planetId)
+                {
+                    // Dont pickup returning ships, they are irrelevant for the target
+                    continue;
+                }
+            }
 
             fleetMovements.push(newFleetMovement);
         }

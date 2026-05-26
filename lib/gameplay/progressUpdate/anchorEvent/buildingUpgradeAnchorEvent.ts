@@ -25,7 +25,7 @@ export function findNextAnchorEvent(playerData: PlayerDataType.PlayerData): Anch
 
         if (event.buildingUpgradeRow.duration_at_start_time === null)
         {
-            throw new Error(`UNREACHABLE: ...`);
+            throw new Error(`UNREACHABLE: find next building upgrade anchor event start time.`);
         }
         
         return event.buildingUpgradeRow.started_at + event.buildingUpgradeRow.duration_at_start_time;

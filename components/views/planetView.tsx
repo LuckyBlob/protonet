@@ -7,6 +7,7 @@ import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTy
 import * as DBType from "@/lib/db/dbTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as HelperElements from "@/components/helperElements";
+import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 
 type PlanetViewProps =
 {
@@ -115,9 +116,10 @@ function renderBody(props: PlanetViewProps, selectedGalaxy: number, selectedSyst
 
 export function PlanetView(props: PlanetViewProps): ReactElement
 {
+    const fullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
     
-    const selectedGalaxyState: [number, (value: number) => void] = useState<number>(1);
-    const selectedSystemState: [number, (value: number) => void] = useState<number>(1);
+    const selectedGalaxyState: [number, (value: number) => void] = useState<number>(fullPlanetDataPredicted.planetRow.galaxy);
+    const selectedSystemState: [number, (value: number) => void] = useState<number>(fullPlanetDataPredicted.planetRow.system);
 
     const handleGalaxyChange = (e: ChangeEvent<HTMLSelectElement>): void =>
     {
