@@ -27,7 +27,13 @@ export function getFullPlanetDataForId(fullPlanetDatas: PlayerDataType.FullPlane
 
     if (matchingPlanetIndex !== null)
     {
-        return fullPlanetDatas[matchingPlanetIndex];
+        const fullPlanetData: PlayerDataType.FullPlanetData | undefined = fullPlanetDatas[matchingPlanetIndex];
+        if (fullPlanetData === undefined)
+        {
+            throw new Error("Cant find matchin full planet data for planet id.")
+        }
+
+        return fullPlanetData;
     }
 
     return null;
@@ -35,17 +41,17 @@ export function getFullPlanetDataForId(fullPlanetDatas: PlayerDataType.FullPlane
 
 export function getFullPlanetDataIndexForId(fullPlanetDatas: PlayerDataType.FullPlanetData[], planetId: number): number | null
 {
-    const matchingPlanetIndex: number | undefined = fullPlanetDatas.findIndex((fullPlanetData: PlayerDataType.FullPlanetData) =>
+    const matchingPlanetIndex: number = fullPlanetDatas.findIndex((fullPlanetData: PlayerDataType.FullPlanetData) =>
     {
         return fullPlanetData.planetRow.id === planetId;
     });
 
-    if (matchingPlanetIndex !== undefined)
+    if (matchingPlanetIndex === -1)
     {
-        return matchingPlanetIndex;
+        return null;
     }
 
-    return null;
+    return matchingPlanetIndex;
 }
 
 export function getPlanetAddress(fullPlanetData: PlayerDataType.FullPlanetData): GameType.PlanetAddress
@@ -57,21 +63,5 @@ export function getPlanetAddress(fullPlanetData: PlayerDataType.FullPlanetData):
         slot: fullPlanetData.planetRow.slot,
     }
 
-    return planetAddress;
-}
-
-// based on the order of seedWorld
-export function getPlanetAddressFromId(planetId: number): GameType.PlanetAddress
-{
-    const slotsPerSystem = GameType.SLOT_COUNT;
-    const slotsPerGalaxy = GameType.SYSTEM_COUNT * GameType.SLOT_COUNT;
-    const zeroBasedId = planetId - 1;
-
-    const planetAddress: GameType.PlanetAddress = 
-    {
-        galaxy: Math.floor(zeroBasedId / slotsPerGalaxy) + 1,
-        system: Math.floor((zeroBasedId % slotsPerGalaxy) / slotsPerSystem) + 1,
-        slot: (zeroBasedId % slotsPerSystem) + 1,
-    }
     return planetAddress;
 }

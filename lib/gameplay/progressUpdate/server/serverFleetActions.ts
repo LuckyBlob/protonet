@@ -39,7 +39,7 @@ function resolveFleetActionToDB(originPlayerData: FleetData.FleetPlayerData | nu
         // Either we sent it and we didn't know about the target locally
         // or we received it and we didn't know about the origin locally
         // Now we do, since we are the server, so we must resolve it
-        FleetData.resolveFleetMovementAtTarget(targetPlayerData?.playerData ?? null, fleetMovement, fleetPlayerDataPair, serverData);
+        FleetData.resolveFleetMovementAtTarget(targetPlayerData?.playerData ?? null, fleetMovement, fleetPlayerDataPair, serverData, originPlayerData.fullPlanetData);
     }
 
     if (fleetMovement.resolutionState !== PlayerDataType.FleetMovementResolution.Resolved)

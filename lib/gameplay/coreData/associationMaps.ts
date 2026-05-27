@@ -41,8 +41,8 @@ export const BUILDING_STATS: ReadonlyMap<number, BuildingStats> = new Map<number
 		productionStats: new Map<number, ProductionStats>([
 			[GameType.RESOURCE_2,
 			{
-				minProductionPerHour: 30,
-				productionFactor: 30,
+				minProductionPerHour: 15,
+				productionFactor: 20,
 				exponentBase: 1.1,
 			}]]),
 		baseCostExponent: 1.6,
@@ -124,9 +124,3 @@ export const SHIP_STATS: ReadonlyMap<number, ShipStats> = new Map<number, ShipSt
 			[GameType.RESOURCE_2, 6000],
 		]),}],
 ]);
-export const STARTING_PLANET_SIZE: number = 163;
-
-export const CLEAN_PLANET: Partial<DBType.PlanetRow> =
-{
-	owner_player_id: null,
-};

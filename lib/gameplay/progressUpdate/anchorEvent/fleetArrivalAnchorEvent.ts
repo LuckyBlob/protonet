@@ -57,10 +57,15 @@ export function resolveFleetArrivalData(playerData: PlayerDataType.PlayerData, a
         throw new Error(`⚠️: fleet arrival anchor event doesnt have a resolver when trying to resolve.`); 
     }
 
+    const originPlayerId: number = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.player_origin_id;
+    const targetPlayerId: number | null = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.player_target_id;
+    
+    const originPlanetId: number = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.planet_origin_id;
+    const targetPlanetId: number = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.planet_target_id;
     const fleetPlayerDataPair: FleetData.FleetPlayerDataPair = 
     {
-        origin: fleetArrivalAnchorEvent.resolver.getOriginFleetPlayerData(playerData, fleetArrivalAnchorEvent),
-        target: fleetArrivalAnchorEvent.resolver.getTargetFleetPlayerData(playerData, fleetArrivalAnchorEvent),
+        origin: fleetArrivalAnchorEvent.resolver.getFleetPlayerData(originPlayerId, originPlanetId, playerData, fleetArrivalAnchorEvent),
+        target: fleetArrivalAnchorEvent.resolver.getFleetPlayerData(targetPlayerId, targetPlanetId, playerData, fleetArrivalAnchorEvent),
     }
 
     return { event: fleetArrivalAnchorEvent, data: fleetPlayerDataPair};
@@ -102,8 +107,5 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
         }
             
         FleetData.resolveFleetMovementAtTarget(playerData, resolvedData.event.fleetMovement, resolvedData.data, serverData);
-
-        // We might not be returning, be might as well just carpet bomb this since if we arent, well just be deleted anyway in the server version
-        resolvedData.event.fleetMovement.fleetMovementRow.is_return_trip = 1;
     }
 }

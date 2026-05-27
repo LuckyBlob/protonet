@@ -72,8 +72,7 @@ export abstract class PlayerProgressApplier
         updateResourcesToTime(playerData, serverData, time);
     }
 
-    abstract getOriginFleetPlayerData(playerData: PlayerDataType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
-    abstract getTargetFleetPlayerData(playerData: PlayerDataType.PlayerData, anchorEvent: AnchorEvent.AnchorEvent) : FleetData.FleetPlayerData | null;
+    abstract getFleetPlayerData(playerId: number | null, planetId: number, playerData: PlayerDataType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null;
 }
 
 export function applyProgressToPlayerData(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, now: number, playerProgressResolver: PlayerProgressApplier): PlayerDataType.PlayerData

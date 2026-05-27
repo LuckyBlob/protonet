@@ -55,12 +55,7 @@ export type PlanetRow =
 	size: number;
 	owner_player_id: number | null;
 	claimed_at: number;
-	released_at: number;
 	last_updated: number;
-	building_upgrade_completes_at: number;
-	building_being_upgraded: number;
-	ship_construction_completes_at: number;
-	current_ship_construction_id: number;
 };
 
 export type PublicPlanetRow =
@@ -131,8 +126,14 @@ export type FleetMovementRow =
     seed: number;
     player_origin_id: number;
     planet_origin_id: number;
+	planet_origin_slot: number;
+	planet_origin_system: number;
+	planet_origin_galaxy: number;
     player_target_id: number | null; // == 0 for colonizing
     planet_target_id: number;
+	planet_target_slot: number;
+	planet_target_system: number;
+	planet_target_galaxy: number;
     is_return_trip: number;
     fleet_action_type: number;
     requested_at: number;

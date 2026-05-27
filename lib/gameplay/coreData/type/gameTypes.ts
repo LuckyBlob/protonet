@@ -1,6 +1,30 @@
 export const GALAXY_COUNT: number = 2;
 export const SYSTEM_COUNT: number = 20;
 export const SLOT_COUNT: number = 5;
+export const MIN_SLOT_STARTING_PLANET: number = 3;
+export const MAX_SLOT_STARTING_PLANET: number = 4;
+export const STARTING_PLANET_SIZE: number = 163;
+
+type SlotSizeRange =
+{
+	min: number;
+	max: number;
+};
+const SLOT_SIZE_RANGES: SlotSizeRange[] =
+[
+	{ min: 40,  max: 70  },  // slot 1
+	{ min: 120, max: 310 },  // slot 2
+	{ min: 125, max: 255 },  // slot 3
+	{ min: 75,  max: 125 },  // slot 4
+	{ min: 60,  max: 90  },  // slot 5
+];
+export function rollSizeForSlot(slot: number): number
+{
+	const range: SlotSizeRange = SLOT_SIZE_RANGES[slot - 1];
+	const span: number = range.max - range.min;
+	const rolledSize: number = range.min + Math.floor(Math.random() * (span + 1));
+	return rolledSize;
+}
 
 export const BUILDING_RESOURCE_PRODUCTION_1: number = 1; // prod resource 1
 export const BUILDING_RESOURCE_PRODUCTION_2: number = 2; // prod resource 1

@@ -322,8 +322,18 @@ function resolveCollectAction(origin: PlayerDataType.FullPlanetData | null, targ
 		fleetResourceQuantities.set(fleetMovementResourceRow.resource_type, fleetMovementResourceRow.resource_quantity);
 		totalResourcesInFleet += fleetMovementResourceRow.resource_quantity;
 	}
-	const originAddress: GameType.PlanetAddress = PlayerData.getPlanetAddressFromId(fleetMovement.fleetMovementRow.planet_origin_id);
-	const targetAddress: GameType.PlanetAddress = PlayerData.getPlanetAddressFromId(fleetMovement.fleetMovementRow.planet_target_id);
+	const originAddress: GameType.PlanetAddress = 
+	{
+		slot: fleetMovement.fleetMovementRow.planet_origin_slot,
+		system: fleetMovement.fleetMovementRow.planet_origin_system,
+		galaxy: fleetMovement.fleetMovementRow.planet_origin_galaxy,
+	}
+	const targetAddress: GameType.PlanetAddress = 
+	{
+		slot: fleetMovement.fleetMovementRow.planet_target_slot,
+		system: fleetMovement.fleetMovementRow.planet_target_system,
+		galaxy: fleetMovement.fleetMovementRow.planet_target_galaxy,
+	}
 
 	const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originAddress, targetAddress, fleetShipQuantities, serverData);
 	totalResourcesInFleet += fuelSpaceData.totalFuel;
