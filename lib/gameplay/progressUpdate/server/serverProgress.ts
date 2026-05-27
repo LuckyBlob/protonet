@@ -74,7 +74,7 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
             {
                 last_updated: time,
             });
-            ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, fullPlanetData.dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, playerData.playerRow.id, PlayerDataType.DataContext.ResourceQuantity, fullPlanetData.dynamicPlanetData);
         }
     }
 
@@ -138,8 +138,8 @@ function resolveBuildingUpgradeAnchorEventToDB(playerData: PlayerDataType.Player
 
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, fullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingUpgrade, fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, playerData.playerRow.id, PlayerDataType.DataContext.BuildingLevel, fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, playerData.playerRow.id, PlayerDataType.DataContext.BuildingUpgrade, fullPlanetData.dynamicPlanetData);
     });
 
     transaction();
@@ -156,8 +156,8 @@ function resolveShipConstructionAnchorEventToDB(playerData: PlayerDataType.Playe
 
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, fullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipQuantity, fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, playerData.playerRow.id, PlayerDataType.DataContext.ShipConstruction, fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, playerData.playerRow.id, PlayerDataType.DataContext.ShipQuantity, fullPlanetData.dynamicPlanetData);
     });
 
     transaction();

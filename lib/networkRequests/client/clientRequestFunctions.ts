@@ -14,7 +14,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 
 export function setPlayerState(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): void
 {
-    const currentlySelectedPlanetId: number = SelectedPlanet.updateSelectedPlanetIdInStorage(psController, newPlayerData);
+    const currentlySelectedPlanetId: number = SelectedPlanet.updateSelectedPlanetIdInStorage(newPlayerData);
     const loadedPlayerState: PlayerDataType.PlayerState =
     {
         dbData: newPlayerData,
@@ -27,7 +27,7 @@ export function setPlayerState(psController: PlayerDataType.PSController, newPla
 
 export function setPredictedPlayerState(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): void
 {
-    const currentlySelectedPlanetId: number = SelectedPlanet.updateSelectedPlanetIdInStorage(psController, newPlayerData);
+    const currentlySelectedPlanetId: number = SelectedPlanet.updateSelectedPlanetIdInStorage(newPlayerData);
     const loadedPlayerState: PlayerDataType.PlayerState =
     {
         dbData: psController[0].dbData,
@@ -119,6 +119,21 @@ export async function clientTryRegisterRequest(username: string, password: strin
 
     return response;
 }
+
+export async function clientTryDeleteUserRequest(): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DeleteUser>>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.DeleteUser> = {};
+
+    const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DeleteUser> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.DeleteUser, clientRequest);
+
+    if (response.error !== null)
+    {
+        throw new Error(response.error);
+    }
+
+    return response;
+}
+
 
 export async function clientTryLogoutRequest(): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout> | null>
 {
@@ -258,6 +273,41 @@ export async function clientTrySendFleetRequest(psController: PlayerDataType.PSC
         if (response.serializedPlayerData == null)
         {
             throw new Error(`Send fleet failed for planetId ${originPlanetId}: Invalid response from server.`);
+        }
+
+        const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+        return null;
+    }
+    catch (error: unknown)
+    {
+        if (error instanceof Error)
+        {
+            return error.message;
+        }
+
+        return String(error);
+    }
+}
+
+export async function clientTryAbandonPlanet(psController: PlayerDataType.PSController): Promise<string | null>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.AbandonPlanet> =
+    {
+        planetId: psController[0].selectedPlanetId,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.AbandonPlanet> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.AbandonPlanet, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Abandon planet failed for planetId ${psController[0].selectedPlanetId}: Invalid response from server.`);
         }
 
         const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);

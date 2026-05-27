@@ -1,7 +1,9 @@
+import { useRouter } from "next/navigation";
 import { ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
+import * as UseCurrentUser from "@/lib/use/useCurrentUser";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
@@ -9,12 +11,80 @@ import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTy
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
+import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 
 type TopBarProps =
 {
 	clientDataStateResult: UseClientDataState.ClientDataStateResult;
+	cuController: UseCurrentUser.CUController;
 	planetSelector: ReactElement;
 };
+
+function renderAbandonPlanetButton(props: TopBarProps): ReactElement
+{
+	const playerData: PlayerDataType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
+	const ownedPlanetCount: number = playerData.fullPlanetDatas.length;
+	const isDisabled: boolean = ownedPlanetCount <= 1;
+
+	const handleAbandonPlanet = async (): Promise<void> =>
+	{
+		const errorMessage: string | null = await ClientRequestFunctions.clientTryAbandonPlanet(props.clientDataStateResult.psController);
+		if (errorMessage !== null)
+		{
+			console.error("⚠️:", errorMessage);
+		}
+	};
+
+	const buttonElement: ReactElement =
+	(
+		<button
+			type="button"
+			onClick={handleAbandonPlanet}
+			disabled={isDisabled}
+			className="border border-gray-400 px-3 py-1 rounded bg-red-600 hover:bg-red-500 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-semibold"
+		>
+			Abandon planet
+		</button>
+	);
+
+	return buttonElement;
+}
+
+function renderDeleteAccountButton(props: TopBarProps, router: ReturnType<typeof useRouter>): ReactElement
+{
+	const handleDeleteAccount = async (): Promise<void> =>
+	{
+		const username: string | undefined = props.cuController[0].user?.username;
+		if (username === undefined)
+		{
+			console.error("⚠️:", "Cannot delete account: username unavailable.");
+			return;
+		}
+
+		try
+		{
+			await ClientRequestFunctions.clientTryDeleteUserRequest();
+			router.push("/login");
+		}
+		catch (error: unknown)
+		{
+			console.error("⚠️:", error);
+		}
+	};
+
+	const buttonElement: ReactElement =
+	(
+		<button
+			type="button"
+			onClick={handleDeleteAccount}
+			className="border border-gray-400 px-3 py-1 rounded bg-red-600 hover:bg-red-500 text-white text-sm font-semibold"
+		>
+			Delete account
+		</button>
+	);
+
+	return buttonElement;
+}
 
 function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, remainingMs: number | null): ReactElement
 {
@@ -38,6 +108,7 @@ function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, 
 
 export function TopBarElement(props: TopBarProps): ReactElement
 {
+	const router: ReturnType<typeof useRouter> = useRouter();
 	const resourceTypes: number[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
 
 	try
@@ -57,6 +128,10 @@ export function TopBarElement(props: TopBarProps): ReactElement
 				</div>
 				<div className="flex-1 flex justify-center gap-4">
 					{cardElements}
+				</div>
+				<div className="flex flex-col items-end gap-2">
+					{renderAbandonPlanetButton(props)}
+					{renderDeleteAccountButton(props, router)}
 				</div>
 			</div>
 		);

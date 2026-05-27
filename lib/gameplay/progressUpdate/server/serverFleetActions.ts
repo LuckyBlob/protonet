@@ -51,15 +51,15 @@ function resolveFleetActionToDB(originPlayerData: FleetData.FleetPlayerData | nu
     {
         if (targetPlayerData !== null)
         {
-            ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.fullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipQuantity, targetPlayerData.fullPlanetData.dynamicPlanetData);
-            ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.fullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, targetPlayerData.fullPlanetData.dynamicPlanetData);
-            ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.fullPlanetData.planetRow.id, PlayerDataType.DataContext.FutureFleetArrivals, targetPlayerData.fullPlanetData.dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.fullPlanetData.planetRow.id, targetPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.ShipQuantity, targetPlayerData.fullPlanetData.dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.fullPlanetData.planetRow.id, targetPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.ResourceQuantity, targetPlayerData.fullPlanetData.dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.fullPlanetData.planetRow.id, targetPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.FutureFleetArrivals, targetPlayerData.fullPlanetData.dynamicPlanetData);
         }
 
         // The ship is returning or stationed, we have to update that
-        ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.fullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipQuantity, originPlayerData.fullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.fullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, originPlayerData.fullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.fullPlanetData.planetRow.id, PlayerDataType.DataContext.FutureFleetArrivals, originPlayerData.fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.fullPlanetData.planetRow.id, originPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.ShipQuantity, originPlayerData.fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.fullPlanetData.planetRow.id, originPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.ResourceQuantity, originPlayerData.fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.fullPlanetData.planetRow.id, originPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.FutureFleetArrivals, originPlayerData.fullPlanetData.dynamicPlanetData);
     });
 
     transaction();
@@ -70,12 +70,12 @@ function deleteFleetMovementFromDB(originPlayerData: FleetData.FleetPlayerData |
     if (originPlayerData !== null)
     {
         const updatedFullPlanetData: PlayerDataType.FullPlanetData = FleetData.removeFleetMovement(originPlayerData.fullPlanetData, fleetMovement.fleetMovementRow.id);
-        ServerDynamicData.serverUpdatePlanetDataContext(updatedFullPlanetData.planetRow.id, PlayerDataType.DataContext.FutureFleetArrivals, updatedFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(updatedFullPlanetData.planetRow.id, originPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.FutureFleetArrivals, updatedFullPlanetData.dynamicPlanetData);
     }
 
     if (targetPlayerData !== null)
     {
         const updatedFullPlanetData: PlayerDataType.FullPlanetData = FleetData.removeFleetMovement(targetPlayerData.fullPlanetData, fleetMovement.fleetMovementRow.id);
-        ServerDynamicData.serverUpdatePlanetDataContext(updatedFullPlanetData.planetRow.id, PlayerDataType.DataContext.FutureFleetArrivals, updatedFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(updatedFullPlanetData.planetRow.id, targetPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.FutureFleetArrivals, updatedFullPlanetData.dynamicPlanetData);
     }
 }

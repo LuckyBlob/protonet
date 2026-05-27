@@ -23,14 +23,26 @@ export function getDataContexts(): PlayerDataType.DataContext[]
 
 export function getFullPlanetDataForId(fullPlanetDatas: PlayerDataType.FullPlanetData[], planetId: number): PlayerDataType.FullPlanetData | null
 {
-    const matchingPlanet: PlayerDataType.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData) =>
+    const matchingPlanetIndex: number | null = getFullPlanetDataIndexForId(fullPlanetDatas, planetId);
+
+    if (matchingPlanetIndex !== null)
+    {
+        return fullPlanetDatas[matchingPlanetIndex];
+    }
+
+    return null;
+}
+
+export function getFullPlanetDataIndexForId(fullPlanetDatas: PlayerDataType.FullPlanetData[], planetId: number): number | null
+{
+    const matchingPlanetIndex: number | undefined = fullPlanetDatas.findIndex((fullPlanetData: PlayerDataType.FullPlanetData) =>
     {
         return fullPlanetData.planetRow.id === planetId;
     });
 
-    if (matchingPlanet !== undefined)
+    if (matchingPlanetIndex !== undefined)
     {
-        return matchingPlanet;
+        return matchingPlanetIndex;
     }
 
     return null;

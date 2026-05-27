@@ -61,45 +61,58 @@ CREATE INDEX idx_planet_owner ON planet(owner_player_id);
 CREATE TABLE IF NOT EXISTS planet_resource
 (
 	planet_id INTEGER NOT NULL,
+	player_id INTEGER NOT NULL,
 	resource_type INTEGER NOT NULL,
 	resource_quantity REAL NOT NULL DEFAULT 0,
 	PRIMARY KEY (planet_id, resource_type),
-	FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
+	FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE,
+	FOREIGN KEY (player_id) REFERENCES player(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS planet_building
 (
 	planet_id INTEGER NOT NULL,
+	player_id INTEGER NOT NULL,
 	building_type INTEGER NOT NULL,
 	building_level INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY (planet_id, building_type),
-	FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
+	FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE,
+	FOREIGN KEY (player_id) REFERENCES player(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_planet_resource_planet ON planet_resource(planet_id);
+CREATE INDEX IF NOT EXISTS idx_planet_resource_player ON planet_resource(player_id);
 CREATE INDEX IF NOT EXISTS idx_planet_building_planet ON planet_building(planet_id);
+CREATE INDEX IF NOT EXISTS idx_planet_building_player ON planet_building(player_id);
 
 CREATE TABLE IF NOT EXISTS planet_ship
 (
     planet_id INTEGER NOT NULL,
+    player_id INTEGER NOT NULL,
     ship_type INTEGER NOT NULL,
     ship_quantity INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (planet_id, ship_type),
-    FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
+    FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE,
+    FOREIGN KEY (player_id) REFERENCES player(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_planet_ship_planet ON planet_ship(planet_id);
+CREATE INDEX IF NOT EXISTS idx_planet_ship_player ON planet_ship(player_id);
 
 CREATE TABLE IF NOT EXISTS ship_construction
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     planet_id INTEGER NOT NULL,
+    player_id INTEGER NOT NULL,
     requested_at INTEGER NOT NULL DEFAULT 0,
     duration_at_request_time INTEGER NOT NULL DEFAULT 0,
     duration_at_start_time INTEGER,
     started_at INTEGER,
     current_ship_construction_ship_row_id INTEGER,
-    FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
+    FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE,
+    FOREIGN KEY (player_id) REFERENCES player(id) ON DELETE CASCADE
 );
+CREATE INDEX IF NOT EXISTS idx_ship_construction_player ON ship_construction(player_id);
+
 CREATE TABLE IF NOT EXISTS ship_construction_ship
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -114,14 +127,17 @@ CREATE TABLE IF NOT EXISTS building_upgrade
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     planet_id INTEGER NOT NULL,
+    player_id INTEGER NOT NULL,
     requested_at INTEGER NOT NULL DEFAULT 0,
     duration_at_request_time INTEGER NOT NULL DEFAULT 0,
     duration_at_start_time INTEGER,
     started_at INTEGER,
     current_building_upgrade_building_row_id INTEGER,
-    FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE
+    FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE,
+    FOREIGN KEY (player_id) REFERENCES player(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_building_upgrade_planet ON building_upgrade(planet_id);
+CREATE INDEX IF NOT EXISTS idx_building_upgrade_player ON building_upgrade(player_id);
 
 CREATE TABLE IF NOT EXISTS building_upgrade_building
 (

@@ -17,7 +17,7 @@ const SLOT_SIZE_RANGES: SlotSizeRange[] =
 	{ min: 60,  max: 90  },  // slot 5
 ];
 
-function rollSizeForSlot(slot: number): number
+export function rollSizeForSlot(slot: number): number
 {
 	const range: SlotSizeRange = SLOT_SIZE_RANGES[slot - 1];
 	const span: number = range.max - range.min;

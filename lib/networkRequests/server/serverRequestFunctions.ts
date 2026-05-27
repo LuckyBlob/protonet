@@ -28,6 +28,7 @@ import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMov
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
 import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipConstructionData";
 import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
+import * as SeedWorld from "@/db/seedWorld"
 //#region Types
 
 type PlayerActionResult =
@@ -254,6 +255,54 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
     }, { status: 200 });
 }
 
+export async function serverTryDeleteUserRequest(request: Request): Promise<NextResponse>
+{
+    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DeleteUser> =
+    {
+        error: "Unknown error.",
+    };
+
+    try
+    {
+        const currentUser : DBType.UserRow | null = await Auth.getCurrentUser();
+        if (currentUser === null)
+        {
+            errorResponse.error = "Not logged in.";
+            return NextResponse.json(errorResponse, { status: 401 });
+        }
+
+        const playerRow: DBType.PlayerRow | null = serverFindPlayerByUserId(currentUser.id);
+        if (playerRow !== null)
+        {
+            const playerData: PlayerDataType.PlayerData = serverGetPlayerData(playerRow.id);
+            for (const fullPlanetData of playerData.fullPlanetDatas)
+            {
+                abandonPlanet(fullPlanetData.planetRow.id, playerRow.id);
+            }
+        }
+
+        const cookieStore: ReadonlyRequestCookies = await cookies();
+        const sessionTokenCookie: RequestCookie | undefined = cookieStore.get(Auth.sessionCookieName);
+        if (sessionTokenCookie !== undefined)
+        {
+            Auth.deleteSession(sessionTokenCookie.value);
+            cookieStore.delete(Auth.sessionCookieName);
+        }
+
+        Auth.deleteUser(currentUser.id);
+    }
+    catch (error: unknown)
+    {
+        errorResponse.error = error instanceof Error ? error.message : String(error);
+        return NextResponse.json(errorResponse, { status: 500 });
+    }
+
+    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DeleteUser>>(
+    {
+        error: null,
+    }, { status: 200 });
+}
+
 export async function serverTryLogoutRequest(): Promise<NextResponse>
 {
     const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout> =
@@ -450,13 +499,13 @@ export function serverUpdatePlanetRow(planetId: number, columnUpdates: Partial<D
     return result;
 }
 
-export function serverUpdateAllPlanetData(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): PlayerDataType.DynamicPlanetData
+export function serverUpdateAllPlanetData(planetId: number, playerId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): PlayerDataType.DynamicPlanetData
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
         for (const dataContext of PlayerData.getDataContexts())
         {
-            ServerDynamicData.serverUpdatePlanetDataContext(planetId, dataContext, dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlanetDataContext(planetId, playerId, dataContext, dynamicPlanetData);
         }
     });
     transaction();
@@ -492,14 +541,21 @@ export function serverAssignStartingPlanets(playerRow: DBType.PlayerRow): void
     transaction();
 }
 
-export function serverCleanPlanet(planetId: number): PlayerDataType.FullPlanetData
+export function serverCleanPlanet(planetId: number, playerId: number): PlayerDataType.FullPlanetData
 {
-    const cleanPlanetData: PlayerDataType.FullPlanetData =
+    const transaction: Database.Transaction = DB.databaseConnection.transaction((): PlayerDataType.FullPlanetData =>
     {
-        planetRow: serverUpdatePlanetRow(planetId, AssociationMaps.CLEAN_PLANET),
-        dynamicPlanetData: serverUpdateAllPlanetData(planetId, PlayerDataType.EmptyPlanetData),
-    };
-    return cleanPlanetData;
+        const cleanPlanetData: PlayerDataType.FullPlanetData =
+        {
+            // Order is important so we delete the playerId before doing the rest.
+            // This will specifically make the fleets point to a null player target ID and not be deleted since target player is now null.
+            planetRow: serverUpdatePlanetRow(planetId, AssociationMaps.CLEAN_PLANET),
+            dynamicPlanetData: serverUpdateAllPlanetData(planetId, playerId, PlayerDataType.EmptyPlanetData),
+        };
+        return cleanPlanetData;
+    });
+
+    return transaction() as PlayerDataType.FullPlanetData;
 }
 
 function createPlayer(userId: number): boolean
@@ -509,6 +565,7 @@ function createPlayer(userId: number): boolean
         const playerRow: DBType.PlayerRow = DB.databaseConnection.prepare(
             "INSERT INTO player (user_id) VALUES (?) RETURNING *"
         ).get(userId) as DBType.PlayerRow;
+
         serverAssignStartingPlanets(playerRow);
     });
 
@@ -540,11 +597,33 @@ function claimPlanet(planetId: number, playerId: number, claimedAt: number, isSt
 
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        serverCleanPlanet(planetId);
+        serverCleanPlanet(planetId, playerId);
         serverUpdatePlanetRow(planetId, updates);
-        serverUpdateAllPlanetData(planetId, AssociationMaps.STARTING_PLANET_DATA);
+        serverUpdateAllPlanetData(planetId, playerId, AssociationMaps.STARTING_PLANET_DATA);
+
+        // do this last so the update fleet sees null target and doesnt delete
+        DB.databaseConnection.prepare(
+            "UPDATE fleet_movement SET player_target_id = ? WHERE planet_target_id = ?"
+        ).run(playerId, planetId);
     });
     transaction();
+}
+
+function abandonPlanet(planetId: number, playerId: number): void
+{
+    // set null first before clean so we fail the "target player null" condition and dont pickup to delete and not re-add.
+    DB.databaseConnection.transaction(() =>
+    {
+        DB.databaseConnection.prepare(
+            "UPDATE fleet_movement SET player_target_id = null WHERE planet_target_id = ?"
+        ).run(planetId);
+
+        DB.databaseConnection.prepare(
+            "DELETE FROM fleet_movement WHERE planet_origin_id = ?"
+        ).run(planetId);
+        
+        serverCleanPlanet(planetId, playerId);
+    })();
 }
 
 function readPlanetRow(planetId: number): DBType.PlanetRow
@@ -754,6 +833,7 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: ServerData
     {
         id: -1,
         planet_id: relevantFullPlanetData.planetRow.id,
+        player_id: playerId,
         requested_at: now,
         duration_at_request_time: buildDurationSeconds * 1000,
         duration_at_start_time: null,
@@ -791,9 +871,9 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: ServerData
 
     const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, relevantFullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingUpgrade, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.BuildingLevel, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.BuildingUpgrade, relevantFullPlanetData.dynamicPlanetData);
 
         const playerActionResult: PlayerActionResult =
         {
@@ -874,6 +954,7 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
     {
         id: -1,
         planet_id: relevantFullPlanetData.planetRow.id,
+        player_id: playerId,
         requested_at: now,
         duration_at_request_time: shipConstructionDurationSeconds * 1000,
         duration_at_start_time: null,
@@ -910,8 +991,8 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
     relevantFullPlanetData.dynamicPlanetData.shipConstructions.push(newShipConstruction);
     const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.ShipConstruction, relevantFullPlanetData.dynamicPlanetData);
         
         const playerActionResult: PlayerActionResult =
         {
@@ -921,6 +1002,41 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
         }
         return playerActionResult;
     })();
+
+    return playerActionResult;
+}
+
+export function tryAbandonPlanetLogic(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.AbandonPlanet>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    const relevantFullPlanetData : PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, requestData.planetId);
+    if (relevantFullPlanetData === null)
+    {
+        return { success: false, failureReason: "Wrong planet to abandon.", playerStateResult: playerData };
+    }
+
+    if (playerData.fullPlanetDatas.length === 1)
+    {
+        return { success: false, failureReason: "Players must keep 1 planet minimum.", playerStateResult: playerData };
+    }
+
+    try
+    {
+        abandonPlanet(requestData.planetId, playerId);
+    }
+    catch (error: unknown)
+    {
+        return { success: false, failureReason: "Failed to abandon planet.", playerStateResult: playerData };
+    }
+
+    const playerActionResult: PlayerActionResult =
+    {
+        success: true,
+        failureReason: null,
+        playerStateResult: serverGetPlayerData(playerId),
+    }
 
     return playerActionResult;
 }
@@ -1079,9 +1195,9 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
         }
         originFullPlanetData.dynamicPlanetData.futureFleetArrivals.push(newFleetMovement);
     
-        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, originFullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipQuantity, originFullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, PlayerDataType.DataContext.FutureFleetArrivals, originFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.ResourceQuantity, originFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.ShipQuantity, originFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.FutureFleetArrivals, originFullPlanetData.dynamicPlanetData);
 
         const playerActionResult: PlayerActionResult =
         {

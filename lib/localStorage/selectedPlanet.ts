@@ -5,16 +5,17 @@ import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 
 const SELECTED_PLANET_STORAGE_KEY: string = "protonet.selectedPlanetId";
 
-export function updateSelectedPlanetIdInStorage(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): number
+export function updateSelectedPlanetIdInStorage(newPlayerData: PlayerDataType.PlayerData): number
 {
-    const currentlySelectedPlanetId: number = readStoredSelectedPlanetId() ?? newPlayerData.fullPlanetDatas[0].planetRow.id;
-    if (currentlySelectedPlanetId === psController[0].selectedPlanetId)
+    const storedSelectedPlanetId: number | null = readStoredSelectedPlanetId();
+    const resolvedSelectedPlanetId: number = getRelevantSelectedPlanetId(newPlayerData.fullPlanetDatas, storedSelectedPlanetId);
+
+    if (resolvedSelectedPlanetId !== storedSelectedPlanetId)
     {
-        return currentlySelectedPlanetId;
+        writeStoredSelectedPlanetId(resolvedSelectedPlanetId);
     }
 
-    writeStoredSelectedPlanetId(getRelevantSelectedPlanetId(newPlayerData.fullPlanetDatas, currentlySelectedPlanetId));
-    return currentlySelectedPlanetId;
+    return resolvedSelectedPlanetId;
 }
 
 export function setSelectedPlanetID(psController: PlayerDataType.PSController, selectedPlanetId: number)

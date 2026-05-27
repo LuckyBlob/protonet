@@ -33,6 +33,7 @@ export type ServerConfigRow =
 export type PlanetResourceRow =
 {
 	planet_id: number;
+	player_id: number;
 	resource_type: number;
 	resource_quantity: number;
 };
@@ -40,6 +41,7 @@ export type PlanetResourceRow =
 export type PlanetBuildingRow =
 {
 	planet_id: number;
+	player_id: number;
 	building_type: number;
 	building_level: number;
 };
@@ -79,6 +81,7 @@ export type PublicPlayerRow =
 export type PlanetShipRow =
 {
     planet_id: number;
+    player_id: number;
     ship_type: number;
     ship_quantity: number;
 };
@@ -87,6 +90,7 @@ export type ShipConstructionRow =
 {
     id: number;
     planet_id: number;
+    player_id: number;
     requested_at: number;
     duration_at_request_time: number;
     duration_at_start_time: number | null;
@@ -106,6 +110,7 @@ export type BuildingUpgradeRow =
 {
     id: number;
     planet_id: number;
+    player_id: number;
     requested_at: number;
     duration_at_request_time: number;
     duration_at_start_time: number | null;

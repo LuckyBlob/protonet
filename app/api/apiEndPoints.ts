@@ -7,31 +7,37 @@ export const ActionRequest =
 {
     Login:    { endpoint: "authentication/login",    name: "Login" },
     Register: { endpoint: "authentication/register", name: "Register" },
+    DeleteUser: { endpoint: "authentication/deleteUser", name: "DeleteUser" },
     Logout:   { endpoint: "authentication/logout",   name: "Logout" },
     RefreshServer:   { endpoint: "refreshServerData",   name: "RefreshServer" },
     UpgradeBuilding:   { endpoint: "buy/upgradeBuilding",   name: "UpgradeBuilding" },
     BuildShips:   { endpoint: "buy/buildShips",   name: "BuildShips" },
     SendFleet:   { endpoint: "buy/sendFleet",   name: "SendFleet" },
+    AbandonPlanet:   { endpoint: "planets/abandon",   name: "AbandonPlanet" },
 } as const satisfies Record<string, validEndpoint>;
 export type ActionRequestMap = 
 {
     Login: RequestType.BaseAuthenticationClientRequest;
     Register: RequestType.BaseAuthenticationClientRequest;
+    DeleteUser: RequestType.BaseClientRequest;
     Logout: null;
     RefreshServer: null;
     UpgradeBuilding: RequestType.BuildingUpgrade_ClientRequest;
     BuildShips: RequestType.BuildShips_ClientRequest;
     SendFleet: RequestType.SendFleet_ClientRequest;
+    AbandonPlanet: RequestType.AbandonPlanet_ClientRequest;
 }
 export type ActionResponseMap = 
 {
     Login: RequestType.BaseAuthenticationServerResponse;
     Register: RequestType.BaseAuthenticationServerResponse;
+    DeleteUser: RequestType.BaseServerResponse;
     Logout: RequestType.BaseAuthenticationServerResponse;
     RefreshServer: RequestType.RefreshServer_ServerResponse;
     UpgradeBuilding: RequestType.BuildingUpgrade_ServerResponse;
     BuildShips: RequestType.BuildShips_ServerResponse;
     SendFleet: RequestType.SendFleet_ServerResponse;
+    AbandonPlanet: RequestType.AbandonPlanet_ServerResponse;
 }
 //#endregion
 
