@@ -10,6 +10,7 @@ export function updateSelectedPlanetIdInStorage(newPlayerData: PlayerDataType.Pl
     const storedSelectedPlanetId: number | null = readStoredSelectedPlanetId();
     const resolvedSelectedPlanetId: number = getRelevantSelectedPlanetId(newPlayerData.fullPlanetDatas, storedSelectedPlanetId);
 
+    
     if (resolvedSelectedPlanetId !== storedSelectedPlanetId)
     {
         writeStoredSelectedPlanetId(resolvedSelectedPlanetId);
