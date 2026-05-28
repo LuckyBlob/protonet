@@ -9,7 +9,10 @@
     "lint": "eslint",
     "db:init": "tsx db/init.ts",
     "db:migrate": "tsx db/migrate.ts",
-    "db:migrateData": "tsx db/transferData.ts"
+    "db:migrateData": "tsx db/transferData.ts",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -25,10 +28,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.7"
   }
 }
