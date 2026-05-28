@@ -167,7 +167,7 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): Player
         const fleetMovements: PlayerDataType.FleetMovement[] = [];
 
         const fleetMovementRows: DBType.FleetMovementRow[] = DB.databaseConnection.prepare(
-            "SELECT * FROM fleet_movement WHERE planet_target_id = ? OR planet_origin_id = ?"
+            "SELECT * FROM fleet_movement WHERE planet_origin_id = ? OR (is_return_trip = 0 AND planet_target_id = ?)"
         ).all(planetId, planetId) as DBType.FleetMovementRow[];
 
         for (const fleetMovementRow of fleetMovementRows)
@@ -188,15 +188,6 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): Player
                 resolutionState: PlayerDataType.FleetMovementResolution.Unresolved,
             }
             
-            if (newFleetMovement.fleetMovementRow.is_return_trip)
-            {
-                if (newFleetMovement.fleetMovementRow.planet_target_id === planetId)
-                {
-                    // Dont pickup returning ships, they are irrelevant for the target
-                    continue;
-                }
-            }
-
             fleetMovements.push(newFleetMovement);
         }
 
@@ -404,11 +395,10 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: PlayerDa
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        // if first leg and both planets (both people can modify)
-        // OR if second leg (return trip) and origin planet (only origin can manage)
+        // Only the origin planet ID is the owner of this fleet movement
         DB.databaseConnection.prepare(
-            "DELETE FROM fleet_movement WHERE (is_return_trip = 0 AND (planet_origin_id = ? OR (planet_target_id = ? AND player_target_id IS NOT NULL))) OR (is_return_trip = 1 AND planet_origin_id = ?)"
-        ).run(planetId, planetId, planetId);
+            "DELETE FROM fleet_movement WHERE (planet_origin_id = ?)"
+        ).run(planetId);
         
         // On delete cascade will delete the ship rows and resource rows
         const fleetMovementStatement: Database.Statement = DB.databaseConnection.prepare(
@@ -423,6 +413,12 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: PlayerDa
 
         for (const fleetMovement of dynamicPlanetData.futureFleetArrivals)
         {
+            if (fleetMovement.fleetMovementRow.planet_origin_id !== planetId)
+            {
+                // Only the origin of a fleet movement can update the DB.
+                continue;
+            }
+
             const fleetIdResult: { id: number } = fleetMovementStatement.get(
                 fleetMovement.fleetMovementRow.seed,
                 fleetMovement.fleetMovementRow.player_origin_id,

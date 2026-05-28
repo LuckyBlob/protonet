@@ -43,6 +43,19 @@ export function addQuantities(quantities: Map<number, number> , get: (type: numb
     return modifyQuantities("+", quantities, get, set);
 }
 
+export function addQuantitiesTogether(quantities1: Map<number, number>, quantities2: Map<number, number>): Map<number, number>
+{
+    const addedQuantities = new Map<number, number>(quantities1);
+
+    for (const [type, qty] of quantities2)
+    {
+        const currentQty = addedQuantities.get(type) ?? 0;
+        addedQuantities.set(type, currentQty + qty);
+    }
+
+    return addedQuantities;
+}
+
 export function addQuantity(type: number, quantity: number, get: (type: number) => number | undefined, set: (type: number, value: number) => void): number
 {
     return modifyQuantity("+", type, quantity, get, set);

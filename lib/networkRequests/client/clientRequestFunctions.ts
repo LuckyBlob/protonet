@@ -24,20 +24,6 @@ export function setPlayerState(psController: PlayerDataType.PSController, newPla
     };
     psController[1](loadedPlayerState);
 }
-
-export function setPredictedPlayerState(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): void
-{
-    const currentlySelectedPlanetId: number = SelectedPlanet.updateSelectedPlanetIdInStorage(newPlayerData);
-    const loadedPlayerState: PlayerDataType.PlayerState =
-    {
-        dbData: psController[0].dbData,
-        predictedDBData: newPlayerData,
-        selectedPlanetId: currentlySelectedPlanetId,
-        lastFetchTimestamp: Date.now(),
-    };
-    psController[1](loadedPlayerState);
-}
-
 //#endregion
 
 //#region Data requests

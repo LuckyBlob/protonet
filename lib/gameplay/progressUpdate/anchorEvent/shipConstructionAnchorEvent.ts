@@ -120,7 +120,8 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
     
     if (nextShipConstructionShipRow === null)
     {
-        nextShipConstructionShipRow = ShipConstructionData.getNextShipConstructionShipRow(fullPlanetData, nextShipConstruction, serverData);
+        ShipConstructionData.sortShipConstructionShipRowByConstructionTime(fullPlanetData, nextShipConstruction, serverData);
+        nextShipConstructionShipRow = nextShipConstruction.shipConstructionShipRows[0] ?? null;
     }
 
     if (nextShipConstructionShipRow === null)

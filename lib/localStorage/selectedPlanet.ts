@@ -18,15 +18,19 @@ export function updateSelectedPlanetIdInStorage(newPlayerData: PlayerDataType.Pl
     return resolvedSelectedPlanetId;
 }
 
-export function setSelectedPlanetID(psController: PlayerDataType.PSController, selectedPlanetId: number)
+export function setSelectedPlanetID(psController: PlayerDataType.PSController, selectedPlanetId: number): void
 {
-    const newPlayerState: PlayerDataType.PlayerState =
+    psController[1]((mostRecentState: PlayerDataType.PlayerState): PlayerDataType.PlayerState =>
     {
-        ...psController[0],
-        selectedPlanetId: selectedPlanetId,
-    }
-    writeStoredSelectedPlanetId(selectedPlanetId);
-    psController[1](newPlayerState);
+        const newPlayerState: PlayerDataType.PlayerState =
+        {
+            dbData: mostRecentState.dbData,
+            predictedDBData: mostRecentState.predictedDBData,
+            selectedPlanetId: selectedPlanetId,
+            lastFetchTimestamp: Date.now(),
+        };
+        return newPlayerState;
+    });
 }
 
 function readStoredSelectedPlanetId(): number | null

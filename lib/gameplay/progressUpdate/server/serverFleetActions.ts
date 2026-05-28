@@ -42,6 +42,14 @@ function resolveFleetActionToDB(originPlayerData: FleetData.FleetPlayerData | nu
         FleetData.resolveFleetMovementAtTarget(targetPlayerData?.playerData ?? null, fleetMovement, fleetPlayerDataPair, serverData, originPlayerData.fullPlanetData);
     }
 
+    // Target can resolve, but doesnt have the origin data. If a one way trip, we must remove the fleet from the origin,
+    // if that fleet was to another player since it's over. But since we couldnt do that locally, we need to do it here.
+    if (fleetMovement.resolutionState === PlayerDataType.FleetMovementResolution.ResolvedOneWayTripForTargetOnly)
+    {
+        FleetData.removeFleetMovementSafe(originPlayerData.fullPlanetData, fleetMovement.fleetMovementRow.id);
+        fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.Resolved
+    }
+
     if (fleetMovement.resolutionState !== PlayerDataType.FleetMovementResolution.Resolved)
     {
         throw new Error("Fleet action could not be resolved.")
@@ -53,12 +61,16 @@ function resolveFleetActionToDB(originPlayerData: FleetData.FleetPlayerData | nu
         {
             ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.fullPlanetData.planetRow.id, targetPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.ShipQuantity, targetPlayerData.fullPlanetData.dynamicPlanetData);
             ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.fullPlanetData.planetRow.id, targetPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.ResourceQuantity, targetPlayerData.fullPlanetData.dynamicPlanetData);
-            ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.fullPlanetData.planetRow.id, targetPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.FutureFleetArrivals, targetPlayerData.fullPlanetData.dynamicPlanetData);
+            // Target never updates the fleet movement DB data, owner of that is origin only
         }
 
         // The ship is returning or stationed, we have to update that
-        ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.fullPlanetData.planetRow.id, originPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.ShipQuantity, originPlayerData.fullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.fullPlanetData.planetRow.id, originPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.ResourceQuantity, originPlayerData.fullPlanetData.dynamicPlanetData);
+        if (fleetMovement.fleetMovementRow.is_return_trip)
+        {
+            ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.fullPlanetData.planetRow.id, originPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.ShipQuantity, originPlayerData.fullPlanetData.dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.fullPlanetData.planetRow.id, originPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.ResourceQuantity, originPlayerData.fullPlanetData.dynamicPlanetData);
+        }
+
         ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.fullPlanetData.planetRow.id, originPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.FutureFleetArrivals, originPlayerData.fullPlanetData.dynamicPlanetData);
     });
 
@@ -69,13 +81,13 @@ function deleteFleetMovementFromDB(originPlayerData: FleetData.FleetPlayerData |
 {
     if (originPlayerData !== null)
     {
-        const updatedFullPlanetData: PlayerDataType.FullPlanetData = FleetData.removeFleetMovement(originPlayerData.fullPlanetData, fleetMovement.fleetMovementRow.id);
+        const updatedFullPlanetData: PlayerDataType.FullPlanetData = FleetData.removeFleetMovementSafe(originPlayerData.fullPlanetData, fleetMovement.fleetMovementRow.id);
         ServerDynamicData.serverUpdatePlanetDataContext(updatedFullPlanetData.planetRow.id, originPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.FutureFleetArrivals, updatedFullPlanetData.dynamicPlanetData);
     }
 
     if (targetPlayerData !== null)
     {
-        const updatedFullPlanetData: PlayerDataType.FullPlanetData = FleetData.removeFleetMovement(targetPlayerData.fullPlanetData, fleetMovement.fleetMovementRow.id);
+        const updatedFullPlanetData: PlayerDataType.FullPlanetData = FleetData.removeFleetMovementSafe(targetPlayerData.fullPlanetData, fleetMovement.fleetMovementRow.id);
         ServerDynamicData.serverUpdatePlanetDataContext(updatedFullPlanetData.planetRow.id, targetPlayerData.playerData.playerRow.id, PlayerDataType.DataContext.FutureFleetArrivals, updatedFullPlanetData.dynamicPlanetData);
     }
 }

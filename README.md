@@ -32,8 +32,7 @@ Then open **http://localhost:3001**.
 | `npm run lint` | Run ESLint. |
 | `npm run db:init` | Create a new local SQLite database from the base schema and register existing migrations as applied. |
 | `npm run db:migrate` | Apply new SQL migrations to an existing local database and create a backup first. |
-| `npm run db:seed` | Seed the game world with the initial planet data. |
-| `npm run db:backfill` | Run the one-off data transfer/backfill script in `db/transfertData.ts`. |
+| `npm run db:migrateData` | Run the one-off data transfer/migrateData script in `db/migrateData.ts`. |
 
 ## Notes for contributors
 

@@ -24,43 +24,29 @@ export function getNextShipConstruction(fullPlanetData: PlayerDataType.FullPlane
     return bestNextConstruction;
 }
 
-export function getNextShipConstructionShipRow(fullPlanetData: PlayerDataType.FullPlanetData, shipConstruction: PlayerDataType.ShipConstruction, serverData: ServerDataType.ServerData): DBType.ShipConstructionShipRow | null
-{
-    const nextShipConstructionShipRowIndex: number | null = getNextShipConstructionShipRowIndex(fullPlanetData, shipConstruction, serverData);
-    if (nextShipConstructionShipRowIndex === null)
-    {
-        return null;
-    }
-    const nestShipConstructionShipRow: DBType.ShipConstructionShipRow = shipConstruction.shipConstructionShipRows[nextShipConstructionShipRowIndex];
-    return nestShipConstructionShipRow;
-}
-
-export function getNextShipConstructionShipRowIndex(fullPlanetData: PlayerDataType.FullPlanetData, shipConstruction: PlayerDataType.ShipConstruction, serverData: ServerDataType.ServerData, startAtIndex: number | null = null): number | null
+export function sortShipConstructionShipRowByConstructionTime(fullPlanetData: PlayerDataType.FullPlanetData, shipConstruction: PlayerDataType.ShipConstruction, serverData: ServerDataType.ServerData): void
 {
     if (shipConstruction.shipConstructionShipRows.length === 0)
     {
-        return null;
+        return;
     }
 
-    let bestNextRowIndex: number | null = null;
-    let currentTimeToBeat: number = Number.MAX_SAFE_INTEGER;
-    for (let index = startAtIndex ? startAtIndex : 0; index < shipConstruction.shipConstructionShipRows.length; index++)
+    // sort shortest duration first
+    shipConstruction.shipConstructionShipRows.sort((row1: DBType.ShipConstructionShipRow, row2: DBType.ShipConstructionShipRow): number =>
     {
-        const shipConstructionShipRow: DBType.ShipConstructionShipRow = shipConstruction.shipConstructionShipRows[index];
-        const shipConstructionTime: number | null = getShipConstructionDurationSeconds(shipConstructionShipRow.ship_type, fullPlanetData, serverData);
-        if (shipConstructionTime === null)
+        const shipConstructionTime1: number | null = getShipConstructionDurationSeconds(row1.ship_type, fullPlanetData, serverData);
+        if (shipConstructionTime1 === null)
         {
-            continue;
+            throw new Error("No ship construction duration data!");
+        }
+        const shipConstructionTime2: number | null = getShipConstructionDurationSeconds(row2.ship_type, fullPlanetData, serverData);
+        if (shipConstructionTime2 === null)
+        {
+            throw new Error("No ship construction duration data!");
         }
 
-        if (bestNextRowIndex === null || currentTimeToBeat > shipConstructionTime)
-        {
-            currentTimeToBeat = shipConstructionTime;
-            bestNextRowIndex = index;
-        }
-    }
-
-    return bestNextRowIndex;
+        return shipConstructionTime1 - shipConstructionTime2;
+    });
 }
 
 export function getShipConstructionDurationSeconds(shipType: number, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData): number | null

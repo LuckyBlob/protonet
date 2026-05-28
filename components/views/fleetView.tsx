@@ -359,6 +359,7 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: number, dat
 
     const resourceName: string = ThingType.getSpecificThingName(ThingType.resource(resourceType));
     const ownedResourceQuantity: number = Math.floor(ResourceData.getResourceQuantity(data.fullPlanetData, resourceType));
+
     const originAddress: GameType.PlanetAddress = PlayerData.getPlanetAddress(data.fullPlanetData);
     const targetAddress: GameType.PlanetAddress = 
     {
@@ -366,7 +367,11 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: number, dat
         system: data.systemIdState[0],
         slot: data.slotIdState[0],
     }
-    const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
+    
+    const fuelRequirements: Map<number, number> = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
+    const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
+    const totalFleetSpace: number = FleetData.calculateTotalFleetSpace(data.requestedShipQuantitiesState.requestedQuantities);
+    const specificFuelResource: number = fuelRequirements.get(resourceType) ?? 0;
 
     let otherResourcesRequested: number = 0;
     for (const [otherType, otherQty] of data.requestedResourceQuantitiesState.requestedQuantities)
@@ -377,8 +382,8 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: number, dat
         }
     }
 
-    const availableSpaceForThisResource: number = Math.max(fuelSpaceData.availableSpace - otherResourcesRequested, 0);
-    const maxResourcePossible: number = Math.min(ownedResourceQuantity, availableSpaceForThisResource);
+    const availableSpaceForThisResource: number = Math.max(totalFleetSpace - otherResourcesRequested - totalFuel, 0);
+    const maxResourcePossible: number = Math.max(0, Math.min(ownedResourceQuantity - specificFuelResource, availableSpaceForThisResource));
 
     const handleFillMax = (): void =>
     {

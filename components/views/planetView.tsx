@@ -116,25 +116,25 @@ function renderBody(props: PlanetViewProps, selectedGalaxy: number, selectedSyst
 
 export function PlanetView(props: PlanetViewProps): ReactElement
 {
-    const fullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-    
-    const selectedGalaxyState: [number, (value: number) => void] = useState<number>(fullPlanetDataPredicted.planetRow.galaxy);
-    const selectedSystemState: [number, (value: number) => void] = useState<number>(fullPlanetDataPredicted.planetRow.system);
-
-    const handleGalaxyChange = (e: ChangeEvent<HTMLSelectElement>): void =>
-    {
-        const parsedValue: number = Number.parseInt(e.target.value, 10);
-        selectedGalaxyState[1](Math.min(Math.max(parsedValue, 1), GameType.GALAXY_COUNT));
-    };
-
-    const handleSystemChange = (e: ChangeEvent<HTMLSelectElement>): void =>
-    {
-        const parsedValue: number = Number.parseInt(e.target.value, 10);
-        selectedSystemState[1](Math.min(Math.max(parsedValue, 1), GameType.SYSTEM_COUNT));
-    };
-
     try
     {
+        const fullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
+    
+        const selectedGalaxyState: [number, (value: number) => void] = useState<number>(fullPlanetDataPredicted.planetRow.galaxy);
+        const selectedSystemState: [number, (value: number) => void] = useState<number>(fullPlanetDataPredicted.planetRow.system);
+
+        const handleGalaxyChange = (e: ChangeEvent<HTMLSelectElement>): void =>
+        {
+            const parsedValue: number = Number.parseInt(e.target.value, 10);
+            selectedGalaxyState[1](Math.min(Math.max(parsedValue, 1), GameType.GALAXY_COUNT));
+        };
+
+        const handleSystemChange = (e: ChangeEvent<HTMLSelectElement>): void =>
+        {
+            const parsedValue: number = Number.parseInt(e.target.value, 10);
+            selectedSystemState[1](Math.min(Math.max(parsedValue, 1), GameType.SYSTEM_COUNT));
+        };
+
         return renderBody(props, selectedGalaxyState[0], selectedSystemState[0], handleGalaxyChange, handleSystemChange);
     }
     catch (error: unknown)

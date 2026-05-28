@@ -28,6 +28,7 @@ import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMov
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
 import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipConstructionData";
 import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
+import * as MathHelp from "@/lib/helper/mathHelp";
 //#region Types
 
 type PlayerActionResult =
@@ -939,6 +940,11 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
         {
             return { success: false, failureReason: "A ship doesn't meet requirements.", playerStateResult: playerData };
         }
+
+        if (shipQuantity < 0)
+        {
+            return { success: false, failureReason: "Negative ship quantity.", playerStateResult: playerData };
+        }
     }
 
     const possibleRequestedShipQuantities: Map<number, number> = ShipConstructionData.computeMaxAffordableShipQuantities(relevantFullPlanetData, requestedShipQuantities);
@@ -995,13 +1001,9 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
         shipConstructionRow: newShipConstructionRow,
         shipConstructionShipRows: newShipConstructionShipRows,
     };
-    const index: number | null = ShipConstructionData.getNextShipConstructionShipRowIndex(relevantFullPlanetData, newShipConstruction, serverData);
-    if (index === null)
-    {
-        throw new Error("Failed to get first ship construction ship row.");
-    }
-    // swap the first construction ship row to start building to ensure it'S in first place.
-    [newShipConstruction.shipConstructionShipRows[0], newShipConstruction.shipConstructionShipRows[index]] = [newShipConstruction.shipConstructionShipRows[index], newShipConstruction.shipConstructionShipRows[0]];
+
+    //Sort the construction ship rows to start building shortest first.
+    ShipConstructionData.sortShipConstructionShipRowByConstructionTime(relevantFullPlanetData, newShipConstruction, serverData);
     const firstConstructionShipRow: DBType.ShipConstructionShipRow = newShipConstruction.shipConstructionShipRows[0];
 
     // No constructions? Means we can start this one right away, otherwise it will be in queue and start when the previous ones are done.
@@ -1100,6 +1102,11 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
         {
             return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
         }
+
+        if (shipQuantity < 0)
+        {
+            return { success: false, failureReason: "Negative ship quantity for fleet.", playerStateResult: playerData };
+        }
     }
 
     const canExecuteFleetAction: boolean = FleetData.canExecuteFleetActionOnTargetPlanet(originFullPlanetData, targetFullPlanetData, shipQuantities, requestData.fleetAction);
@@ -1139,18 +1146,20 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
         return { success: false, failureReason: `Duration calculation problems: ${errorMessage}`, playerStateResult: playerData };
     }
 
+    const totalRequiredResourceQuantities: Map<number, number> = MathHelp.addQuantitiesTogether(transportedResourceQuantities, fuelRequirements);
+
     const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
-        const canAffordFuel: boolean = ResourceData.hasResourceQuantities(originFullPlanetData, fuelRequirements);
+        const canAffordFuel: boolean = ResourceData.hasResourceQuantities(originFullPlanetData, totalRequiredResourceQuantities);
         if (canAffordFuel === false)
         {
             return { success: false, failureReason: `Not enough fuel.`, playerStateResult: playerData };
         }
 
-        const canStoreFuel: boolean = FleetData.hasSpaceForFuel(shipQuantities, fuelRequirements);
-        if (canStoreFuel === false)
+        const canStoreResources: boolean = FleetData.hasSpaceForResourceQuantities(shipQuantities, totalRequiredResourceQuantities);
+        if (canStoreResources === false)
         {
-            return { success: false, failureReason: `Not enough space for fuel.`, playerStateResult: playerData };
+            return { success: false, failureReason: `Not enough space for resources.`, playerStateResult: playerData };
         }
 
         const hasShips: boolean = ShipData.hasShipQuantities(originFullPlanetData, shipQuantities);

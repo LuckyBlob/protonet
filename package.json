@@ -9,8 +9,7 @@
     "lint": "eslint",
     "db:init": "tsx db/init.ts",
     "db:migrate": "tsx db/migrate.ts",
-    "db:seed": "tsx db/seedWorld.ts",
-    "db:backfill": "tsx db/transfertData.ts"
+    "db:migrateData": "tsx db/transferData.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
