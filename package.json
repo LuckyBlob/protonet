@@ -9,7 +9,7 @@
     "lint": "eslint",
     "db:init": "tsx db/init.ts",
     "db:migrate": "tsx db/migrate.ts",
-    "db:migrateData": "tsx db/transferData.ts",
+    "db:transfer": "tsx db/runDataTransfers.ts",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "playwright test"
