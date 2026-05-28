@@ -1,0 +1,164 @@
+import * as DBType from "@/lib/db/dbTypes";
+import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+
+export function buildPlayerRow(overrides?: Partial<DBType.PlayerRow>): DBType.PlayerRow
+{
+    const playerRow: DBType.PlayerRow =
+    {
+        id: 1,
+        user_id: 1,
+        gold: 0,
+        upgrade_level: 0,
+        building_upgrade_completes_at: 0,
+        last_updated: 1_000_000,
+        ...overrides,
+    };
+
+    return playerRow;
+}
+
+export function buildPlanetRow(overrides?: Partial<DBType.PlanetRow>): DBType.PlanetRow
+{
+    const planetRow: DBType.PlanetRow =
+    {
+        id: 1,
+        slot: 3,
+        system: 1,
+        galaxy: 1,
+        size: GameType.STARTING_PLANET_SIZE,
+        owner_player_id: 1,
+        claimed_at: 0,
+        last_updated: 1_000_000,
+        ...overrides,
+    };
+
+    return planetRow;
+}
+
+export function buildDynamicPlanetData(overrides?: Partial<PlayerDataType.DynamicPlanetData>): PlayerDataType.DynamicPlanetData
+{
+    const dynamicPlanetData: PlayerDataType.DynamicPlanetData =
+    {
+        resourceQuantity: new Map<number, number>
+        ([
+            [GameType.RESOURCE_1, 2000],
+            [GameType.RESOURCE_2, 500],
+            [GameType.RESOURCE_3, 0],
+        ]),
+        buildingLevels: new Map<number, number>(),
+        shipQuantity: new Map<number, number>
+        ([
+            [GameType.SMALL_TRANSPORT, 0],
+            [GameType.LARGE_TRANSPORT, 0],
+        ]),
+        shipConstructions: [],
+        futureFleetArrivals: [],
+        buildingUpgrades: [],
+        ...overrides,
+    };
+
+    return dynamicPlanetData;
+}
+
+export function buildFullPlanetData(overrides?: { planetRow?: Partial<DBType.PlanetRow>; dynamicPlanetData?: Partial<PlayerDataType.DynamicPlanetData>; }): PlayerDataType.FullPlanetData
+{
+    const fullPlanetData: PlayerDataType.FullPlanetData =
+    {
+        planetRow: buildPlanetRow(overrides?.planetRow),
+        dynamicPlanetData: buildDynamicPlanetData(overrides?.dynamicPlanetData),
+    };
+
+    return fullPlanetData;
+}
+
+export function buildPlayerData(overrides?: { playerRow?: Partial<DBType.PlayerRow>; fullPlanetDatas?: PlayerDataType.FullPlanetData[]; }): PlayerDataType.PlayerData
+{
+    const playerData: PlayerDataType.PlayerData =
+    {
+        playerRow: buildPlayerRow(overrides?.playerRow),
+        fullPlanetDatas: overrides?.fullPlanetDatas ?? [buildFullPlanetData()],
+        publicPlanetRows: [],
+        publicPlayerRows: [],
+    };
+
+    return playerData;
+}
+
+export function buildServerData(timeMultiplier?: number): ServerDataType.ServerData
+{
+    const serverData: ServerDataType.ServerData =
+    {
+        config:
+        {
+            id: 1,
+            time_multiplier: timeMultiplier ?? 1,
+        },
+    };
+
+    return serverData;
+}
+
+export function buildBuildingUpgradeRow(overrides?: Partial<DBType.BuildingUpgradeRow>): DBType.BuildingUpgradeRow
+{
+    const row: DBType.BuildingUpgradeRow =
+    {
+        id: 1,
+        planet_id: 1,
+        player_id: 1,
+        requested_at: 1_000_000,
+        duration_at_request_time: 10_000,
+        duration_at_start_time: 10_000,
+        started_at: 1_000_000,
+        current_building_upgrade_building_row_id: 1,
+        ...overrides,
+    };
+
+    return row;
+}
+
+export function buildBuildingUpgradeBuildingRow(overrides?: Partial<DBType.BuildingUpgradeBuildingRow>): DBType.BuildingUpgradeBuildingRow
+{
+    const row: DBType.BuildingUpgradeBuildingRow =
+    {
+        id: 1,
+        building_upgrade_id: 1,
+        building_type: GameType.BUILDING_RESOURCE_PRODUCTION_1,
+        ...overrides,
+    };
+
+    return row;
+}
+
+export function buildShipConstructionRow(overrides?: Partial<DBType.ShipConstructionRow>): DBType.ShipConstructionRow
+{
+    const row: DBType.ShipConstructionRow =
+    {
+        id: 1,
+        planet_id: 1,
+        player_id: 1,
+        requested_at: 1_000_000,
+        duration_at_request_time: 10_000,
+        duration_at_start_time: 10_000,
+        started_at: 1_000_000,
+        current_ship_construction_ship_row_id: 1,
+        ...overrides,
+    };
+
+    return row;
+}
+
+export function buildShipConstructionShipRow(overrides?: Partial<DBType.ShipConstructionShipRow>): DBType.ShipConstructionShipRow
+{
+    const row: DBType.ShipConstructionShipRow =
+    {
+        id: 1,
+        ship_construction_id: 1,
+        ship_type: GameType.SMALL_TRANSPORT,
+        ship_quantity: 1,
+        ...overrides,
+    };
+
+    return row;
+}
