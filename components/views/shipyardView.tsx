@@ -310,10 +310,10 @@ function renderTimer(isActive: boolean, remainingMs: number, durationAtRequestTi
 
 function renderShipLines(fullPlanetData: PlayerDataType.FullPlanetData, shipConstruction: PlayerDataType.ShipConstruction, serverData: ServerDataType.ServerData): ReactElement[]
 {
-    const sortedRows: DBType.ShipConstructionShipRow[] = buildSortedShipRows(fullPlanetData, shipConstruction, serverData);
+    ShipConstructionData.sortShipConstructionShipRowByConstructionTime(fullPlanetData, shipConstruction, serverData);
     const lineElements: ReactElement[] = [];
 
-    for (const shipRow of sortedRows)
+    for (const shipRow of shipConstruction.shipConstructionShipRows)
     {
         const shipName: string = ThingType.getSpecificThingName(ThingType.ship(shipRow.ship_type));
 
@@ -325,27 +325,6 @@ function renderShipLines(fullPlanetData: PlayerDataType.FullPlanetData, shipCons
     }
 
     return lineElements;
-}
-
-function buildSortedShipRows(fullPlanetData: PlayerDataType.FullPlanetData, shipConstruction: PlayerDataType.ShipConstruction, serverData: ServerDataType.ServerData): DBType.ShipConstructionShipRow[]
-{
-    const sortedRows: DBType.ShipConstructionShipRow[] = [];
-    let startAtIndex: number | null = null;
-
-    while (true)
-    {
-        const nextIndex: number | null = ShipConstructionData.getNextShipConstructionShipRowIndex(fullPlanetData, shipConstruction, serverData, startAtIndex);
-
-        if (nextIndex === null)
-        {
-            break;
-        }
-
-        sortedRows.push(shipConstruction.shipConstructionShipRows[nextIndex]);
-        startAtIndex = nextIndex + 1;
-    }
-
-    return sortedRows;
 }
 
 function renderBuildableShipLines(buildableQuantities: Map<number, number>): ReactElement

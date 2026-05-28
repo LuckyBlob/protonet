@@ -28,6 +28,7 @@ import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMov
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
 import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipConstructionData";
 import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
+import * as MathHelp from "@/lib/helper/mathHelp";
 //#region Types
 
 type PlayerActionResult =
@@ -254,6 +255,54 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
     }, { status: 200 });
 }
 
+export async function serverTryDeleteUserRequest(request: Request): Promise<NextResponse>
+{
+    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DeleteUser> =
+    {
+        error: "Unknown error.",
+    };
+
+    try
+    {
+        const currentUser : DBType.UserRow | null = await Auth.getCurrentUser();
+        if (currentUser === null)
+        {
+            errorResponse.error = "Not logged in.";
+            return NextResponse.json(errorResponse, { status: 401 });
+        }
+
+        const playerRow: DBType.PlayerRow | null = serverFindPlayerByUserId(currentUser.id);
+        if (playerRow !== null)
+        {
+            const playerData: PlayerDataType.PlayerData = serverGetPlayerData(playerRow.id);
+            for (const fullPlanetData of playerData.fullPlanetDatas)
+            {
+                abandonPlanet(fullPlanetData.planetRow.id, playerRow.id);
+            }
+        }
+
+        const cookieStore: ReadonlyRequestCookies = await cookies();
+        const sessionTokenCookie: RequestCookie | undefined = cookieStore.get(Auth.sessionCookieName);
+        if (sessionTokenCookie !== undefined)
+        {
+            Auth.deleteSession(sessionTokenCookie.value);
+            cookieStore.delete(Auth.sessionCookieName);
+        }
+
+        Auth.deleteUser(currentUser.id);
+    }
+    catch (error: unknown)
+    {
+        errorResponse.error = error instanceof Error ? error.message : String(error);
+        return NextResponse.json(errorResponse, { status: 500 });
+    }
+
+    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DeleteUser>>(
+    {
+        error: null,
+    }, { status: 200 });
+}
+
 export async function serverTryLogoutRequest(): Promise<NextResponse>
 {
     const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout> =
@@ -450,56 +499,17 @@ export function serverUpdatePlanetRow(planetId: number, columnUpdates: Partial<D
     return result;
 }
 
-export function serverUpdateAllPlanetData(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): PlayerDataType.DynamicPlanetData
+export function serverUpdateAllPlanetData(planetId: number, playerId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): PlayerDataType.DynamicPlanetData
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
         for (const dataContext of PlayerData.getDataContexts())
         {
-            ServerDynamicData.serverUpdatePlanetDataContext(planetId, dataContext, dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlanetDataContext(planetId, playerId, dataContext, dynamicPlanetData);
         }
     });
     transaction();
     return ServerDynamicData.getDynamicPlanetData(planetId);
-}
-
-export function serverAssignStartingPlanets(playerRow: DBType.PlayerRow): void
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        const firstPlanetRow: DBType.PlanetRow | undefined = DB.databaseConnection.prepare(
-            "SELECT * FROM planet WHERE owner_player_id IS NULL AND (slot = 3 OR slot = 4) ORDER BY RANDOM() LIMIT 1"
-        ).get() as DBType.PlanetRow | undefined;
-
-        if (firstPlanetRow === undefined)
-        {
-            throw new Error("Failed to assign first planet: no available planets.");
-        }
-
-        const secondPlanetRow: DBType.PlanetRow | undefined = DB.databaseConnection.prepare(
-            "SELECT * FROM planet WHERE owner_player_id IS NULL AND (slot = 3 OR slot = 4) AND NOT (system = ? AND galaxy = ?) ORDER BY RANDOM() LIMIT 1"
-        ).get(firstPlanetRow.system, firstPlanetRow.galaxy) as DBType.PlanetRow | undefined;
-
-        if (secondPlanetRow === undefined)
-        {
-            throw new Error("Failed to assign second planet: no available planets in a different system.");
-        }
-
-        const now: number = Date.now();
-        claimPlanet(firstPlanetRow.id, playerRow.id, now, true);
-        claimPlanet(secondPlanetRow.id, playerRow.id, now + 1, true);
-    });
-    transaction();
-}
-
-export function serverCleanPlanet(planetId: number): PlayerDataType.FullPlanetData
-{
-    const cleanPlanetData: PlayerDataType.FullPlanetData =
-    {
-        planetRow: serverUpdatePlanetRow(planetId, AssociationMaps.CLEAN_PLANET),
-        dynamicPlanetData: serverUpdateAllPlanetData(planetId, PlayerDataType.EmptyPlanetData),
-    };
-    return cleanPlanetData;
 }
 
 function createPlayer(userId: number): boolean
@@ -509,7 +519,10 @@ function createPlayer(userId: number): boolean
         const playerRow: DBType.PlayerRow = DB.databaseConnection.prepare(
             "INSERT INTO player (user_id) VALUES (?) RETURNING *"
         ).get(userId) as DBType.PlayerRow;
-        serverAssignStartingPlanets(playerRow);
+
+        const now: number = Date.now();
+        claimPlanet(null, playerRow.id, now);
+        claimPlanet(null, playerRow.id, now + 1);
     });
 
     try
@@ -524,27 +537,123 @@ function createPlayer(userId: number): boolean
     }
 }
 
-function claimPlanet(planetId: number, playerId: number, claimedAt: number, isStartingPlanet: boolean): void
+function findFreePlanetAddress(minSlot: number, maxSlot:number): GameType.PlanetAddress | null
 {
-    const updates: Partial<DBType.PlanetRow> =
-    {
-        owner_player_id: playerId,
-        claimed_at: claimedAt,
-        last_updated: claimedAt,
-    };
+    const freeCoordinate: GameType.PlanetAddress | undefined = DB.databaseConnection.prepare
+    (
+        `WITH RECURSIVE
+            galaxies(galaxy) AS (
+                SELECT @galaxyMin
+                UNION ALL SELECT galaxy + 1 FROM galaxies WHERE galaxy < @galaxyMax
+            ),
+            systems(system) AS (
+                SELECT @systemMin
+                UNION ALL SELECT system + 1 FROM systems WHERE system < @systemMax
+            ),
+            slots(slot) AS (
+                SELECT @slotMin
+                UNION ALL SELECT slot + 1 FROM slots WHERE slot < @slotMax
+            )
+            SELECT g.galaxy AS galaxy, s.system AS system, sl.slot AS slot
+            FROM galaxies g
+            CROSS JOIN systems s
+            CROSS JOIN slots sl
+            WHERE NOT EXISTS
+            (
+                SELECT 1 FROM planet p
+                WHERE p.galaxy = g.galaxy AND p.system = s.system AND p.slot = sl.slot
+            )
+            ORDER BY random()
+            LIMIT 1`
+    ).get({
+        galaxyMin: 1,
+        galaxyMax: GameType.GALAXY_COUNT,
+        systemMin: 1,
+        systemMax: GameType.SYSTEM_COUNT,
+        slotMin: minSlot,
+        slotMax: maxSlot,
+    }) as GameType.PlanetAddress | undefined;
 
-    if (isStartingPlanet === true)
-    {
-        updates.size = AssociationMaps.STARTING_PLANET_SIZE;
-    }
+    return freeCoordinate ?? null;
+}
 
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+function claimPlanet(planetId: number | null, playerId: number, claimedAt: number): void
+{
+    DB.databaseConnection.transaction(() =>
     {
-        serverCleanPlanet(planetId);
-        serverUpdatePlanetRow(planetId, updates);
-        serverUpdateAllPlanetData(planetId, AssociationMaps.STARTING_PLANET_DATA);
-    });
-    transaction();
+        const isNew: boolean = planetId === null;
+        if (isNew)
+        {
+            const freePlanetAddress: GameType.PlanetAddress | null = findFreePlanetAddress(GameType.MIN_SLOT_STARTING_PLANET, GameType.MAX_SLOT_STARTING_PLANET);
+            if (freePlanetAddress === null)
+            {
+                throw new Error("No more planets for new player.")
+            }
+
+            const newPlanetId: { id: number } = DB.databaseConnection.prepare(
+                "INSERT INTO planet (slot, system, galaxy, size, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
+            ).get(
+                freePlanetAddress.slot,
+                freePlanetAddress.system,
+                freePlanetAddress.galaxy,
+                GameType.STARTING_PLANET_SIZE,
+                playerId,
+                claimedAt,
+                claimedAt
+            ) as { id: number };
+
+            planetId = newPlanetId.id;
+        }
+
+        let size: number = GameType.STARTING_PLANET_SIZE;
+        if (isNew === false)
+        {
+            const slotRow: { slot: number } = DB.databaseConnection.prepare(
+                "SELECT slot FROM planet WHERE id = ?"
+            ).get(planetId) as { slot: number };
+            size = GameType.rollSizeForSlot(slotRow.slot);
+        }
+
+        DB.databaseConnection.prepare(
+            "UPDATE planet SET size = ?, owner_player_id = ?, claimed_at = ?, last_updated = ? WHERE id = ?"
+        ).run(
+            size,
+            playerId,
+            claimedAt,
+            claimedAt,
+            planetId
+        );
+
+        // do this last so the update fleet sees null target and doesnt delete
+        DB.databaseConnection.prepare(
+            "UPDATE fleet_movement SET player_target_id = ? WHERE planet_target_id = ?"
+        ).run(playerId, planetId);
+    })();
+    
+    const serverData: ServerDataType.ServerData = ServerData.getServerData();
+    ServerProgress.applyPlayerUpdate(playerId, serverData, Date.now());
+}
+
+function abandonPlanet(planetId: number, playerId: number): void
+{
+    const serverData: ServerDataType.ServerData = ServerData.getServerData();
+    ServerProgress.applyPlayerUpdate(playerId, serverData, Date.now());
+
+    // set null first before clean so we fail the "target player null" condition and dont pickup to delete and not re-add.
+    DB.databaseConnection.transaction(() =>
+    {
+        DB.databaseConnection.prepare(
+            "UPDATE fleet_movement SET player_target_id = null WHERE planet_target_id = ?"
+        ).run(planetId);
+
+        DB.databaseConnection.prepare(
+            "DELETE FROM fleet_movement WHERE planet_origin_id = ?"
+        ).run(planetId);
+        
+        DB.databaseConnection.prepare(
+            "DELETE FROM planet WHERE id = ?"
+        ).run(planetId);
+    })();
 }
 
 function readPlanetRow(planetId: number): DBType.PlanetRow
@@ -754,6 +863,7 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: ServerData
     {
         id: -1,
         planet_id: relevantFullPlanetData.planetRow.id,
+        player_id: playerId,
         requested_at: now,
         duration_at_request_time: buildDurationSeconds * 1000,
         duration_at_start_time: null,
@@ -791,9 +901,9 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: ServerData
 
     const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, relevantFullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingUpgrade, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.BuildingLevel, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.BuildingUpgrade, relevantFullPlanetData.dynamicPlanetData);
 
         const playerActionResult: PlayerActionResult =
         {
@@ -829,6 +939,11 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
         if (Requirement.getFailedShipBuildRequirements(playerData, shipType, relevantFullPlanetData.planetRow.id).length > 0)
         {
             return { success: false, failureReason: "A ship doesn't meet requirements.", playerStateResult: playerData };
+        }
+
+        if (shipQuantity < 0)
+        {
+            return { success: false, failureReason: "Negative ship quantity.", playerStateResult: playerData };
         }
     }
 
@@ -874,6 +989,7 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
     {
         id: -1,
         planet_id: relevantFullPlanetData.planetRow.id,
+        player_id: playerId,
         requested_at: now,
         duration_at_request_time: shipConstructionDurationSeconds * 1000,
         duration_at_start_time: null,
@@ -885,13 +1001,9 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
         shipConstructionRow: newShipConstructionRow,
         shipConstructionShipRows: newShipConstructionShipRows,
     };
-    const index: number | null = ShipConstructionData.getNextShipConstructionShipRowIndex(relevantFullPlanetData, newShipConstruction, serverData);
-    if (index === null)
-    {
-        throw new Error("Failed to get first ship construction ship row.");
-    }
-    // swap the first construction ship row to start building to ensure it'S in first place.
-    [newShipConstruction.shipConstructionShipRows[0], newShipConstruction.shipConstructionShipRows[index]] = [newShipConstruction.shipConstructionShipRows[index], newShipConstruction.shipConstructionShipRows[0]];
+
+    //Sort the construction ship rows to start building shortest first.
+    ShipConstructionData.sortShipConstructionShipRowByConstructionTime(relevantFullPlanetData, newShipConstruction, serverData);
     const firstConstructionShipRow: DBType.ShipConstructionShipRow = newShipConstruction.shipConstructionShipRows[0];
 
     // No constructions? Means we can start this one right away, otherwise it will be in queue and start when the previous ones are done.
@@ -910,8 +1022,8 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
     relevantFullPlanetData.dynamicPlanetData.shipConstructions.push(newShipConstruction);
     const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.ResourceQuantity, relevantFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.ShipConstruction, relevantFullPlanetData.dynamicPlanetData);
         
         const playerActionResult: PlayerActionResult =
         {
@@ -921,6 +1033,41 @@ export function tryBuildShipsLogic(playerId: number, serverData: ServerDataType.
         }
         return playerActionResult;
     })();
+
+    return playerActionResult;
+}
+
+export function tryAbandonPlanetLogic(playerId: number, serverData: ServerDataType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.AbandonPlanet>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: PlayerDataType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    const relevantFullPlanetData : PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, requestData.planetId);
+    if (relevantFullPlanetData === null)
+    {
+        return { success: false, failureReason: "Wrong planet to abandon.", playerStateResult: playerData };
+    }
+
+    if (playerData.fullPlanetDatas.length === 1)
+    {
+        return { success: false, failureReason: "Players must keep 1 planet minimum.", playerStateResult: playerData };
+    }
+
+    try
+    {
+        abandonPlanet(requestData.planetId, playerId);
+    }
+    catch (error: unknown)
+    {
+        return { success: false, failureReason: "Failed to abandon planet.", playerStateResult: playerData };
+    }
+
+    const playerActionResult: PlayerActionResult =
+    {
+        success: true,
+        failureReason: null,
+        playerStateResult: serverGetPlayerData(playerId),
+    }
 
     return playerActionResult;
 }
@@ -954,6 +1101,11 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
         if (Requirement.getFailedFleetMovementRequirements(playerData, shipType, originFullPlanetData.planetRow.id).length > 0)
         {
             return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
+        }
+
+        if (shipQuantity < 0)
+        {
+            return { success: false, failureReason: "Negative ship quantity for fleet.", playerStateResult: playerData };
         }
     }
 
@@ -994,18 +1146,20 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
         return { success: false, failureReason: `Duration calculation problems: ${errorMessage}`, playerStateResult: playerData };
     }
 
+    const totalRequiredResourceQuantities: Map<number, number> = MathHelp.addQuantitiesTogether(transportedResourceQuantities, fuelRequirements);
+
     const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
-        const canAffordFuel: boolean = ResourceData.hasResourceQuantities(originFullPlanetData, fuelRequirements);
+        const canAffordFuel: boolean = ResourceData.hasResourceQuantities(originFullPlanetData, totalRequiredResourceQuantities);
         if (canAffordFuel === false)
         {
             return { success: false, failureReason: `Not enough fuel.`, playerStateResult: playerData };
         }
 
-        const canStoreFuel: boolean = FleetData.hasSpaceForFuel(shipQuantities, fuelRequirements);
-        if (canStoreFuel === false)
+        const canStoreResources: boolean = FleetData.hasSpaceForResourceQuantities(shipQuantities, totalRequiredResourceQuantities);
+        if (canStoreResources === false)
         {
-            return { success: false, failureReason: `Not enough space for fuel.`, playerStateResult: playerData };
+            return { success: false, failureReason: `Not enough space for resources.`, playerStateResult: playerData };
         }
 
         const hasShips: boolean = ShipData.hasShipQuantities(originFullPlanetData, shipQuantities);
@@ -1061,8 +1215,14 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
             seed: Math.random() * 0x7FFFFFFF, //random is float, SQLite takes ints, 0x7FFFFFFF is 2^31 - 1
             player_origin_id: playerData.playerRow.id,
             planet_origin_id: originFullPlanetData.planetRow.id,
+            planet_origin_slot: originFullPlanetData.planetRow.slot,
+	        planet_origin_system: originFullPlanetData.planetRow.system,
+	        planet_origin_galaxy: originFullPlanetData.planetRow.galaxy,
             player_target_id: targetFullPlanetData.planetRow.owner_player_id,
             planet_target_id: targetFullPlanetData.planetRow.id,
+            planet_target_slot: targetFullPlanetData.planetRow.slot,
+	        planet_target_system: targetFullPlanetData.planetRow.system,
+	        planet_target_galaxy: targetFullPlanetData.planetRow.galaxy,
             is_return_trip: 0,
             fleet_action_type: requestData.fleetAction,
             requested_at: now,
@@ -1079,9 +1239,9 @@ export function trySendFleetLogic(playerId: number, serverData: ServerDataType.S
         }
         originFullPlanetData.dynamicPlanetData.futureFleetArrivals.push(newFleetMovement);
     
-        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, originFullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipQuantity, originFullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, PlayerDataType.DataContext.FutureFleetArrivals, originFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.ResourceQuantity, originFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.ShipQuantity, originFullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originFullPlanetData.planetRow.id, playerId, PlayerDataType.DataContext.FutureFleetArrivals, originFullPlanetData.dynamicPlanetData);
 
         const playerActionResult: PlayerActionResult =
         {

@@ -9,7 +9,7 @@ import * as ServerRequestFunctions from "@/lib/networkRequests/server/serverRequ
 import * as ServerData from "@/lib/gameplay/gameplayData/server/serverData"
 import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 
-export function serverUpdatePlanetDataContext(planetId: number, dataContext: PlayerDataType.DataContext, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+export function serverUpdatePlanetDataContext(planetId: number, playerId: number, dataContext: PlayerDataType.DataContext, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
@@ -17,22 +17,22 @@ export function serverUpdatePlanetDataContext(planetId: number, dataContext: Pla
         {
             case PlayerDataType.DataContext.BuildingLevel:
             {
-                updateBuildingLevels(planetId, dynamicPlanetData);
+                updateBuildingLevels(planetId, playerId, dynamicPlanetData);
                 break;
             }
             case PlayerDataType.DataContext.ResourceQuantity:
             {
-                updateResourceQuantities(planetId, dynamicPlanetData);
+                updateResourceQuantities(planetId, playerId, dynamicPlanetData);
                 break;
             }
             case PlayerDataType.DataContext.ShipQuantity:
             {
-                updateShipQuantities(planetId, dynamicPlanetData);
+                updateShipQuantities(planetId, playerId, dynamicPlanetData);
                 break;
             }
             case PlayerDataType.DataContext.ShipConstruction:
             {
-                updateShipConstructions(planetId, dynamicPlanetData);
+                updateShipConstructions(planetId, playerId, dynamicPlanetData);
                 break;
             }
             case PlayerDataType.DataContext.FutureFleetArrivals:
@@ -42,7 +42,7 @@ export function serverUpdatePlanetDataContext(planetId: number, dataContext: Pla
             }
             case PlayerDataType.DataContext.BuildingUpgrade:
             {
-                updateBuildingUpgrades(planetId, dynamicPlanetData);
+                updateBuildingUpgrades(planetId, playerId, dynamicPlanetData);
                 break;
             }
             default:
@@ -167,7 +167,7 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): Player
         const fleetMovements: PlayerDataType.FleetMovement[] = [];
 
         const fleetMovementRows: DBType.FleetMovementRow[] = DB.databaseConnection.prepare(
-            "SELECT * FROM fleet_movement WHERE planet_target_id = ? OR planet_origin_id = ?"
+            "SELECT * FROM fleet_movement WHERE planet_origin_id = ? OR (is_return_trip = 0 AND planet_target_id = ?)"
         ).all(planetId, planetId) as DBType.FleetMovementRow[];
 
         for (const fleetMovementRow of fleetMovementRows)
@@ -188,15 +188,6 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): Player
                 resolutionState: PlayerDataType.FleetMovementResolution.Unresolved,
             }
             
-            if (newFleetMovement.fleetMovementRow.is_return_trip)
-            {
-                if (newFleetMovement.fleetMovementRow.planet_target_id === planetId)
-                {
-                    // Dont pickup returning ships, they are irrelevant for the target
-                    continue;
-                }
-            }
-
             fleetMovements.push(newFleetMovement);
         }
 
@@ -206,62 +197,62 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): Player
     return fleetMovements;
 }
 
-function updateResourceQuantities(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateResourceQuantities(planetId: number, playerId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
         DB.databaseConnection.prepare("DELETE FROM planet_resource WHERE planet_id = ?").run(planetId);
         const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO planet_resource VALUES (?, ?, ?)"
+            "INSERT INTO planet_resource (planet_id, player_id, resource_type, resource_quantity) VALUES (?, ?, ?, ?)"
         );
         for (const [resourceType, resourceQuantity] of dynamicPlanetData.resourceQuantity)
         {
-            insertStatement.run(planetId, resourceType, resourceQuantity);
+            insertStatement.run(planetId, playerId, resourceType, resourceQuantity);
         }
     });
     transaction();
 }
 
-function updateBuildingLevels(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateBuildingLevels(planetId: number, playerId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
         DB.databaseConnection.prepare("DELETE FROM planet_building WHERE planet_id = ?").run(planetId);
         const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO planet_building VALUES (?, ?, ?)"
+            "INSERT INTO planet_building (planet_id, player_id, building_type, building_level) VALUES (?, ?, ?, ?)"
         );
         for (const [buildingType, buildingLevel] of dynamicPlanetData.buildingLevels)
         {
-            insertStatement.run(planetId, buildingType, buildingLevel);
+            insertStatement.run(planetId, playerId, buildingType, buildingLevel);
         }
     });
     transaction();
 }
 
-function updateShipQuantities(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateShipQuantities(planetId: number, playerId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
         DB.databaseConnection.prepare("DELETE FROM planet_ship WHERE planet_id = ?").run(planetId);
         const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO planet_ship VALUES (?, ?, ?)"
+            "INSERT INTO planet_ship (planet_id, player_id, ship_type, ship_quantity) VALUES (?, ?, ?, ?)"
         );
         for (const [shipType, shipQuantity] of dynamicPlanetData.shipQuantity)
         {
-            insertStatement.run(planetId, shipType, shipQuantity);
+            insertStatement.run(planetId, playerId, shipType, shipQuantity);
         }
     });
     transaction();
 }
 
-function updateShipConstructions(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateShipConstructions(planetId: number, playerId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
         DB.databaseConnection.prepare("DELETE FROM ship_construction WHERE planet_id = ?").run(planetId);
         // On delete cascade will delete ship_construction_ship rows
         const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO ship_construction (planet_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_ship_construction_ship_row_id) VALUES (?, ?, ?, ?, ?, ?) RETURNING id"
+            "INSERT INTO ship_construction (planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_ship_construction_ship_row_id) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
         );
         const insertShipStatement: Database.Statement = DB.databaseConnection.prepare(
             "INSERT INTO ship_construction_ship (ship_construction_id, ship_type, ship_quantity) VALUES (?, ?, ?) RETURNING id"
@@ -278,6 +269,7 @@ function updateShipConstructions(planetId: number, dynamicPlanetData: PlayerData
             const shipConstructionRow: DBType.ShipConstructionRow = shipConstruction.shipConstructionRow;
             const constructionIdResult: { id: number } = insertStatement.get(
                 planetId,
+                playerId,
                 shipConstructionRow.requested_at,
                 shipConstructionRow.duration_at_request_time,
                 shipConstructionRow.duration_at_start_time,
@@ -327,14 +319,14 @@ function updateShipConstructions(planetId: number, dynamicPlanetData: PlayerData
     transaction();
 }
 
-function updateBuildingUpgrades(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateBuildingUpgrades(planetId: number, playerId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
         DB.databaseConnection.prepare("DELETE FROM building_upgrade WHERE planet_id = ?").run(planetId);
         // On delete cascade will delete building_upgrade_building rows
         const insertUpgradeStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO building_upgrade (planet_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_building_upgrade_building_row_id) VALUES (?, ?, ?, ?, ?, ?) RETURNING id"
+            "INSERT INTO building_upgrade (planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_building_upgrade_building_row_id) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
         );
         const insertBuildingStatement: Database.Statement = DB.databaseConnection.prepare(
             "INSERT INTO building_upgrade_building (building_upgrade_id, building_type) VALUES (?, ?) RETURNING id"
@@ -350,6 +342,7 @@ function updateBuildingUpgrades(planetId: number, dynamicPlanetData: PlayerDataT
             const buildingUpgradeRow: DBType.BuildingUpgradeRow = buildingUpgrade.buildingUpgradeRow;
             const upgradeIdResult: { id: number } = insertUpgradeStatement.get(
                 planetId,
+                playerId,
                 buildingUpgradeRow.requested_at,
                 buildingUpgradeRow.duration_at_request_time,
                 buildingUpgradeRow.duration_at_start_time,
@@ -402,10 +395,14 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: PlayerDa
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        DB.databaseConnection.prepare("DELETE FROM fleet_movement WHERE planet_origin_id = ? OR planet_target_id = ?").run(planetId, planetId);
+        // Only the origin planet ID is the owner of this fleet movement
+        DB.databaseConnection.prepare(
+            "DELETE FROM fleet_movement WHERE (planet_origin_id = ?)"
+        ).run(planetId);
+        
         // On delete cascade will delete the ship rows and resource rows
         const fleetMovementStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO fleet_movement (seed, player_origin_id, planet_origin_id, player_target_id, planet_target_id, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
+            "INSERT INTO fleet_movement (seed, player_origin_id, planet_origin_id, planet_origin_slot, planet_origin_system, planet_origin_galaxy, player_target_id, planet_target_id, planet_target_slot, planet_target_system, planet_target_galaxy, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
         );
         const fleetMovementShipStatement: Database.Statement = DB.databaseConnection.prepare(
             "INSERT INTO fleet_movement_ship VALUES (?, ?, ?)"
@@ -416,12 +413,24 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: PlayerDa
 
         for (const fleetMovement of dynamicPlanetData.futureFleetArrivals)
         {
+            if (fleetMovement.fleetMovementRow.planet_origin_id !== planetId)
+            {
+                // Only the origin of a fleet movement can update the DB.
+                continue;
+            }
+
             const fleetIdResult: { id: number } = fleetMovementStatement.get(
                 fleetMovement.fleetMovementRow.seed,
                 fleetMovement.fleetMovementRow.player_origin_id,
                 fleetMovement.fleetMovementRow.planet_origin_id,
+                fleetMovement.fleetMovementRow.planet_origin_slot,
+                fleetMovement.fleetMovementRow.planet_origin_system,
+                fleetMovement.fleetMovementRow.planet_origin_galaxy,
                 fleetMovement.fleetMovementRow.player_target_id,
                 fleetMovement.fleetMovementRow.planet_target_id,
+                fleetMovement.fleetMovementRow.planet_target_slot,
+                fleetMovement.fleetMovementRow.planet_target_system,
+                fleetMovement.fleetMovementRow.planet_target_galaxy,
                 fleetMovement.fleetMovementRow.is_return_trip,
                 fleetMovement.fleetMovementRow.fleet_action_type,
                 fleetMovement.fleetMovementRow.requested_at,

@@ -159,9 +159,9 @@ export function calculateTotalFleetSpace(shipQuantities: Map<number, number>): n
 	return totalSpace;
 }
 
-export function hasSpaceForFuel(shipQuantities: Map<number, number>, fuelRequirements: Map<number, number>): boolean
+export function hasSpaceForResourceQuantities(shipQuantities: Map<number, number>, resourceQuantities: Map<number, number>): boolean
 {
-    const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
+    const totalFuel: number = MathHelp.calculateTotalQuantityMap(resourceQuantities);
     const totalSpace: number = calculateTotalFleetSpace(shipQuantities);
 
     return totalFuel <= totalSpace;
@@ -206,7 +206,7 @@ export function resolveFleetMovementAtTarget(targetPlayerData: PlayerDataType.Pl
 
 	if (fleetMovement.fleetMovementRow.player_target_id !== targetPlayerData.playerRow.id)
 	{
-		// if not us, we stationned on someone else. We dont have his data, so we unknown.
+		// To resolve a fleet we need the target data since all the origin data is in the fleet itself
 		fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.ResolveResultUnknown;
 		return;
 	}
@@ -295,9 +295,12 @@ function resolveStationAction(origin: PlayerDataType.FullPlanetData | null, targ
 	if (origin !== null)
 	{
 		FleetData.removeFleetMovement(origin, fleetMovement.fleetMovementRow.id);
+		fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.Resolved;
 	}
-
-	fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.Resolved;
+	else
+	{
+		fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.ResolvedOneWayTripForTargetOnly;
+	}
 }
 
 function resolveCollectAction(origin: PlayerDataType.FullPlanetData | null, target: PlayerDataType.FullPlanetData, fleetMovement: PlayerDataType.FleetMovement, serverData: ServerDataType.ServerData): void
@@ -322,8 +325,18 @@ function resolveCollectAction(origin: PlayerDataType.FullPlanetData | null, targ
 		fleetResourceQuantities.set(fleetMovementResourceRow.resource_type, fleetMovementResourceRow.resource_quantity);
 		totalResourcesInFleet += fleetMovementResourceRow.resource_quantity;
 	}
-	const originAddress: GameType.PlanetAddress = PlayerData.getPlanetAddressFromId(fleetMovement.fleetMovementRow.planet_origin_id);
-	const targetAddress: GameType.PlanetAddress = PlayerData.getPlanetAddressFromId(fleetMovement.fleetMovementRow.planet_target_id);
+	const originAddress: GameType.PlanetAddress = 
+	{
+		slot: fleetMovement.fleetMovementRow.planet_origin_slot,
+		system: fleetMovement.fleetMovementRow.planet_origin_system,
+		galaxy: fleetMovement.fleetMovementRow.planet_origin_galaxy,
+	}
+	const targetAddress: GameType.PlanetAddress = 
+	{
+		slot: fleetMovement.fleetMovementRow.planet_target_slot,
+		system: fleetMovement.fleetMovementRow.planet_target_system,
+		galaxy: fleetMovement.fleetMovementRow.planet_target_galaxy,
+	}
 
 	const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originAddress, targetAddress, fleetShipQuantities, serverData);
 	totalResourcesInFleet += fuelSpaceData.totalFuel;
@@ -425,13 +438,29 @@ function getCollectedResources(targetResourceQuantities: Map<number, number>, av
 	return collectedResourceQuantities;
 }
 
+export function removeFleetMovementSafe(fullPlanetData: PlayerDataType.FullPlanetData, fleetId: number): PlayerDataType.FullPlanetData
+{
+	try
+	{
+		return removeFleetMovement(fullPlanetData, fleetId);
+	}
+	catch (error: unknown)
+	{
+		return fullPlanetData;
+	}
+}
+
 export function removeFleetMovement(fullPlanetData: PlayerDataType.FullPlanetData, fleetId: number): PlayerDataType.FullPlanetData
 {
 	const index: number = fullPlanetData.dynamicPlanetData.futureFleetArrivals.findIndex((innerFleetMovement: PlayerDataType.FleetMovement): boolean => innerFleetMovement.fleetMovementRow.id === fleetId);
-  	if (index !== -1)
+  	
+	if (index === -1)
   	{
-		fullPlanetData.dynamicPlanetData.futureFleetArrivals.splice(index, 1);
-  	}
+		throw new Error("No fleet movement to remove!");
+	}
+
+	fullPlanetData.dynamicPlanetData.futureFleetArrivals.splice(index, 1);
+
 	return fullPlanetData;
 }
 
@@ -457,16 +486,6 @@ function setFleetReturnTrip(target: PlayerDataType.FullPlanetData | null, fleetM
 
 	if (target !== null)
 	{
-		for (let index = 0; index < target.dynamicPlanetData.futureFleetArrivals.length; ++ index)
-		{
-			const futureFleetArrival: PlayerDataType.FleetMovement = target.dynamicPlanetData.futureFleetArrivals[index];
-			if (futureFleetArrival.fleetMovementRow.id === fleetMovement.fleetMovementRow.id)
-			{
-				target.dynamicPlanetData.futureFleetArrivals.splice(index, 1);
-				break;
-			}
-
-			throw new Error("Didnt find fleet arrival for fleet return trip.")
-		}
+		FleetData.removeFleetMovement(target, fleetMovement.fleetMovementRow.id);
 	}
 }

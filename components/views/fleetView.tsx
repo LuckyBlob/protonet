@@ -37,17 +37,11 @@ type FleetViewData =
 }
 
 //#region rendering helpers
-function formatPlanetAddress(planetId: number, publicPlanetRows: DBType.PublicPlanetRow[]): string
-{
-    const planetAddress: GameType.PlanetAddress = PlayerData.getPlanetAddressFromId(planetId);
-    return `${planetAddress.slot}:${planetAddress.system}:${planetAddress.galaxy}`;
-}
-
 function renderFleetMovementRow(fleetMovement: PlayerDataType.FleetMovement, publicPlanetRows: DBType.PublicPlanetRow[]): ReactElement
 {
     const fleetMovementRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const originAddress: string = formatPlanetAddress(fleetMovementRow.planet_origin_id, publicPlanetRows);
-    const targetAddress: string = formatPlanetAddress(fleetMovementRow.planet_target_id, publicPlanetRows);
+    const originAddress: string = `${fleetMovementRow.planet_origin_slot}:${fleetMovementRow.planet_origin_system}:${fleetMovementRow.planet_origin_galaxy}`;
+    const targetAddress: string = `${fleetMovementRow.planet_target_slot}:${fleetMovementRow.planet_target_system}:${fleetMovementRow.planet_target_galaxy}`;
     const actionName: string = GameType.FLEET_ACTION_NAMES.get(fleetMovementRow.fleet_action_type) ?? `Unknown (${fleetMovementRow.fleet_action_type})`;
     const isReturnTrip: boolean = fleetMovementRow.is_return_trip === 1;
     if (fleetMovementRow.started_at === null || fleetMovementRow.duration_at_start_time === null)
@@ -365,6 +359,7 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: number, dat
 
     const resourceName: string = ThingType.getSpecificThingName(ThingType.resource(resourceType));
     const ownedResourceQuantity: number = Math.floor(ResourceData.getResourceQuantity(data.fullPlanetData, resourceType));
+
     const originAddress: GameType.PlanetAddress = PlayerData.getPlanetAddress(data.fullPlanetData);
     const targetAddress: GameType.PlanetAddress = 
     {
@@ -372,7 +367,11 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: number, dat
         system: data.systemIdState[0],
         slot: data.slotIdState[0],
     }
-    const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
+    
+    const fuelRequirements: Map<number, number> = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
+    const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
+    const totalFleetSpace: number = FleetData.calculateTotalFleetSpace(data.requestedShipQuantitiesState.requestedQuantities);
+    const specificFuelResource: number = fuelRequirements.get(resourceType) ?? 0;
 
     let otherResourcesRequested: number = 0;
     for (const [otherType, otherQty] of data.requestedResourceQuantitiesState.requestedQuantities)
@@ -383,8 +382,8 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: number, dat
         }
     }
 
-    const availableSpaceForThisResource: number = Math.max(fuelSpaceData.availableSpace - otherResourcesRequested, 0);
-    const maxResourcePossible: number = Math.min(ownedResourceQuantity, availableSpaceForThisResource);
+    const availableSpaceForThisResource: number = Math.max(totalFleetSpace - otherResourcesRequested - totalFuel, 0);
+    const maxResourcePossible: number = Math.max(0, Math.min(ownedResourceQuantity - specificFuelResource, availableSpaceForThisResource));
 
     const handleFillMax = (): void =>
     {

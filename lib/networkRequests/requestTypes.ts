@@ -89,4 +89,13 @@ export type SendFleet_ServerResponse = BaseServerResponse &
 {
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
+
+export type AbandonPlanet_ClientRequest = BaseClientRequest &
+{
+	planetId: number;
+};
+export type AbandonPlanet_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
 //#endregion

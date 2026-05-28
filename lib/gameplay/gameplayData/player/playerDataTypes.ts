@@ -9,7 +9,7 @@ export type PlayerData =
 	publicPlayerRows: DBType.PublicPlayerRow[];
 };
 
-export type PSController  = [PlayerState, (value: PlayerState) => void];
+export type PSController  = [PlayerState, (value: PlayerState | ((prev: PlayerState) => PlayerState)) => void];
 export type PlayerState =
 {
 	dbData: PlayerData;
@@ -96,6 +96,7 @@ export const FleetMovementResolution =
     Resolved: 2,
     ResolveResultUnknown: 3,
     Invalid: 4,
+    ResolvedOneWayTripForTargetOnly: 5,
 } as const;
 
 export function isPlayerData(value: PlayerData | FullPlanetData): value is PlayerData

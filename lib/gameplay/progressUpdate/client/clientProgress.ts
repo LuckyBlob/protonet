@@ -9,6 +9,7 @@ import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTy
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
 import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
+import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 
 class ClientPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
 {
@@ -23,39 +24,17 @@ class ClientPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
         return updatedPlayerData;
     }
 
-    getOriginFleetPlayerData(playerData: PlayerDataType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
+    getFleetPlayerData(playerId: number | null, planetId: number, playerData: PlayerDataType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
     {
-        if (playerData.playerRow.id !== anchorEvent.fleetMovement.fleetMovementRow.player_origin_id)
+        if (playerId === null || playerData.playerRow.id !== playerId)
         {
             return null;
         }
 
-        const associatedFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, anchorEvent.fleetMovement.fleetMovementRow.planet_origin_id);
+        const associatedFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, planetId);
         if (associatedFullPlanetData === null)
         {
-            throw new Error(`⚠️: Can get full planet data for origin fleet.`); 
-        }
-
-        const fleetPlayerData: FleetData.FleetPlayerData =
-        {
-            playerData: playerData,
-            fullPlanetData: associatedFullPlanetData,
-        }
-
-        return fleetPlayerData;
-    }
-
-    getTargetFleetPlayerData(playerData: PlayerDataType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
-    {
-        if (playerData.playerRow.id !== anchorEvent.fleetMovement.fleetMovementRow.player_target_id)
-        {
-            return null;
-        }
-
-        const associatedFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, anchorEvent.fleetMovement.fleetMovementRow.planet_target_id);
-        if (associatedFullPlanetData === null)
-        {
-            throw new Error(`⚠️: Can get full planet data for target fleet.`); 
+            throw new Error(`⚠️: Cant get full planet data for fleet.`); 
         }
 
         const fleetPlayerData: FleetData.FleetPlayerData =
@@ -82,8 +61,23 @@ export function applyPlayerUpdate(playerData: PlayerDataType.PlayerData, serverD
 export function runClientTick(clientDataStateResult: UseClientDataState.ClientDataStateResult): void
 {
     const now: number = Date.now();
-    const updatedPredictedPlayerData: PlayerDataType.PlayerData | null = applyPlayerUpdate(clientDataStateResult.psController[0].predictedDBData, clientDataStateResult.sdsController[0], now);
 
-    ClientRequestFunctions.setPredictedPlayerState(clientDataStateResult.psController, updatedPredictedPlayerData);
+    // use this to make sure we get the latest state since the tick might have copied old data and we might have updated that 
+    // data before the next tick. So when we receive the next tick the psController[0] is from before data reception
+    clientDataStateResult.psController[1]((mostRecentState: PlayerDataType.PlayerState): PlayerDataType.PlayerState =>
+    {
+        const updatedPredictedPlayerData: PlayerDataType.PlayerData | null = applyPlayerUpdate(mostRecentState.dbData, clientDataStateResult.sdsController[0], now);
+
+        const currentlySelectedPlanetId: number = SelectedPlanet.updateSelectedPlanetIdInStorage(updatedPredictedPlayerData);
+        const loadedPlayerState: PlayerDataType.PlayerState =
+        {
+            dbData: mostRecentState.dbData,
+            predictedDBData: updatedPredictedPlayerData,
+            selectedPlanetId: currentlySelectedPlanetId,
+            lastFetchTimestamp: Date.now(),
+        };
+
+        return loadedPlayerState;
+    });
 }
 

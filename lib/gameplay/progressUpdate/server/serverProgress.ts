@@ -74,47 +74,23 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
             {
                 last_updated: time,
             });
-            ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.ResourceQuantity, fullPlanetData.dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, playerData.playerRow.id, PlayerDataType.DataContext.ResourceQuantity, fullPlanetData.dynamicPlanetData);
         }
     }
 
-    getOriginFleetPlayerData(playerData: PlayerDataType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
+    getFleetPlayerData(playerId: number | null, planetId: number, playerData: PlayerDataType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
     {
-        if (anchorEvent.fleetMovement.fleetMovementRow.player_origin_id === null)
+        if (playerId === null)
         {
             return null;
         }
 
-        const needsToGetDataFromDB: boolean = playerData.playerRow.id !== anchorEvent.fleetMovement.fleetMovementRow.player_origin_id;
-        const originPlayerData: PlayerDataType.PlayerData = needsToGetDataFromDB ? ServerRequestFunctions.serverGetPlayerData(anchorEvent.fleetMovement.fleetMovementRow.player_origin_id) : playerData;
-        const associatedFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(originPlayerData.fullPlanetDatas, anchorEvent.fleetMovement.fleetMovementRow.planet_origin_id);
+        const needsToGetDataFromDB: boolean = playerData.playerRow.id !== playerId;
+        const targetPlayerData: PlayerDataType.PlayerData = needsToGetDataFromDB ? ServerRequestFunctions.serverGetPlayerData(playerId) : playerData;
+        const associatedFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(targetPlayerData.fullPlanetDatas, planetId);
         if (associatedFullPlanetData === null)
         {
-            throw new Error(`⚠️: Can get full planet data for origin fleet.`); 
-        }
-
-        const fleetPlayerData: FleetData.FleetPlayerData =
-        {
-            playerData: originPlayerData,
-            fullPlanetData: associatedFullPlanetData,
-        }
-
-        return fleetPlayerData;
-    }
-    
-    getTargetFleetPlayerData(playerData: PlayerDataType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
-    {
-        if (anchorEvent.fleetMovement.fleetMovementRow.player_target_id === null)
-        {
-            return null;
-        }
-
-        const needsToGetDataFromDB: boolean = playerData.playerRow.id !== anchorEvent.fleetMovement.fleetMovementRow.player_target_id;
-        const targetPlayerData: PlayerDataType.PlayerData = needsToGetDataFromDB ? ServerRequestFunctions.serverGetPlayerData(anchorEvent.fleetMovement.fleetMovementRow.player_target_id) : playerData;
-        const associatedFullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(targetPlayerData.fullPlanetDatas, anchorEvent.fleetMovement.fleetMovementRow.planet_target_id);
-        if (associatedFullPlanetData === null)
-        {
-            throw new Error(`⚠️: Can get full planet data for target fleet.`); 
+            throw new Error(`⚠️: Can get full planet data for fleet.`); 
         }
 
         const fleetPlayerData: FleetData.FleetPlayerData =
@@ -123,8 +99,23 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
             fullPlanetData: associatedFullPlanetData,
         }
 
+        // Case: We are updating an arriving fleet that should return as the receiver.
+        // The resolve does : Remove the fleet (since its going to return and doesnt affect us anymore)
+        // This data is done in the local data, and other modifications to the fleet is done in the data in the anchor event
+        // But here we read from the DB, which has the fleet but more importantly, not the modifications.
+        let oldFleetMovementIndex: number = associatedFullPlanetData.dynamicPlanetData.futureFleetArrivals.findIndex((value: PlayerDataType.FleetMovement): boolean =>
+        {
+            return value.fleetMovementRow.id === anchorEvent.fleetMovement.fleetMovementRow.id;
+        });
+
+        if (oldFleetMovementIndex !== -1)
+        {
+            associatedFullPlanetData.dynamicPlanetData.futureFleetArrivals[oldFleetMovementIndex] = anchorEvent.fleetMovement;
+        }
+
         return fleetPlayerData;
     }
+    
 }
 
 function resolveBuildingUpgradeAnchorEventToDB(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
@@ -138,8 +129,8 @@ function resolveBuildingUpgradeAnchorEventToDB(playerData: PlayerDataType.Player
 
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingLevel, fullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.BuildingUpgrade, fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, playerData.playerRow.id, PlayerDataType.DataContext.BuildingLevel, fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, playerData.playerRow.id, PlayerDataType.DataContext.BuildingUpgrade, fullPlanetData.dynamicPlanetData);
     });
 
     transaction();
@@ -156,8 +147,8 @@ function resolveShipConstructionAnchorEventToDB(playerData: PlayerDataType.Playe
 
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipConstruction, fullPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, PlayerDataType.DataContext.ShipQuantity, fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, playerData.playerRow.id, PlayerDataType.DataContext.ShipConstruction, fullPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(fullPlanetData.planetRow.id, playerData.playerRow.id, PlayerDataType.DataContext.ShipQuantity, fullPlanetData.dynamicPlanetData);
     });
 
     transaction();

@@ -23,17 +23,35 @@ export function getDataContexts(): PlayerDataType.DataContext[]
 
 export function getFullPlanetDataForId(fullPlanetDatas: PlayerDataType.FullPlanetData[], planetId: number): PlayerDataType.FullPlanetData | null
 {
-    const matchingPlanet: PlayerDataType.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData) =>
+    const matchingPlanetIndex: number | null = getFullPlanetDataIndexForId(fullPlanetDatas, planetId);
+
+    if (matchingPlanetIndex !== null)
+    {
+        const fullPlanetData: PlayerDataType.FullPlanetData | undefined = fullPlanetDatas[matchingPlanetIndex];
+        if (fullPlanetData === undefined)
+        {
+            throw new Error("Cant find matchin full planet data for planet id.")
+        }
+
+        return fullPlanetData;
+    }
+
+    return null;
+}
+
+export function getFullPlanetDataIndexForId(fullPlanetDatas: PlayerDataType.FullPlanetData[], planetId: number): number | null
+{
+    const matchingPlanetIndex: number = fullPlanetDatas.findIndex((fullPlanetData: PlayerDataType.FullPlanetData) =>
     {
         return fullPlanetData.planetRow.id === planetId;
     });
 
-    if (matchingPlanet !== undefined)
+    if (matchingPlanetIndex === -1)
     {
-        return matchingPlanet;
+        return null;
     }
 
-    return null;
+    return matchingPlanetIndex;
 }
 
 export function getPlanetAddress(fullPlanetData: PlayerDataType.FullPlanetData): GameType.PlanetAddress
@@ -45,21 +63,5 @@ export function getPlanetAddress(fullPlanetData: PlayerDataType.FullPlanetData):
         slot: fullPlanetData.planetRow.slot,
     }
 
-    return planetAddress;
-}
-
-// based on the order of seedWorld
-export function getPlanetAddressFromId(planetId: number): GameType.PlanetAddress
-{
-    const slotsPerSystem = GameType.SLOT_COUNT;
-    const slotsPerGalaxy = GameType.SYSTEM_COUNT * GameType.SLOT_COUNT;
-    const zeroBasedId = planetId - 1;
-
-    const planetAddress: GameType.PlanetAddress = 
-    {
-        galaxy: Math.floor(zeroBasedId / slotsPerGalaxy) + 1,
-        system: Math.floor((zeroBasedId % slotsPerGalaxy) / slotsPerSystem) + 1,
-        slot: (zeroBasedId % slotsPerSystem) + 1,
-    }
     return planetAddress;
 }

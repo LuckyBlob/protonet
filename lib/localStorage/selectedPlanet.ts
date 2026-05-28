@@ -5,27 +5,32 @@ import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 
 const SELECTED_PLANET_STORAGE_KEY: string = "protonet.selectedPlanetId";
 
-export function updateSelectedPlanetIdInStorage(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): number
+export function updateSelectedPlanetIdInStorage(newPlayerData: PlayerDataType.PlayerData): number
 {
-    const currentlySelectedPlanetId: number = readStoredSelectedPlanetId() ?? newPlayerData.fullPlanetDatas[0].planetRow.id;
-    if (currentlySelectedPlanetId === psController[0].selectedPlanetId)
+    const storedSelectedPlanetId: number | null = readStoredSelectedPlanetId();
+    const resolvedSelectedPlanetId: number = getRelevantSelectedPlanetId(newPlayerData.fullPlanetDatas, storedSelectedPlanetId);
+
+    if (resolvedSelectedPlanetId !== storedSelectedPlanetId)
     {
-        return currentlySelectedPlanetId;
+        writeStoredSelectedPlanetId(resolvedSelectedPlanetId);
     }
 
-    writeStoredSelectedPlanetId(getRelevantSelectedPlanetId(newPlayerData.fullPlanetDatas, currentlySelectedPlanetId));
-    return currentlySelectedPlanetId;
+    return resolvedSelectedPlanetId;
 }
 
-export function setSelectedPlanetID(psController: PlayerDataType.PSController, selectedPlanetId: number)
+export function setSelectedPlanetID(psController: PlayerDataType.PSController, selectedPlanetId: number): void
 {
-    const newPlayerState: PlayerDataType.PlayerState =
+    psController[1]((mostRecentState: PlayerDataType.PlayerState): PlayerDataType.PlayerState =>
     {
-        ...psController[0],
-        selectedPlanetId: selectedPlanetId,
-    }
-    writeStoredSelectedPlanetId(selectedPlanetId);
-    psController[1](newPlayerState);
+        const newPlayerState: PlayerDataType.PlayerState =
+        {
+            dbData: mostRecentState.dbData,
+            predictedDBData: mostRecentState.predictedDBData,
+            selectedPlanetId: selectedPlanetId,
+            lastFetchTimestamp: Date.now(),
+        };
+        return newPlayerState;
+    });
 }
 
 function readStoredSelectedPlanetId(): number | null
