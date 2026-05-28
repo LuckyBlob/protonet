@@ -20,6 +20,7 @@ export function updateSelectedPlanetIdInStorage(newPlayerData: PlayerDataType.Pl
 
 export function setSelectedPlanetID(psController: PlayerDataType.PSController, selectedPlanetId: number): void
 {
+    writeStoredSelectedPlanetId(selectedPlanetId);
     psController[1]((mostRecentState: PlayerDataType.PlayerState): PlayerDataType.PlayerState =>
     {
         const newPlayerState: PlayerDataType.PlayerState =
