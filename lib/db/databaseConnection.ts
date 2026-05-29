@@ -1,9 +1,9 @@
 import Database from "better-sqlite3";
 import { mkdirSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
 
-export const databaseDirectoryPath: string = join(process.cwd(), "data");
-export const databaseFilePath: string = join(databaseDirectoryPath, "game.db");
+export const databaseFilePath: string = process.env.DATABASE_PATH ?? join(process.cwd(), "data", "game.db");
+export const databaseDirectoryPath: string = dirname(databaseFilePath);
 
 export function ensureDatabaseDirectoryExists(): void
 {
