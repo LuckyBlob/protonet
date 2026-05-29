@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import * as AnchorEvent from '@/lib/gameplay/progressUpdate/anchorEvent';
-import * as PlayerDataType from '@/lib/gameplay/gameplayData/player/playerDataTypes';
+import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 
-function makeUpgrade(planetId: number, startedAt: number, durationMs: number): PlayerDataType.BuildingUpgrade
+function makeUpgrade(planetId: number, startedAt: number, durationMs: number): CoreType.BuildingUpgrade
 {
     return {
         buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({
@@ -21,12 +21,12 @@ describe('findNextAnchorEvent (generic helper)', () =>
 {
     it('returns null when there are no items', () =>
     {
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
 
         const result: AnchorEvent.AnchorEvent | null = AnchorEvent.findNextAnchorEvent(
             playerData,
-            (planet: PlayerDataType.FullPlanetData): PlayerDataType.BuildingUpgrade[] => planet.dynamicPlanetData.buildingUpgrades,
-            (event: PlayerDataType.BuildingUpgrade): number | null =>
+            (planet: CoreType.PlanetData): CoreType.BuildingUpgrade[] => planet.dynamicPlanetData.buildingUpgrades,
+            (event: CoreType.BuildingUpgrade): number | null =>
             {
                 if (event.buildingUpgradeRow.started_at === null || event.buildingUpgradeRow.duration_at_start_time === null)
                 {
@@ -34,7 +34,7 @@ describe('findNextAnchorEvent (generic helper)', () =>
                 }
                 return event.buildingUpgradeRow.started_at + event.buildingUpgradeRow.duration_at_start_time;
             },
-            (event: PlayerDataType.BuildingUpgrade, time: number): AnchorEvent.AnchorEvent =>
+            (event: CoreType.BuildingUpgrade, time: number): AnchorEvent.AnchorEvent =>
             {
                 return { type: AnchorEvent.AnchorEventType.BuildingUpgrade, time };
             },
@@ -45,26 +45,26 @@ describe('findNextAnchorEvent (generic helper)', () =>
 
     it('picks the earliest event across multiple planets', () =>
     {
-        const earlyUpgrade: PlayerDataType.BuildingUpgrade = makeUpgrade(1, 1_000_000, 5_000);
-        const lateUpgrade: PlayerDataType.BuildingUpgrade = makeUpgrade(2, 1_000_000, 20_000);
+        const earlyUpgrade: CoreType.BuildingUpgrade = makeUpgrade(1, 1_000_000, 5_000);
+        const lateUpgrade: CoreType.BuildingUpgrade = makeUpgrade(2, 1_000_000, 20_000);
 
-        const planet1: PlayerDataType.FullPlanetData = TestDataBuilders.buildFullPlanetData({
+        const planet1: CoreType.PlanetData = TestDataBuilders.buildPlanetData({
             planetRow: { id: 1 },
             dynamicPlanetData: { buildingUpgrades: [earlyUpgrade] },
         });
-        const planet2: PlayerDataType.FullPlanetData = TestDataBuilders.buildFullPlanetData({
+        const planet2: CoreType.PlanetData = TestDataBuilders.buildPlanetData({
             planetRow: { id: 2 },
             dynamicPlanetData: { buildingUpgrades: [lateUpgrade] },
         });
 
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData({
-            fullPlanetDatas: [planet1, planet2],
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({
+            planetDatas: [planet1, planet2],
         });
 
         const result: AnchorEvent.AnchorEvent | null = AnchorEvent.findNextAnchorEvent(
             playerData,
-            (planet: PlayerDataType.FullPlanetData): PlayerDataType.BuildingUpgrade[] => planet.dynamicPlanetData.buildingUpgrades,
-            (event: PlayerDataType.BuildingUpgrade): number | null =>
+            (planet: CoreType.PlanetData): CoreType.BuildingUpgrade[] => planet.dynamicPlanetData.buildingUpgrades,
+            (event: CoreType.BuildingUpgrade): number | null =>
             {
                 if (event.buildingUpgradeRow.started_at === null || event.buildingUpgradeRow.duration_at_start_time === null)
                 {
@@ -72,7 +72,7 @@ describe('findNextAnchorEvent (generic helper)', () =>
                 }
                 return event.buildingUpgradeRow.started_at + event.buildingUpgradeRow.duration_at_start_time;
             },
-            (event: PlayerDataType.BuildingUpgrade, time: number): AnchorEvent.AnchorEvent =>
+            (event: CoreType.BuildingUpgrade, time: number): AnchorEvent.AnchorEvent =>
             {
                 return { type: AnchorEvent.AnchorEventType.BuildingUpgrade, time };
             },
@@ -85,24 +85,24 @@ describe('findNextAnchorEvent (generic helper)', () =>
 
     it('skips items where getTime returns null', () =>
     {
-        const notStartedUpgrade: PlayerDataType.BuildingUpgrade =
+        const notStartedUpgrade: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ started_at: null, duration_at_start_time: null }),
             buildingUpgradeBuildingRows: [TestDataBuilders.buildBuildingUpgradeBuildingRow()],
         };
 
-        const planet: PlayerDataType.FullPlanetData = TestDataBuilders.buildFullPlanetData({
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({
             dynamicPlanetData: { buildingUpgrades: [notStartedUpgrade] },
         });
 
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData({
-            fullPlanetDatas: [planet],
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({
+            planetDatas: [planet],
         });
 
         const result: AnchorEvent.AnchorEvent | null = AnchorEvent.findNextAnchorEvent(
             playerData,
-            (p: PlayerDataType.FullPlanetData): PlayerDataType.BuildingUpgrade[] => p.dynamicPlanetData.buildingUpgrades,
-            (event: PlayerDataType.BuildingUpgrade): number | null =>
+            (p: CoreType.PlanetData): CoreType.BuildingUpgrade[] => p.dynamicPlanetData.buildingUpgrades,
+            (event: CoreType.BuildingUpgrade): number | null =>
             {
                 if (event.buildingUpgradeRow.started_at === null)
                 {
@@ -110,7 +110,7 @@ describe('findNextAnchorEvent (generic helper)', () =>
                 }
                 return event.buildingUpgradeRow.started_at + (event.buildingUpgradeRow.duration_at_start_time ?? 0);
             },
-            (_event: PlayerDataType.BuildingUpgrade, time: number): AnchorEvent.AnchorEvent =>
+            (_event: CoreType.BuildingUpgrade, time: number): AnchorEvent.AnchorEvent =>
             {
                 return { type: AnchorEvent.AnchorEventType.BuildingUpgrade, time };
             },

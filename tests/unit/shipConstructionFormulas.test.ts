@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as ShipConstructionFormulas from '@/lib/gameplay/coreData/formula/shipConstructionFormulas';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
-import * as ServerDataType from '@/lib/gameplay/gameplayData/server/serverDataTypes';
+import * as dataType from '@/lib/gameplay/gameplayData/server/serverDataTypes';
 
 describe('computeConstructionDurationSeconds', () =>
 {
@@ -39,7 +39,7 @@ describe('computeConstructionDurationSeconds', () =>
 
     it('applies time_multiplier from serverData', () =>
     {
-        const serverData: ServerDataType.ServerData = TestDataBuilders.buildServerData(2);
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData(2);
         const base: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.SMALL_TRANSPORT, 0, null);
         const accelerated: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.SMALL_TRANSPORT, 0, serverData);
         expect(base).not.toBeNull();

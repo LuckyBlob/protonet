@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as BuildingProduction from '@/lib/gameplay/coreData/formula/buildingProductionFormulas';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
-import * as ServerDataType from '@/lib/gameplay/gameplayData/server/serverDataTypes';
+import * as dataType from '@/lib/gameplay/gameplayData/server/serverDataTypes';
 
 describe('computeProductionRatePerHour', () =>
 {
@@ -61,7 +61,7 @@ describe('computeProductionRatePerHour', () =>
 
     it('applies time_multiplier from serverData', () =>
     {
-        const serverData: ServerDataType.ServerData = TestDataBuilders.buildServerData(2);
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData(2);
         const base: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_1, 1, null);
         const accelerated: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_1, 1, serverData);
         expect(base).not.toBeNull();

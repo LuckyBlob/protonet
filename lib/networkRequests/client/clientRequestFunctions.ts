@@ -1,8 +1,7 @@
 "use client";
 
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as Serialization from "@/lib/helper/serialization";
 import * as ServerRequest from "@/lib/networkRequests/serverRequests";
@@ -12,10 +11,10 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 
 //#region Player state helpers
 
-export function setPlayerState(psController: PlayerDataType.PSController, newPlayerData: PlayerDataType.PlayerData): void
+export function setPlayerState(psController: CoreType.PSController, newPlayerData: CoreType.PlayerData): void
 {
     const currentlySelectedPlanetId: number = SelectedPlanet.updateSelectedPlanetIdInStorage(newPlayerData);
-    const loadedPlayerState: PlayerDataType.PlayerState =
+    const loadedPlayerState: CoreType.PlayerState =
     {
         dbData: newPlayerData,
         predictedDBData: newPlayerData,
@@ -33,7 +32,7 @@ export async function clientTryUserInfoRequest(): Promise<APIEndPoint.ResponseFo
     return ServerRequest.requestServerData(APIEndPoint.DataRequest.UserInfo);
 }
 
-export async function clientTryPlayerDataRequest(psController: PlayerDataType.PSController): Promise<void>
+export async function clientTryPlayerDataRequest(psController: CoreType.PSController): Promise<void>
 {
     const response: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.PlayerData> | null = await ServerRequest.requestServerData(APIEndPoint.DataRequest.PlayerData);
     // Use != instead of !== here to catch everything that's very weird.
@@ -42,11 +41,11 @@ export async function clientTryPlayerDataRequest(psController: PlayerDataType.PS
         const serverError: string = response === null ? "no response" : (response.error ?? "no error message");
         throw new Error(`Failed to fetch player data: ${serverError}`);
     }
-    const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+    const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
     await setPlayerState(psController, playerData);
 }
 
-export async function clientTryServerConfigRequest(sdsController: ServerDataType.SDSController): Promise<void>
+export async function clientTryServerConfigRequest(sdsController: CoreType.SDSController): Promise<void>
 {
     const response: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.ServerConfig> | null = await ServerRequest.requestServerData(APIEndPoint.DataRequest.ServerConfig);
     // Use != instead of !== here to catch everything that's very weird.
@@ -165,7 +164,7 @@ export async function clientTryRefreshServerRequest(clientDataStateResult: UseCl
         {
             throw new Error(`Refresh server failed: Invalid server data.`);
         }
-        const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
         await setPlayerState(clientDataStateResult.psController, playerData);
         clientDataStateResult.sdsController[1](response.serverData);
     }
@@ -175,7 +174,7 @@ export async function clientTryRefreshServerRequest(clientDataStateResult: UseCl
     }
 }
 
-export async function clientTryUpgradeBuildingRequest(psController: PlayerDataType.PSController, planetId: number, buildingType: number): Promise<void>
+export async function clientTryUpgradeBuildingRequest(psController: CoreType.PSController, planetId: number, buildingType: number): Promise<void>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding> =
     {
@@ -196,7 +195,7 @@ export async function clientTryUpgradeBuildingRequest(psController: PlayerDataTy
         throw new Error(`Building upgrade failed for planetId ${planetId}: Invalid response from server.`);
         }
 
-        const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
         await setPlayerState(psController, playerData);
     }
     catch (error: unknown)
@@ -205,7 +204,7 @@ export async function clientTryUpgradeBuildingRequest(psController: PlayerDataTy
     }
 }
 
-export async function clientTryBuildShipsRequest(psController: PlayerDataType.PSController, planetId: number, shipQuantities: Map<number, number>): Promise<void>
+export async function clientTryBuildShipsRequest(psController: CoreType.PSController, planetId: number, shipQuantities: Map<number, number>): Promise<void>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips> =
     {
@@ -226,7 +225,7 @@ export async function clientTryBuildShipsRequest(psController: PlayerDataType.PS
             throw new Error(`Build ships failed for planetId ${planetId}: Invalid response from server.`);
         }
 
-        const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
         await setPlayerState(psController, playerData);
     }
     catch (error: unknown)
@@ -235,7 +234,7 @@ export async function clientTryBuildShipsRequest(psController: PlayerDataType.PS
     }
 }
 
-export async function clientTrySendFleetRequest(psController: PlayerDataType.PSController, originPlanetId: number, targetPlanetAddress: GameType.PlanetAddress, fleetAction: number, shipQuantities: Map<number, number>, resourceQuantities: Map<number, number>): Promise<string | null>
+export async function clientTrySendFleetRequest(psController: CoreType.PSController, originPlanetId: number, targetPlanetAddress: GameType.PlanetAddress, fleetAction: number, shipQuantities: Map<number, number>, resourceQuantities: Map<number, number>): Promise<string | null>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.SendFleet> =
     {
@@ -261,7 +260,7 @@ export async function clientTrySendFleetRequest(psController: PlayerDataType.PSC
             throw new Error(`Send fleet failed for planetId ${originPlanetId}: Invalid response from server.`);
         }
 
-        const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
         await setPlayerState(psController, playerData);
         return null;
     }
@@ -276,7 +275,7 @@ export async function clientTrySendFleetRequest(psController: PlayerDataType.PSC
     }
 }
 
-export async function clientTryAbandonPlanet(psController: PlayerDataType.PSController): Promise<string | null>
+export async function clientTryAbandonPlanet(psController: CoreType.PSController): Promise<string | null>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.AbandonPlanet> =
     {
@@ -296,7 +295,7 @@ export async function clientTryAbandonPlanet(psController: PlayerDataType.PSCont
             throw new Error(`Abandon planet failed for planetId ${psController[0].selectedPlanetId}: Invalid response from server.`);
         }
 
-        const playerData: PlayerDataType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
         await setPlayerState(psController, playerData);
         return null;
     }

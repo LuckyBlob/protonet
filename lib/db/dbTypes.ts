@@ -155,3 +155,11 @@ export type FleetMovementResourceRow =
     resource_type: number;
     resource_quantity: number;
 };
+
+export type MessageRow =
+{
+	player_id: number;
+	type: number;
+	is_read: boolean;
+	body: string;
+}

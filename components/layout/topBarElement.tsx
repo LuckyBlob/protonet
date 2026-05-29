@@ -7,7 +7,7 @@ import * as UseCurrentUser from "@/lib/use/useCurrentUser";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
@@ -22,8 +22,8 @@ type TopBarProps =
 
 function renderAbandonPlanetButton(props: TopBarProps): ReactElement
 {
-	const playerData: PlayerDataType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
-	const ownedPlanetCount: number = playerData.fullPlanetDatas.length;
+	const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
+	const ownedPlanetCount: number = playerData.planetDatas.length;
 	const isDisabled: boolean = ownedPlanetCount <= 1;
 
 	const handleAbandonPlanet = async (): Promise<void> =>
@@ -163,16 +163,16 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 {
 	const now: number = Date.now();
 
-	const fullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(clientDataStateResult.psController[0]);
-	const buildingBeingUpgraded: number | null = BuildingUpgradeData.getBuildingTypeCurrentlyUpgrading(fullPlanetDataPredicted);
+	const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(clientDataStateResult.psController[0]);
+	const buildingBeingUpgraded: number | null = BuildingUpgradeData.getBuildingTypeCurrentlyUpgrading(planetDataPredicted);
 
 	const resourceDisplayValues: PlanetResourceDisplayValues[] = [];
 
 	for (const resourceType of resourceTypes)
 	{
-		const calculatedNewResourceQuantity: number = ResourceData.getResourceQuantity(fullPlanetDataPredicted, resourceType);
+		const calculatedNewResourceQuantity: number = ResourceData.getResourceQuantity(planetDataPredicted, resourceType);
 
-		const productionRatePerSecond: number = BuildingData.getPlanetProductionRatePerSecond(fullPlanetDataPredicted, resourceType, clientDataStateResult.sdsController[0]);
+		const productionRatePerSecond: number = BuildingData.getPlanetProductionRatePerSecond(planetDataPredicted, resourceType, clientDataStateResult.sdsController[0]);
 		const productionRatePerHour: number = productionRatePerSecond * 3600;
 
 		const affectedByCurrentBuild: boolean = (buildingBeingUpgraded !== null) && (BuildingData.doesBuildingProduceResource(buildingBeingUpgraded, resourceType) === true);
@@ -191,7 +191,7 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 	const displayValues: PlanetDisplayValues =
 	{
 		resourceDisplayValues: resourceDisplayValues,
-		remainingBuildingUpgradeMs: BuildingUpgradeData.getBuildingUpgradeRemainingMs(fullPlanetDataPredicted),
+		remainingBuildingUpgradeMs: BuildingUpgradeData.getBuildingUpgradeRemainingMs(planetDataPredicted),
 	};
 
 	return displayValues;

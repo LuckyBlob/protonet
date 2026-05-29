@@ -1,6 +1,5 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
-import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 
 export type SpecificThing = number;
 export const Thing =
@@ -29,32 +28,32 @@ const THING_DEFINITIONS: ReadonlyMap<Thing, ThingDefinition> = new Map
     [Thing.Resource,
     {
         specificThingDisplayNames: GameType.RESOURCE_DISPLAY_NAMES,
-        contexts: [PlayerDataType.DataContext.ResourceQuantity],
+        contexts: [CoreType.DataContext.ResourceQuantity],
     }],
     [Thing.Building,
     {
         specificThingDisplayNames: GameType.BUILDING_DISPLAY_NAMES,
-        contexts: [PlayerDataType.DataContext.BuildingLevel],
+        contexts: [CoreType.DataContext.BuildingLevel],
     }],
     [Thing.Ship,
     {
         specificThingDisplayNames: GameType.SHIP_DISPLAY_NAMES,
-        contexts: [PlayerDataType.DataContext.ShipQuantity, PlayerDataType.DataContext.ShipConstruction],
+        contexts: [CoreType.DataContext.ShipQuantity, CoreType.DataContext.ShipConstruction],
     }],
     [Thing.BuildingUpgrade,
     {
         specificThingDisplayNames: GameType.BUILDING_DISPLAY_NAMES,
-        contexts: [PlayerDataType.DataContext.BuildingLevel],
+        contexts: [CoreType.DataContext.BuildingLevel],
     }],
     [Thing.ShipConstruction,
     {
         specificThingDisplayNames: GameType.SHIP_DISPLAY_NAMES,
-        contexts: [PlayerDataType.DataContext.ShipConstruction],
+        contexts: [CoreType.DataContext.ShipConstruction],
     }],
     [Thing.FleetMovement,
     {
         specificThingDisplayNames: GameType.SHIP_DISPLAY_NAMES,
-        contexts: [PlayerDataType.DataContext.FutureFleetArrivals],
+        contexts: [CoreType.DataContext.FutureFleetArrivals],
     }],
 ]);
 
@@ -67,7 +66,7 @@ export type SpecificThingType =
 type ThingDefinition =
 {
 	specificThingDisplayNames: ReadonlyMap<SpecificThing, string>;
-	contexts: PlayerDataType.DataContext[];
+	contexts: CoreType.DataContext[];
 };
 
 export function getAllSpecificThings(thingType: Thing): SpecificThing[]
@@ -118,44 +117,44 @@ export function getSpecificThingName(specificThing: SpecificThingType): string
     return specificThingDisplayName;
 }
 
-export function getThingValues(fullPlanetData: PlayerDataType.FullPlanetData, dataContext: PlayerDataType.DataContext): Map<SpecificThing, number>
+export function getThingValues(planetData: CoreType.PlanetData, dataContext: CoreType.DataContext): Map<SpecificThing, number>
 {
-	if (dataContext === PlayerDataType.DataContext.ShipConstruction)
+	if (dataContext === CoreType.DataContext.ShipConstruction)
 	{
 		throw new Error("ShipConstruction context does not have specific things that have a value... yet.");
 	}
 
-    if (dataContext === PlayerDataType.DataContext.FutureFleetArrivals)
+    if (dataContext === CoreType.DataContext.FutureFleetArrivals)
 	{
 		throw new Error("FutureFleetArrivals context does not have specific things that have a value... yet.");
 	}
 
-    if (dataContext === PlayerDataType.DataContext.BuildingUpgrade)
+    if (dataContext === CoreType.DataContext.BuildingUpgrade)
 	{
 		throw new Error("BuildingUpgrade context does not have specific things that have a value... yet.");
 	}
 
-	return PlayerData.getVariableFromContext(fullPlanetData.dynamicPlanetData, dataContext);
+	return CoreType.getVariableFromContext(planetData.dynamicPlanetData, dataContext);
 }
 
-export function setSpecificThingValue(fullPlanetData: PlayerDataType.FullPlanetData, dataContext: PlayerDataType.DataContext, specificThing: SpecificThing, value: number): void
+export function setSpecificThingValue(planetData: CoreType.PlanetData, dataContext: CoreType.DataContext, specificThing: SpecificThing, value: number): void
 {
-	if (dataContext === PlayerDataType.DataContext.ShipConstruction)
+	if (dataContext === CoreType.DataContext.ShipConstruction)
 	{
 		throw new Error("ShipConstruction context is not supported for type setters since it doesnt have specific things.");
 	}
 
-    if (dataContext === PlayerDataType.DataContext.FutureFleetArrivals)
+    if (dataContext === CoreType.DataContext.FutureFleetArrivals)
 	{
 		throw new Error("FutureFleetArrivals context is not supported for type setters since it doesnt have specific things.");
 	}
 
-    if (dataContext === PlayerDataType.DataContext.BuildingUpgrade)
+    if (dataContext === CoreType.DataContext.BuildingUpgrade)
 	{
 		throw new Error("BuildingUpgrade context is not supported for type setters since it doesnt have specific things.");
 	}
 
-	const specificThingValueMap: Map<SpecificThing, number> = PlayerData.getVariableFromContext(fullPlanetData.dynamicPlanetData, dataContext);
+	const specificThingValueMap: Map<SpecificThing, number> = CoreType.getVariableFromContext(planetData.dynamicPlanetData, dataContext);
 
     specificThingValueMap.set(specificThing, value);
 }

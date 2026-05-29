@@ -3,7 +3,7 @@
 import { ReactElement, ChangeEvent, useState } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as DBType from "@/lib/db/dbTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as HelperElements from "@/components/helperElements";
@@ -48,7 +48,7 @@ function renderPlanetRow(slot: number, selectedGalaxy: number, selectedSystem: n
     return element;
 }
 
-function renderPlanetGrid(selectedGalaxy: number, selectedSystem: number, playerData: PlayerDataType.PlayerData): ReactElement
+function renderPlanetGrid(selectedGalaxy: number, selectedSystem: number, playerData: CoreType.PlayerData): ReactElement
 {
     const slotNumbers: number[] = Array.from({ length: GameType.SLOT_COUNT }, (_: unknown, index: number): number => index + 1);
 
@@ -69,7 +69,7 @@ function renderPlanetGrid(selectedGalaxy: number, selectedSystem: number, player
 
 function renderBody(props: PlanetViewProps, selectedGalaxy: number, selectedSystem: number, handleGalaxyChange: (e: ChangeEvent<HTMLSelectElement>) => void, handleSystemChange: (e: ChangeEvent<HTMLSelectElement>) => void): ReactElement
 {
-    const playerData: PlayerDataType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
+    const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 
     const galaxyNumbers: number[] = Array.from({ length: GameType.GALAXY_COUNT }, (_: unknown, index: number): number => index + 1);
     const systemNumbers: number[] = Array.from({ length: GameType.SYSTEM_COUNT }, (_: unknown, index: number): number => index + 1);
@@ -118,10 +118,10 @@ export function PlanetView(props: PlanetViewProps): ReactElement
 {
     try
     {
-        const fullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
+        const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
     
-        const selectedGalaxyState: [number, (value: number) => void] = useState<number>(fullPlanetDataPredicted.planetRow.galaxy);
-        const selectedSystemState: [number, (value: number) => void] = useState<number>(fullPlanetDataPredicted.planetRow.system);
+        const selectedGalaxyState: [number, (value: number) => void] = useState<number>(planetDataPredicted.planetRow.galaxy);
+        const selectedSystemState: [number, (value: number) => void] = useState<number>(planetDataPredicted.planetRow.system);
 
         const handleGalaxyChange = (e: ChangeEvent<HTMLSelectElement>): void =>
         {

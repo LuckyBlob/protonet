@@ -1,18 +1,13 @@
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as DBType from "@/lib/db/dbTypes";
 import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
-import * as ShipConstruction from "@/lib/gameplay/coreData/formula/shipConstructionFormulas";
-import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
-import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
-import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
 
-export function getNextBuildingUpgrade(fullPlanetData: PlayerDataType.FullPlanetData): PlayerDataType.BuildingUpgrade | null
+export function getNextBuildingUpgrade(planetData: CoreType.PlanetData): CoreType.BuildingUpgrade | null
 {
-    let bestNextUpgrade: PlayerDataType.BuildingUpgrade | null = null;
+    let bestNextUpgrade: CoreType.BuildingUpgrade | null = null;
     let currentTimeToBeat: number = Number.MAX_SAFE_INTEGER;
-    for (const buildingUpgrade of fullPlanetData.dynamicPlanetData.buildingUpgrades)
+    for (const buildingUpgrade of planetData.dynamicPlanetData.buildingUpgrades)
     {
 
         if (bestNextUpgrade === null || currentTimeToBeat > buildingUpgrade.buildingUpgradeRow.requested_at)
@@ -25,9 +20,9 @@ export function getNextBuildingUpgrade(fullPlanetData: PlayerDataType.FullPlanet
     return bestNextUpgrade;
 }
 
-export function getNextBuildingUpgradeBuildingRow(playerData: PlayerDataType.PlayerData, fullPlanetData: PlayerDataType.FullPlanetData, buildingUpgrade: PlayerDataType.BuildingUpgrade, serverData: ServerDataType.ServerData): DBType.BuildingUpgradeBuildingRow | null
+export function getNextBuildingUpgradeBuildingRow(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, buildingUpgrade: CoreType.BuildingUpgrade, serverData: CoreType.ServerData): DBType.BuildingUpgradeBuildingRow | null
 {
-    const nextBuildingUpgradeBuildingRowIndex: number | null = getNextBuildingUpgradeBuildingRowIndex(playerData, fullPlanetData, buildingUpgrade, serverData);
+    const nextBuildingUpgradeBuildingRowIndex: number | null = getNextBuildingUpgradeBuildingRowIndex(playerData, planetData, buildingUpgrade, serverData);
     if (nextBuildingUpgradeBuildingRowIndex === null)
     {
         return null;
@@ -36,7 +31,7 @@ export function getNextBuildingUpgradeBuildingRow(playerData: PlayerDataType.Pla
     return nestBuildingUpgradeBuildingRow;
 }
 
-export function getNextBuildingUpgradeBuildingRowIndex(playerData: PlayerDataType.PlayerData, fullPlanetData: PlayerDataType.FullPlanetData, buildingUpgrade: PlayerDataType.BuildingUpgrade, serverData: ServerDataType.ServerData): number | null
+export function getNextBuildingUpgradeBuildingRowIndex(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, buildingUpgrade: CoreType.BuildingUpgrade, serverData: CoreType.ServerData): number | null
 {
     if (buildingUpgrade.buildingUpgradeBuildingRows.length === 0)
     {
@@ -48,7 +43,7 @@ export function getNextBuildingUpgradeBuildingRowIndex(playerData: PlayerDataTyp
     for (let index = 0; index < buildingUpgrade.buildingUpgradeBuildingRows.length; index++)
     {
         const buildingUpgradeBuildingRow: DBType.BuildingUpgradeBuildingRow = buildingUpgrade.buildingUpgradeBuildingRows[index];
-        const buildingUpgradeTime: number | null = getBuildingUpgradeDurationSeconds(playerData, buildingUpgradeBuildingRow.building_type, fullPlanetData, serverData);
+        const buildingUpgradeTime: number | null = getBuildingUpgradeDurationSeconds(playerData, buildingUpgradeBuildingRow.building_type, planetData, serverData);
         if (buildingUpgradeTime === null)
         {
             continue;
@@ -64,15 +59,15 @@ export function getNextBuildingUpgradeBuildingRowIndex(playerData: PlayerDataTyp
     return bestNextRowIndex;
 }
 
-export function getBuildingUpgradeDurationSeconds(playerData: PlayerDataType.PlayerData, buildingType: number, fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData): number | null
+export function getBuildingUpgradeDurationSeconds(playerData: CoreType.PlayerData, buildingType: number, planetData: CoreType.PlanetData, serverData: CoreType.ServerData): number | null
 {
-    const buildingLevel: number = BuildingData.getBuildingLevel(fullPlanetData, buildingType);
-    return BuildingDuration.computeUpgradeDurationSeconds(buildingLevel, buildingType, playerData, fullPlanetData.planetRow.id, serverData);
+    const buildingLevel: number = BuildingData.getBuildingLevel(planetData, buildingType);
+    return BuildingDuration.computeUpgradeDurationSeconds(buildingLevel, buildingType, playerData, planetData.planetRow.id, serverData);
 }
 
-export function getBuildingUpgradeRemainingMs(fullPlanetData: PlayerDataType.FullPlanetData): number | null
+export function getBuildingUpgradeRemainingMs(planetData: CoreType.PlanetData): number | null
 {
-    for (const buildingUpgrade of fullPlanetData.dynamicPlanetData.buildingUpgrades)
+    for (const buildingUpgrade of planetData.dynamicPlanetData.buildingUpgrades)
     {
         const startedAt: number | null = buildingUpgrade.buildingUpgradeRow.started_at;
         const durationAtStartTime: number | null = buildingUpgrade.buildingUpgradeRow.duration_at_start_time;
@@ -93,9 +88,9 @@ export function getBuildingUpgradeRemainingMs(fullPlanetData: PlayerDataType.Ful
     return null;
 }
 
-export function getBuildingTypeCurrentlyUpgrading(fullPlanetData: PlayerDataType.FullPlanetData): number | null
+export function getBuildingTypeCurrentlyUpgrading(planetData: CoreType.PlanetData): number | null
 {
-    for (const buildingUpgrade of fullPlanetData.dynamicPlanetData.buildingUpgrades)
+    for (const buildingUpgrade of planetData.dynamicPlanetData.buildingUpgrades)
     {
         if (buildingUpgrade.buildingUpgradeRow.started_at === null)
         {
@@ -114,9 +109,9 @@ export function getBuildingTypeCurrentlyUpgrading(fullPlanetData: PlayerDataType
     return null;
 }
 
-export function isBuildingTypeCurrentlyUpgrading(fullPlanetData: PlayerDataType.FullPlanetData, buildingType: number): boolean
+export function isBuildingTypeCurrentlyUpgrading(planetData: CoreType.PlanetData, buildingType: number): boolean
 {
-    const buildingTypeCurrentlyUpgrading: number | null = getBuildingTypeCurrentlyUpgrading(fullPlanetData);
+    const buildingTypeCurrentlyUpgrading: number | null = getBuildingTypeCurrentlyUpgrading(planetData);
     if (buildingTypeCurrentlyUpgrading === null)
     {
         return false;

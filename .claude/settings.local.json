@@ -11,7 +11,16 @@
       "Bash(Select-Object -First 30)",
       "PowerShell(Get-ChildItem -Path \"D:\\\\Claude\\\\WebsiteProject\\\\protonet\" -Recurse -Directory | Select-Object -First 30 | ForEach-Object { $_.FullName })",
       "Bash(npx tsc *)",
-      "PowerShell(netstat -ano)"
+      "PowerShell(netstat -ano)",
+      "Bash(pnpm --version)",
+      "Bash(npx playwright *)",
+      "Bash(pnpm test:e2e -g \"Buildings\" --workers=1 --reporter=line)",
+      "Bash(pnpm test:e2e tests/e2e/gameplay.test.ts --workers=1 --reporter=line)",
+      "Bash(pnpm test:e2e tests/e2e/gameplay.test.ts -g \"Ships|Fleets\" --workers=1 --reporter=list)",
+      "Bash(pnpm test:e2e tests/e2e/gameplay.test.ts --workers=1 --reporter=list)",
+      "Bash(pnpm test:e2e tests/e2e/gameplay.test.ts -g \"Bug probes\" --workers=1 --reporter=list)",
+      "Bash(pnpm test:e2e tests/e2e/gameplay.test.ts -g \"defended by ships\" --workers=1 --reporter=list)",
+      "Bash(pnpm test:e2e tests/e2e/gameplay.test.ts -g \"conserves resources\" --workers=1 --reporter=list)"
     ]
   }
 }

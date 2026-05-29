@@ -1,4 +1,4 @@
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as DBType from "@/lib/db/dbTypes";
 
 // The wire format. Maps cannot survive JSON.stringify, so on the wire each
@@ -30,36 +30,107 @@ export function deserializeNumberNumberMap(serialized: SerializedNumberNumberMap
 }
 //#region 
 
+//#region Player Data
+
+export function serializePlayerData(playerData: CoreType.PlayerData): SerializedPlayerData
+{
+	const serializedDynamicPlayerData: SerializedDynamicPlayerData = serializeDynamicPlayerData(playerData.dynamicPlayerData);
+
+	const serializedPlanetDatas: SerializedPlanetData[] = playerData.planetDatas.map((planetData: CoreType.PlanetData): SerializedPlanetData =>
+	{
+		return serializePlanetData(planetData);
+	});
+
+	const serialized: SerializedPlayerData =
+	{
+		playerRow: playerData.playerRow,
+		dynamicPlayerData: serializedDynamicPlayerData,
+		planetDatas: serializedPlanetDatas,
+		publicPlanetRows: playerData.publicPlanetRows,
+		publicPlayerRows: playerData.publicPlayerRows,
+	};
+
+	return serialized;
+}
+
+export function deserializePlayerData(serialized: SerializedPlayerData): CoreType.PlayerData
+{
+	const dynamicPlayerData: CoreType.DynamicPlayerData = deserializeDynamicPlayerData(serialized.dynamicPlayerData);
+
+	const planetDatas: CoreType.PlanetData[] = serialized.planetDatas.map((serializedPlanetData: SerializedPlanetData): CoreType.PlanetData =>
+	{
+		return deserializePlanetData(serializedPlanetData);
+	});
+
+	const playerData: CoreType.PlayerData =
+	{
+		playerRow: serialized.playerRow,
+		dynamicPlayerData: dynamicPlayerData,
+
+		planetDatas: planetDatas,
+		publicPlanetRows: serialized.publicPlanetRows,
+		publicPlayerRows: serialized.publicPlayerRows,
+	};
+
+	return playerData;
+}
+
+type SerializedDynamicPlayerData =
+{
+	messageDatas: CoreType.MessageData[];
+};
+
+function serializeDynamicPlayerData(dynamicPlayerData: CoreType.DynamicPlayerData): SerializedDynamicPlayerData
+{
+	const serialized: SerializedDynamicPlayerData =
+	{
+		messageDatas: [...dynamicPlayerData.messageDatas],
+	};
+
+	return serialized;
+}
+
+function deserializeDynamicPlayerData(serialized: SerializedDynamicPlayerData): CoreType.DynamicPlayerData
+{
+	const dynamicPlayerData: CoreType.DynamicPlayerData =
+	{
+		messageDatas: serialized.messageDatas ?? [],
+	};
+
+	return dynamicPlayerData;
+}
+//#endregion
+
 //#region Planet Data
 type SerializedDynamicPlanetData =
 {
 	resourceQuantity: [number, number][];
 	buildingLevels: [number, number][];
 	shipQuantity: [number, number][];
-	shipConstructions: PlayerDataType.ShipConstruction[];
-	futureFleetArrivals: PlayerDataType.FleetMovement[];
-	buildingUpgrades: PlayerDataType.BuildingUpgrade[];
+	shipConstructions: CoreType.ShipConstruction[];
+	futureFleetArrivals: CoreType.FleetMovement[];
+	buildingUpgrades: CoreType.BuildingUpgrade[];
 };
 
-type SerializedFullPlanetData =
+type SerializedPlanetData =
 {
 	planetRow: DBType.PlanetRow;
 	dynamicPlanetData: SerializedDynamicPlanetData;
 };
 
-function serializeFullPlanetData(fullPlanetData: PlayerDataType.FullPlanetData): SerializedFullPlanetData
+function serializePlanetData(planetData: CoreType.PlanetData): SerializedPlanetData
 {
-	const serialized: SerializedFullPlanetData =
+	const serialized: SerializedPlanetData =
 	{
-		planetRow: fullPlanetData.planetRow,
+		planetRow: planetData.planetRow,
 		dynamicPlanetData:
 		{
-			resourceQuantity: [...fullPlanetData.dynamicPlanetData.resourceQuantity],
-			buildingLevels: [...fullPlanetData.dynamicPlanetData.buildingLevels],
-			shipQuantity: [...fullPlanetData.dynamicPlanetData.shipQuantity],
-			shipConstructions: [...fullPlanetData.dynamicPlanetData.shipConstructions],
-			futureFleetArrivals: [...fullPlanetData.dynamicPlanetData.futureFleetArrivals],
-			buildingUpgrades: [...fullPlanetData.dynamicPlanetData.buildingUpgrades],
+			resourceQuantity: [...planetData.dynamicPlanetData.resourceQuantity],
+			buildingLevels: [...planetData.dynamicPlanetData.buildingLevels],
+			shipQuantity: [...planetData.dynamicPlanetData.shipQuantity],
+			shipConstructions: [...planetData.dynamicPlanetData.shipConstructions],
+			futureFleetArrivals: [...planetData.dynamicPlanetData.futureFleetArrivals],
+			buildingUpgrades: [...planetData.dynamicPlanetData.buildingUpgrades],
 		},
 	};
 
@@ -71,32 +142,15 @@ function serializeFullPlanetData(fullPlanetData: PlayerDataType.FullPlanetData):
 export type SerializedPlayerData =
 {
 	playerRow: DBType.PlayerRow;
-	fullPlanetDatas: SerializedFullPlanetData[];
+	dynamicPlayerData: SerializedDynamicPlayerData;
+	planetDatas: SerializedPlanetData[];
 	publicPlanetRows: DBType.PublicPlanetRow[];
 	publicPlayerRows: DBType.PublicPlayerRow[];
 };
 
-export function serializePlayerData(playerData: PlayerDataType.PlayerData): SerializedPlayerData
+function deserializePlanetData(serialized: SerializedPlanetData): CoreType.PlanetData
 {
-	const serializedFullPlanetDatas: SerializedFullPlanetData[] = playerData.fullPlanetDatas.map((fullPlanetData: PlayerDataType.FullPlanetData): SerializedFullPlanetData =>
-	{
-		return serializeFullPlanetData(fullPlanetData);
-	});
-
-	const serialized: SerializedPlayerData =
-	{
-		playerRow: playerData.playerRow,
-		fullPlanetDatas: serializedFullPlanetDatas,
-		publicPlanetRows: playerData.publicPlanetRows,
-		publicPlayerRows: playerData.publicPlayerRows,
-	};
-
-	return serialized;
-}
-
-function deserializeFullPlanetData(serialized: SerializedFullPlanetData): PlayerDataType.FullPlanetData
-{
-	const fullPlanetData: PlayerDataType.FullPlanetData =
+	const planetData: CoreType.PlanetData =
 	{
 		planetRow: serialized.planetRow,
 		dynamicPlanetData:
@@ -110,24 +164,7 @@ function deserializeFullPlanetData(serialized: SerializedFullPlanetData): Player
 		},
 	};
 
-	return fullPlanetData;
+	return planetData;
 }
 
-export function deserializePlayerData(serialized: SerializedPlayerData): PlayerDataType.PlayerData
-{
-	const fullPlanetDatas: PlayerDataType.FullPlanetData[] = serialized.fullPlanetDatas.map((serializedFullPlanetData: SerializedFullPlanetData): PlayerDataType.FullPlanetData =>
-	{
-		return deserializeFullPlanetData(serializedFullPlanetData);
-	});
-
-	const playerData: PlayerDataType.PlayerData =
-	{
-		playerRow: serialized.playerRow,
-		fullPlanetDatas: fullPlanetDatas,
-		publicPlanetRows: serialized.publicPlanetRows,
-		publicPlayerRows: serialized.publicPlayerRows,
-	};
-
-	return playerData;
-}
 //#endregion

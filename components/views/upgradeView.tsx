@@ -6,7 +6,7 @@ import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
@@ -60,13 +60,13 @@ function renderCostLine(nextCostMap: Map<number, number>): ReactElement
 	return <span>{parts.join(" / ")}</span>;
 }
 
-function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData, buildingType: number): ReactElement
+function renderBuildingCard(props: UpgradeViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: number): ReactElement
 {
-	const playerData: PlayerDataType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
-	const planetId: number = selectedFullPlanetDataPredicted.planetRow.id;
+	const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
+	const planetId: number = selectedPlanetDataPredicted.planetRow.id;
 
 	const displayName: string = ThingType.getSpecificThingName(ThingType.building(buildingType));
-	const currentLevel: number = BuildingData.getBuildingLevel(selectedFullPlanetDataPredicted, buildingType);
+	const currentLevel: number = BuildingData.getBuildingLevel(selectedPlanetDataPredicted, buildingType);
 
 	const nextCostMap: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(currentLevel, buildingType);
 	const buildDurationSeconds: number | null = BuildingDuration.computeUpgradeDurationSeconds(currentLevel, buildingType, playerData, planetId, props.clientDataStateResult.sdsController[0]);
@@ -82,13 +82,13 @@ function renderBuildingCard(props: UpgradeViewProps, selectedFullPlanetDataPredi
 
 	const imagePath: string = getBuildingImagePath(buildingType, currentLevel);
 
-	const isThisBuildingUpgrading: boolean = BuildingUpgradeData.isBuildingTypeCurrentlyUpgrading(selectedFullPlanetDataPredicted, buildingType);
+	const isThisBuildingUpgrading: boolean = BuildingUpgradeData.isBuildingTypeCurrentlyUpgrading(selectedPlanetDataPredicted, buildingType);
 	const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedBuildingUpgradeRequirements(playerData, buildingType, planetId);
 	const failedHidingRequirements: RequirementType.Requirement[] = failedRequirements.filter((requirement: RequirementType.Requirement): boolean => requirement.hideDataWhenRequirementFailed === true);
 	const hidingDescriptions: string[] = Requirement.getRequirementDescriptions(failedHidingRequirements, playerData, planetId);
 
-	const remainingMs: number = BuildingUpgradeData.getBuildingUpgradeRemainingMs(selectedFullPlanetDataPredicted) ?? 0;
-	const canAfford: boolean = BuildingData.canAffordUpgrade(selectedFullPlanetDataPredicted, buildingType);
+	const remainingMs: number = BuildingUpgradeData.getBuildingUpgradeRemainingMs(selectedPlanetDataPredicted) ?? 0;
+	const canAfford: boolean = BuildingData.canAffordUpgrade(selectedPlanetDataPredicted, buildingType);
 
 	const handleBuyUpgrade: () => void = () =>
 	{
@@ -163,11 +163,11 @@ export function UpgradeView(props: UpgradeViewProps): ReactElement
 {
 	try
 	{
-		const selectedFullPlanetDataPredicted: PlayerDataType.FullPlanetData = SelectedPlanet.getSelectedFullPlanetDataPredicted(props.clientDataStateResult.psController[0]);
+		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 
 		const cardElements: ReactElement[] = ThingType.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: number): ReactElement =>
 		{
-			return renderBuildingCard(props, selectedFullPlanetDataPredicted, buildingType);
+			return renderBuildingCard(props, selectedPlanetDataPredicted, buildingType);
 		});
 
 		const upgradeViewElement: ReactElement =
