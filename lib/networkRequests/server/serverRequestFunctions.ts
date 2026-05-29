@@ -502,7 +502,7 @@ export function serverUpdateAllPlanetData(planetId: number, playerId: number, dy
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        for (const dataContext of CoreType.getDataContexts())
+        for (const dataContext of CoreType.getPlanetDataContexts())
         {
             ServerDynamicData.serverUpdatePlanetDataContext(planetId, playerId, dataContext, dynamicPlanetData);
         }
@@ -520,8 +520,11 @@ function createPlayer(userId: number): boolean
         ).get(userId) as DBType.PlayerRow;
 
         const now: number = Date.now();
-        claimPlanet(null, playerRow.id, now);
-        claimPlanet(null, playerRow.id, now + 1);
+        const firstPlanetId: number = claimPlanet(null, playerRow.id, now);
+        serverUpdateAllPlanetData(firstPlanetId, playerRow.id, GameType.STARTING_PLANET_DATA);
+
+        const secondPlanetId: number = claimPlanet(null, playerRow.id, now + 1);
+        serverUpdateAllPlanetData(secondPlanetId, playerRow.id, GameType.STARTING_PLANET_DATA);
     });
 
     try
@@ -576,40 +579,39 @@ function findFreePlanetAddress(minSlot: number, maxSlot:number): GameType.Planet
     return freeCoordinate ?? null;
 }
 
-function claimPlanet(planetId: number | null, playerId: number, claimedAt: number): void
+function claimPlanet(planetAddress: GameType.PlanetAddress | null, playerId: number, claimedAt: number): number
 {
-    DB.databaseConnection.transaction(() =>
+    const claimedPlanetId: number | null = DB.databaseConnection.transaction(() =>
     {
-        const isNew: boolean = planetId === null;
+        const isNew: boolean = planetAddress === null;
         if (isNew)
         {
-            const freePlanetAddress: GameType.PlanetAddress | null = findFreePlanetAddress(GameType.MIN_SLOT_STARTING_PLANET, GameType.MAX_SLOT_STARTING_PLANET);
-            if (freePlanetAddress === null)
-            {
-                throw new Error("No more planets for new player.")
-            }
-
-            const newPlanetId: { id: number } = DB.databaseConnection.prepare(
-                "INSERT INTO planet (slot, system, galaxy, size, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
-            ).get(
-                freePlanetAddress.slot,
-                freePlanetAddress.system,
-                freePlanetAddress.galaxy,
-                GameType.STARTING_PLANET_SIZE,
-                playerId,
-                claimedAt,
-                claimedAt
-            ) as { id: number };
-
-            planetId = newPlanetId.id;
+            planetAddress = findFreePlanetAddress(GameType.MIN_SLOT_STARTING_PLANET, GameType.MAX_SLOT_STARTING_PLANET);
         }
+
+        if (planetAddress === null)
+        {
+            throw new Error("No more planets for new player.")
+        }
+
+        const claimedPlanet: { id: number } = DB.databaseConnection.prepare(
+            "INSERT INTO planet (slot, system, galaxy, size, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
+        ).get(
+            planetAddress.slot,
+            planetAddress.system,
+            planetAddress.galaxy,
+            GameType.STARTING_PLANET_SIZE,
+            playerId,
+            claimedAt,
+            claimedAt
+        ) as { id: number };
 
         let size: number = GameType.STARTING_PLANET_SIZE;
         if (isNew === false)
         {
             const slotRow: { slot: number } = DB.databaseConnection.prepare(
                 "SELECT slot FROM planet WHERE id = ?"
-            ).get(planetId) as { slot: number };
+            ).get(claimedPlanet.id) as { slot: number };
             size = GameType.rollSizeForSlot(slotRow.slot);
         }
 
@@ -620,17 +622,21 @@ function claimPlanet(planetId: number | null, playerId: number, claimedAt: numbe
             playerId,
             claimedAt,
             claimedAt,
-            planetId
+            claimedPlanet.id
         );
 
-        // do this last so the update fleet sees null target and doesnt delete
+        // do this last so the update fleet sees the new player target and acts accordingly
         DB.databaseConnection.prepare(
             "UPDATE fleet_movement SET player_target_id = ? WHERE planet_target_id = ?"
-        ).run(playerId, planetId);
+        ).run(playerId, claimedPlanet.id);
+
+        return claimedPlanet.id;
     })();
-    
+
     const serverData: CoreType.ServerData = ServerType.getServerData();
     ServerProgress.applyPlayerUpdate(playerId, serverData, Date.now());
+
+    return claimedPlanetId;
 }
 
 function abandonPlanet(planetId: number, playerId: number): void

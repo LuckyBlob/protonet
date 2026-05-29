@@ -53,7 +53,10 @@ test('full user journey', async ({ page }) =>
 	expect(await E2EHelper.getSelectedPlanetAddress(page)).toBe(e2e1SecondAddress)
 
 	await page.getByRole('button', { name: 'Abandon planet' }).click()
-	await expect(page.getByRole('button', { name: /^Planet \(/ })).toBeVisible()
+	// The abandon is async: the planet button is already visible, so waiting on visibility alone
+	// races the network round-trip. Instead wait for the selection to fall off the abandoned
+	// planet (it resolves to the remaining one), which only happens once the new state lands.
+	await expect(page.getByRole('button', { name: /^Planet \(/ })).not.toContainText(e2e1SecondAddress)
 
 	const remainingAddresses: string[] = await E2EHelper.getDropdownAddresses(page)
 	expect(remainingAddresses).not.toContain(e2e1SecondAddress)
