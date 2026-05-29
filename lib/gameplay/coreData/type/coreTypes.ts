@@ -68,7 +68,7 @@ export const EmptyPlanetData: DynamicPlanetData =
 
 } as const;
 
-export const DataContext =
+export const PlanetDataContext =
 {
 	ResourceQuantity: 1,
 	BuildingLevel: 2,
@@ -76,18 +76,37 @@ export const DataContext =
 	ShipConstruction: 4,
 	FutureFleetArrivals: 5,
 	BuildingUpgrade: 6,
+} as const;
+export type PlanetDataContext = typeof PlanetDataContext[keyof typeof PlanetDataContext];
+export const PlayerDataContext =
+{
 	Messages: 7,
 } as const;
+export type PlayerDataContext = typeof PlayerDataContext[keyof typeof PlayerDataContext];
+
+export const DataContext =
+{
+	...PlanetDataContext,
+	...PlayerDataContext,
+} as const;
 export type DataContext = typeof DataContext[keyof typeof DataContext];
+export const PlanetDataContextToVariableNameMap =
+{
+    [PlanetDataContext.ResourceQuantity]: "resourceQuantity",
+    [PlanetDataContext.BuildingLevel]: "buildingLevels",
+    [PlanetDataContext.ShipQuantity]: "shipQuantity",
+    [PlanetDataContext.ShipConstruction]: "shipConstructions",
+    [PlanetDataContext.FutureFleetArrivals]: "futureFleetArrivals",
+    [PlanetDataContext.BuildingUpgrade]: "buildingUpgrades",
+} as const;
+export const PlayerDataContextToVariableNameMap =
+{
+    [PlayerDataContext.Messages]: "messages",
+} as const;
 export const DataContextToVariableNameMap =
 {
-    [DataContext.ResourceQuantity]: "resourceQuantity",
-    [DataContext.BuildingLevel]: "buildingLevels",
-    [DataContext.ShipQuantity]: "shipQuantity",
-    [DataContext.ShipConstruction]: "shipConstructions",
-    [DataContext.FutureFleetArrivals]: "futureFleetArrivals",
-    [DataContext.BuildingUpgrade]: "buildingUpgrades",
-    [DataContext.Messages]: "messages",
+    ...PlanetDataContextToVariableNameMap,
+    ...PlayerDataContextToVariableNameMap,
 } as const;
 
 export type PlanetData =
@@ -156,6 +175,16 @@ export function getVariableFromContext<T extends DataContext>(data: DynamicPlane
 
     // 3. This will now compile cleanly because TargetPropertyName<T> is guaranteed to be a valid key
     return data[propertyKey] as DynamicPlanetData[TargetPropertyName<T>];
+}
+
+export function getPlayerDataContexts(): DataContext[]
+{
+	return Object.values(PlayerDataContext) as DataContext[];
+}
+
+export function getPlanetDataContexts(): DataContext[]
+{
+	return Object.values(PlanetDataContext) as DataContext[];
 }
 
 export function getDataContexts(): DataContext[]
