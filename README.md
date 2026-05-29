@@ -40,3 +40,4 @@ Then open **http://localhost:3001**.
 - If you already have a local database and pull schema changes, run `npm run db:migrate` instead of `npm run db:init`.
 - If you need to reset your local game state, delete `data/game.db`, rerun `npm run db:init`, then rerun `npm run db:seed`.
 "" 
+ 
