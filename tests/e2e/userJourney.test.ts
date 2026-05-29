@@ -86,8 +86,9 @@ test('full user journey', async ({ page }) =>
 	await selectPlanetByAddress(page, e2e1SecondAddress)
 	expect(await getSelectedPlanetAddress(page)).toBe(e2e1SecondAddress)
 
-	await page.getByRole('button', { name: 'Abandon planet' }).click()
-	await expect(page.getByRole('button', { name: /^Planet \(/ })).toBeVisible()
+    await page.getByRole('button', { name: 'Abandon planet' }).click()
+    await expect(page.getByRole('button', { name: /^Planet \(/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Planet \(/ })).not.toContainText(e2e1SecondAddress)
 
 	const remainingAddresses: string[] = await getDropdownAddresses(page)
 	expect(remainingAddresses).not.toContain(e2e1SecondAddress)
