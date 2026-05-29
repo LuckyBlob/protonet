@@ -1,6 +1,5 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
-import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 
 type BaseFuelConsumptionData =
 {
@@ -15,13 +14,13 @@ const BASE_FUEL_CONSUMPTION_DATA: BaseFuelConsumptionData =
 	exponent: 2,
 };
 
-export function computeFuelConsumption(shipQuantities: Map<number, number>, distance: number, speed: number, serverData: ServerDataType.ServerData | null): Map<number, number>
+export function computeFuelConsumption(shipQuantities: Map<number, number>, distance: number, speed: number, serverData: CoreType.ServerData | null): Map<number, number>
 {
 	return computeFuelConsumption_Base(shipQuantities, distance, speed, serverData);
 }
 
 // Speed is 1-10, where 1 is 10% and 10 is 100% max speed.
-function computeFuelConsumption_Base(shipQuantities: Map<number, number>, distance: number, speed: number, serverData: ServerDataType.ServerData | null): Map<number, number>
+function computeFuelConsumption_Base(shipQuantities: Map<number, number>, distance: number, speed: number, serverData: CoreType.ServerData | null): Map<number, number>
 {
 	const totalBaseCost: Map<number, number> = new Map<number, number>();
 	for (const [shipType, shipQuantity] of shipQuantities)
@@ -31,7 +30,7 @@ function computeFuelConsumption_Base(shipQuantities: Map<number, number>, distan
         	continue;
     	}
 
-		const shipStats: AssociationMaps.ShipStats | undefined = AssociationMaps.SHIP_STATS.get(shipType);
+		const shipStats: GameType.ShipStats | undefined = GameType.SHIP_STATS.get(shipType);
 		if (shipStats === undefined)
 		{
 			throw new Error(`⚠️: Building type ${shipType} has no ship stats.`); 

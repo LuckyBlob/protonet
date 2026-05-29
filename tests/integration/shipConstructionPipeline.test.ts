@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as ApplyProgress from '@/lib/gameplay/progressUpdate/applyProgress';
-import * as PlayerDataType from '@/lib/gameplay/gameplayData/player/playerDataTypes';
-import * as ServerDataType from '@/lib/gameplay/gameplayData/server/serverDataTypes';
+import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
+import * as dataType from '@/lib/gameplay/gameplayData/server/serverDataTypes';
 import * as ShipData from '@/lib/gameplay/gameplayData/dynamic/shipData';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as FleetArrival from '@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent';
@@ -11,12 +11,12 @@ import * as TestDataBuilders from '../helpers/testDataBuilders';
 // Minimal concrete applier for tests — pure in-memory, no database, no fleet resolution.
 class TestProgressApplier extends ApplyProgress.PlayerProgressApplier
 {
-    applyPlayerProgressAtTime(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, _targetPlayerId: number, time: number): PlayerDataType.PlayerData | null
+    applyPlayerProgressAtTime(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, _targetPlayerId: number, time: number): CoreType.PlayerData | null
     {
         return ApplyProgress.applyProgressToPlayerData(playerData, serverData, time, this);
     }
 
-    getFleetPlayerData(_playerId: number | null, _planetId: number, _playerData: PlayerDataType.PlayerData, _anchorEvent: FleetArrival.FleetArrivalAnchorEvent): FleetData.FleetPlayerData | null
+    getFleetPlayerData(_playerId: number | null, _planetId: number, _playerData: CoreType.PlayerData, _anchorEvent: FleetArrival.FleetArrivalAnchorEvent): FleetData.FleetPlayerData | null
     {
         return null;
     }
@@ -32,7 +32,7 @@ const SMALL_TRANSPORT_DURATION_MS: number = SMALL_TRANSPORT_DURATION_S * 1000;
 // Large Transport: maxHealth=12000 → 17280s duration at shipyard level 0
 const LARGE_TRANSPORT_DURATION_MS: number = 17_280_000;
 
-function buildConstruction(id: number, planetId: number, shipType: number, quantity: number, startedAt: number | null, durationMs: number | null, requestedAt: number): PlayerDataType.ShipConstruction
+function buildConstruction(id: number, planetId: number, shipType: number, quantity: number, startedAt: number | null, durationMs: number | null, requestedAt: number): CoreType.ShipConstruction
 {
     const shipRow = TestDataBuilders.buildShipConstructionShipRow(
     {
@@ -42,7 +42,7 @@ function buildConstruction(id: number, planetId: number, shipType: number, quant
         ship_quantity: quantity,
     });
 
-    const construction: PlayerDataType.ShipConstruction =
+    const construction: CoreType.ShipConstruction =
     {
         shipConstructionRow: TestDataBuilders.buildShipConstructionRow(
         {
@@ -63,65 +63,65 @@ describe('ship construction pipeline — single ship', () =>
 {
     it('adds a ship and removes the construction when it completes', () =>
     {
-        const construction: PlayerDataType.ShipConstruction = buildConstruction(1, 1, GameType.SMALL_TRANSPORT, 1, BASE_TIME, SMALL_TRANSPORT_DURATION_MS, BASE_TIME);
+        const construction: CoreType.ShipConstruction = buildConstruction(1, 1, GameType.SMALL_TRANSPORT, 1, BASE_TIME, SMALL_TRANSPORT_DURATION_MS, BASE_TIME);
 
-        const planet: PlayerDataType.FullPlanetData = TestDataBuilders.buildFullPlanetData(
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData: { shipConstructions: [construction] },
         });
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData({ fullPlanetDatas: [planet] });
-        const serverData: ServerDataType.ServerData = TestDataBuilders.buildServerData();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
 
         const afterCompletion: number = BASE_TIME + SMALL_TRANSPORT_DURATION_MS + 1;
-        const result: PlayerDataType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, afterCompletion, APPLIER);
+        const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, afterCompletion, APPLIER);
 
-        const shipCount: number = ShipData.getShipQuantity(result.fullPlanetDatas[0]!, GameType.SMALL_TRANSPORT);
+        const shipCount: number = ShipData.getShipQuantity(result.planetDatas[0]!, GameType.SMALL_TRANSPORT);
         expect(shipCount).toBe(1);
-        expect(result.fullPlanetDatas[0]!.dynamicPlanetData.shipConstructions).toHaveLength(0);
+        expect(result.planetDatas[0]!.dynamicPlanetData.shipConstructions).toHaveLength(0);
     });
 
     it('does not complete a construction that has not yet finished', () =>
     {
-        const construction: PlayerDataType.ShipConstruction = buildConstruction(1, 1, GameType.SMALL_TRANSPORT, 1, BASE_TIME, SMALL_TRANSPORT_DURATION_MS, BASE_TIME);
+        const construction: CoreType.ShipConstruction = buildConstruction(1, 1, GameType.SMALL_TRANSPORT, 1, BASE_TIME, SMALL_TRANSPORT_DURATION_MS, BASE_TIME);
 
-        const planet: PlayerDataType.FullPlanetData = TestDataBuilders.buildFullPlanetData(
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData: { shipConstructions: [construction] },
         });
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData({ fullPlanetDatas: [planet] });
-        const serverData: ServerDataType.ServerData = TestDataBuilders.buildServerData();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
 
         const beforeCompletion: number = BASE_TIME + SMALL_TRANSPORT_DURATION_MS - 1000;
-        const result: PlayerDataType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, beforeCompletion, APPLIER);
+        const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, beforeCompletion, APPLIER);
 
-        const shipCount: number = ShipData.getShipQuantity(result.fullPlanetDatas[0]!, GameType.SMALL_TRANSPORT);
+        const shipCount: number = ShipData.getShipQuantity(result.planetDatas[0]!, GameType.SMALL_TRANSPORT);
         expect(shipCount).toBe(0);
-        expect(result.fullPlanetDatas[0]!.dynamicPlanetData.shipConstructions).toHaveLength(1);
+        expect(result.planetDatas[0]!.dynamicPlanetData.shipConstructions).toHaveLength(1);
     });
 
     it('builds one ship at a time when quantity > 1, keeping the construction alive', () =>
     {
-        const construction: PlayerDataType.ShipConstruction = buildConstruction(1, 1, GameType.SMALL_TRANSPORT, 3, BASE_TIME, SMALL_TRANSPORT_DURATION_MS, BASE_TIME);
+        const construction: CoreType.ShipConstruction = buildConstruction(1, 1, GameType.SMALL_TRANSPORT, 3, BASE_TIME, SMALL_TRANSPORT_DURATION_MS, BASE_TIME);
 
-        const planet: PlayerDataType.FullPlanetData = TestDataBuilders.buildFullPlanetData(
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData: { shipConstructions: [construction] },
         });
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData({ fullPlanetDatas: [planet] });
-        const serverData: ServerDataType.ServerData = TestDataBuilders.buildServerData();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
 
         // Advance just past the first ship's completion time but not the second
         const afterFirst: number = BASE_TIME + SMALL_TRANSPORT_DURATION_MS + 1;
-        const result: PlayerDataType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, afterFirst, APPLIER);
+        const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, afterFirst, APPLIER);
 
-        const shipCount: number = ShipData.getShipQuantity(result.fullPlanetDatas[0]!, GameType.SMALL_TRANSPORT);
+        const shipCount: number = ShipData.getShipQuantity(result.planetDatas[0]!, GameType.SMALL_TRANSPORT);
         expect(shipCount).toBe(1);
 
         // Construction still present with 2 ships remaining
-        const remainingConstructions: PlayerDataType.ShipConstruction[] = result.fullPlanetDatas[0]!.dynamicPlanetData.shipConstructions;
+        const remainingConstructions: CoreType.ShipConstruction[] = result.planetDatas[0]!.dynamicPlanetData.shipConstructions;
         expect(remainingConstructions).toHaveLength(1);
         expect(remainingConstructions[0]!.shipConstructionShipRows[0]!.ship_quantity).toBe(2);
     });
@@ -133,26 +133,26 @@ describe('ship construction pipeline — queued constructions', () =>
     {
         // Construction 1: Small Transport, started, requestedAt=BASE_TIME
         // Construction 2: Large Transport, not started (started_at=null), requestedAt=BASE_TIME+1
-        const construction1: PlayerDataType.ShipConstruction = buildConstruction(1, 1, GameType.SMALL_TRANSPORT, 1, BASE_TIME, SMALL_TRANSPORT_DURATION_MS, BASE_TIME);
-        const construction2: PlayerDataType.ShipConstruction = buildConstruction(2, 1, GameType.LARGE_TRANSPORT, 1, null, null, BASE_TIME + 1);
+        const construction1: CoreType.ShipConstruction = buildConstruction(1, 1, GameType.SMALL_TRANSPORT, 1, BASE_TIME, SMALL_TRANSPORT_DURATION_MS, BASE_TIME);
+        const construction2: CoreType.ShipConstruction = buildConstruction(2, 1, GameType.LARGE_TRANSPORT, 1, null, null, BASE_TIME + 1);
 
-        const planet: PlayerDataType.FullPlanetData = TestDataBuilders.buildFullPlanetData(
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData: { shipConstructions: [construction1, construction2] },
         });
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData({ fullPlanetDatas: [planet] });
-        const serverData: ServerDataType.ServerData = TestDataBuilders.buildServerData();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
 
         const justAfterFirst: number = BASE_TIME + SMALL_TRANSPORT_DURATION_MS + 1;
-        const result: PlayerDataType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, justAfterFirst, APPLIER);
+        const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, justAfterFirst, APPLIER);
 
         // Construction 1 is done — 1 small transport built
-        const smallCount: number = ShipData.getShipQuantity(result.fullPlanetDatas[0]!, GameType.SMALL_TRANSPORT);
+        const smallCount: number = ShipData.getShipQuantity(result.planetDatas[0]!, GameType.SMALL_TRANSPORT);
         expect(smallCount).toBe(1);
 
         // Construction 2 is now active (started_at was set on resolution)
-        const remainingConstructions: PlayerDataType.ShipConstruction[] = result.fullPlanetDatas[0]!.dynamicPlanetData.shipConstructions;
+        const remainingConstructions: CoreType.ShipConstruction[] = result.planetDatas[0]!.dynamicPlanetData.shipConstructions;
         expect(remainingConstructions).toHaveLength(1);
         expect(remainingConstructions[0]!.shipConstructionRow.started_at).not.toBeNull();
         expect(remainingConstructions[0]!.shipConstructionRow.duration_at_start_time).toBe(LARGE_TRANSPORT_DURATION_MS);
@@ -160,23 +160,23 @@ describe('ship construction pipeline — queued constructions', () =>
 
     it('builds both ships when advanced past both completion times', () =>
     {
-        const construction1: PlayerDataType.ShipConstruction = buildConstruction(1, 1, GameType.SMALL_TRANSPORT, 1, BASE_TIME, SMALL_TRANSPORT_DURATION_MS, BASE_TIME);
-        const construction2: PlayerDataType.ShipConstruction = buildConstruction(2, 1, GameType.LARGE_TRANSPORT, 1, null, null, BASE_TIME + 1);
+        const construction1: CoreType.ShipConstruction = buildConstruction(1, 1, GameType.SMALL_TRANSPORT, 1, BASE_TIME, SMALL_TRANSPORT_DURATION_MS, BASE_TIME);
+        const construction2: CoreType.ShipConstruction = buildConstruction(2, 1, GameType.LARGE_TRANSPORT, 1, null, null, BASE_TIME + 1);
 
-        const planet: PlayerDataType.FullPlanetData = TestDataBuilders.buildFullPlanetData(
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData: { shipConstructions: [construction1, construction2] },
         });
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData({ fullPlanetDatas: [planet] });
-        const serverData: ServerDataType.ServerData = TestDataBuilders.buildServerData();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
 
         // Small (5760s) + Large (17280s) = 23040s after start
         const bothDone: number = BASE_TIME + SMALL_TRANSPORT_DURATION_MS + LARGE_TRANSPORT_DURATION_MS + 1;
-        const result: PlayerDataType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, bothDone, APPLIER);
+        const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, bothDone, APPLIER);
 
-        expect(ShipData.getShipQuantity(result.fullPlanetDatas[0]!, GameType.SMALL_TRANSPORT)).toBe(1);
-        expect(ShipData.getShipQuantity(result.fullPlanetDatas[0]!, GameType.LARGE_TRANSPORT)).toBe(1);
-        expect(result.fullPlanetDatas[0]!.dynamicPlanetData.shipConstructions).toHaveLength(0);
+        expect(ShipData.getShipQuantity(result.planetDatas[0]!, GameType.SMALL_TRANSPORT)).toBe(1);
+        expect(ShipData.getShipQuantity(result.planetDatas[0]!, GameType.LARGE_TRANSPORT)).toBe(1);
+        expect(result.planetDatas[0]!.dynamicPlanetData.shipConstructions).toHaveLength(0);
     });
 });

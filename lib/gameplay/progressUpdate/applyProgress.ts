@@ -1,6 +1,5 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
 import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as ThingTypes from "@/lib/gameplay/coreData/type/thingTypes";
@@ -11,9 +10,9 @@ import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
 
 export abstract class PlayerProgressApplier
 {
-    abstract applyPlayerProgressAtTime(sourcePlayerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, targetPlayerId: number, time: number): PlayerDataType.PlayerData | null;
+    abstract applyPlayerProgressAtTime(sourcePlayerData: CoreType.PlayerData, serverData: CoreType.ServerData, targetPlayerId: number, time: number): CoreType.PlayerData | null;
 
-    getNextAnchorEvent(playerData: PlayerDataType.PlayerData): AnchorEvent.AnchorEvent | null
+    getNextAnchorEvent(playerData: CoreType.PlayerData): AnchorEvent.AnchorEvent | null
     {
         const anchorEvents: (AnchorEvent.AnchorEvent | null)[] = [];
         anchorEvents.push(BuildingUpgrade.findNextAnchorEvent(playerData));
@@ -43,7 +42,7 @@ export abstract class PlayerProgressApplier
     }
 
     // Keep server data param here even if unused for future ease when we will use it
-    resolveAnchorEvent(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
+    resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
     {
         switch (anchorEvent.type)
         {
@@ -67,17 +66,17 @@ export abstract class PlayerProgressApplier
         }
     }
 
-    updateResourcesToTime(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, time: number): void
+    updateResourcesToTime(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, time: number): void
     {
         updateResourcesToTime(playerData, serverData, time);
     }
 
-    abstract getFleetPlayerData(playerId: number | null, planetId: number, playerData: PlayerDataType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null;
+    abstract getFleetPlayerData(playerId: number | null, planetId: number, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null;
 }
 
-export function applyProgressToPlayerData(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, now: number, playerProgressResolver: PlayerProgressApplier): PlayerDataType.PlayerData
+export function applyProgressToPlayerData(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, now: number, playerProgressResolver: PlayerProgressApplier): CoreType.PlayerData
 {
-    const modifiedPlayerData: PlayerDataType.PlayerData = structuredClone(playerData);
+    const modifiedPlayerData: CoreType.PlayerData = structuredClone(playerData);
 
     let nextAnchorEvent: AnchorEvent.AnchorEvent | null = playerProgressResolver.getNextAnchorEvent(modifiedPlayerData);
     while (nextAnchorEvent !== null && nextAnchorEvent.time < now)
@@ -95,55 +94,55 @@ export function applyProgressToPlayerData(playerData: PlayerDataType.PlayerData,
     return modifiedPlayerData;
 }
 
-export function updateResourcesToTime(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, time: number): void
+export function updateResourcesToTime(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, time: number): void
 {
-    for (const fullPlanetData of playerData.fullPlanetDatas)
+    for (const planetData of playerData.planetDatas)
     {
-        applyUpdateAtTimeForPlanet(fullPlanetData, serverData, time);
+        applyUpdateAtTimeForPlanet(planetData, serverData, time);
     }
 }
 
 // Keep server data param here even if unused for future ease when we will use it
-function setUpdatedTimeStamp(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, time: number): void
+function setUpdatedTimeStamp(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, time: number): void
 {
     playerData.playerRow.last_updated = time;
-    for (const fullPlanetData of playerData.fullPlanetDatas)
+    for (const planetData of playerData.planetDatas)
     {
-        fullPlanetData.planetRow.last_updated = time;
+        planetData.planetRow.last_updated = time;
     }
 }
 
-function applyUpdateAtTimeForPlanet(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, time: number): void
+function applyUpdateAtTimeForPlanet(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number): void
 {
-    const resourceQuantities: Map<number, number> = getPredictedResourceQuantitiesAtTime(fullPlanetData, serverData, time);
+    const resourceQuantities: Map<number, number> = getPredictedResourceQuantitiesAtTime(planetData, serverData, time);
 
-    ResourceData.setResourceQuantities(fullPlanetData, resourceQuantities);
+    ResourceData.setResourceQuantities(planetData, resourceQuantities);
 }
 
-function getPredictedResourceQuantitiesAtTime(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, time: number): Map<number, number>
+function getPredictedResourceQuantitiesAtTime(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number): Map<number, number>
 {
     const resourceTypes: number[] = ThingTypes.getAllSpecificThings(ThingTypes.Thing.Resource);
 
     const predictedResourceQuantities: Map<number, number> = new Map<number, number>();
     for (const resourceType of resourceTypes)
     {
-        predictedResourceQuantities.set(resourceType, getPredictedResourceQuantityAtTime(fullPlanetData, serverData, time, resourceType))
+        predictedResourceQuantities.set(resourceType, getPredictedResourceQuantityAtTime(planetData, serverData, time, resourceType))
     }
 
     return predictedResourceQuantities;
 }
 
-function getPredictedResourceQuantityAtTime(fullPlanetData: PlayerDataType.FullPlanetData, serverData: ServerDataType.ServerData, time: number, resourceType: number): number
+function getPredictedResourceQuantityAtTime(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number, resourceType: number): number
 {
-    const currentResourceQuantity: number = ResourceData.getResourceQuantity(fullPlanetData, resourceType);
-    const elapsedMilliseconds: number = time - fullPlanetData.planetRow.last_updated;
+    const currentResourceQuantity: number = ResourceData.getResourceQuantity(planetData, resourceType);
+    const elapsedMilliseconds: number = time - planetData.planetRow.last_updated;
     const elapsedSeconds: number = elapsedMilliseconds / 1000;
     if (elapsedSeconds <= 0)
     {
         return currentResourceQuantity;
     }
 
-    const productionRate: number = BuildingData.getPlanetProductionRatePerSecond(fullPlanetData, resourceType, serverData);
+    const productionRate: number = BuildingData.getPlanetProductionRatePerSecond(planetData, resourceType, serverData);
     const resourceGained: number = productionRate * elapsedSeconds;
 
     const updatedResourceQuantity: number = currentResourceQuantity + resourceGained;

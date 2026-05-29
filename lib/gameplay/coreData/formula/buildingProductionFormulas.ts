@@ -1,12 +1,11 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
-import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 
-export function computeProductionRatePerHour(buildingType: number, currentLevel: number, serverData: ServerDataType.ServerData | null): Map<number, number> | null
+export function computeProductionRatePerHour(buildingType: number, currentLevel: number, serverData: CoreType.ServerData | null): Map<number, number> | null
 {
     try
     {
-        const buildingStats: AssociationMaps.BuildingStats | undefined = AssociationMaps.BUILDING_STATS.get(buildingType);
+        const buildingStats: GameType.BuildingStats | undefined = GameType.BUILDING_STATS.get(buildingType);
         if (buildingStats === undefined)
         {
             throw new Error(`⚠️: Building type ${buildingType} has no building stats.`); 
@@ -20,9 +19,9 @@ export function computeProductionRatePerHour(buildingType: number, currentLevel:
     }
 }
 
-function computeProductionRate_SimpleProductionBuilding(currentLevel: number, buildingStats: AssociationMaps.BuildingStats, serverData: ServerDataType.ServerData | null): Map<number, number> | null
+function computeProductionRate_SimpleProductionBuilding(currentLevel: number, buildingStats: GameType.BuildingStats, serverData: CoreType.ServerData | null): Map<number, number> | null
 {
-    const productionStats: Map<number, AssociationMaps.ProductionStats> | null = buildingStats.productionStats;
+    const productionStats: Map<number, GameType.ProductionStats> | null = buildingStats.productionStats;
     if (productionStats === null)
     {
         return null;

@@ -1,7 +1,6 @@
 import * as DBType from "@/lib/db/dbTypes";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
 
 export function buildPlayerRow(overrides?: Partial<DBType.PlayerRow>): DBType.PlayerRow
 {
@@ -37,9 +36,9 @@ export function buildPlanetRow(overrides?: Partial<DBType.PlanetRow>): DBType.Pl
     return planetRow;
 }
 
-export function buildDynamicPlanetData(overrides?: Partial<PlayerDataType.DynamicPlanetData>): PlayerDataType.DynamicPlanetData
+export function buildDynamicPlanetData(overrides?: Partial<CoreType.DynamicPlanetData>): CoreType.DynamicPlanetData
 {
-    const dynamicPlanetData: PlayerDataType.DynamicPlanetData =
+    const dynamicPlanetData: CoreType.DynamicPlanetData =
     {
         resourceQuantity: new Map<number, number>
         ([
@@ -62,23 +61,35 @@ export function buildDynamicPlanetData(overrides?: Partial<PlayerDataType.Dynami
     return dynamicPlanetData;
 }
 
-export function buildFullPlanetData(overrides?: { planetRow?: Partial<DBType.PlanetRow>; dynamicPlanetData?: Partial<PlayerDataType.DynamicPlanetData>; }): PlayerDataType.FullPlanetData
+export function buildDynamicPlayerData(overrides?: { planetRow?: Partial<DBType.PlanetRow>; dynamicPlanetData?: Partial<CoreType.DynamicPlanetData>; }): CoreType.DynamicPlayerData
 {
-    const fullPlanetData: PlayerDataType.FullPlanetData =
+    const dynamicPlayerData: CoreType.DynamicPlayerData =
+    {
+        messageDatas: [],
+        ...overrides,
+    };
+
+    return dynamicPlayerData;
+}
+
+export function buildPlanetData(overrides?: { planetRow?: Partial<DBType.PlanetRow>; dynamicPlanetData?: Partial<CoreType.DynamicPlanetData>; }): CoreType.PlanetData
+{
+    const planetData: CoreType.PlanetData =
     {
         planetRow: buildPlanetRow(overrides?.planetRow),
         dynamicPlanetData: buildDynamicPlanetData(overrides?.dynamicPlanetData),
     };
 
-    return fullPlanetData;
+    return planetData;
 }
 
-export function buildPlayerData(overrides?: { playerRow?: Partial<DBType.PlayerRow>; fullPlanetDatas?: PlayerDataType.FullPlanetData[]; }): PlayerDataType.PlayerData
+export function buildPlayerData(overrides?: { playerRow?: Partial<DBType.PlayerRow>; dynamicPlayerData?: CoreType.DynamicPlayerData; planetDatas?: CoreType.PlanetData[]; }): CoreType.PlayerData
 {
-    const playerData: PlayerDataType.PlayerData =
+    const playerData: CoreType.PlayerData =
     {
         playerRow: buildPlayerRow(overrides?.playerRow),
-        fullPlanetDatas: overrides?.fullPlanetDatas ?? [buildFullPlanetData()],
+        dynamicPlayerData: overrides?.dynamicPlayerData ?? buildDynamicPlayerData(),
+        planetDatas: overrides?.planetDatas ?? [buildPlanetData()],
         publicPlanetRows: [],
         publicPlayerRows: [],
     };
@@ -86,9 +97,9 @@ export function buildPlayerData(overrides?: { playerRow?: Partial<DBType.PlayerR
     return playerData;
 }
 
-export function buildServerData(timeMultiplier?: number): ServerDataType.ServerData
+export function buildServerData(timeMultiplier?: number): CoreType.ServerData
 {
-    const serverData: ServerDataType.ServerData =
+    const serverData: CoreType.ServerData =
     {
         config:
         {

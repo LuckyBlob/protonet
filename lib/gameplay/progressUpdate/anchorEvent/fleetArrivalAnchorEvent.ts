@@ -1,22 +1,21 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
 
 export type FleetArrivalAnchorEvent = AnchorEvent.AnchorEvent &
 {
-    fleetMovement: PlayerDataType.FleetMovement,
+    fleetMovement: CoreType.FleetMovement,
 }
 
-export function findNextAnchorEvent(playerData: PlayerDataType.PlayerData): AnchorEvent.AnchorEvent | null
+export function findNextAnchorEvent(playerData: CoreType.PlayerData): AnchorEvent.AnchorEvent | null
 {
-    const getItems = (planet: PlayerDataType.FullPlanetData): PlayerDataType.FleetMovement[] =>
+    const getItems = (planet: CoreType.PlanetData): CoreType.FleetMovement[] =>
     {
         return planet.dynamicPlanetData.futureFleetArrivals;
     };
-    const getTime = (event: PlayerDataType.FleetMovement): number | null =>
+    const getTime = (event: CoreType.FleetMovement): number | null =>
     {
-        if (event.resolutionState === PlayerDataType.FleetMovementResolution.ResolveResultUnknown)
+        if (event.resolutionState === CoreType.FleetMovementResolution.ResolveResultUnknown)
         {
             // pending until resolved
             return null;
@@ -34,7 +33,7 @@ export function findNextAnchorEvent(playerData: PlayerDataType.PlayerData): Anch
         
         return event.fleetMovementRow.started_at + event.fleetMovementRow.duration_at_start_time;
     };
-    const buildEvent = (event: PlayerDataType.FleetMovement, time: number): AnchorEvent.AnchorEvent =>
+    const buildEvent = (event: CoreType.FleetMovement, time: number): AnchorEvent.AnchorEvent =>
     {
         const newEvent: FleetArrivalAnchorEvent =
         {
@@ -49,7 +48,7 @@ export function findNextAnchorEvent(playerData: PlayerDataType.PlayerData): Anch
     return AnchorEvent.findNextAnchorEvent(playerData, getItems, getTime, buildEvent);
 }
 
-export function resolveFleetArrivalData(playerData: PlayerDataType.PlayerData, anchorEvent: AnchorEvent.AnchorEvent): { event: FleetArrivalAnchorEvent, data: FleetData.FleetPlayerDataPair }
+export function resolveFleetArrivalData(playerData: CoreType.PlayerData, anchorEvent: AnchorEvent.AnchorEvent): { event: FleetArrivalAnchorEvent, data: FleetData.FleetPlayerDataPair }
 {
     const fleetArrivalAnchorEvent: FleetArrivalAnchorEvent = anchorEvent as FleetArrivalAnchorEvent;
     if (fleetArrivalAnchorEvent.resolver === undefined)
@@ -71,7 +70,7 @@ export function resolveFleetArrivalData(playerData: PlayerDataType.PlayerData, a
     return { event: fleetArrivalAnchorEvent, data: fleetPlayerDataPair};
 }
 
-export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
+export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
 {
     if (anchorEvent.resolver === undefined)
     {

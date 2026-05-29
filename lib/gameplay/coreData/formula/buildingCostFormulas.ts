@@ -1,9 +1,8 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 
 export function computeBuildingUpgradeCost(currentUpgradeLevel: number, buildingType: number): Map<number, number> | null
 {
-	const buildingStats: AssociationMaps.BuildingStats | undefined = AssociationMaps.BUILDING_STATS.get(buildingType);
+	const buildingStats: GameType.BuildingStats | undefined = GameType.BUILDING_STATS.get(buildingType);
 	if (buildingStats === undefined)
 	{
 		console.error("⚠️:", `Building type ${buildingType} has no calculatable cost.`); 
@@ -12,7 +11,7 @@ export function computeBuildingUpgradeCost(currentUpgradeLevel: number, building
 
 	switch (buildingStats.costFunctionType)
 	{
-		case AssociationMaps.BuildingCostFunctionType.SimpleExponential:
+		case GameType.BuildingCostFunctionType.SimpleExponential:
 		{
 			return computeBuildingUpgradeCost_SimpleExponential(currentUpgradeLevel, buildingStats);
 		}
@@ -20,7 +19,7 @@ export function computeBuildingUpgradeCost(currentUpgradeLevel: number, building
 			return null;
 	}
 }
-function computeBuildingUpgradeCost_SimpleExponential(currentUpgradeLevel: number, buildingStats: AssociationMaps.BuildingStats): Map<number, number>
+function computeBuildingUpgradeCost_SimpleExponential(currentUpgradeLevel: number, buildingStats: GameType.BuildingStats): Map<number, number>
 {
 	const costMap: Map<number, number> = new Map<number, number>();
 

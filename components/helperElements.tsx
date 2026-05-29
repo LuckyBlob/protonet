@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, ReactElement, ReactNode, ChangeEvent } from "react";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 
 export function EmptyElement(): ReactElement
 {
@@ -85,7 +85,7 @@ export function useRequestedQuantities(): RequestedQuantitiesState
 	};
 }
 
-export function renderQuantityInput(type: number, min: number, max: number | null, requestedQuantity: number, fullPlanetData: PlayerDataType.FullPlanetData, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
+export function renderQuantityInput(type: number, min: number, max: number | null, requestedQuantity: number, planetData: CoreType.PlanetData, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
 {
 	const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>): void =>
 	{

@@ -2,45 +2,59 @@ import Database from "better-sqlite3";
 
 import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
-import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipConstructionData";
-import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
-import * as ServerRequestFunctions from "@/lib/networkRequests/server/serverRequestFunctions";
-import * as ServerData from "@/lib/gameplay/gameplayData/server/serverData"
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 
-export function serverUpdatePlanetDataContext(planetId: number, playerId: number, dataContext: PlayerDataType.DataContext, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+//#region Dynamic Player Data
+export function getDynamicPlayerData(playerId: number): CoreType.DynamicPlayerData
+{
+    return {
+        messageDatas: getDynamicMessageData(playerId),
+    };
+}
+
+export function getDynamicMessageData(planetId: number): CoreType.MessageData[]
+{
+    return DB.databaseConnection.transaction((): CoreType.MessageData[] =>
+    {
+        const messageDatas: CoreType.MessageData[] = [];
+        return messageDatas;
+    })();
+}
+//#endregion
+
+//#region Dynamic Planet Data
+export function serverUpdatePlanetDataContext(planetId: number, playerId: number, dataContext: CoreType.DataContext, dynamicPlanetData: CoreType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
         switch (dataContext)
         {
-            case PlayerDataType.DataContext.BuildingLevel:
+            case CoreType.DataContext.BuildingLevel:
             {
                 updateBuildingLevels(planetId, playerId, dynamicPlanetData);
                 break;
             }
-            case PlayerDataType.DataContext.ResourceQuantity:
+            case CoreType.DataContext.ResourceQuantity:
             {
                 updateResourceQuantities(planetId, playerId, dynamicPlanetData);
                 break;
             }
-            case PlayerDataType.DataContext.ShipQuantity:
+            case CoreType.DataContext.ShipQuantity:
             {
                 updateShipQuantities(planetId, playerId, dynamicPlanetData);
                 break;
             }
-            case PlayerDataType.DataContext.ShipConstruction:
+            case CoreType.DataContext.ShipConstruction:
             {
                 updateShipConstructions(planetId, playerId, dynamicPlanetData);
                 break;
             }
-            case PlayerDataType.DataContext.FutureFleetArrivals:
+            case CoreType.DataContext.FutureFleetArrivals:
             {
                 updateFutureFleetArrivals(planetId, dynamicPlanetData);
                 break;
             }
-            case PlayerDataType.DataContext.BuildingUpgrade:
+            case CoreType.DataContext.BuildingUpgrade:
             {
                 updateBuildingUpgrades(planetId, playerId, dynamicPlanetData);
                 break;
@@ -52,7 +66,7 @@ export function serverUpdatePlanetDataContext(planetId: number, playerId: number
     transaction();
 }
 
-export function getDynamicPlanetData(planetId: number): PlayerDataType.DynamicPlanetData
+export function getDynamicPlanetData(planetId: number): CoreType.DynamicPlanetData
 {
     return {
         resourceQuantity: getDynamicPlanetResourceData(planetId),
@@ -103,11 +117,11 @@ export function getDynamicPlanetShipData(planetId: number): Map<number, number>
     return shipQuantities;
 }
 
-export function getDynamicPlanetShipConstructionData(planetId: number): PlayerDataType.ShipConstruction[]
+export function getDynamicPlanetShipConstructionData(planetId: number): CoreType.ShipConstruction[]
 {
-    return DB.databaseConnection.transaction((): PlayerDataType.ShipConstruction[] =>
+    return DB.databaseConnection.transaction((): CoreType.ShipConstruction[] =>
     {
-        const shipConstructions: PlayerDataType.ShipConstruction[] = [];
+        const shipConstructions: CoreType.ShipConstruction[] = [];
 
         const shipConstructionRows: DBType.ShipConstructionRow[] = DB.databaseConnection.prepare(
             "SELECT * FROM ship_construction WHERE planet_id = ? ORDER BY id"
@@ -119,7 +133,7 @@ export function getDynamicPlanetShipConstructionData(planetId: number): PlayerDa
                 "SELECT * FROM ship_construction_ship WHERE ship_construction_id = ?"
             ).all(shipConstructionRow.id) as DBType.ShipConstructionShipRow[];
 
-            const newShipConstruction: PlayerDataType.ShipConstruction =
+            const newShipConstruction: CoreType.ShipConstruction =
             {
                 shipConstructionRow: shipConstructionRow,
                 shipConstructionShipRows: shipConstructionShipRows,
@@ -131,11 +145,11 @@ export function getDynamicPlanetShipConstructionData(planetId: number): PlayerDa
     })();
 }
 
-export function getDynamicPlanetBuildingUpgradeData(planetId: number): PlayerDataType.BuildingUpgrade[]
+export function getDynamicPlanetBuildingUpgradeData(planetId: number): CoreType.BuildingUpgrade[]
 {
-    return DB.databaseConnection.transaction((): PlayerDataType.BuildingUpgrade[] =>
+    return DB.databaseConnection.transaction((): CoreType.BuildingUpgrade[] =>
     {
-        const buildingUpgrades: PlayerDataType.BuildingUpgrade[] = [];
+        const buildingUpgrades: CoreType.BuildingUpgrade[] = [];
 
         const buildingUpgradeRows: DBType.BuildingUpgradeRow[] = DB.databaseConnection.prepare(
             "SELECT * FROM building_upgrade WHERE planet_id = ?"
@@ -147,7 +161,7 @@ export function getDynamicPlanetBuildingUpgradeData(planetId: number): PlayerDat
                 "SELECT * FROM building_upgrade_building WHERE building_upgrade_id = ?"
             ).all(buildingUpgradeRow.id) as DBType.BuildingUpgradeBuildingRow[];
 
-            const newBuildingUpgrade: PlayerDataType.BuildingUpgrade =
+            const newBuildingUpgrade: CoreType.BuildingUpgrade =
             {
                 buildingUpgradeRow: buildingUpgradeRow,
                 buildingUpgradeBuildingRows: buildingUpgradeBuildingRows,
@@ -160,11 +174,11 @@ export function getDynamicPlanetBuildingUpgradeData(planetId: number): PlayerDat
     })();
 }
 
-export function getDynamicPlanetFutureFleetArrivalData(planetId: number): PlayerDataType.FleetMovement[]
+export function getDynamicPlanetFutureFleetArrivalData(planetId: number): CoreType.FleetMovement[]
 {
-    const fleetMovements: PlayerDataType.FleetMovement[] = DB.databaseConnection.transaction((): PlayerDataType.FleetMovement[] =>
+    const fleetMovements: CoreType.FleetMovement[] = DB.databaseConnection.transaction((): CoreType.FleetMovement[] =>
     {
-        const fleetMovements: PlayerDataType.FleetMovement[] = [];
+        const fleetMovements: CoreType.FleetMovement[] = [];
 
         const fleetMovementRows: DBType.FleetMovementRow[] = DB.databaseConnection.prepare(
             "SELECT * FROM fleet_movement WHERE planet_origin_id = ? OR (is_return_trip = 0 AND planet_target_id = ?)"
@@ -180,12 +194,12 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): Player
                 "SELECT * FROM fleet_movement_resource WHERE fleet_id = ?"
             ).all(fleetMovementRow.id) as DBType.FleetMovementResourceRow[];
 
-            const newFleetMovement: PlayerDataType.FleetMovement = 
+            const newFleetMovement: CoreType.FleetMovement = 
             {
                 fleetMovementRow: fleetMovementRow,
                 fleetMovementShipRows: fleetMovementShipRows,
                 fleetMovementResourceRows: fleetMovementResourceRows,
-                resolutionState: PlayerDataType.FleetMovementResolution.Unresolved,
+                resolutionState: CoreType.FleetMovementResolution.Unresolved,
             }
             
             fleetMovements.push(newFleetMovement);
@@ -197,7 +211,7 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): Player
     return fleetMovements;
 }
 
-function updateResourceQuantities(planetId: number, playerId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateResourceQuantities(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
@@ -213,7 +227,7 @@ function updateResourceQuantities(planetId: number, playerId: number, dynamicPla
     transaction();
 }
 
-function updateBuildingLevels(planetId: number, playerId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateBuildingLevels(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
@@ -229,7 +243,7 @@ function updateBuildingLevels(planetId: number, playerId: number, dynamicPlanetD
     transaction();
 }
 
-function updateShipQuantities(planetId: number, playerId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateShipQuantities(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
@@ -245,7 +259,7 @@ function updateShipQuantities(planetId: number, playerId: number, dynamicPlanetD
     transaction();
 }
 
-function updateShipConstructions(planetId: number, playerId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateShipConstructions(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
@@ -319,7 +333,7 @@ function updateShipConstructions(planetId: number, playerId: number, dynamicPlan
     transaction();
 }
 
-function updateBuildingUpgrades(planetId: number, playerId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateBuildingUpgrades(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
@@ -391,7 +405,7 @@ function updateBuildingUpgrades(planetId: number, playerId: number, dynamicPlane
     transaction();
 }
 
-function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: PlayerDataType.DynamicPlanetData): void
+function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: CoreType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
@@ -454,3 +468,4 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: PlayerDa
     });
     transaction();
 }
+//#endregion

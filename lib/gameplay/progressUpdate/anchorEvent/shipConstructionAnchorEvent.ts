@@ -1,23 +1,21 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
 import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipConstructionData";
-import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 import * as DBType from "@/lib/db/dbTypes";
 
 export type ShipConstructionAnchorEvent = AnchorEvent.AnchorEvent &
 {
-    event: PlayerDataType.ShipConstruction,
+    event: CoreType.ShipConstruction,
 }
 
-export function findNextAnchorEvent(playerData: PlayerDataType.PlayerData): AnchorEvent.AnchorEvent | null
+export function findNextAnchorEvent(playerData: CoreType.PlayerData): AnchorEvent.AnchorEvent | null
 {
-    const getItems = (planet: PlayerDataType.FullPlanetData): PlayerDataType.ShipConstruction[] =>
+    const getItems = (planet: CoreType.PlanetData): CoreType.ShipConstruction[] =>
     {
         return planet.dynamicPlanetData.shipConstructions;
     };
-    const getTime = (event: PlayerDataType.ShipConstruction): number | null =>
+    const getTime = (event: CoreType.ShipConstruction): number | null =>
     {
         if (event.shipConstructionRow.started_at === null)
         {
@@ -31,7 +29,7 @@ export function findNextAnchorEvent(playerData: PlayerDataType.PlayerData): Anch
         
         return event.shipConstructionRow.started_at + event.shipConstructionRow.duration_at_start_time;
     };
-    const buildEvent = (event: PlayerDataType.ShipConstruction, time: number): AnchorEvent.AnchorEvent =>
+    const buildEvent = (event: CoreType.ShipConstruction, time: number): AnchorEvent.AnchorEvent =>
     {
         const newEvent: ShipConstructionAnchorEvent =
         {
@@ -46,23 +44,23 @@ export function findNextAnchorEvent(playerData: PlayerDataType.PlayerData): Anch
     return AnchorEvent.findNextAnchorEvent(playerData, getItems, getTime, buildEvent);
 }
 
-export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, serverData: ServerDataType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
+export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
 {
     const shipConstructionAnchorEvent: ShipConstructionAnchorEvent = anchorEvent as ShipConstructionAnchorEvent;
-    const fullPlanetData: PlayerDataType.FullPlanetData | null = PlayerData.getFullPlanetDataForId(playerData.fullPlanetDatas, shipConstructionAnchorEvent.event.shipConstructionRow.planet_id);
-    if (fullPlanetData === null)
+    const planetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, shipConstructionAnchorEvent.event.shipConstructionRow.planet_id);
+    if (planetData === null)
     {
-        console.error("⚠️:", `Detected ship construction anchor event but had no fullPlanetData for planet id.`);
+        console.error("⚠️:", `Detected ship construction anchor event but had no planetData for planet id.`);
         return;
     }
 
-    if (fullPlanetData.dynamicPlanetData.shipConstructions.length === 0)
+    if (planetData.dynamicPlanetData.shipConstructions.length === 0)
     {
-        console.error("⚠️:", `Detected ship construction anchor event but had no shipConstructions for planet id ${fullPlanetData.planetRow.id}`);
+        console.error("⚠️:", `Detected ship construction anchor event but had no shipConstructions for planet id ${planetData.planetRow.id}`);
         return;
     }
 
-    const finishedShipConstruction: PlayerDataType.ShipConstruction = shipConstructionAnchorEvent.event;
+    const finishedShipConstruction: CoreType.ShipConstruction = shipConstructionAnchorEvent.event;
     if (finishedShipConstruction.shipConstructionRow.current_ship_construction_ship_row_id === null)
     {
         throw new Error(`UNREACHABLE: null row index for ship construction on resolution.`);
@@ -80,10 +78,10 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
     const currentShipConstructionShipRow: DBType.ShipConstructionShipRow = finishedShipConstruction.shipConstructionShipRows[nextShipConstructionShipRowIndex];
     
     // Apply the change
-    ShipData.addPlanetShip(fullPlanetData, currentShipConstructionShipRow.ship_type, 1);
+    ShipData.addPlanetShip(planetData, currentShipConstructionShipRow.ship_type, 1);
     currentShipConstructionShipRow.ship_quantity -= 1;
 
-    let nextShipConstruction: PlayerDataType.ShipConstruction | null = finishedShipConstruction;
+    let nextShipConstruction: CoreType.ShipConstruction | null = finishedShipConstruction;
     let nextShipConstructionShipRow: DBType.ShipConstructionShipRow | null = currentShipConstructionShipRow;
     // Is that row done?
     if (currentShipConstructionShipRow.ship_quantity === 0)
@@ -95,21 +93,21 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
         //Does that mean the whole construction is done?
         if (finishedShipConstruction.shipConstructionShipRows.length === 0)
         {
-            const finishedIndex: number = fullPlanetData.dynamicPlanetData.shipConstructions.indexOf(finishedShipConstruction);
+            const finishedIndex: number = planetData.dynamicPlanetData.shipConstructions.indexOf(finishedShipConstruction);
             if (finishedIndex === -1)
             {
                 throw new Error(`Must have ship construction when ending anchor event.`);
             }
 
             //remove it!
-            fullPlanetData.dynamicPlanetData.shipConstructions.splice(finishedIndex, 1);
+            planetData.dynamicPlanetData.shipConstructions.splice(finishedIndex, 1);
             nextShipConstruction = null;
         }
     }
 
     if (nextShipConstruction === null)
     {
-        nextShipConstruction = ShipConstructionData.getNextShipConstruction(fullPlanetData);
+        nextShipConstruction = ShipConstructionData.getNextShipConstruction(planetData);
     }
 
     if (nextShipConstruction === null)
@@ -120,7 +118,7 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
     
     if (nextShipConstructionShipRow === null)
     {
-        ShipConstructionData.sortShipConstructionShipRowByConstructionTime(fullPlanetData, nextShipConstruction, serverData);
+        ShipConstructionData.sortShipConstructionShipRowByConstructionTime(planetData, nextShipConstruction, serverData);
         nextShipConstructionShipRow = nextShipConstruction.shipConstructionShipRows[0] ?? null;
     }
 
@@ -131,7 +129,7 @@ export function resolveAnchorEvent(playerData: PlayerDataType.PlayerData, server
 
     nextShipConstruction.shipConstructionRow.current_ship_construction_ship_row_id = nextShipConstructionShipRow.id;
     nextShipConstruction.shipConstructionRow.started_at = anchorEvent.time;
-    const shipConstructionDurationSeconds: number | null = ShipConstructionData.getShipConstructionDurationSeconds(nextShipConstructionShipRow.ship_type, fullPlanetData, serverData);
+    const shipConstructionDurationSeconds: number | null = ShipConstructionData.getShipConstructionDurationSeconds(nextShipConstructionShipRow.ship_type, planetData, serverData);
     if (shipConstructionDurationSeconds === null)
     {
         throw new Error(`Must have ship construction duration if ship construction ship row isnt null.`);

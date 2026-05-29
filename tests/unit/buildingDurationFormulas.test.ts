@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import * as BuildingDuration from '@/lib/gameplay/coreData/formula/buildingDurationFormulas';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
-import * as PlayerDataType from '@/lib/gameplay/gameplayData/player/playerDataTypes';
-import * as ServerDataType from '@/lib/gameplay/gameplayData/server/serverDataTypes';
+import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
+import * as dataType from '@/lib/gameplay/gameplayData/server/serverDataTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
 describe('computeUpgradeDurationSeconds', () =>
 {
     it('returns null for an unknown building type', () =>
     {
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const result: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, 9999, playerData, 1, null);
         expect(result).toBeNull();
     });
@@ -17,19 +17,19 @@ describe('computeUpgradeDurationSeconds', () =>
     it('computes duration for Iron Mine at level 0 with no robotic factory', () =>
     {
         // cost: resource1=60+resource2=15=75 total; robotics=0 → 75/(2500*1)*3600=108s
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const result: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 1, null);
         expect(result).toBe(108);
     });
 
     it('decreases duration when robotic factory level is higher', () =>
     {
-        const playerDataNoRobotics: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData();
-        const playerDataWithRobotics: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData(
+        const playerDataNoRobotics: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const playerDataWithRobotics: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
         {
-            fullPlanetDatas:
+            planetDatas:
             [
-                TestDataBuilders.buildFullPlanetData(
+                TestDataBuilders.buildPlanetData(
                 {
                     dynamicPlanetData:
                     {
@@ -51,8 +51,8 @@ describe('computeUpgradeDurationSeconds', () =>
 
     it('applies time_multiplier from serverData', () =>
     {
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData();
-        const serverData: ServerDataType.ServerData = TestDataBuilders.buildServerData(2);
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData(2);
 
         const base: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 1, null);
         const accelerated: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 1, serverData);
@@ -65,7 +65,7 @@ describe('computeUpgradeDurationSeconds', () =>
 
     it('duration increases for higher upgrade levels (higher cost)', () =>
     {
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const durationLevel0: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 1, null);
         const durationLevel5: number | null = BuildingDuration.computeUpgradeDurationSeconds(5, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 1, null);
 
@@ -77,7 +77,7 @@ describe('computeUpgradeDurationSeconds', () =>
     it('uses 0 for robotic factory level when the planet is not found', () =>
     {
         // planetId 999 does not exist → falls back to robotics=0, same as no-robotics case
-        const playerData: PlayerDataType.PlayerData = TestDataBuilders.buildPlayerData();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const resultUnknownPlanet: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 999, null);
         const resultKnownPlanet: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 1, null);
 

@@ -1,19 +1,16 @@
-import * as AssociationMaps from "@/lib/gameplay/coreData/associationMaps";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ShipFuelConsumption from "@/lib/gameplay/coreData/formula/shipFuelConsumptionFormulas";
 import * as MathHelp from "@/lib/helper/mathHelp";
 import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
-import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
 import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
 import * as DBType from "@/lib/db/dbTypes";
 
 export type FleetPlayerData =
 {
-    playerData: PlayerDataType.PlayerData,
-    fullPlanetData: PlayerDataType.FullPlanetData,
+    playerData: CoreType.PlayerData,
+    planetData: CoreType.PlanetData,
 }
 
 export type FleetPlayerDataPair =
@@ -22,7 +19,7 @@ export type FleetPlayerDataPair =
     target: FleetPlayerData | null,
 }
 
-export function canExecuteFleetActionOnTargetAddress(originPlanetData: PlayerDataType.FullPlanetData, targetPlanetOwnedPlayerId: number | null, shipQuantities: Map<number, number>, fleetAction: number): boolean
+export function canExecuteFleetActionOnTargetAddress(originPlanetData: CoreType.PlanetData, targetPlanetOwnedPlayerId: number | null, shipQuantities: Map<number, number>, fleetAction: number): boolean
 {
     switch (fleetAction)
     {
@@ -71,7 +68,7 @@ export function canExecuteFleetActionOnTargetAddress(originPlanetData: PlayerDat
     }
 }
 
-export function canExecuteFleetActionOnTargetPlanet(originPlanetData: PlayerDataType.FullPlanetData, targetPlanetData: PlayerDataType.FullPlanetData, shipQuantities: Map<number, number>, fleetAction: number): boolean
+export function canExecuteFleetActionOnTargetPlanet(originPlanetData: CoreType.PlanetData, targetPlanetData: CoreType.PlanetData, shipQuantities: Map<number, number>, fleetAction: number): boolean
 {
 	const canExecuteActionWithPublicInfo: boolean = canExecuteFleetActionOnTargetAddress(originPlanetData, targetPlanetData.planetRow.owner_player_id, shipQuantities, fleetAction) 
 	if (canExecuteActionWithPublicInfo === false)
@@ -114,7 +111,7 @@ export function calculateShipQuantitiesLowestMovementSpeed(shipQuantities: Map<n
 			continue;
 		}
 
-		const shipStats: AssociationMaps.ShipStats | undefined = AssociationMaps.SHIP_STATS.get(shipType);
+		const shipStats: GameType.ShipStats | undefined = GameType.SHIP_STATS.get(shipType);
 		if (shipStats === undefined)
 		{
 			throw new Error(`⚠️: Building type ${shipType} has no ship stats.`); 
@@ -135,7 +132,7 @@ export function calculateShipQuantitiesLowestMovementSpeed(shipQuantities: Map<n
 	return lowestSpeed;
 }
 
-export function calculateTotalFleetFuel(from: GameType.PlanetAddress, to: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: ServerDataType.ServerData): Map<number, number>
+export function calculateTotalFleetFuel(from: GameType.PlanetAddress, to: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: CoreType.ServerData): Map<number, number>
 {
 	const distance: number = GameType.getDistance(from, to);
 	const speed: number = 10;
@@ -147,7 +144,7 @@ export function calculateTotalFleetSpace(shipQuantities: Map<number, number>): n
 	let totalSpace: number = 0;
 	for (const [shipType, shipQuantity] of shipQuantities)
 	{
-		const shipStats: AssociationMaps.ShipStats | undefined = AssociationMaps.SHIP_STATS.get(shipType);
+		const shipStats: GameType.ShipStats | undefined = GameType.SHIP_STATS.get(shipType);
 		if (shipStats === undefined)
 		{
 			throw new Error(`⚠️: Building type ${shipType} has no ship stats.`); 
@@ -188,7 +185,7 @@ export function clampResoucesToAddToFleet(shipQuantities: Map<number, number>, f
     return resourcesActuallyOnBoard;
 }
 
-export function resolveFleetMovementAtTarget(targetPlayerData: PlayerDataType.PlayerData | null, fleetMovement: PlayerDataType.FleetMovement, fleetPlayerDataPair: FleetPlayerDataPair, serverData: ServerDataType.ServerData, serverSuppliedOrigin: PlayerDataType.FullPlanetData | null = null): void
+export function resolveFleetMovementAtTarget(targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, fleetPlayerDataPair: FleetPlayerDataPair, serverData: CoreType.ServerData, serverSuppliedOrigin: CoreType.PlanetData | null = null): void
 {
 	if (targetPlayerData === null)
 	{
@@ -199,7 +196,7 @@ export function resolveFleetMovementAtTarget(targetPlayerData: PlayerDataType.Pl
 		else
 		{
 			setFleetReturnTrip(targetPlayerData, fleetMovement);
-			fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.Resolved;
+			fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
 		}
 		return;
 	}
@@ -207,37 +204,37 @@ export function resolveFleetMovementAtTarget(targetPlayerData: PlayerDataType.Pl
 	if (fleetMovement.fleetMovementRow.player_target_id !== targetPlayerData.playerRow.id)
 	{
 		// To resolve a fleet we need the target data since all the origin data is in the fleet itself
-		fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.ResolveResultUnknown;
+		fleetMovement.resolutionState = CoreType.FleetMovementResolution.ResolveResultUnknown;
 		return;
 	}
 
-	const targetFullPlanetData: PlayerDataType.FullPlanetData | undefined = targetPlayerData.fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData) => 
+	const targetPlanetData: CoreType.PlanetData | undefined = targetPlayerData.planetDatas.find((planetData: CoreType.PlanetData) => 
 	{
-		return fullPlanetData.planetRow.id === fleetMovement.fleetMovementRow.planet_target_id;
+		return planetData.planetRow.id === fleetMovement.fleetMovementRow.planet_target_id;
 	});
 
-	if (targetFullPlanetData === undefined)
+	if (targetPlanetData === undefined)
 	{
 		throw new Error(`Didnt find target planet when stationning ${fleetMovement.fleetMovementRow.planet_target_id} for player ${targetPlayerData.playerRow.id}.`)
 	}
 
 	// Origin planet only exists in our data if we also sent the fleet. If the fleet came from another player,
 	// the origin belongs to them and won't be found here, unless we were supplied by the server.
-	const originFullPlanetData: PlayerDataType.FullPlanetData | null = targetPlayerData.fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData) =>
+	const originPlanetData: CoreType.PlanetData | null = targetPlayerData.planetDatas.find((planetData: CoreType.PlanetData) =>
 	{
-		return fullPlanetData.planetRow.id === fleetMovement.fleetMovementRow.planet_origin_id;
+		return planetData.planetRow.id === fleetMovement.fleetMovementRow.planet_origin_id;
 	}) ?? serverSuppliedOrigin;
 
 	switch (fleetMovement.fleetMovementRow.fleet_action_type)
 	{
 		case GameType.FLEET_ACTION_STATION:
 		{
-			resolveStationAction(originFullPlanetData, targetFullPlanetData, fleetMovement, serverData);
+			resolveStationAction(originPlanetData, targetPlanetData, fleetMovement, serverData);
 			return;
 		}
 		case GameType.FLEET_ACTION_COLLECT:
 		{
-			resolveCollectAction(originFullPlanetData, targetFullPlanetData, fleetMovement, serverData);
+			resolveCollectAction(originPlanetData, targetPlanetData, fleetMovement, serverData);
 			return;
 		}
 		default:
@@ -247,39 +244,39 @@ export function resolveFleetMovementAtTarget(targetPlayerData: PlayerDataType.Pl
 	}
 }
 
-export function resolveFleetMovementReturnTrip(originPlayerData: PlayerDataType.PlayerData | null, fleetMovement: PlayerDataType.FleetMovement, fleetPlayerDataPair: FleetPlayerDataPair, serverData: ServerDataType.ServerData): void
+export function resolveFleetMovementReturnTrip(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, fleetPlayerDataPair: FleetPlayerDataPair, serverData: CoreType.ServerData): void
 {
 	if (originPlayerData === null)
 	{
 		throw new Error("Resolving return trip but origin is null.");
 	}
 
-	const originFullPlanetData: PlayerDataType.FullPlanetData | undefined = originPlayerData.fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData) =>
+	const originPlanetData: CoreType.PlanetData | undefined = originPlayerData.planetDatas.find((planetData: CoreType.PlanetData) =>
 	{
-		return fullPlanetData.planetRow.id === fleetMovement.fleetMovementRow.planet_origin_id;
+		return planetData.planetRow.id === fleetMovement.fleetMovementRow.planet_origin_id;
 	});
 
-	if (originFullPlanetData === undefined)
+	if (originPlanetData === undefined)
 	{
 		throw new Error("Resolving return trip but origin full planet data is null.");
 	}
 
 	for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)
 	{
-		ShipData.addPlanetShip(originFullPlanetData, fleetMovementShipRow.ship_type, fleetMovementShipRow.ship_quantity);
+		ShipData.addPlanetShip(originPlanetData, fleetMovementShipRow.ship_type, fleetMovementShipRow.ship_quantity);
 	}
 
 	for (const fleetMovementResourceRow of fleetMovement.fleetMovementResourceRows)
 	{
-		ResourceData.addPlanetResource(originFullPlanetData, fleetMovementResourceRow.resource_type, fleetMovementResourceRow.resource_quantity);
+		ResourceData.addPlanetResource(originPlanetData, fleetMovementResourceRow.resource_type, fleetMovementResourceRow.resource_quantity);
 	}
 
-	FleetData.removeFleetMovement(originFullPlanetData, fleetMovement.fleetMovementRow.id);
+	FleetData.removeFleetMovement(originPlanetData, fleetMovement.fleetMovementRow.id);
 
-	fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.Resolved;
+	fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
 }
 
-function resolveStationAction(origin: PlayerDataType.FullPlanetData | null, target: PlayerDataType.FullPlanetData, fleetMovement: PlayerDataType.FleetMovement, serverData: ServerDataType.ServerData): void
+function resolveStationAction(origin: CoreType.PlanetData | null, target: CoreType.PlanetData, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
 	for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)
 	{
@@ -295,21 +292,21 @@ function resolveStationAction(origin: PlayerDataType.FullPlanetData | null, targ
 	if (origin !== null)
 	{
 		FleetData.removeFleetMovement(origin, fleetMovement.fleetMovementRow.id);
-		fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.Resolved;
+		fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
 	}
 	else
 	{
-		fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.ResolvedOneWayTripForTargetOnly;
+		fleetMovement.resolutionState = CoreType.FleetMovementResolution.ResolvedOneWayTripForTargetOnly;
 	}
 }
 
-function resolveCollectAction(origin: PlayerDataType.FullPlanetData | null, target: PlayerDataType.FullPlanetData, fleetMovement: PlayerDataType.FleetMovement, serverData: ServerDataType.ServerData): void
+function resolveCollectAction(origin: CoreType.PlanetData | null, target: CoreType.PlanetData, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
 	// They caught you!
 	if (ShipData.hasShips(target))
 	{
 		setFleetReturnTrip(target, fleetMovement);
-		fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.Resolved;
+		fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
 		return;
 	}
 
@@ -346,7 +343,7 @@ function resolveCollectAction(origin: PlayerDataType.FullPlanetData | null, targ
 	if (availableSpace <= 0)
 	{
 		setFleetReturnTrip(target, fleetMovement);
-		fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.Resolved;
+		fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
 		return;
 	}
 
@@ -371,7 +368,7 @@ function resolveCollectAction(origin: PlayerDataType.FullPlanetData | null, targ
 
 	// Theif!
 	setFleetReturnTrip(target, fleetMovement);
-	fleetMovement.resolutionState = PlayerDataType.FleetMovementResolution.Resolved;
+	fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
 }
 
 function getCollectedResources(targetResourceQuantities: Map<number, number>, availableSpace: number): Map<number, number>
@@ -438,33 +435,33 @@ function getCollectedResources(targetResourceQuantities: Map<number, number>, av
 	return collectedResourceQuantities;
 }
 
-export function removeFleetMovementSafe(fullPlanetData: PlayerDataType.FullPlanetData, fleetId: number): PlayerDataType.FullPlanetData
+export function removeFleetMovementSafe(planetData: CoreType.PlanetData, fleetId: number): CoreType.PlanetData
 {
 	try
 	{
-		return removeFleetMovement(fullPlanetData, fleetId);
+		return removeFleetMovement(planetData, fleetId);
 	}
 	catch (error: unknown)
 	{
-		return fullPlanetData;
+		return planetData;
 	}
 }
 
-export function removeFleetMovement(fullPlanetData: PlayerDataType.FullPlanetData, fleetId: number): PlayerDataType.FullPlanetData
+export function removeFleetMovement(planetData: CoreType.PlanetData, fleetId: number): CoreType.PlanetData
 {
-	const index: number = fullPlanetData.dynamicPlanetData.futureFleetArrivals.findIndex((innerFleetMovement: PlayerDataType.FleetMovement): boolean => innerFleetMovement.fleetMovementRow.id === fleetId);
+	const index: number = planetData.dynamicPlanetData.futureFleetArrivals.findIndex((innerFleetMovement: CoreType.FleetMovement): boolean => innerFleetMovement.fleetMovementRow.id === fleetId);
   	
 	if (index === -1)
   	{
 		throw new Error("No fleet movement to remove!");
 	}
 
-	fullPlanetData.dynamicPlanetData.futureFleetArrivals.splice(index, 1);
+	planetData.dynamicPlanetData.futureFleetArrivals.splice(index, 1);
 
-	return fullPlanetData;
+	return planetData;
 }
 
-export function computeFleetFuelAndSpace(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: ServerDataType.ServerData): { totalFuel: number, availableSpace: number }
+export function computeFleetFuelAndSpace(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: CoreType.ServerData): { totalFuel: number, availableSpace: number }
 {
 	const fuelRequirements: Map<number, number> = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, shipQuantities, serverData);
 	const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
@@ -474,7 +471,7 @@ export function computeFleetFuelAndSpace(originAddress: GameType.PlanetAddress, 
 	return { totalFuel: totalFuel, availableSpace: availableSpace };
 }
 
-function setFleetReturnTrip(target: PlayerDataType.FullPlanetData | null, fleetMovement: PlayerDataType.FleetMovement): void
+function setFleetReturnTrip(target: CoreType.PlanetData | null, fleetMovement: CoreType.FleetMovement): void
 {
 	fleetMovement.fleetMovementRow.is_return_trip = 1;
 	if (fleetMovement.fleetMovementRow.started_at === null || fleetMovement.fleetMovementRow.duration_at_start_time == null)

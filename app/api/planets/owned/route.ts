@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import * as Auth from "@/lib/authentication/auth";
 import * as DBType from "@/lib/db/dbTypes";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ServerRequestFunctions from "@/lib/networkRequests/server/serverRequestFunctions";
 
 export async function GET(): Promise<NextResponse>
@@ -19,6 +19,6 @@ export async function GET(): Promise<NextResponse>
         return NextResponse.json({ error: "Player not found" }, { status: 404 });
     }
 
-    const fullPlanetDatas: PlayerDataType.FullPlanetData[] = ServerRequestFunctions.serverGetFullPlanetDatas(player.id);
-    return NextResponse.json({ fullPlanetDatas: fullPlanetDatas });
+    const planetDatas: CoreType.PlanetData[] = ServerRequestFunctions.serverGetPlanetDatas(player.id);
+    return NextResponse.json({ planetDatas: planetDatas });
 }

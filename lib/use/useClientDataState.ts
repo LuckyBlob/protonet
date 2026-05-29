@@ -2,22 +2,21 @@
 
 import { useEffect, useState } from "react";
 
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 
 export type ClientDataStateResult =
 {
-	psController: PlayerDataType.PSController;
-	sdsController: ServerDataType.SDSController;
-	lsController: PlayerDataType.LSController;
+	psController: CoreType.PSController;
+	sdsController: CoreType.SDSController;
+	lsController: CoreType.LSController;
 };
 
 export function useClientDataState(enabled: boolean): ClientDataStateResult
 {
-	const psController: PlayerDataType.PSController = useState<PlayerDataType.PlayerState>({} as PlayerDataType.PlayerState);
-	const sdsController: ServerDataType.SDSController = useState<ServerDataType.ServerData>({} as ServerDataType.ServerData);
-	const lsController: PlayerDataType.LSController = useState<PlayerDataType.LoadingState>({ isLoading: true } as PlayerDataType.LoadingState);
+	const psController: CoreType.PSController = useState<CoreType.PlayerState>({} as CoreType.PlayerState);
+	const sdsController: CoreType.SDSController = useState<CoreType.ServerData>({} as CoreType.ServerData);
+	const lsController: CoreType.LSController = useState<CoreType.LoadingState>({ isLoading: true } as CoreType.LoadingState);
 
 	useEffect(() =>
 	{

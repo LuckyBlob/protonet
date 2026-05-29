@@ -1,7 +1,6 @@
 import * as DBType from "@/lib/db/dbTypes";
 import * as Serialization from "@/lib/helper/serialization";
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 
 export type BaseServerResponse = 
 {
@@ -23,7 +22,7 @@ export type PlayerDataRequest = BaseServerResponse &
 
 export type ServerDataStateRequest = BaseServerResponse &
 {
-	serverData: ServerDataType.ServerData | null;
+	serverData: CoreType.ServerData | null;
 };
 
 export type AllPlanetDataRequest = BaseServerResponse &
@@ -32,7 +31,7 @@ export type AllPlanetDataRequest = BaseServerResponse &
 }
 export type OwnedPlanetDataRequest = BaseServerResponse &
 {
-	fullPlanetDatas: PlayerDataType.FullPlanetData[];
+	planetDatas: CoreType.PlanetData[];
 }
 //#endregion
 
@@ -52,7 +51,7 @@ export type BaseAuthenticationServerResponse = BaseServerResponse &
 export type RefreshServer_ServerResponse = BaseServerResponse &
 {
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
-	serverData: ServerDataType.ServerData | null;
+	serverData: CoreType.ServerData | null;
 }
 
 export type BuildingUpgrade_ClientRequest = BaseClientRequest &

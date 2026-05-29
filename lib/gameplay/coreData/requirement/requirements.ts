@@ -1,24 +1,24 @@
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as RequirementMap from "@/lib/gameplay/coreData/requirement/requirementMap";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 
-export function getFailedBuildingUpgradeRequirements(playerData: PlayerDataType.PlayerData, buildingType: number, planetId: number): RequirementType.Requirement[]
+export function getFailedBuildingUpgradeRequirements(playerData: CoreType.PlayerData, buildingType: number, planetId: number): RequirementType.Requirement[]
 {
     return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.BuildingUpgrade, buildingType);
 }
 
-export function getFailedShipBuildRequirements(playerData: PlayerDataType.PlayerData, shipType: number, planetId: number): RequirementType.Requirement[]
+export function getFailedShipBuildRequirements(playerData: CoreType.PlayerData, shipType: number, planetId: number): RequirementType.Requirement[]
 {
     return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.ShipConstruction, shipType);
 }
 
-export function getFailedFleetMovementRequirements(playerData: PlayerDataType.PlayerData, shipType: number, planetId: number): RequirementType.Requirement[]
+export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerData, shipType: number, planetId: number): RequirementType.Requirement[]
 {
     return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.FleetMovement, shipType);
 }
 
-export function getRequirementDescriptions(failedRequirements: RequirementType.Requirement[], playerData: PlayerDataType.PlayerData, planetId: number): string[]
+export function getRequirementDescriptions(failedRequirements: RequirementType.Requirement[], playerData: CoreType.PlayerData, planetId: number): string[]
 {
     const descriptions: string[] = [];
 
@@ -130,7 +130,7 @@ function operatorToString(operator: RequirementType.RequirementOperator): string
     throw new Error(`UNREACHABLE: Unknown RequirementOperator ${operator}`);
 }
 
-function meetsSingleRequirement(playerData: PlayerDataType.PlayerData, planetId: number, requirement: RequirementType.Requirement): boolean
+function meetsSingleRequirement(playerData: CoreType.PlayerData, planetId: number, requirement: RequirementType.Requirement): boolean
 {
     if (requirement.thingRequirement !== undefined)
     {
@@ -161,7 +161,7 @@ function meetsSingleRequirement(playerData: PlayerDataType.PlayerData, planetId:
     return true;
 }
 
-function getFailedRequirementsInternal(playerData: PlayerDataType.PlayerData, planetId: number, thingType: ThingType.Thing, specificThing: ThingType.SpecificThing): RequirementType.Requirement[]
+function getFailedRequirementsInternal(playerData: CoreType.PlayerData, planetId: number, thingType: ThingType.Thing, specificThing: ThingType.SpecificThing): RequirementType.Requirement[]
 {
     const requirements: RequirementType.Requirement[] = getRequirements(thingType, specificThing);
     return requirements.filter((requirement: RequirementType.Requirement): boolean =>
@@ -170,7 +170,7 @@ function getFailedRequirementsInternal(playerData: PlayerDataType.PlayerData, pl
     });
 }
 
-function describeSingleRequirement(playerData: PlayerDataType.PlayerData, planetId: number, requirement: RequirementType.Requirement): string | null
+function describeSingleRequirement(playerData: CoreType.PlayerData, planetId: number, requirement: RequirementType.Requirement): string | null
 {
     if (requirement.thingRequirement !== undefined)
     {

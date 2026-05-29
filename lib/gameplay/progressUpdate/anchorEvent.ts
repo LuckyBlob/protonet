@@ -1,5 +1,4 @@
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
-import * as ServerDataType from "@/lib/gameplay/gameplayData/server/serverDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent"
@@ -21,14 +20,14 @@ export type AnchorEvent =
     resolver?: ApplyProgress.PlayerProgressApplier,
 }
 
-export function findNextAnchorEvent<T>(playerData: PlayerDataType.PlayerData, getItems: (planet: PlayerDataType.FullPlanetData) => T[], getTime: (item: T) => number | null, buildEvent: (item: T, time: number) => AnchorEvent): AnchorEvent | null
+export function findNextAnchorEvent<T>(playerData: CoreType.PlayerData, getItems: (planet: CoreType.PlanetData) => T[], getTime: (item: T) => number | null, buildEvent: (item: T, time: number) => AnchorEvent): AnchorEvent | null
 {
     let nextTime: number | null = null;
     let bestItem: T | null = null;
 
-    for (const fullPlanetData of playerData.fullPlanetDatas)
+    for (const planetData of playerData.planetDatas)
     {
-        for (const item of getItems(fullPlanetData))
+        for (const item of getItems(planetData))
         {
             const time: number | null = getTime(item);
 

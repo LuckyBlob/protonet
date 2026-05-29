@@ -1,5 +1,5 @@
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 
 export const RequirementOperator =
 {
@@ -11,7 +11,7 @@ export const RequirementOperator =
 } as const;
 export type RequirementOperator = typeof RequirementOperator[keyof typeof RequirementOperator];
 
-export type ThingValueGetter = (playerData: PlayerDataType.PlayerData, planetId: number) => number;
+export type ThingValueGetter = (playerData: CoreType.PlayerData, planetId: number) => number;
 
 export type ThingRequirement =
 {
@@ -21,7 +21,7 @@ export type ThingRequirement =
     valueGetter: ThingValueGetter;
 };
 
-export type SpecificThingValueGetter = (playerData: PlayerDataType.PlayerData, planetId: number) => number;
+export type SpecificThingValueGetter = (playerData: CoreType.PlayerData, planetId: number) => number;
 
 export type SpecificThingRequirement =
 {

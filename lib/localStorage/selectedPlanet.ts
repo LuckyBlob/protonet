@@ -1,14 +1,13 @@
 "use client";
 
-import * as PlayerDataType from "@/lib/gameplay/gameplayData/player/playerDataTypes";
-import * as PlayerData from "@/lib/gameplay/gameplayData/player/playerData";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 
 const SELECTED_PLANET_STORAGE_KEY: string = "protonet.selectedPlanetId";
 
-export function updateSelectedPlanetIdInStorage(newPlayerData: PlayerDataType.PlayerData): number
+export function updateSelectedPlanetIdInStorage(newPlayerData: CoreType.PlayerData): number
 {
     const storedSelectedPlanetId: number | null = readStoredSelectedPlanetId();
-    const resolvedSelectedPlanetId: number = getRelevantSelectedPlanetId(newPlayerData.fullPlanetDatas, storedSelectedPlanetId);
+    const resolvedSelectedPlanetId: number = getRelevantSelectedPlanetId(newPlayerData.planetDatas, storedSelectedPlanetId);
 
     if (resolvedSelectedPlanetId !== storedSelectedPlanetId)
     {
@@ -18,12 +17,12 @@ export function updateSelectedPlanetIdInStorage(newPlayerData: PlayerDataType.Pl
     return resolvedSelectedPlanetId;
 }
 
-export function setSelectedPlanetID(psController: PlayerDataType.PSController, selectedPlanetId: number): void
+export function setSelectedPlanetID(psController: CoreType.PSController, selectedPlanetId: number): void
 {
     writeStoredSelectedPlanetId(selectedPlanetId);
-    psController[1]((mostRecentState: PlayerDataType.PlayerState): PlayerDataType.PlayerState =>
+    psController[1]((mostRecentState: CoreType.PlayerState): CoreType.PlayerState =>
     {
-        const newPlayerState: PlayerDataType.PlayerState =
+        const newPlayerState: CoreType.PlayerState =
         {
             dbData: mostRecentState.dbData,
             predictedDBData: mostRecentState.predictedDBData,
@@ -68,45 +67,45 @@ function writeStoredSelectedPlanetId(planetId: number): void
     window.localStorage.setItem(SELECTED_PLANET_STORAGE_KEY, String(planetId));
 }
 
-function getRelevantSelectedPlanetId(fullPlanetDatas: PlayerDataType.FullPlanetData[], candidateId: number | null): number
+function getRelevantSelectedPlanetId(planetDatas: CoreType.PlanetData[], candidateId: number | null): number
 {
-    if (fullPlanetDatas.length === 0)
+    if (planetDatas.length === 0)
     {
 		throw new Error(`Player has no planets!`);
 	}
 
     if (candidateId === null)
     {
-        return fullPlanetDatas[0].planetRow.id;
+        return planetDatas[0].planetRow.id;
     }
 
-    return PlayerData.getFullPlanetDataForId(fullPlanetDatas, candidateId)?.planetRow.id ?? fullPlanetDatas[0].planetRow.id;
+    return CoreType.getPlanetDataForId(planetDatas, candidateId)?.planetRow.id ?? planetDatas[0].planetRow.id;
 }
 
-export function getSelectedFullPlanetDataPredicted(playerState: PlayerDataType.PlayerState): PlayerDataType.FullPlanetData
+export function getSelectedPlanetDataPredicted(playerState: CoreType.PlayerState): CoreType.PlanetData
 {
     if (playerState === undefined || playerState.predictedDBData === undefined)
     {
         throw new Error(`Player state or player predicted state is invalid for selected planet data.`);
     }
 
-    const fullPlanetDatas: PlayerDataType.FullPlanetData[] | undefined = playerState.predictedDBData.fullPlanetDatas;
-    if (fullPlanetDatas === undefined || fullPlanetDatas.length === 0)
+    const planetDatas: CoreType.PlanetData[] | undefined = playerState.predictedDBData.planetDatas;
+    if (planetDatas === undefined || planetDatas.length === 0)
     {
         throw new Error(`Player state or player predicted state is invalid for selected planet data.`);
     }
 
-    const resolvedId: number = getRelevantSelectedPlanetId(fullPlanetDatas, playerState.selectedPlanetId);
+    const resolvedId: number = getRelevantSelectedPlanetId(planetDatas, playerState.selectedPlanetId);
 
-	const matchingFullPlanetData: PlayerDataType.FullPlanetData | undefined = fullPlanetDatas.find((fullPlanetData: PlayerDataType.FullPlanetData): boolean =>
+	const matchingPlanetData: CoreType.PlanetData | undefined = planetDatas.find((planetData: CoreType.PlanetData): boolean =>
     {
-        return fullPlanetData.planetRow.id === resolvedId;
+        return planetData.planetRow.id === resolvedId;
     });
 
-    if (matchingFullPlanetData === undefined)
+    if (matchingPlanetData === undefined)
     {
-        return fullPlanetDatas[0];
+        return planetDatas[0];
     }
 
-    return matchingFullPlanetData;
+    return matchingPlanetData;
 }
