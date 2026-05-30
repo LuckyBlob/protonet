@@ -441,9 +441,21 @@ export function serverGetPlanetData(planetId: number): CoreType.PlanetData
     return planetData;
 }
 
+const PLAYER_ROW_ALLOWED_COLUMNS: ReadonlySet<string> = new Set<string>([
+    "user_id", "gold", "upgrade_level", "building_upgrade_completes_at", "last_updated",
+]);
+
 export function serverUpdatePlayerColumns(playerId: number, columnUpdates: Partial<DBType.PlayerRow>): DBType.PlayerRow
 {
     const columnNames: string[] = Object.keys(columnUpdates);
+    for (const columnName of columnNames)
+    {
+        if (PLAYER_ROW_ALLOWED_COLUMNS.has(columnName) === false)
+        {
+            throw new Error(`UNREACHABLE: Unexpected player column name in update: ${columnName}`);
+        }
+    }
+
     const columnValues: unknown[] = Object.values(columnUpdates);
     const setClause: string = columnNames.map((columnName: string): string => `${columnName} = ?`).join(", ");
 
@@ -478,12 +490,24 @@ export function serverFindAllPlanetsPublic(): DBType.PublicPlanetRow[]
     return planetRows;
 }
 
+const PLANET_ROW_ALLOWED_COLUMNS: ReadonlySet<string> = new Set<string>([
+    "slot", "system", "galaxy", "size", "owner_player_id", "claimed_at", "last_updated",
+]);
+
 export function serverUpdatePlanetRow(planetId: number, columnUpdates: Partial<DBType.PlanetRow>): DBType.PlanetRow
 {
     const columnNames: string[] = Object.keys(columnUpdates);
     if (columnNames.length === 0)
     {
         return readPlanetRow(planetId);
+    }
+
+    for (const columnName of columnNames)
+    {
+        if (PLANET_ROW_ALLOWED_COLUMNS.has(columnName) === false)
+        {
+            throw new Error(`UNREACHABLE: Unexpected planet column name in update: ${columnName}`);
+        }
     }
 
     const columnValues: unknown[] = Object.values(columnUpdates);
