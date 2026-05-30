@@ -191,7 +191,9 @@ export function resolveFleetMovementAtTarget(targetPlayerData: CoreType.PlayerDa
 	{
 		if (fleetMovement.fleetMovementRow.fleet_action_type === GameType.FLEET_ACTION_COLONIZE)
 		{
-
+			// Colonize is not yet implemented. Mark Invalid so the DB writer deletes the fleet row
+			// rather than throwing on Unresolved, which would freeze the originating player's account.
+			fleetMovement.resolutionState = CoreType.FleetMovementResolution.Invalid;
 		}
 		else
 		{
