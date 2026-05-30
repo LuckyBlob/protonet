@@ -1098,19 +1098,14 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
 
     for (const [shipType, shipQuantity] of shipQuantities)
     {
-        if (shipQuantity === 0)
-		{
-			continue;
-		}
+        if (shipQuantity <= 0)
+        {
+            return { success: false, failureReason: "Non-positive ship quantity for fleet.", playerStateResult: playerData };
+        }
 
         if (Requirement.getFailedFleetMovementRequirements(playerData, shipType, originPlanetData.planetRow.id).length > 0)
         {
             return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
-        }
-
-        if (shipQuantity < 0)
-        {
-            return { success: false, failureReason: "Negative ship quantity for fleet.", playerStateResult: playerData };
         }
     }
 
