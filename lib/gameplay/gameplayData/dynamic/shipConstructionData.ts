@@ -2,24 +2,16 @@ import * as DBType from "@/lib/db/dbTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as ShipConstruction from "@/lib/gameplay/coreData/formula/shipConstructionFormulas";
-import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
+import * as MathHelp from "@/lib/helper/mathHelp";
 
 export function getNextShipConstruction(planetData: CoreType.PlanetData): CoreType.ShipConstruction | null
 {
-    let bestNextConstruction: CoreType.ShipConstruction | null = null;
-    let currentTimeToBeat: number = Number.MAX_SAFE_INTEGER;
-    for (const shipConstruction of planetData.dynamicPlanetData.shipConstructions)
-    {
-
-        if (bestNextConstruction === null || currentTimeToBeat > shipConstruction.shipConstructionRow.requested_at)
-        {
-            currentTimeToBeat = shipConstruction.shipConstructionRow.requested_at;
-            bestNextConstruction = shipConstruction;
-        }
-    }
-
-    return bestNextConstruction;
+    return MathHelp.getEarliestByRequestedAt(
+        planetData.dynamicPlanetData.shipConstructions,
+        (construction: CoreType.ShipConstruction): number => construction.shipConstructionRow.requested_at
+    );
 }
 
 export function sortShipConstructionShipRowByConstructionTime(planetData: CoreType.PlanetData, shipConstruction: CoreType.ShipConstruction, serverData: CoreType.ServerData): void

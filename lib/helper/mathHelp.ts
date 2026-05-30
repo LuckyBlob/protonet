@@ -1,3 +1,22 @@
+export function getEarliestByRequestedAt<T>(items: T[], getRequestedAt: (item: T) => number): T | null
+{
+    let earliest: T | null = null;
+    let currentTimeToBeat: number = Number.MAX_SAFE_INTEGER;
+
+    for (const item of items)
+    {
+        const requestedAt: number = getRequestedAt(item);
+
+        if (earliest === null || currentTimeToBeat > requestedAt)
+        {
+            currentTimeToBeat = requestedAt;
+            earliest = item;
+        }
+    }
+
+    return earliest;
+}
+
 export function calculateTotalQuantityMap(map: Map<number, number>): number
 {
     let total: number = 0;
