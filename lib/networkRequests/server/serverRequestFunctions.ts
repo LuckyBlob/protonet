@@ -688,72 +688,39 @@ export function getPlanetDataByCoords(galaxy: number, system: number, slot: numb
     return { planetRow: planetRow, dynamicPlanetData: dynamicPlanetData };
 }
 
+type ActiveTimerRow = { id: number; started_at: number; duration_at_start_time: number };
+
+// tableName is always a hardcoded string literal from within this file — never user input.
+function rescaleActiveTimerRows(tableName: string, rescaleFactor: number, now: number): void
+{
+    const activeRows: ActiveTimerRow[] = DB.databaseConnection.prepare(
+        `SELECT id, started_at, duration_at_start_time FROM ${tableName} WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL AND (started_at + duration_at_start_time) > ?`
+    ).all(now) as ActiveTimerRow[];
+
+    for (const row of activeRows)
+    {
+        const realMsRemaining: number = row.started_at + row.duration_at_start_time - now;
+        const newDurationAtStartTime: number = (now - row.started_at) + Math.floor(realMsRemaining * rescaleFactor);
+
+        DB.databaseConnection.prepare(
+            `UPDATE ${tableName} SET duration_at_start_time = ? WHERE id = ?`
+        ).run(newDurationAtStartTime, row.id);
+    }
+}
+
 function rescaleBuildingUpgradeTimes(rescaleFactor: number, now: number): void
 {
-    const activeUpgradeRows: { id: number; started_at: number; duration_at_start_time: number }[] = DB.databaseConnection.prepare(
-        "SELECT id, started_at, duration_at_start_time FROM building_upgrade WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL"
-    ).all() as { id: number; started_at: number; duration_at_start_time: number }[];
-
-    for (const upgradeRow of activeUpgradeRows)
-    {
-        const completesAt: number = upgradeRow.started_at + upgradeRow.duration_at_start_time;
-        const realMsRemaining: number = completesAt - now;
-
-        if (realMsRemaining <= 0)
-        {
-            continue;
-        }
-
-        const newDurationAtStartTime: number = (now - upgradeRow.started_at) + Math.floor(realMsRemaining * rescaleFactor);
-        DB.databaseConnection.prepare(
-            "UPDATE building_upgrade SET duration_at_start_time = ? WHERE id = ?"
-        ).run(newDurationAtStartTime, upgradeRow.id);
-    }
+    rescaleActiveTimerRows("building_upgrade", rescaleFactor, now);
 }
 
 function rescaleFleetMovementTimes(rescaleFactor: number, now: number): void
 {
-    const activeFleetRows: { id: number; started_at: number; duration_at_start_time: number }[] = DB.databaseConnection.prepare(
-        "SELECT id, started_at, duration_at_start_time FROM fleet_movement WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL AND (started_at + duration_at_start_time) > ?"
-    ).all(now) as { id: number; started_at: number; duration_at_start_time: number }[];
-
-    for (const fleetRow of activeFleetRows)
-    {
-        const completesAt: number = fleetRow.started_at + fleetRow.duration_at_start_time;
-        const realMsRemaining: number = completesAt - now;
-        if (realMsRemaining <= 0)
-        {
-            continue;
-        }
-
-        const newDurationAtStartTime: number = (now - fleetRow.started_at) + Math.floor(realMsRemaining * rescaleFactor);
-        DB.databaseConnection.prepare(
-            "UPDATE fleet_movement SET duration_at_start_time = ? WHERE id = ?"
-        ).run(newDurationAtStartTime, fleetRow.id);
-    }
+    rescaleActiveTimerRows("fleet_movement", rescaleFactor, now);
 }
 
 function rescaleShipConstructionTimes(rescaleFactor: number, now: number): void
 {
-    const activeConstructionRows: { id: number; started_at: number; duration_at_start_time: number }[] = DB.databaseConnection.prepare(
-        "SELECT id, started_at, duration_at_start_time FROM ship_construction WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL"
-    ).all() as { id: number; started_at: number; duration_at_start_time: number }[];
-
-    for (const constructionRow of activeConstructionRows)
-    {
-        const completesAt: number = constructionRow.started_at + constructionRow.duration_at_start_time;
-        const realMsRemaining: number = completesAt - now;
-
-        if (realMsRemaining <= 0)
-        {
-            continue;
-        }
-
-        const newDurationAtStartTime: number = (now - constructionRow.started_at) + Math.floor(realMsRemaining * rescaleFactor);
-        DB.databaseConnection.prepare(
-            "UPDATE ship_construction SET duration_at_start_time = ? WHERE id = ?"
-        ).run(newDurationAtStartTime, constructionRow.id);
-    }
+    rescaleActiveTimerRows("ship_construction", rescaleFactor, now);
 }
 
 //#endregion
