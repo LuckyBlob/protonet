@@ -442,7 +442,7 @@ export function serverGetPlanetData(planetId: number): CoreType.PlanetData
 }
 
 const PLAYER_ROW_ALLOWED_COLUMNS: ReadonlySet<string> = new Set<string>([
-    "user_id", "gold", "upgrade_level", "building_upgrade_completes_at", "last_updated",
+    "user_id", "last_updated",
 ]);
 
 export function serverUpdatePlayerColumns(playerId: number, columnUpdates: Partial<DBType.PlayerRow>): DBType.PlayerRow
