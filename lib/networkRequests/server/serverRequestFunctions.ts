@@ -1217,7 +1217,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         const fleetMovementRow: DBType.FleetMovementRow =
         {
             id: -1, // will be set on the update
-            seed: Math.random() * 0x7FFFFFFF, //random is float, SQLite takes ints, 0x7FFFFFFF is 2^31 - 1
+            seed: Math.floor(Math.random() * 0x7FFFFFFF),
             player_origin_id: playerData.playerRow.id,
             planet_origin_id: originPlanetData.planetRow.id,
             planet_origin_slot: originPlanetData.planetRow.slot,
