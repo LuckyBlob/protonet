@@ -666,11 +666,15 @@ function claimPlanet(planetAddress: GameType.PlanetAddress | null, playerId: num
 function abandonPlanet(planetId: number, playerId: number): void
 {
     const serverData: CoreType.ServerData = ServerType.getServerData();
-    ServerProgress.applyPlayerUpdate(playerId, serverData, Date.now());
 
+    // applyPlayerUpdate detects inTransaction and runs without starting a nested transaction.
+    // Wrapping both calls in one transaction eliminates the gap between progress application
+    // and planet deletion where a concurrent request could observe inconsistent state.
     // set null first before clean so we fail the "target player null" condition and dont pickup to delete and not re-add.
     DB.databaseConnection.transaction(() =>
     {
+        ServerProgress.applyPlayerUpdate(playerId, serverData, Date.now());
+
         DB.databaseConnection.prepare(
             "UPDATE fleet_movement SET player_target_id = null WHERE planet_target_id = ?"
         ).run(planetId);
@@ -678,7 +682,7 @@ function abandonPlanet(planetId: number, playerId: number): void
         DB.databaseConnection.prepare(
             "DELETE FROM fleet_movement WHERE planet_origin_id = ?"
         ).run(planetId);
-        
+
         DB.databaseConnection.prepare(
             "DELETE FROM planet WHERE id = ?"
         ).run(planetId);
