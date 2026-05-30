@@ -471,6 +471,21 @@ export function computeFleetFuelAndSpace(originAddress: GameType.PlanetAddress, 
 	return { totalFuel: totalFuel, availableSpace: availableSpace };
 }
 
+export function getFleetMovementRemainingMs(fleetMovement: CoreType.FleetMovement): number | null
+{
+	if (fleetMovement.fleetMovementRow.started_at === null)
+	{
+		return null;
+	}
+
+	if (fleetMovement.fleetMovementRow.duration_at_start_time === null)
+	{
+		throw new Error(`UNREACHABLE: started_at set but duration_at_start_time is null for fleet movement ${fleetMovement.fleetMovementRow.id}.`);
+	}
+
+	return fleetMovement.fleetMovementRow.started_at + fleetMovement.fleetMovementRow.duration_at_start_time - Date.now();
+}
+
 function setFleetReturnTrip(target: CoreType.PlanetData | null, fleetMovement: CoreType.FleetMovement): void
 {
 	fleetMovement.fleetMovementRow.is_return_trip = 1;
