@@ -719,8 +719,8 @@ export function getPlanetDataByCoords(galaxy: number, system: number, slot: numb
 function rescaleBuildingUpgradeTimes(rescaleFactor: number, now: number): void
 {
     const activeUpgradeRows: { id: number; started_at: number; duration_at_start_time: number }[] = DB.databaseConnection.prepare(
-        "SELECT id, started_at, duration_at_start_time FROM building_upgrade WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL"
-    ).all() as { id: number; started_at: number; duration_at_start_time: number }[];
+        "SELECT id, started_at, duration_at_start_time FROM building_upgrade WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL AND (started_at + duration_at_start_time) > ?"
+    ).all(now) as { id: number; started_at: number; duration_at_start_time: number }[];
 
     for (const upgradeRow of activeUpgradeRows)
     {
