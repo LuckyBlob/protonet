@@ -965,18 +965,13 @@ export function tryBuildShipsLogic(playerId: number, serverData: CoreType.Server
     }
 
     const totalCost: Map<number, number> = ShipConstructionData.computeShipConstructionCost(possibleRequestedShipQuantities);
-    for (const [resourceType, resourceCost] of totalCost)
+
+    if (ResourceData.hasResourceQuantities(relevantPlanetData, totalCost) === false)
     {
-        try
-        {
-            ResourceData.subtractPlanetResource(relevantPlanetData, resourceType, resourceCost);
-        }
-        catch (error: unknown)
-        {
-            const errorMessage: string = error instanceof Error ? error.message : String(error);
-            return { success: false, failureReason: `Failed to substract planet resources for ship contruction.`, playerStateResult: playerData };
-        }
+        return { success: false, failureReason: "Not enough resources for ship construction.", playerStateResult: playerData };
     }
+
+    ResourceData.subtractPlanetResources(relevantPlanetData, totalCost);
 
     const newShipConstructionShipRows: DBType.ShipConstructionShipRow[] = [];
     for (const [shipType, shipQuantity] of possibleRequestedShipQuantities)
