@@ -437,30 +437,30 @@ function getCollectedResources(targetResourceQuantities: Map<number, number>, av
 	return collectedResourceQuantities;
 }
 
-export function removeFleetMovementSafe(planetData: CoreType.PlanetData, fleetId: number): CoreType.PlanetData
-{
-	try
-	{
-		return removeFleetMovement(planetData, fleetId);
-	}
-	catch (error: unknown)
-	{
-		return planetData;
-	}
-}
-
-export function removeFleetMovement(planetData: CoreType.PlanetData, fleetId: number): CoreType.PlanetData
+// Removes the fleet from the planet's local data. Returns whether anything was removed.
+// Use this when the fleet may legitimately not be present (e.g. server-side flows where
+// the fleet's origin or target belongs to a different player whose data wasn't loaded).
+export function removeFleetMovementIfPresent(planetData: CoreType.PlanetData, fleetId: number): boolean
 {
 	const index: number = planetData.dynamicPlanetData.futureFleetArrivals.findIndex((innerFleetMovement: CoreType.FleetMovement): boolean => innerFleetMovement.fleetMovementRow.id === fleetId);
-  	
 	if (index === -1)
-  	{
-		throw new Error("No fleet movement to remove!");
+	{
+		return false;
 	}
 
 	planetData.dynamicPlanetData.futureFleetArrivals.splice(index, 1);
+	return true;
+}
 
-	return planetData;
+// Throws if the fleet isn't present — used in resolution flows where the fleet's
+// presence is an invariant. Use removeFleetMovementIfPresent when absence is expected.
+export function removeFleetMovement(planetData: CoreType.PlanetData, fleetId: number): void
+{
+	const didRemove: boolean = removeFleetMovementIfPresent(planetData, fleetId);
+	if (didRemove === false)
+	{
+		throw new Error(`No fleet movement to remove for fleetId ${fleetId} on planetId ${planetData.planetRow.id}.`);
+	}
 }
 
 export function computeFleetFuelAndSpace(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: CoreType.ServerData): { totalFuel: number, availableSpace: number }
