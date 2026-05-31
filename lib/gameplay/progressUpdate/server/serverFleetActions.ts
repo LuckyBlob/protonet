@@ -45,7 +45,7 @@ function resolveFleetActionToDB(originPlayerData: FleetData.FleetPlayerData | nu
     // if that fleet was to another player since it's over. But since we couldnt do that locally, we need to do it here.
     if (fleetMovement.resolutionState === CoreType.FleetMovementResolution.ResolvedOneWayTripForTargetOnly)
     {
-        FleetData.removeFleetMovementSafe(originPlayerData.planetData, fleetMovement.fleetMovementRow.id);
+        FleetData.removeFleetMovementIfPresent(originPlayerData.planetData, fleetMovement.fleetMovementRow.id);
         fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved
     }
 
@@ -80,13 +80,13 @@ function deleteFleetMovementFromDB(originPlayerData: FleetData.FleetPlayerData |
 {
     if (originPlayerData !== null)
     {
-        const updatedPlanetData: CoreType.PlanetData = FleetData.removeFleetMovementSafe(originPlayerData.planetData, fleetMovement.fleetMovementRow.id);
-        ServerDynamicData.serverUpdatePlanetDataContext(updatedPlanetData.planetRow.id, originPlayerData.playerData.playerRow.id, CoreType.DataContext.FutureFleetArrivals, updatedPlanetData.dynamicPlanetData);
+        FleetData.removeFleetMovementIfPresent(originPlayerData.planetData, fleetMovement.fleetMovementRow.id);
+        ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.planetData.planetRow.id, originPlayerData.playerData.playerRow.id, CoreType.DataContext.FutureFleetArrivals, originPlayerData.planetData.dynamicPlanetData);
     }
 
     if (targetPlayerData !== null)
     {
-        const updatedPlanetData: CoreType.PlanetData = FleetData.removeFleetMovementSafe(targetPlayerData.planetData, fleetMovement.fleetMovementRow.id);
-        ServerDynamicData.serverUpdatePlanetDataContext(updatedPlanetData.planetRow.id, targetPlayerData.playerData.playerRow.id, CoreType.DataContext.FutureFleetArrivals, updatedPlanetData.dynamicPlanetData);
+        FleetData.removeFleetMovementIfPresent(targetPlayerData.planetData, fleetMovement.fleetMovementRow.id);
+        ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.planetData.planetRow.id, targetPlayerData.playerData.playerRow.id, CoreType.DataContext.FutureFleetArrivals, targetPlayerData.planetData.dynamicPlanetData);
     }
 }
