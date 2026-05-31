@@ -76,7 +76,7 @@ export async function clientTryLoginRequest(username: string, password: string):
     // Use != instead of !== here to catch everything that's very weird.
     if (response.username == null)
     {
-        throw new Error(`Logout server failed: Invalid player data.`);
+        throw new Error(`Login failed: Invalid response from server.`);
     }
     return response;
 }
@@ -99,7 +99,7 @@ export async function clientTryRegisterRequest(username: string, password: strin
     // Use != instead of !== here to catch everything that's very weird.
     if (response.username == null)
     {
-        throw new Error(`Logout server failed: Invalid player data.`);
+        throw new Error(`Register failed: Invalid response from server.`);
     }
 
     return response;
