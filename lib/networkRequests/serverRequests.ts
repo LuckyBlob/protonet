@@ -3,11 +3,11 @@
 import * as RequestType from "@/lib/networkRequests/requestTypes";
 import * as APIEndPoint from "@/app/api/apiEndPoints"
 
-export async function requestServerData<K extends keyof APIEndPoint.DataResponseMap>(dataRequest: { name: K; endpoint: string }, urlSearchParams?: Record<string, string | number>): Promise<APIEndPoint.DataResponseMap[K] | null>
+export async function requestServerData<K extends keyof APIEndPoint.DataResponseMap>(dataRequest: { name: K; endpoint: string }, clientRequest?: APIEndPoint.DataRequestMap[K]): Promise<APIEndPoint.DataResponseMap[K] | null>
 {
     try
     {
-        const urlSearchSuffix: string = buildUrlSearchSuffix(urlSearchParams);
+        const urlSearchSuffix: string = buildUrlSearchSuffix(clientRequest);
         const requestUrl: string = `/api/${dataRequest.endpoint}${urlSearchSuffix}`;
         const response: Response = await fetch(requestUrl);
         const parsed: unknown = await response.json();
@@ -25,20 +25,20 @@ export async function requestServerData<K extends keyof APIEndPoint.DataResponse
     }
 }
 
-function buildUrlSearchSuffix(urlSearchParams: Record<string, string | number> | undefined): string
+function buildUrlSearchSuffix(clientRequest: object | null | undefined): string
 {
-    if (urlSearchParams === undefined)
+    if (clientRequest === undefined || clientRequest === null)
     {
         return "";
     }
 
-    const params: URLSearchParams = new URLSearchParams();
-    for (const [key, value] of Object.entries(urlSearchParams))
+    const urlSearchParams: URLSearchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(clientRequest))
     {
-        params.set(key, String(value));
+        urlSearchParams.set(key, String(value));
     }
 
-    return `?${params.toString()}`;
+    return `?${urlSearchParams.toString()}`;
 }
 
 function handleServerDataResponse<K extends keyof APIEndPoint.DataResponseMap>(parsed: unknown, actionName: string): APIEndPoint.DataResponseMap[K]

@@ -15,15 +15,23 @@ type MessagesViewProps =
     clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
-type MessageBodyState =
+type MessageBody =
 {
     isLoading: boolean;
     body: string | null;
 };
 
 type SelectedMessageRowIdState = [number | null, (value: number | null) => void];
-type BodyState = [MessageBodyState, (value: MessageBodyState) => void];
 type DeletedMessageRowIdsState = [Set<number>, (value: Set<number>) => void];
+
+type MessagesViewData =
+{
+    visibleMessageDatas: CoreType.MessageData[];
+    selectedMessageRowIdState: SelectedMessageRowIdState;
+    deletedMessageRowIdsState: DeletedMessageRowIdsState;
+    messageBody: MessageBody;
+    psController: CoreType.PSController;
+};
 
 const MESSAGE_ROW_HEIGHT_PX: number = 48;
 const MESSAGE_ROW_GAP_PX: number = 8;
@@ -41,19 +49,19 @@ function formatMessageTimestamp(epochMs: number): string
 //#endregion
 
 //#region state hooks
-function useMessageBodyState(selectedMessageRowId: number | null): MessageBodyState
+function useMessageBody(selectedMessageRowId: number | null): MessageBody
 {
-    const bodyState: BodyState = useState<MessageBodyState>({ isLoading: false, body: null });
+    const messageBodyState: [MessageBody, (value: MessageBody) => void] = useState<MessageBody>({ isLoading: false, body: null });
 
-    useEffect((): void =>
+    useEffect((): (() => void) =>
     {
         if (selectedMessageRowId === null)
         {
-            bodyState[1]({ isLoading: false, body: null });
-            return;
+            messageBodyState[1]({ isLoading: false, body: null });
+            return (): void => {};
         }
 
-        bodyState[1]({ isLoading: true, body: null });
+        messageBodyState[1]({ isLoading: true, body: null });
 
         let isCancelled: boolean = false;
         const runFetch = async (): Promise<void> =>
@@ -68,21 +76,22 @@ function useMessageBodyState(selectedMessageRowId: number | null): MessageBodySt
             if (response === null || response.error != null || response.messageRow == null)
             {
                 console.error("⚠️:", `Failed to fetch messageRowId ${selectedMessageRowId}.`);
-                bodyState[1]({ isLoading: false, body: null });
+                messageBodyState[1]({ isLoading: false, body: null });
                 return;
             }
 
             const messageRow: DBType.MessageRow = response.messageRow;
-            bodyState[1]({ isLoading: false, body: messageRow.body });
+            messageBodyState[1]({ isLoading: false, body: messageRow.body });
         };
         runFetch();
 
-        // Cancel-on-unmount / selection-change guard via closure flag instead of returning a cleanup.
-        // We don't have a real abort signal yet; this prevents stale fetches from clobbering the latest selection.
-        return ((): void => { isCancelled = true; }) as unknown as void;
+        return (): void =>
+        {
+            isCancelled = true;
+        };
     }, [selectedMessageRowId]);
 
-    return bodyState[0];
+    return messageBodyState[0];
 }
 //#endregion
 
@@ -134,9 +143,9 @@ function renderMessagePreviewRow(messageData: CoreType.MessageData, isSelected: 
     return element;
 }
 
-function renderMessageListSection(messageDatas: CoreType.MessageData[], selectedMessageRowIdState: SelectedMessageRowIdState, deletedMessageRowIdsState: DeletedMessageRowIdsState, psController: CoreType.PSController): ReactElement
+function renderMessageListSection(data: MessagesViewData): ReactElement
 {
-    if (messageDatas.length === 0)
+    if (data.visibleMessageDatas.length === 0)
     {
         const emptyElement: ReactElement =
         (
@@ -153,37 +162,37 @@ function renderMessageListSection(messageDatas: CoreType.MessageData[], selected
 
     const handleSelect = (messageRowId: number): void =>
     {
-        selectedMessageRowIdState[1](messageRowId);
+        data.selectedMessageRowIdState[1](messageRowId);
     };
 
     const handleDelete = (messageRowId: number): void =>
     {
-        const optimisticDeleted: Set<number> = new Set<number>(deletedMessageRowIdsState[0]);
+        const optimisticDeleted: Set<number> = new Set<number>(data.deletedMessageRowIdsState[0]);
         optimisticDeleted.add(messageRowId);
-        deletedMessageRowIdsState[1](optimisticDeleted);
+        data.deletedMessageRowIdsState[1](optimisticDeleted);
 
-        if (selectedMessageRowIdState[0] === messageRowId)
+        if (data.selectedMessageRowIdState[0] === messageRowId)
         {
-            selectedMessageRowIdState[1](null);
+            data.selectedMessageRowIdState[1](null);
         }
 
         const runDelete = async (): Promise<void> =>
         {
-            const errorMessage: string | null = await ClientRequestFunctions.clientTryDeleteMessageRequest(psController, messageRowId);
+            const errorMessage: string | null = await ClientRequestFunctions.clientTryDeleteMessageRequest(data.psController, messageRowId);
             if (errorMessage !== null)
             {
                 console.error("⚠️:", `Delete message ${messageRowId} failed: ${errorMessage}`);
-                const revertedDeleted: Set<number> = new Set<number>(deletedMessageRowIdsState[0]);
+                const revertedDeleted: Set<number> = new Set<number>(data.deletedMessageRowIdsState[0]);
                 revertedDeleted.delete(messageRowId);
-                deletedMessageRowIdsState[1](revertedDeleted);
+                data.deletedMessageRowIdsState[1](revertedDeleted);
             }
         };
         runDelete();
     };
 
-    const rowElements: ReactElement[] = messageDatas.map((messageData: CoreType.MessageData): ReactElement =>
+    const rowElements: ReactElement[] = data.visibleMessageDatas.map((messageData: CoreType.MessageData): ReactElement =>
     {
-        const isSelected: boolean = selectedMessageRowIdState[0] === messageData.messagePreview.messageRowId;
+        const isSelected: boolean = data.selectedMessageRowIdState[0] === messageData.messagePreview.messageRowId;
 
         return renderMessagePreviewRow(messageData, isSelected, handleSelect, handleDelete);
     });
@@ -201,68 +210,77 @@ function renderMessageListSection(messageDatas: CoreType.MessageData[], selected
     return element;
 }
 
-function renderMessageBodySection(messageDatas: CoreType.MessageData[], selectedMessageRowId: number | null, bodyState: MessageBodyState): ReactElement
+function renderMessageBodyPlaceholder(): ReactElement
 {
-    const containerClass: string = "w-full border border-gray-600 rounded p-3 text-sm text-white overflow-y-auto";
-    const containerStyle: { height: string } = { height: `${SECTION_HEIGHT_PX}px` };
+    const placeholderElement: ReactElement =
+    (
+        <div
+            className="w-full border border-gray-600 rounded p-3 text-sm text-white overflow-y-auto"
+            style={{ height: `${SECTION_HEIGHT_PX}px` }}
+        />
+    );
 
+    return placeholderElement;
+}
+
+function renderMessageBodyMessage(message: string): ReactElement
+{
+    const messageElement: ReactElement =
+    (
+        <div
+            className="w-full border border-gray-600 rounded p-3 text-sm text-white overflow-y-auto flex items-center justify-center text-gray-400"
+            style={{ height: `${SECTION_HEIGHT_PX}px` }}
+        >
+            {message}
+        </div>
+    );
+
+    return messageElement;
+}
+
+function renderMessageBodySection(data: MessagesViewData): ReactElement
+{
+    const selectedMessageRowId: number | null = data.selectedMessageRowIdState[0];
     if (selectedMessageRowId === null)
     {
-        const placeholderElement: ReactElement =
-        (
-            <div className={containerClass} style={containerStyle} />
-        );
-
-        return placeholderElement;
+        return renderMessageBodyPlaceholder();
     }
 
-    if (bodyState.isLoading === true)
+    if (data.messageBody.isLoading === true)
     {
-        const loadingElement: ReactElement =
-        (
-            <div
-                className={`${containerClass} flex items-center justify-center text-gray-400`}
-                style={containerStyle}
-            >
-                Loading message…
-            </div>
-        );
-
-        return loadingElement;
+        return renderMessageBodyMessage("Loading message…");
     }
 
-    if (bodyState.body === null)
+    if (data.messageBody.body === null)
     {
-        const missingElement: ReactElement =
-        (
-            <div
-                className={`${containerClass} flex items-center justify-center text-gray-400`}
-                style={containerStyle}
-            >
-                Could not load message.
-            </div>
-        );
-
-        return missingElement;
+        return renderMessageBodyMessage("Could not load message.");
     }
 
-    const selectedMessageData: CoreType.MessageData | null = MessageData.findMessageDataByMessageRowId(messageDatas, selectedMessageRowId);
-    const titleText: string = selectedMessageData !== null ? selectedMessageData.messagePreview.title : "";
-    const receivedAt: number | null = selectedMessageData !== null ? selectedMessageData.messagePreview.receivedAt : null;
+    const selectedMessageData: CoreType.MessageData | null = MessageData.findMessageDataByMessageRowId(data.visibleMessageDatas, selectedMessageRowId);
+    if (selectedMessageData === null)
+    {
+        // The selected preview disappeared between fetch start and now (e.g. deleted from another tab).
+        return renderMessageBodyPlaceholder();
+    }
+
+    const messagePreview: CoreType.MessagePreview = selectedMessageData.messagePreview;
 
     const element: ReactElement =
     (
-        <div className={`${containerClass} flex flex-col gap-2`} style={containerStyle}>
-            <div className="font-semibold">{titleText}</div>
-            {receivedAt !== null ? <div className="text-xs text-gray-400">{formatMessageTimestamp(receivedAt)}</div> : null}
-            <div className="whitespace-pre-wrap text-justify">{bodyState.body}</div>
+        <div
+            className="w-full border border-gray-600 rounded p-3 text-sm text-white overflow-y-auto flex flex-col gap-2"
+            style={{ height: `${SECTION_HEIGHT_PX}px` }}
+        >
+            <div className="font-semibold">{messagePreview.title}</div>
+            <div className="text-xs text-gray-400">{formatMessageTimestamp(messagePreview.receivedAt)}</div>
+            <div className="whitespace-pre-wrap text-justify">{data.messageBody.body}</div>
         </div>
     );
 
     return element;
 }
 
-function renderMessagesViewLayout(visibleMessageDatas: CoreType.MessageData[], selectedMessageRowIdState: SelectedMessageRowIdState, deletedMessageRowIdsState: DeletedMessageRowIdsState, bodyState: MessageBodyState, psController: CoreType.PSController): ReactElement
+function renderMessagesViewLayout(data: MessagesViewData): ReactElement
 {
     const element: ReactElement =
     (
@@ -275,7 +293,7 @@ function renderMessagesViewLayout(visibleMessageDatas: CoreType.MessageData[], s
                     className="px-3 shrink-0"
                     style={{ width: `${LIST_COLUMN_WIDTH_PX}px` }}
                 >
-                    {renderMessageListSection(visibleMessageDatas, selectedMessageRowIdState, deletedMessageRowIdsState, psController)}
+                    {renderMessageListSection(data)}
                 </div>
 
                 <div
@@ -287,7 +305,7 @@ function renderMessagesViewLayout(visibleMessageDatas: CoreType.MessageData[], s
                     className="px-3 shrink-0"
                     style={{ width: `${BODY_COLUMN_WIDTH_PX}px` }}
                 >
-                    {renderMessageBodySection(visibleMessageDatas, selectedMessageRowIdState[0], bodyState)}
+                    {renderMessageBodySection(data)}
                 </div>
             </div>
         </div>
@@ -301,14 +319,23 @@ export function MessagesView(props: MessagesViewProps): ReactElement
 {
     const selectedMessageRowIdState: SelectedMessageRowIdState = useState<number | null>(null);
     const deletedMessageRowIdsState: DeletedMessageRowIdsState = useState<Set<number>>(new Set<number>());
-
-    const allMessageDatas: CoreType.MessageData[] = props.clientDataStateResult.psController[0].predictedDBData.dynamicPlayerData.messageDatas;
-    const visibleMessageDatas: CoreType.MessageData[] = MessageData.buildVisibleMessageDatas(allMessageDatas, deletedMessageRowIdsState[0]);
-    const bodyState: MessageBodyState = useMessageBodyState(selectedMessageRowIdState[0]);
+    const messageBody: MessageBody = useMessageBody(selectedMessageRowIdState[0]);
 
     try
     {
-        return renderMessagesViewLayout(visibleMessageDatas, selectedMessageRowIdState, deletedMessageRowIdsState, bodyState, props.clientDataStateResult.psController);
+        const allMessageDatas: CoreType.MessageData[] = props.clientDataStateResult.psController[0].predictedDBData.dynamicPlayerData.messageDatas;
+        const visibleMessageDatas: CoreType.MessageData[] = MessageData.buildVisibleMessageDatas(allMessageDatas, deletedMessageRowIdsState[0]);
+
+        const messagesViewData: MessagesViewData =
+        {
+            visibleMessageDatas: visibleMessageDatas,
+            selectedMessageRowIdState: selectedMessageRowIdState,
+            deletedMessageRowIdsState: deletedMessageRowIdsState,
+            messageBody: messageBody,
+            psController: props.clientDataStateResult.psController,
+        }
+
+        return renderMessagesViewLayout(messagesViewData);
     }
     catch (error: unknown)
     {
