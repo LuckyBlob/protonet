@@ -204,6 +204,18 @@ function useIdState(max: number): [number, (value: number) => void, (e: ChangeEv
     return [idState[0], idState[1], handleQuantityChange];
 }
 
+function getFleetViewTargetAddress(data: FleetViewData): GameType.PlanetAddress
+{
+    const targetAddress: GameType.PlanetAddress =
+    {
+        galaxy: data.galaxyIdState[0],
+        system: data.systemIdState[0],
+        slot: data.slotIdState[0],
+    };
+
+    return targetAddress;
+}
+
 function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): ReactElement
 {
     const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
@@ -298,12 +310,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
 function renderFleetMaxResource(props: FleetViewProps, data: FleetViewData): ReactElement
 {
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
-    const targetAddress: GameType.PlanetAddress = 
-    {
-        galaxy: data.galaxyIdState[0],
-        system: data.systemIdState[0],
-        slot: data.slotIdState[0],
-    }
+    const targetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
     const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
     const totalShipsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedShipQuantitiesState.requestedQuantities);
 
@@ -361,13 +368,8 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: number, dat
     const ownedResourceQuantity: number = Math.floor(ResourceData.getResourceQuantity(data.planetData, resourceType));
 
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
-    const targetAddress: GameType.PlanetAddress = 
-    {
-        galaxy: data.galaxyIdState[0],
-        system: data.systemIdState[0],
-        slot: data.slotIdState[0],
-    }
-    
+    const targetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
+
     const fuelRequirements: Map<number, number> = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
     const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
     const totalFleetSpace: number = FleetData.calculateTotalFleetSpace(data.requestedShipQuantitiesState.requestedQuantities);
@@ -418,12 +420,7 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
 
     const totalShipsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedShipQuantitiesState.requestedQuantities);
 
-    const targetPlanetAddress: GameType.PlanetAddress =
-    {
-        galaxy: data.galaxyIdState[0],
-        system: data.systemIdState[0],
-        slot: data.slotIdState[0],
-    }
+    const targetPlanetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
 
     const targetPublicRow: DBType.PublicPlanetRow | undefined = props.clientDataStateResult.psController[0].dbData.publicPlanetRows.find((row: DBType.PublicPlanetRow): boolean =>
     {
@@ -442,19 +439,8 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
     });
 
     const isSelectedActionValid: boolean = validActionIds.includes(selectedAction);
-    const originAddress: GameType.PlanetAddress =
-    {
-        galaxy: data.planetData.planetRow.galaxy,
-        system: data.planetData.planetRow.system,
-        slot: data.planetData.planetRow.slot,
-    }
-    const targetAddress: GameType.PlanetAddress =
-    {
-        galaxy: data.galaxyIdState[0],
-        system: data.systemIdState[0],
-        slot: data.slotIdState[0],
-    }
-    const isSamePlanet: boolean = GameType.isSameAddress(originAddress, targetAddress);
+    const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
+    const isSamePlanet: boolean = GameType.isSameAddress(originAddress, targetPlanetAddress);
     const isSendDisabled: boolean = (totalShipsRequested === 0) || (isSelectedActionValid === false) || (isSamePlanet === true);
 
     const handleChange = (e: ChangeEvent<HTMLSelectElement>): void =>
