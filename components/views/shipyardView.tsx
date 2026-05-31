@@ -544,7 +544,7 @@ export function ShipyardView(props: ShipyardViewProps): ReactElement
     }
     catch (error: unknown)
     {
-        console.error("⚠️:", error);
+        console.error("⚠️:", "ShipyardView render failed:", error);
         return <HelperElements.EmptyElement />;
     }
 }
