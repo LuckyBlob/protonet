@@ -14,8 +14,9 @@ export const ActionRequest =
     BuildShips:   { endpoint: "buy/buildShips",   name: "BuildShips" },
     SendFleet:   { endpoint: "buy/sendFleet",   name: "SendFleet" },
     AbandonPlanet:   { endpoint: "planets/abandon",   name: "AbandonPlanet" },
+    DeleteMessage:   { endpoint: "message/delete",   name: "DeleteMessage" },
 } as const satisfies Record<string, validEndpoint>;
-export type ActionRequestMap = 
+export type ActionRequestMap =
 {
     Login: RequestType.BaseAuthenticationClientRequest;
     Register: RequestType.BaseAuthenticationClientRequest;
@@ -26,8 +27,9 @@ export type ActionRequestMap =
     BuildShips: RequestType.BuildShips_ClientRequest;
     SendFleet: RequestType.SendFleet_ClientRequest;
     AbandonPlanet: RequestType.AbandonPlanet_ClientRequest;
+    DeleteMessage: RequestType.DeleteMessage_ClientRequest;
 }
-export type ActionResponseMap = 
+export type ActionResponseMap =
 {
     Login: RequestType.BaseAuthenticationServerResponse;
     Register: RequestType.BaseAuthenticationServerResponse;
@@ -38,6 +40,7 @@ export type ActionResponseMap =
     BuildShips: RequestType.BuildShips_ServerResponse;
     SendFleet: RequestType.SendFleet_ServerResponse;
     AbandonPlanet: RequestType.AbandonPlanet_ServerResponse;
+    DeleteMessage: RequestType.DeleteMessage_ServerResponse;
 }
 //#endregion
 
@@ -49,14 +52,25 @@ export const DataRequest =
     ServerConfig: { endpoint: "serverDataState",       name: "ServerConfig" },
     AllPlanets: { endpoint: "planets/all",       name: "AllPlanets" },
     OwnedPlanets: { endpoint: "planets/owned",       name: "OwnedPlanets" },
+    Message: { endpoint: "message/get",       name: "Message" },
 } as const satisfies Record<string, validEndpoint>;
-export type DataResponseMap = 
+export type DataRequestMap =
+{
+    UserInfo: null;
+    PlayerData: null;
+    ServerConfig: null;
+    AllPlanets: null;
+    OwnedPlanets: null;
+    Message: RequestType.Message_ClientRequest;
+}
+export type DataResponseMap =
 {
     UserInfo: RequestType.UserRowRequest;
     PlayerData: RequestType.PlayerDataRequest;
     ServerConfig: RequestType.ServerDataStateRequest;
     AllPlanets: RequestType.AllPlanetDataRequest;
     OwnedPlanets: RequestType.OwnedPlanetDataRequest;
+    Message: RequestType.Message_ServerResponse;
 }
 //#endregion
 
@@ -88,4 +102,5 @@ type FindDataKeyByValueObject<TObject> =
 }[DataRequestKey];
 
 export type ResponseForData<T extends typeof DataRequest[DataRequestKey]> = DataResponseMap[FindDataKeyByValueObject<T>];
+export type RequestForData<T extends typeof DataRequest[DataRequestKey]> = DataRequestMap[FindDataKeyByValueObject<T>];
 //#endregion

@@ -146,6 +146,9 @@ export const FleetMovementResolution =
 
 export type MessageData =
 {
+	messageRowId: number;
+	receivedAt: number;
+	title: string;
 	messagePreview: MessagePreview,
 	messageRow: DBType.MessageRow,
 };
@@ -154,7 +157,6 @@ export type MessagePreview =
 {
 	isRead: boolean;
 	type: number;
-	title: string;
 	createdAt: number;
 };
 

@@ -3,11 +3,13 @@
 import * as RequestType from "@/lib/networkRequests/requestTypes";
 import * as APIEndPoint from "@/app/api/apiEndPoints"
 
-export async function requestServerData<K extends keyof APIEndPoint.DataResponseMap>(dataRequest: { name: K; endpoint: string }): Promise<APIEndPoint.DataResponseMap[K] | null>
+export async function requestServerData<K extends keyof APIEndPoint.DataResponseMap>(dataRequest: { name: K; endpoint: string }, urlSearchParams?: Record<string, string | number>): Promise<APIEndPoint.DataResponseMap[K] | null>
 {
     try
     {
-        const response: Response = await fetch(`/api/${dataRequest.endpoint}`);
+        const urlSearchSuffix: string = buildUrlSearchSuffix(urlSearchParams);
+        const requestUrl: string = `/api/${dataRequest.endpoint}${urlSearchSuffix}`;
+        const response: Response = await fetch(requestUrl);
         const parsed: unknown = await response.json();
         return handleServerDataResponse<K>(parsed, dataRequest.name);
     }
@@ -18,9 +20,25 @@ export async function requestServerData<K extends keyof APIEndPoint.DataResponse
             error: `Unknown ${dataRequest.name} error.`,
         } as APIEndPoint.DataResponseMap[K]
 
-		console.error("⚠️:", error); 
+		console.error("⚠️:", error);
         return responseFailure;
     }
+}
+
+function buildUrlSearchSuffix(urlSearchParams: Record<string, string | number> | undefined): string
+{
+    if (urlSearchParams === undefined)
+    {
+        return "";
+    }
+
+    const params: URLSearchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(urlSearchParams))
+    {
+        params.set(key, String(value));
+    }
+
+    return `?${params.toString()}`;
 }
 
 function handleServerDataResponse<K extends keyof APIEndPoint.DataResponseMap>(parsed: unknown, actionName: string): APIEndPoint.DataResponseMap[K]

@@ -117,6 +117,67 @@ export async function serverTryPlayerDataRequest(): Promise<NextResponse>
     }, { status: 200 });
 }
 
+export async function serverTryMessageRequest(request: Request): Promise<NextResponse>
+{
+    const errorResponse: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.Message> =
+    {
+        error: "Unknown error.",
+        messageRow: null,
+    };
+
+    const user: DBType.UserRow | null = await Auth.getCurrentUser();
+    if (user === null)
+    {
+        errorResponse.error = "Not logged in.";
+        return NextResponse.json(errorResponse, { status: 401 });
+    }
+
+    const player: DBType.PlayerRow | null = serverFindPlayerByUserId(user.id);
+    if (player === null)
+    {
+        errorResponse.error = "Player not found.";
+        return NextResponse.json(errorResponse, { status: 404 });
+    }
+
+    const requestUrl: URL = new URL(request.url);
+    const messageRowIdParam: string | null = requestUrl.searchParams.get("messageRowId");
+    if (messageRowIdParam === null)
+    {
+        errorResponse.error = "Missing messageRowId.";
+        return NextResponse.json(errorResponse, { status: 400 });
+    }
+
+    const messageRowId: number = Number.parseInt(messageRowIdParam, 10);
+    if (Number.isNaN(messageRowId) === true)
+    {
+        errorResponse.error = `Invalid messageRowId: ${messageRowIdParam}.`;
+        return NextResponse.json(errorResponse, { status: 400 });
+    }
+
+    let messageRow: DBType.MessageRow | null;
+    try
+    {
+        messageRow = serverGetMessageRow(messageRowId, player.id);
+    }
+    catch (error: unknown)
+    {
+        errorResponse.error = error instanceof Error ? error.message : String(error);
+        return NextResponse.json(errorResponse, { status: 500 });
+    }
+
+    if (messageRow === null)
+    {
+        errorResponse.error = `Message not found for messageRowId ${messageRowId}.`;
+        return NextResponse.json(errorResponse, { status: 404 });
+    }
+
+    return NextResponse.json<APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.Message>>(
+    {
+        error: null,
+        messageRow: messageRow,
+    }, { status: 200 });
+}
+
 export async function serverTryServerConfigRequest(): Promise<NextResponse>
 {
     const errorResponse: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.ServerConfig> =
@@ -384,6 +445,24 @@ export async function serverTryRefreshServerRequest(): Promise<NextResponse>
 //#endregion
 
 //#region DB functions
+
+export function serverGetMessageRow(messageRowId: number, playerId: number): DBType.MessageRow | null
+{
+    const messageRow: DBType.MessageRow | undefined = DB.databaseConnection.prepare(
+        "SELECT * FROM message WHERE id = ? AND player_id = ?"
+    ).get(messageRowId, playerId) as DBType.MessageRow | undefined;
+
+    return messageRow ?? null;
+}
+
+export function serverDeleteMessageRow(messageRowId: number, playerId: number): boolean
+{
+    const result: { changes: number } = DB.databaseConnection.prepare(
+        "DELETE FROM message WHERE id = ? AND player_id = ?"
+    ).run(messageRowId, playerId) as { changes: number };
+
+    return result.changes > 0;
+}
 
 export function serverFindPlayerByUserId(userId: number): DBType.PlayerRow | null
 {
@@ -1038,6 +1117,37 @@ export function tryBuildShipsLogic(playerId: number, serverData: CoreType.Server
         }
         return playerActionResult;
     })();
+
+    return playerActionResult;
+}
+
+export function tryDeleteMessageLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.DeleteMessage>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    let didDelete: boolean = false;
+    try
+    {
+        didDelete = serverDeleteMessageRow(requestData.messageRowId, playerId);
+    }
+    catch (error: unknown)
+    {
+        const errorMessage: string = error instanceof Error ? error.message : String(error);
+        return { success: false, failureReason: `Failed to delete messageRowId ${requestData.messageRowId}: ${errorMessage}`, playerStateResult: playerData };
+    }
+
+    if (didDelete === false)
+    {
+        return { success: false, failureReason: `Message not found for messageRowId ${requestData.messageRowId}.`, playerStateResult: playerData };
+    }
+
+    const playerActionResult: PlayerActionResult =
+    {
+        success: true,
+        failureReason: null,
+        playerStateResult: serverGetPlayerData(playerId),
+    }
 
     return playerActionResult;
 }

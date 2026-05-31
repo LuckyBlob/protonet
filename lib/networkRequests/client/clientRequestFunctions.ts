@@ -45,6 +45,11 @@ export async function clientTryPlayerDataRequest(psController: CoreType.PSContro
     await setPlayerState(psController, playerData);
 }
 
+export async function clientTryMessageRequest(messageRowId: number): Promise<APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.Message> | null>
+{
+    return ServerRequest.requestServerData(APIEndPoint.DataRequest.Message, { messageRowId: messageRowId });
+}
+
 export async function clientTryServerConfigRequest(sdsController: CoreType.SDSController): Promise<void>
 {
     const response: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.ServerConfig> | null = await ServerRequest.requestServerData(APIEndPoint.DataRequest.ServerConfig);
@@ -258,6 +263,41 @@ export async function clientTrySendFleetRequest(psController: CoreType.PSControl
         if (response.serializedPlayerData == null)
         {
             throw new Error(`Send fleet failed for planetId ${originPlanetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+        return null;
+    }
+    catch (error: unknown)
+    {
+        if (error instanceof Error)
+        {
+            return error.message;
+        }
+
+        return String(error);
+    }
+}
+
+export async function clientTryDeleteMessageRequest(psController: CoreType.PSController, messageRowId: number): Promise<string | null>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.DeleteMessage> =
+    {
+        messageRowId: messageRowId,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DeleteMessage> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.DeleteMessage, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Delete message failed for messageRowId ${messageRowId}: Invalid response from server.`);
         }
 
         const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);

@@ -4,7 +4,10 @@ import { ReactElement, MouseEvent, useEffect, useState } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/gameplayData/dynamic/messageData";
+import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
+import * as APIEndPoint from "@/app/api/apiEndPoints";
 import * as HelperElements from "@/components/helperElements";
 
 type MessagesViewProps =
@@ -18,38 +21,33 @@ type MessageBodyState =
     body: string | null;
 };
 
-type SelectedCreatedAtState = [number | null, (value: number | null) => void];
+type SelectedMessageRowIdState = [number | null, (value: number | null) => void];
 type BodyState = [MessageBodyState, (value: MessageBodyState) => void];
-type DeletedCreatedAtsState = [Set<number>, (value: Set<number>) => void];
+type DeletedMessageRowIdsState = [Set<number>, (value: Set<number>) => void];
 
 const MESSAGE_ROW_HEIGHT_PX: number = 48;
 const MESSAGE_ROW_GAP_PX: number = 8;
 const SECTION_HEIGHT_PX: number = (MessageData.VISIBLE_MESSAGE_ROW_COUNT * MESSAGE_ROW_HEIGHT_PX) + ((MessageData.VISIBLE_MESSAGE_ROW_COUNT - 1) * MESSAGE_ROW_GAP_PX);
 const LAYOUT_WIDTH_PX: number = 720;
+const LIST_COLUMN_WIDTH_PX: number = Math.floor(LAYOUT_WIDTH_PX / 3);
+const BODY_COLUMN_WIDTH_PX: number = LAYOUT_WIDTH_PX - LIST_COLUMN_WIDTH_PX;
 
 //#region pure helpers
-function formatMessageTimestamp(createdAt: number): string
+function formatMessageTimestamp(epochMs: number): string
 {
-    const date: Date = new Date(createdAt);
+    const date: Date = new Date(epochMs);
     return date.toLocaleString();
 }
 //#endregion
 
 //#region state hooks
-function useMessageBodyState(messageDatas: CoreType.MessageData[], selectedCreatedAt: number | null): MessageBodyState
+function useMessageBodyState(selectedMessageRowId: number | null): MessageBodyState
 {
     const bodyState: BodyState = useState<MessageBodyState>({ isLoading: false, body: null });
 
-    useEffect((): (() => void) | void =>
+    useEffect((): void =>
     {
-        if (selectedCreatedAt === null)
-        {
-            bodyState[1]({ isLoading: false, body: null });
-            return;
-        }
-
-        const selectedMessageData: CoreType.MessageData | null = MessageData.findMessageDataByCreatedAt(messageDatas, selectedCreatedAt);
-        if (selectedMessageData === null)
+        if (selectedMessageRowId === null)
         {
             bodyState[1]({ isLoading: false, body: null });
             return;
@@ -57,28 +55,43 @@ function useMessageBodyState(messageDatas: CoreType.MessageData[], selectedCreat
 
         bodyState[1]({ isLoading: true, body: null });
 
-        const bodyToLoad: string = selectedMessageData.messageRow.body;
-        const timeoutId: ReturnType<typeof setTimeout> = setTimeout((): void =>
+        let isCancelled: boolean = false;
+        const runFetch = async (): Promise<void> =>
         {
-            bodyState[1]({ isLoading: false, body: bodyToLoad });
-        }, MessageData.SIMULATED_BODY_FETCH_DELAY_MS);
+            const response: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.Message> | null = await ClientRequestFunctions.clientTryMessageRequest(selectedMessageRowId);
+            if (isCancelled === true)
+            {
+                return;
+            }
 
-        return (): void =>
-        {
-            clearTimeout(timeoutId);
+            // Use != instead of !== here to catch everything that's very weird.
+            if (response === null || response.error != null || response.messageRow == null)
+            {
+                console.error("⚠️:", `Failed to fetch messageRowId ${selectedMessageRowId}.`);
+                bodyState[1]({ isLoading: false, body: null });
+                return;
+            }
+
+            const messageRow: DBType.MessageRow = response.messageRow;
+            bodyState[1]({ isLoading: false, body: messageRow.body });
         };
-    }, [selectedCreatedAt]);
+        runFetch();
+
+        // Cancel-on-unmount / selection-change guard via closure flag instead of returning a cleanup.
+        // We don't have a real abort signal yet; this prevents stale fetches from clobbering the latest selection.
+        return ((): void => { isCancelled = true; }) as unknown as void;
+    }, [selectedMessageRowId]);
 
     return bodyState[0];
 }
 //#endregion
 
 //#region rendering helpers
-function renderMessagePreviewRow(messageData: CoreType.MessageData, isSelected: boolean, onSelect: (createdAt: number) => void, onDelete: (createdAt: number) => void): ReactElement
+function renderMessagePreviewRow(messageData: CoreType.MessageData, isSelected: boolean, onSelect: (messageRowId: number) => void, onDelete: (messageRowId: number) => void): ReactElement
 {
     const messagePreview: CoreType.MessagePreview = messageData.messagePreview;
     const isUnread: boolean = messagePreview.isRead === false;
-    const createdAt: number = messagePreview.createdAt;
+    const messageRowId: number = messageData.messageRowId;
 
     const titleWeightClass: string = isUnread === true
         ? "font-bold"
@@ -89,30 +102,29 @@ function renderMessagePreviewRow(messageData: CoreType.MessageData, isSelected: 
 
     const handleClick = (): void =>
     {
-        onSelect(createdAt);
+        onSelect(messageRowId);
     };
 
     const handleDeleteClick = (e: MouseEvent<HTMLButtonElement>): void =>
     {
         e.stopPropagation();
-        onDelete(createdAt);
+        onDelete(messageRowId);
     };
 
     const element: ReactElement =
     (
         <div
-            key={createdAt}
+            key={messageRowId}
             onClick={handleClick}
-            className={`flex flex-row items-center gap-2 px-3 py-2 border border-gray-600 rounded text-sm text-white text-left w-full cursor-pointer ${selectedClass}`}
+            className={`flex flex-row items-center gap-2 px-3 py-2 border border-gray-600 rounded text-sm text-white text-left w-full cursor-pointer overflow-hidden ${selectedClass}`}
             style={{ height: `${MESSAGE_ROW_HEIGHT_PX}px` }}
         >
-            <span className={`flex-1 truncate ${titleWeightClass}`}>{messagePreview.title}</span>
-            <span className="text-xs text-gray-400 whitespace-nowrap">{formatMessageTimestamp(createdAt)}</span>
+            <span className={`flex-1 min-w-0 truncate ${titleWeightClass}`}>{messageData.title}</span>
             <button
                 type="button"
                 onClick={handleDeleteClick}
                 aria-label="Delete message"
-                className="text-gray-300 hover:text-red-400 px-2 font-bold"
+                className="text-gray-300 hover:text-red-400 px-2 font-bold shrink-0"
             >
                 ✕
             </button>
@@ -122,7 +134,7 @@ function renderMessagePreviewRow(messageData: CoreType.MessageData, isSelected: 
     return element;
 }
 
-function renderMessageListSection(messageDatas: CoreType.MessageData[], selectedCreatedAtState: SelectedCreatedAtState, deletedCreatedAtsState: DeletedCreatedAtsState): ReactElement
+function renderMessageListSection(messageDatas: CoreType.MessageData[], selectedMessageRowIdState: SelectedMessageRowIdState, deletedMessageRowIdsState: DeletedMessageRowIdsState, psController: CoreType.PSController): ReactElement
 {
     if (messageDatas.length === 0)
     {
@@ -139,26 +151,39 @@ function renderMessageListSection(messageDatas: CoreType.MessageData[], selected
         return emptyElement;
     }
 
-    const handleSelect = (createdAt: number): void =>
+    const handleSelect = (messageRowId: number): void =>
     {
-        selectedCreatedAtState[1](createdAt);
+        selectedMessageRowIdState[1](messageRowId);
     };
 
-    const handleDelete = (createdAt: number): void =>
+    const handleDelete = (messageRowId: number): void =>
     {
-        const updatedDeleted: Set<number> = new Set<number>(deletedCreatedAtsState[0]);
-        updatedDeleted.add(createdAt);
-        deletedCreatedAtsState[1](updatedDeleted);
+        const optimisticDeleted: Set<number> = new Set<number>(deletedMessageRowIdsState[0]);
+        optimisticDeleted.add(messageRowId);
+        deletedMessageRowIdsState[1](optimisticDeleted);
 
-        if (selectedCreatedAtState[0] === createdAt)
+        if (selectedMessageRowIdState[0] === messageRowId)
         {
-            selectedCreatedAtState[1](null);
+            selectedMessageRowIdState[1](null);
         }
+
+        const runDelete = async (): Promise<void> =>
+        {
+            const errorMessage: string | null = await ClientRequestFunctions.clientTryDeleteMessageRequest(psController, messageRowId);
+            if (errorMessage !== null)
+            {
+                console.error("⚠️:", `Delete message ${messageRowId} failed: ${errorMessage}`);
+                const revertedDeleted: Set<number> = new Set<number>(deletedMessageRowIdsState[0]);
+                revertedDeleted.delete(messageRowId);
+                deletedMessageRowIdsState[1](revertedDeleted);
+            }
+        };
+        runDelete();
     };
 
     const rowElements: ReactElement[] = messageDatas.map((messageData: CoreType.MessageData): ReactElement =>
     {
-        const isSelected: boolean = selectedCreatedAtState[0] === messageData.messagePreview.createdAt;
+        const isSelected: boolean = selectedMessageRowIdState[0] === messageData.messageRowId;
 
         return renderMessagePreviewRow(messageData, isSelected, handleSelect, handleDelete);
     });
@@ -176,12 +201,12 @@ function renderMessageListSection(messageDatas: CoreType.MessageData[], selected
     return element;
 }
 
-function renderMessageBodySection(messageDatas: CoreType.MessageData[], selectedCreatedAt: number | null, bodyState: MessageBodyState): ReactElement
+function renderMessageBodySection(messageDatas: CoreType.MessageData[], selectedMessageRowId: number | null, bodyState: MessageBodyState): ReactElement
 {
     const containerClass: string = "w-full border border-gray-600 rounded p-3 text-sm text-white overflow-y-auto";
     const containerStyle: { height: string } = { height: `${SECTION_HEIGHT_PX}px` };
 
-    if (selectedCreatedAt === null)
+    if (selectedMessageRowId === null)
     {
         const placeholderElement: ReactElement =
         (
@@ -206,51 +231,63 @@ function renderMessageBodySection(messageDatas: CoreType.MessageData[], selected
         return loadingElement;
     }
 
-    const selectedMessageData: CoreType.MessageData | null = MessageData.findMessageDataByCreatedAt(messageDatas, selectedCreatedAt);
-    if (selectedMessageData === null || bodyState.body === null)
+    if (bodyState.body === null)
     {
         const missingElement: ReactElement =
         (
-            <div className={containerClass} style={containerStyle} />
+            <div
+                className={`${containerClass} flex items-center justify-center text-gray-400`}
+                style={containerStyle}
+            >
+                Could not load message.
+            </div>
         );
 
         return missingElement;
     }
 
-    const messagePreview: CoreType.MessagePreview = selectedMessageData.messagePreview;
+    const selectedMessageData: CoreType.MessageData | null = MessageData.findMessageDataByMessageRowId(messageDatas, selectedMessageRowId);
+    const titleText: string = selectedMessageData !== null ? selectedMessageData.title : "";
+    const receivedAt: number | null = selectedMessageData !== null ? selectedMessageData.receivedAt : null;
 
     const element: ReactElement =
     (
         <div className={`${containerClass} flex flex-col gap-2`} style={containerStyle}>
-            <div className="font-semibold">{messagePreview.title}</div>
-            <div className="text-xs text-gray-400">{formatMessageTimestamp(messagePreview.createdAt)}</div>
-            <div className="whitespace-pre-wrap">{bodyState.body}</div>
+            <div className="font-semibold">{titleText}</div>
+            {receivedAt !== null ? <div className="text-xs text-gray-400">{formatMessageTimestamp(receivedAt)}</div> : null}
+            <div className="whitespace-pre-wrap text-justify">{bodyState.body}</div>
         </div>
     );
 
     return element;
 }
 
-function renderMessagesViewLayout(visibleMessageDatas: CoreType.MessageData[], selectedCreatedAtState: SelectedCreatedAtState, deletedCreatedAtsState: DeletedCreatedAtsState, bodyState: MessageBodyState): ReactElement
+function renderMessagesViewLayout(visibleMessageDatas: CoreType.MessageData[], selectedMessageRowIdState: SelectedMessageRowIdState, deletedMessageRowIdsState: DeletedMessageRowIdsState, bodyState: MessageBodyState, psController: CoreType.PSController): ReactElement
 {
     const element: ReactElement =
     (
-        <div className="w-full flex justify-center pt-4">
+        <div className="w-full flex flex-row justify-start pt-4 pl-8">
             <div
-                className="flex flex-row items-start"
-                style={{ width: `${LAYOUT_WIDTH_PX}px`, maxWidth: "100%" }}
+                className="flex flex-row items-start shrink-0"
+                style={{ width: `${LAYOUT_WIDTH_PX}px` }}
             >
-                <div className="w-1/3 px-3">
-                    {renderMessageListSection(visibleMessageDatas, selectedCreatedAtState, deletedCreatedAtsState)}
+                <div
+                    className="px-3 shrink-0"
+                    style={{ width: `${LIST_COLUMN_WIDTH_PX}px` }}
+                >
+                    {renderMessageListSection(visibleMessageDatas, selectedMessageRowIdState, deletedMessageRowIdsState, psController)}
                 </div>
 
                 <div
-                    className="w-px bg-gray-400"
+                    className="w-px bg-gray-400 shrink-0"
                     style={{ height: `${SECTION_HEIGHT_PX}px` }}
                 />
 
-                <div className="w-2/3 px-3">
-                    {renderMessageBodySection(visibleMessageDatas, selectedCreatedAtState[0], bodyState)}
+                <div
+                    className="px-3 shrink-0"
+                    style={{ width: `${BODY_COLUMN_WIDTH_PX}px` }}
+                >
+                    {renderMessageBodySection(visibleMessageDatas, selectedMessageRowIdState[0], bodyState)}
                 </div>
             </div>
         </div>
@@ -262,16 +299,16 @@ function renderMessagesViewLayout(visibleMessageDatas: CoreType.MessageData[], s
 
 export function MessagesView(props: MessagesViewProps): ReactElement
 {
-    const selectedCreatedAtState: SelectedCreatedAtState = useState<number | null>(null);
-    const deletedCreatedAtsState: DeletedCreatedAtsState = useState<Set<number>>(new Set<number>());
+    const selectedMessageRowIdState: SelectedMessageRowIdState = useState<number | null>(null);
+    const deletedMessageRowIdsState: DeletedMessageRowIdsState = useState<Set<number>>(new Set<number>());
 
     const allMessageDatas: CoreType.MessageData[] = props.clientDataStateResult.psController[0].predictedDBData.dynamicPlayerData.messageDatas;
-    const visibleMessageDatas: CoreType.MessageData[] = MessageData.buildVisibleMessageDatas(allMessageDatas, deletedCreatedAtsState[0]);
-    const bodyState: MessageBodyState = useMessageBodyState(visibleMessageDatas, selectedCreatedAtState[0]);
+    const visibleMessageDatas: CoreType.MessageData[] = MessageData.buildVisibleMessageDatas(allMessageDatas, deletedMessageRowIdsState[0]);
+    const bodyState: MessageBodyState = useMessageBodyState(selectedMessageRowIdState[0]);
 
     try
     {
-        return renderMessagesViewLayout(visibleMessageDatas, selectedCreatedAtState, deletedCreatedAtsState, bodyState);
+        return renderMessagesViewLayout(visibleMessageDatas, selectedMessageRowIdState, deletedMessageRowIdsState, bodyState, props.clientDataStateResult.psController);
     }
     catch (error: unknown)
     {

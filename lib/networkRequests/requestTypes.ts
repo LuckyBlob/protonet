@@ -33,6 +33,15 @@ export type OwnedPlanetDataRequest = BaseServerResponse &
 {
 	planetDatas: CoreType.PlanetData[];
 }
+
+export type Message_ClientRequest = BaseClientRequest &
+{
+	messageRowId: number;
+}
+export type Message_ServerResponse = BaseServerResponse &
+{
+	messageRow: DBType.MessageRow | null;
+}
 //#endregion
 
 //#region Action requests
@@ -94,6 +103,15 @@ export type AbandonPlanet_ClientRequest = BaseClientRequest &
 	planetId: number;
 };
 export type AbandonPlanet_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
+export type DeleteMessage_ClientRequest = BaseClientRequest &
+{
+	messageRowId: number;
+};
+export type DeleteMessage_ServerResponse = BaseServerResponse &
 {
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
