@@ -492,9 +492,17 @@ function renderPreviewSlot(previewContent: ReactElement | null, buildButton: Rea
 //#region state + handlers
 function createBuildShipsHandler(props: ShipyardViewProps, planetData: CoreType.PlanetData, requestedQuantities: Map<number, number>, resetRequestedQuantities: () => void): () => void
 {
-    return () =>
+    return (): void =>
     {
-        ClientRequestFunctions.clientTryBuildShipsRequest(props.clientDataStateResult.psController, planetData.planetRow.id, requestedQuantities);
+        const runBuild = async (): Promise<void> =>
+        {
+            const errorMessage: string | null = await ClientRequestFunctions.clientTryBuildShipsRequest(props.clientDataStateResult.psController, planetData.planetRow.id, requestedQuantities);
+            if (errorMessage !== null)
+            {
+                console.error("⚠️:", `Build ships failed for planetId ${planetData.planetRow.id}: ${errorMessage}`);
+            }
+        };
+        runBuild();
         resetRequestedQuantities();
     };
 }
