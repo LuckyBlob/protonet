@@ -942,9 +942,9 @@ export function tryBuildShipsLogic(playerId: number, serverData: CoreType.Server
             return { success: false, failureReason: "A ship doesn't meet requirements.", playerStateResult: playerData };
         }
 
-        if (shipQuantity < 0)
+        if (shipQuantity <= 0)
         {
-            return { success: false, failureReason: "Negative ship quantity.", playerStateResult: playerData };
+            return { success: false, failureReason: "Non-positive ship quantity.", playerStateResult: playerData };
         }
     }
 
