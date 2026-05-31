@@ -154,6 +154,8 @@ export type MessagePreview =
 {
 	isRead: boolean;
 	type: number;
+	title: string;
+	createdAt: number;
 };
 
 export function isPlayerData(value: PlayerData | PlanetData): value is PlayerData
