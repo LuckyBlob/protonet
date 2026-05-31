@@ -536,7 +536,7 @@ function createPlayer(userId: number): boolean
     }
     catch (error: unknown)
     {
-        console.error("⚠️:", error);
+        console.error("⚠️:", `createPlayer failed for userId ${userId}:`, error);
         return false;
     }
 }

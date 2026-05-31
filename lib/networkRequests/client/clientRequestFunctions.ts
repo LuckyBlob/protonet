@@ -140,7 +140,7 @@ export async function clientTryLogoutRequest(): Promise<APIEndPoint.ResponseForA
     }
     catch (error: unknown)
     {
-        console.error("⚠️:", error);
+        console.error("⚠️:", "clientTryLogoutRequest failed:", error);
         return null;
     }
 }
