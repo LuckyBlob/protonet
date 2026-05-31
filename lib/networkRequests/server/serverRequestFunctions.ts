@@ -25,6 +25,7 @@ import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
 import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipConstructionData";
 import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
 import * as MathHelp from "@/lib/helper/mathHelp";
+import * as ServerError from "@/lib/networkRequests/server/serverErrors";
 //#region Types
 
 type PlayerActionResult =
@@ -46,107 +47,98 @@ type PlayerStateActionResponse =
 
 export async function serverTryUserInfoRequest(): Promise<NextResponse>
 {
-    const errorResponse: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.UserInfo> =
+    const errorResponseTemplate: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.UserInfo> =
     {
         error: "Unknown error.",
         userRow: null,
     };
 
-    let currentUserRow: DBType.UserRow | null = null;
     try
     {
-        currentUserRow = await Auth.getCurrentUser();
+        const currentUserRow: DBType.UserRow | null = await Auth.getCurrentUser();
         if (currentUserRow === null)
         {
-            errorResponse.error = "Didn't find user.";
-            return NextResponse.json(errorResponse, { status: 401 });
+            throw new ServerError.AuthError("Didn't find user.");
         }
+
+        return NextResponse.json<APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.UserInfo>>(
+        {
+            error: null,
+            userRow: { ...currentUserRow, password_hash: "" },
+        }, { status: 200 });
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
-        return NextResponse.json(errorResponse, { status: 500 });
+        return ServerError.respondWithError(error, errorResponseTemplate);
     }
-
-    return NextResponse.json<APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.UserInfo>>(
-    {
-        error: null,
-        userRow: { ...currentUserRow, password_hash: "" },
-    }, { status: 200 });
 }
 
 export async function serverTryPlayerDataRequest(): Promise<NextResponse>
 {
-    const errorResponse: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.PlayerData> =
+    const errorResponseTemplate: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.PlayerData> =
     {
         error: "Unknown error.",
         serializedPlayerData: null,
     };
 
-    const user: DBType.UserRow | null = await Auth.getCurrentUser();
-    if (user === null)
-    {
-        errorResponse.error = "Not logged in.";
-        return NextResponse.json(errorResponse, { status: 401 });
-    }
-
-    let serializedPlayerData: Serialization.SerializedPlayerData;
     try
     {
+        const user: DBType.UserRow | null = await Auth.getCurrentUser();
+        if (user === null)
+        {
+            throw new ServerError.AuthError("Not logged in.");
+        }
+
         const player: DBType.PlayerRow | null = serverFindPlayerByUserId(user.id);
         if (player === null)
         {
-            errorResponse.error = "Player not found.";
-            return NextResponse.json(errorResponse, { status: 404 });
+            throw new ServerError.NotFoundError("Player not found.");
         }
 
         const serverData: CoreType.ServerData = ServerType.getServerData();
         const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(player.id, serverData, Date.now());
-        serializedPlayerData = Serialization.serializePlayerData(playerData);
+        const serializedPlayerData: Serialization.SerializedPlayerData = Serialization.serializePlayerData(playerData);
+
+        return NextResponse.json<APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.PlayerData>>(
+        {
+            error: null,
+            serializedPlayerData: serializedPlayerData,
+        }, { status: 200 });
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
-        return NextResponse.json(errorResponse, { status: 500 });
+        return ServerError.respondWithError(error, errorResponseTemplate);
     }
-
-    return NextResponse.json<APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.PlayerData>>(
-    {
-        error: null,
-        serializedPlayerData: serializedPlayerData,
-    }, { status: 200 });
 }
 
 export async function serverTryServerConfigRequest(): Promise<NextResponse>
 {
-    const errorResponse: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.ServerConfig> =
+    const errorResponseTemplate: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.ServerConfig> =
     {
         error: "Unknown error.",
         serverData: null,
     };
 
-    let serverData: CoreType.ServerData;
     try
     {
-        serverData = ServerType.getServerData();
+        const serverData: CoreType.ServerData = ServerType.getServerData();
+
+        return NextResponse.json<APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.ServerConfig>>(
+        {
+            error: null,
+            serverData: serverData,
+        }, { status: 200 });
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
-        return NextResponse.json(errorResponse, { status: 500 });
+        return ServerError.respondWithError(error, errorResponseTemplate);
     }
-
-    return NextResponse.json<APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.ServerConfig>>(
-    {
-        error: null,
-        serverData: serverData,
-    }, { status: 200 });
 }
 
 export async function serverTryLoginRequest(request: Request): Promise<NextResponse>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Login> = await request.json();
-    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Login> =
+    const errorResponseTemplate: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Login> =
     {
         error: "Unknown error.",
         username: clientRequest.username,
@@ -157,15 +149,13 @@ export async function serverTryLoginRequest(request: Request): Promise<NextRespo
         const user: DBType.UserRow | null = Auth.findUserByUsername(clientRequest.username);
         if (user === null)
         {
-            errorResponse.error = "Invalid username or password.";
-            return NextResponse.json(errorResponse, { status: 401 });
+            throw new ServerError.AuthError("Invalid username or password.");
         }
 
         const passwordIsValid: boolean = await Auth.verifyPassword(clientRequest.password, user.password_hash);
         if (passwordIsValid === false)
         {
-            errorResponse.error = "Invalid username or password.";
-            return NextResponse.json(errorResponse, { status: 401 });
+            throw new ServerError.AuthError("Invalid username or password.");
         }
 
         const session: DBType.SessionRow = Auth.createSession(user.id);
@@ -178,24 +168,23 @@ export async function serverTryLoginRequest(request: Request): Promise<NextRespo
             maxAge: Auth.sessionDurationSeconds,
             path: "/",
         });
+
+        return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Login>>(
+        {
+            error: null,
+            username: clientRequest.username,
+        }, { status: 200 });
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
-        return NextResponse.json(errorResponse, { status: 500 });
+        return ServerError.respondWithError(error, errorResponseTemplate);
     }
-
-    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Login>>(
-    {
-        error: null,
-        username: clientRequest.username,
-    }, { status: 200 });
 }
 
 export async function serverTryRegisterRequest(request: Request): Promise<NextResponse>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Register> = await request.json();
-    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register> =
+    const errorResponseTemplate: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register> =
     {
         error: "Unknown error.",
         username: clientRequest.username,
@@ -205,15 +194,13 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
     {
         if ((clientRequest.username.length < 3) || (clientRequest.password.length < 6))
         {
-            errorResponse.error = "Username must be 3+ chars, password 6+ chars.";
-            return NextResponse.json(errorResponse, { status: 400 });
+            throw new ServerError.ValidationError("Username must be 3+ chars, password 6+ chars.");
         }
 
         const existingUser: DBType.UserRow | null = Auth.findUserByUsername(clientRequest.username);
         if (existingUser !== null)
         {
-            errorResponse.error = "Username already taken.";
-            return NextResponse.json(errorResponse, { status: 400 });
+            throw new ServerError.ValidationError("Username already taken.");
         }
 
         const passwordHash: string = await Auth.hashPassword(clientRequest.password);
@@ -223,8 +210,7 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
         if (playerCreated === false)
         {
             Auth.deleteUser(newUser.id);
-            errorResponse.error = "Failed to create player.";
-            return NextResponse.json(errorResponse, { status: 500 });
+            throw new Error(`Failed to create player for newUserId ${newUser.id}.`);
         }
 
         const session: DBType.SessionRow = Auth.createSession(newUser.id);
@@ -237,34 +223,32 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
             maxAge: Auth.sessionDurationSeconds,
             path: "/",
         });
+
+        return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register>>(
+        {
+            error: null,
+            username: clientRequest.username,
+        }, { status: 200 });
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
-        return NextResponse.json(errorResponse, { status: 500 });
+        return ServerError.respondWithError(error, errorResponseTemplate);
     }
-
-    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register>>(
-    {
-        error: null,
-        username: clientRequest.username,
-    }, { status: 200 });
 }
 
 export async function serverTryDeleteUserRequest(request: Request): Promise<NextResponse>
 {
-    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DeleteUser> =
+    const errorResponseTemplate: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DeleteUser> =
     {
         error: "Unknown error.",
     };
 
     try
     {
-        const currentUser : DBType.UserRow | null = await Auth.getCurrentUser();
+        const currentUser: DBType.UserRow | null = await Auth.getCurrentUser();
         if (currentUser === null)
         {
-            errorResponse.error = "Not logged in.";
-            return NextResponse.json(errorResponse, { status: 401 });
+            throw new ServerError.AuthError("Not logged in.");
         }
 
         const playerRow: DBType.PlayerRow | null = serverFindPlayerByUserId(currentUser.id);
@@ -286,22 +270,21 @@ export async function serverTryDeleteUserRequest(request: Request): Promise<Next
         }
 
         Auth.deleteUser(currentUser.id);
+
+        return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DeleteUser>>(
+        {
+            error: null,
+        }, { status: 200 });
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
-        return NextResponse.json(errorResponse, { status: 500 });
+        return ServerError.respondWithError(error, errorResponseTemplate);
     }
-
-    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DeleteUser>>(
-    {
-        error: null,
-    }, { status: 200 });
 }
 
 export async function serverTryLogoutRequest(): Promise<NextResponse>
 {
-    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout> =
+    const errorResponseTemplate: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout> =
     {
         error: "Unknown error.",
         username: "",
@@ -316,69 +299,64 @@ export async function serverTryLogoutRequest(): Promise<NextResponse>
             Auth.deleteSession(sessionTokenCookie.value);
             cookieStore.delete(Auth.sessionCookieName);
         }
+
+        return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout>>(
+        {
+            error: null,
+            username: "",
+        }, { status: 200 });
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
-        return NextResponse.json(errorResponse, { status: 500 });
+        return ServerError.respondWithError(error, errorResponseTemplate);
     }
-
-    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Logout>>(
-    {
-        error: null,
-        username: "",
-    }, { status: 200 });
 }
 
 export async function serverTryRefreshServerRequest(): Promise<NextResponse>
 {
-    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RefreshServer> =
+    const errorResponseTemplate: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RefreshServer> =
     {
         error: "Unknown error.",
         serializedPlayerData: null,
         serverData: null,
     };
 
-    const user: DBType.UserRow | null = await Auth.getCurrentUser();
-    if (user === null)
-    {
-        errorResponse.error = "Not logged in.";
-        return NextResponse.json(errorResponse, { status: 401 });
-    }
-
-    // must be power admin (0) for this action
-    if (user.admin_level !== 0)
-    {
-        errorResponse.error = "Forbidden.";
-        return NextResponse.json(errorResponse, { status: 401 });
-    }
-    
-    let player: DBType.PlayerRow | null = null;
     try
     {
-        player = serverFindPlayerByUserId(user.id);
+        const user: DBType.UserRow | null = await Auth.getCurrentUser();
+        if (user === null)
+        {
+            throw new ServerError.AuthError("Not logged in.");
+        }
+
+        // must be power admin (0) for this action
+        if (user.admin_level !== 0)
+        {
+            throw new ServerError.ForbiddenError("Forbidden.");
+        }
+
+        const player: DBType.PlayerRow | null = serverFindPlayerByUserId(user.id);
         if (player === null)
         {
-            errorResponse.error = "Player not found.";
-            return NextResponse.json(errorResponse, { status: 404 });
+            throw new ServerError.NotFoundError("Player not found.");
         }
+
         applyProgressToAllPlayersAndRescaleEndTimes();
+
+        const serverData: CoreType.ServerData = ServerType.getServerData();
+        const playerData: CoreType.PlayerData = serverGetPlayerData(player.id);
+
+        return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RefreshServer>>(
+        {
+            error: null,
+            serializedPlayerData: Serialization.serializePlayerData(playerData),
+            serverData: serverData,
+        }, { status: 200 });
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
-        return NextResponse.json(errorResponse, { status: 500 });
+        return ServerError.respondWithError(error, errorResponseTemplate);
     }
-
-    const serverData: CoreType.ServerData = ServerType.getServerData();
-    const playerData: CoreType.PlayerData = serverGetPlayerData(player.id);
-
-    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RefreshServer>>(
-    {
-        error: null,
-        serializedPlayerData: Serialization.serializePlayerData(playerData),
-        serverData: serverData,
-    }, { status: 200 });
 }
 
 //#endregion
@@ -758,50 +736,45 @@ function rescaleShipConstructionTimes(rescaleFactor: number, now: number): void
 
 export async function handlePlayerStateActionRequest(logic: (playerId: number, serverData: CoreType.ServerData) => PlayerActionResult): Promise<NextResponse>
 {
-    const errorResponse: PlayerStateActionResponse =
+    const errorResponseTemplate: PlayerStateActionResponse =
     {
         error: "Unknown error.",
         serializedPlayerData: null,
     };
 
-    const user: DBType.UserRow | null = await Auth.getCurrentUser();
-    if (user === null)
-    {
-        errorResponse.error = "Not logged in.";
-        return NextResponse.json(errorResponse, { status: 401 });
-    }
-
-    let serializedPlayerData: Serialization.SerializedPlayerData;
     try
     {
+        const user: DBType.UserRow | null = await Auth.getCurrentUser();
+        if (user === null)
+        {
+            throw new ServerError.AuthError("Not logged in.");
+        }
+
         const player: DBType.PlayerRow | null = serverFindPlayerByUserId(user.id);
         if (player === null)
         {
-            errorResponse.error = "Player not found.";
-            return NextResponse.json(errorResponse, { status: 404 });
+            throw new ServerError.NotFoundError("Player not found.");
         }
 
         const serverData: CoreType.ServerData = ServerType.getServerData();
         const result: PlayerActionResult = logic(player.id, serverData);
         if (result.success === false)
         {
-            errorResponse.error = result.failureReason;
-            return NextResponse.json(errorResponse, { status: 400 });
+            throw new ServerError.ValidationError(result.failureReason ?? "Action failed.");
         }
 
-        serializedPlayerData = Serialization.serializePlayerData(result.playerStateResult);
+        const serializedPlayerData: Serialization.SerializedPlayerData = Serialization.serializePlayerData(result.playerStateResult);
+
+        return NextResponse.json(
+        {
+            error: null,
+            serializedPlayerData: serializedPlayerData,
+        }, { status: 200 });
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
-        return NextResponse.json(errorResponse, { status: 500 });
+        return ServerError.respondWithError(error, errorResponseTemplate);
     }
-
-    return NextResponse.json(
-    {
-        error: null,
-        serializedPlayerData: serializedPlayerData,
-    }, { status: 200 });
 }
 
 export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding>): PlayerActionResult
