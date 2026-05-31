@@ -53,7 +53,7 @@ export function resolveFleetArrivalData(playerData: CoreType.PlayerData, anchorE
     const fleetArrivalAnchorEvent: FleetArrivalAnchorEvent = anchorEvent as FleetArrivalAnchorEvent;
     if (fleetArrivalAnchorEvent.resolver === undefined)
     {
-        throw new Error(`⚠️: fleet arrival anchor event doesnt have a resolver when trying to resolve.`); 
+        throw new Error(`fleet arrival anchor event doesnt have a resolver when trying to resolve.`); 
     }
 
     const originPlayerId: number = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.player_origin_id;
@@ -74,17 +74,17 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
 {
     if (anchorEvent.resolver === undefined)
     {
-        throw new Error(`⚠️: No resolver on fleet arrival resolveAnchorEvent.`); 
+        throw new Error(`No resolver on fleet arrival resolveAnchorEvent.`); 
     }
     const resolvedData: { event: FleetArrivalAnchorEvent, data: FleetData.FleetPlayerDataPair } = resolveFleetArrivalData(playerData, anchorEvent);
 
     if (resolvedData.event.fleetMovement.fleetMovementRow.started_at === null)
     {
-        throw new Error(`⚠️: Resolving fleet event with no started time.`); 
+        throw new Error(`Resolving fleet event with no started time.`); 
     }
     if (resolvedData.event.fleetMovement.fleetMovementRow.duration_at_start_time === null)
     {
-        throw new Error(`⚠️: Resolving fleet event with no duration at start time.`); 
+        throw new Error(`Resolving fleet event with no duration at start time.`); 
     }
 
     // this code takes care of the "client" part AKA the data in the structures

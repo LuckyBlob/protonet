@@ -32,7 +32,7 @@ class ClientPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
         const associatedPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, planetId);
         if (associatedPlanetData === null)
         {
-            throw new Error(`⚠️: Cant get full planet data for fleet.`); 
+            throw new Error(`Cant get full planet data for fleet.`); 
         }
 
         const fleetPlayerData: FleetData.FleetPlayerData =

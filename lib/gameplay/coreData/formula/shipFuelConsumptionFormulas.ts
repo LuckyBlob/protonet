@@ -33,7 +33,7 @@ function computeFuelConsumption_Base(shipQuantities: Map<number, number>, distan
 		const shipStats: GameType.ShipStats | undefined = GameType.SHIP_STATS.get(shipType);
 		if (shipStats === undefined)
 		{
-			throw new Error(`⚠️: Building type ${shipType} has no ship stats.`); 
+			throw new Error(`Building type ${shipType} has no ship stats.`); 
 		}
 
 		for (const [ressourceType, baseFuelResourceCost] of shipStats.baseFuelConsumption)
