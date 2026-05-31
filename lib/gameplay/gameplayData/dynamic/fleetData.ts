@@ -191,7 +191,9 @@ export function resolveFleetMovementAtTarget(targetPlayerData: CoreType.PlayerDa
 	{
 		if (fleetMovement.fleetMovementRow.fleet_action_type === GameType.FLEET_ACTION_COLONIZE)
 		{
-
+			// Colonize is not yet implemented. Mark Invalid so the DB writer deletes the fleet row
+			// rather than throwing on Unresolved, which would freeze the originating player's account.
+			fleetMovement.resolutionState = CoreType.FleetMovementResolution.Invalid;
 		}
 		else
 		{
@@ -469,6 +471,21 @@ export function computeFleetFuelAndSpace(originAddress: GameType.PlanetAddress, 
 	const availableSpace: number = Math.max(totalSpace - totalFuel, 0);
 
 	return { totalFuel: totalFuel, availableSpace: availableSpace };
+}
+
+export function getFleetMovementRemainingMs(fleetMovement: CoreType.FleetMovement): number | null
+{
+	if (fleetMovement.fleetMovementRow.started_at === null)
+	{
+		return null;
+	}
+
+	if (fleetMovement.fleetMovementRow.duration_at_start_time === null)
+	{
+		throw new Error(`UNREACHABLE: started_at set but duration_at_start_time is null for fleet movement ${fleetMovement.fleetMovementRow.id}.`);
+	}
+
+	return fleetMovement.fleetMovementRow.started_at + fleetMovement.fleetMovementRow.duration_at_start_time - Date.now();
 }
 
 function setFleetReturnTrip(target: CoreType.PlanetData | null, fleetMovement: CoreType.FleetMovement): void

@@ -60,18 +60,24 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
     }
 
     const finishedUpgrade: CoreType.BuildingUpgrade = buildingUpgradeAnchorEvent.event;
-    if (finishedUpgrade.buildingUpgradeRow.current_building_upgrade_building_row_id === null)
+    const currentBuildingRowId: number | null = finishedUpgrade.buildingUpgradeRow.current_building_upgrade_building_row_id;
+    if (currentBuildingRowId === null)
     {
         throw new Error(`UNREACHABLE: null row id for building upgrade on resolution.`);
     }
 
+    if (currentBuildingRowId <= 0)
+    {
+        throw new Error(`Building upgrade has not yet been assigned a DB row id (sentinel id ${currentBuildingRowId}) for planet ${planetData.planetRow.id}.`);
+    }
+
     const currentBuildingRowIndex: number = finishedUpgrade.buildingUpgradeBuildingRows.findIndex((row: DBType.BuildingUpgradeBuildingRow): boolean =>
     {
-        return row.id === finishedUpgrade.buildingUpgradeRow.current_building_upgrade_building_row_id;
+        return row.id === currentBuildingRowId;
     });
     if (currentBuildingRowIndex === -1)
     {
-        throw new Error(`UNREACHABLE: Cant find building row to upgrade.`);
+        throw new Error(`UNREACHABLE: Cant find building row to upgrade for planet ${planetData.planetRow.id}, row id ${currentBuildingRowId}.`);
     }
 
     const currentBuildingUpgradeBuildingRow: DBType.BuildingUpgradeBuildingRow = finishedUpgrade.buildingUpgradeBuildingRows[currentBuildingRowIndex];
