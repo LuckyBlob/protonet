@@ -26,6 +26,7 @@ import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipC
 import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
 import * as MathHelp from "@/lib/helper/mathHelp";
 import * as ServerError from "@/lib/networkRequests/server/serverErrors";
+import * as RequestValidator from "@/lib/networkRequests/server/requestValidators";
 //#region Types
 
 type PlayerActionResult =
@@ -137,15 +138,17 @@ export async function serverTryServerConfigRequest(): Promise<NextResponse>
 
 export async function serverTryLoginRequest(request: Request): Promise<NextResponse>
 {
-    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Login> = await request.json();
     const errorResponseTemplate: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Login> =
     {
         error: "Unknown error.",
-        username: clientRequest.username,
+        username: "",
     };
 
     try
     {
+        const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Login> = RequestValidator.validateLoginRequest(await RequestValidator.parseRequestJson(request, "Login"));
+        errorResponseTemplate.username = clientRequest.username;
+
         const user: DBType.UserRow | null = Auth.findUserByUsername(clientRequest.username);
         if (user === null)
         {
@@ -183,15 +186,17 @@ export async function serverTryLoginRequest(request: Request): Promise<NextRespo
 
 export async function serverTryRegisterRequest(request: Request): Promise<NextResponse>
 {
-    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Register> = await request.json();
     const errorResponseTemplate: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register> =
     {
         error: "Unknown error.",
-        username: clientRequest.username,
+        username: "",
     };
 
     try
     {
+        const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Register> = RequestValidator.validateRegisterRequest(await RequestValidator.parseRequestJson(request, "Register"));
+        errorResponseTemplate.username = clientRequest.username;
+
         if ((clientRequest.username.length < 3) || (clientRequest.password.length < 6))
         {
             throw new ServerError.ValidationError("Username must be 3+ chars, password 6+ chars.");
@@ -734,7 +739,12 @@ function rescaleShipConstructionTimes(rescaleFactor: number, now: number): void
 
 //#region Server logic
 
-export async function handlePlayerStateActionRequest(logic: (playerId: number, serverData: CoreType.ServerData) => PlayerActionResult): Promise<NextResponse>
+export async function handlePlayerStateActionRequest<TClientRequest>(
+    request: Request,
+    requestName: string,
+    validateRequest: (raw: unknown) => TClientRequest,
+    logic: (clientRequest: TClientRequest, playerId: number, serverData: CoreType.ServerData) => PlayerActionResult,
+): Promise<NextResponse>
 {
     const errorResponseTemplate: PlayerStateActionResponse =
     {
@@ -744,6 +754,8 @@ export async function handlePlayerStateActionRequest(logic: (playerId: number, s
 
     try
     {
+        const clientRequest: TClientRequest = validateRequest(await RequestValidator.parseRequestJson(request, requestName));
+
         const user: DBType.UserRow | null = await Auth.getCurrentUser();
         if (user === null)
         {
@@ -757,7 +769,7 @@ export async function handlePlayerStateActionRequest(logic: (playerId: number, s
         }
 
         const serverData: CoreType.ServerData = ServerType.getServerData();
-        const result: PlayerActionResult = logic(player.id, serverData);
+        const result: PlayerActionResult = logic(clientRequest, player.id, serverData);
         if (result.success === false)
         {
             throw new ServerError.ValidationError(result.failureReason ?? "Action failed.");
