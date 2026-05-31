@@ -1217,6 +1217,9 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         const fleetMovementRow: DBType.FleetMovementRow =
         {
             id: -1, // will be set on the update
+            // 0x7FFFFFFF is 2^31 - 1, the max signed 32-bit int that fits SQLite's INTEGER column.
+            // Math.floor is required because Math.random() returns a float, but SQLite would silently
+            // truncate the fractional part on insert and desync the in-memory row from the stored row.
             seed: Math.floor(Math.random() * 0x7FFFFFFF),
             player_origin_id: playerData.playerRow.id,
             planet_origin_id: originPlanetData.planetRow.id,
