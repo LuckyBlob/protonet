@@ -5,7 +5,7 @@ import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as MessagesView from "@/components/views/messagesView";
+import * as MessageData from "@/lib/gameplay/gameplayData/dynamic/messageData";
 
 type SideBarProps =
 {
@@ -22,7 +22,7 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	const navButtonClass: string = "px-4 py-1 text-center hover:bg-white/10 rounded transition-colors";
 
 	const messageDatas: CoreType.MessageData[] = props.clientDataStateResult.psController[0].predictedDBData.dynamicPlayerData.messageDatas;
-	const unreadMessageCount: number = MessagesView.computeUnreadMessageCount(messageDatas);
+	const unreadMessageCount: number = MessageData.computeUnreadMessageCount(messageDatas);
 	const unreadBadge: ReactElement | null = unreadMessageCount > 0
 	    ?
 	    (

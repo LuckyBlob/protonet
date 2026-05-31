@@ -4,6 +4,7 @@ import { ReactElement, MouseEvent, useEffect, useState } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as MessageData from "@/lib/gameplay/gameplayData/dynamic/messageData";
 import * as HelperElements from "@/components/helperElements";
 
 type MessagesViewProps =
@@ -21,57 +22,12 @@ type SelectedCreatedAtState = [number | null, (value: number | null) => void];
 type BodyState = [MessageBodyState, (value: MessageBodyState) => void];
 type DeletedCreatedAtsState = [Set<number>, (value: Set<number>) => void];
 
-const MAX_VISIBLE_MESSAGES: number = 50;
-const VISIBLE_MESSAGE_ROW_COUNT: number = 5;
 const MESSAGE_ROW_HEIGHT_PX: number = 48;
 const MESSAGE_ROW_GAP_PX: number = 8;
-const SECTION_HEIGHT_PX: number = (VISIBLE_MESSAGE_ROW_COUNT * MESSAGE_ROW_HEIGHT_PX) + ((VISIBLE_MESSAGE_ROW_COUNT - 1) * MESSAGE_ROW_GAP_PX);
+const SECTION_HEIGHT_PX: number = (MessageData.VISIBLE_MESSAGE_ROW_COUNT * MESSAGE_ROW_HEIGHT_PX) + ((MessageData.VISIBLE_MESSAGE_ROW_COUNT - 1) * MESSAGE_ROW_GAP_PX);
 const LAYOUT_WIDTH_PX: number = 720;
-const SIMULATED_BODY_FETCH_DELAY_MS: number = 400;
 
 //#region pure helpers
-export function computeUnreadMessageCount(messageDatas: CoreType.MessageData[]): number
-{
-    const unreadCount: number = messageDatas.filter((messageData: CoreType.MessageData): boolean =>
-    {
-        return messageData.messagePreview.isRead === false;
-    }).length;
-
-    return unreadCount;
-}
-
-function buildVisibleMessageDatas(messageDatas: CoreType.MessageData[], deletedCreatedAts: Set<number>): CoreType.MessageData[]
-{
-    const filteredMessageDatas: CoreType.MessageData[] = messageDatas.filter((messageData: CoreType.MessageData): boolean =>
-    {
-        return deletedCreatedAts.has(messageData.messagePreview.createdAt) === false;
-    });
-
-    const sortedMessageDatas: CoreType.MessageData[] = [...filteredMessageDatas].sort((a: CoreType.MessageData, b: CoreType.MessageData): number =>
-    {
-        return b.messagePreview.createdAt - a.messagePreview.createdAt;
-    });
-
-    const cappedMessageDatas: CoreType.MessageData[] = sortedMessageDatas.slice(0, MAX_VISIBLE_MESSAGES);
-
-    return cappedMessageDatas;
-}
-
-function findMessageDataByCreatedAt(messageDatas: CoreType.MessageData[], createdAt: number): CoreType.MessageData | null
-{
-    const matchingMessageData: CoreType.MessageData | undefined = messageDatas.find((messageData: CoreType.MessageData): boolean =>
-    {
-        return messageData.messagePreview.createdAt === createdAt;
-    });
-
-    if (matchingMessageData === undefined)
-    {
-        return null;
-    }
-
-    return matchingMessageData;
-}
-
 function formatMessageTimestamp(createdAt: number): string
 {
     const date: Date = new Date(createdAt);
@@ -92,7 +48,7 @@ function useMessageBodyState(messageDatas: CoreType.MessageData[], selectedCreat
             return;
         }
 
-        const selectedMessageData: CoreType.MessageData | null = findMessageDataByCreatedAt(messageDatas, selectedCreatedAt);
+        const selectedMessageData: CoreType.MessageData | null = MessageData.findMessageDataByCreatedAt(messageDatas, selectedCreatedAt);
         if (selectedMessageData === null)
         {
             bodyState[1]({ isLoading: false, body: null });
@@ -105,7 +61,7 @@ function useMessageBodyState(messageDatas: CoreType.MessageData[], selectedCreat
         const timeoutId: ReturnType<typeof setTimeout> = setTimeout((): void =>
         {
             bodyState[1]({ isLoading: false, body: bodyToLoad });
-        }, SIMULATED_BODY_FETCH_DELAY_MS);
+        }, MessageData.SIMULATED_BODY_FETCH_DELAY_MS);
 
         return (): void =>
         {
@@ -250,7 +206,7 @@ function renderMessageBodySection(messageDatas: CoreType.MessageData[], selected
         return loadingElement;
     }
 
-    const selectedMessageData: CoreType.MessageData | null = findMessageDataByCreatedAt(messageDatas, selectedCreatedAt);
+    const selectedMessageData: CoreType.MessageData | null = MessageData.findMessageDataByCreatedAt(messageDatas, selectedCreatedAt);
     if (selectedMessageData === null || bodyState.body === null)
     {
         const missingElement: ReactElement =
@@ -310,7 +266,7 @@ export function MessagesView(props: MessagesViewProps): ReactElement
     const deletedCreatedAtsState: DeletedCreatedAtsState = useState<Set<number>>(new Set<number>());
 
     const allMessageDatas: CoreType.MessageData[] = props.clientDataStateResult.psController[0].predictedDBData.dynamicPlayerData.messageDatas;
-    const visibleMessageDatas: CoreType.MessageData[] = buildVisibleMessageDatas(allMessageDatas, deletedCreatedAtsState[0]);
+    const visibleMessageDatas: CoreType.MessageData[] = MessageData.buildVisibleMessageDatas(allMessageDatas, deletedCreatedAtsState[0]);
     const bodyState: MessageBodyState = useMessageBodyState(visibleMessageDatas, selectedCreatedAtState[0]);
 
     try
