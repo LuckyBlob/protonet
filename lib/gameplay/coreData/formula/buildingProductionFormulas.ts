@@ -8,7 +8,7 @@ export function computeProductionRatePerHour(buildingType: number, currentLevel:
         const buildingStats: GameType.BuildingStats | undefined = GameType.BUILDING_STATS.get(buildingType);
         if (buildingStats === undefined)
         {
-            throw new Error(`⚠️: Building type ${buildingType} has no building stats.`); 
+            throw new Error(`Building type ${buildingType} has no building stats.`); 
         }
         return computeProductionRate_SimpleProductionBuilding(currentLevel, buildingStats, serverData);
     }

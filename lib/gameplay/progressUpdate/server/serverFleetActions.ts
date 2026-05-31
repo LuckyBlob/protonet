@@ -13,7 +13,7 @@ export function resolveFleetMovementAtTargetToDB(playerData: CoreType.PlayerData
 
     if (resolvedData.event.fleetMovement.resolutionState === CoreType.FleetMovementResolution.Unresolved)
     {
-        throw new Error(`⚠️: Resolving an unresolved fleet movement.`); 
+        throw new Error(`Resolving an unresolved fleet movement.`); 
     }
 
     if (resolvedData.event.fleetMovement.resolutionState === CoreType.FleetMovementResolution.Invalid)
@@ -30,7 +30,7 @@ function resolveFleetActionToDB(originPlayerData: FleetData.FleetPlayerData | nu
 {
     if (originPlayerData === null)
     {
-        throw new Error(`⚠️: Origin is null when writing fleet action to DB.`); 
+        throw new Error(`Origin is null when writing fleet action to DB.`); 
     }
     
     if (fleetMovement.resolutionState === CoreType.FleetMovementResolution.ResolveResultUnknown)
