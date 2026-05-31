@@ -91,7 +91,7 @@ function renderMessagePreviewRow(messageData: CoreType.MessageData, isSelected: 
 {
     const messagePreview: CoreType.MessagePreview = messageData.messagePreview;
     const isUnread: boolean = messagePreview.isRead === false;
-    const messageRowId: number = messageData.messageRowId;
+    const messageRowId: number = messagePreview.messageRowId;
 
     const titleWeightClass: string = isUnread === true
         ? "font-bold"
@@ -119,7 +119,7 @@ function renderMessagePreviewRow(messageData: CoreType.MessageData, isSelected: 
             className={`flex flex-row items-center gap-2 px-3 py-2 border border-gray-600 rounded text-sm text-white text-left w-full cursor-pointer overflow-hidden ${selectedClass}`}
             style={{ height: `${MESSAGE_ROW_HEIGHT_PX}px` }}
         >
-            <span className={`flex-1 min-w-0 truncate ${titleWeightClass}`}>{messageData.title}</span>
+            <span className={`flex-1 min-w-0 truncate ${titleWeightClass}`}>{messagePreview.title}</span>
             <button
                 type="button"
                 onClick={handleDeleteClick}
@@ -183,7 +183,7 @@ function renderMessageListSection(messageDatas: CoreType.MessageData[], selected
 
     const rowElements: ReactElement[] = messageDatas.map((messageData: CoreType.MessageData): ReactElement =>
     {
-        const isSelected: boolean = selectedMessageRowIdState[0] === messageData.messageRowId;
+        const isSelected: boolean = selectedMessageRowIdState[0] === messageData.messagePreview.messageRowId;
 
         return renderMessagePreviewRow(messageData, isSelected, handleSelect, handleDelete);
     });
@@ -247,8 +247,8 @@ function renderMessageBodySection(messageDatas: CoreType.MessageData[], selected
     }
 
     const selectedMessageData: CoreType.MessageData | null = MessageData.findMessageDataByMessageRowId(messageDatas, selectedMessageRowId);
-    const titleText: string = selectedMessageData !== null ? selectedMessageData.title : "";
-    const receivedAt: number | null = selectedMessageData !== null ? selectedMessageData.receivedAt : null;
+    const titleText: string = selectedMessageData !== null ? selectedMessageData.messagePreview.title : "";
+    const receivedAt: number | null = selectedMessageData !== null ? selectedMessageData.messagePreview.receivedAt : null;
 
     const element: ReactElement =
     (

@@ -20,12 +20,12 @@ export function buildVisibleMessageDatas(messageDatas: CoreType.MessageData[], d
 {
     const filteredMessageDatas: CoreType.MessageData[] = messageDatas.filter((messageData: CoreType.MessageData): boolean =>
     {
-        return deletedMessageRowIds.has(messageData.messageRowId) === false;
+        return deletedMessageRowIds.has(messageData.messagePreview.messageRowId) === false;
     });
 
     const sortedMessageDatas: CoreType.MessageData[] = [...filteredMessageDatas].sort((a: CoreType.MessageData, b: CoreType.MessageData): number =>
     {
-        return b.receivedAt - a.receivedAt;
+        return b.messagePreview.receivedAt - a.messagePreview.receivedAt;
     });
 
     const cappedMessageDatas: CoreType.MessageData[] = sortedMessageDatas.slice(0, MAX_VISIBLE_MESSAGES);
@@ -37,7 +37,7 @@ export function findMessageDataByMessageRowId(messageDatas: CoreType.MessageData
 {
     const matchingMessageData: CoreType.MessageData | undefined = messageDatas.find((messageData: CoreType.MessageData): boolean =>
     {
-        return messageData.messageRowId === messageRowId;
+        return messageData.messagePreview.messageRowId === messageRowId;
     });
 
     if (matchingMessageData === undefined)
