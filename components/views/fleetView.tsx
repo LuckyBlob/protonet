@@ -43,13 +43,14 @@ function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement, publicPla
     const targetAddress: string = `${fleetMovementRow.planet_target_slot}:${fleetMovementRow.planet_target_system}:${fleetMovementRow.planet_target_galaxy}`;
     const actionName: string = GameType.FLEET_ACTION_NAMES.get(fleetMovementRow.fleet_action_type) ?? `Unknown (${fleetMovementRow.fleet_action_type})`;
     const isReturnTrip: boolean = fleetMovementRow.is_return_trip === 1;
-    if (fleetMovementRow.started_at === null || fleetMovementRow.duration_at_start_time === null)
+    const remainingMs: number | null = FleetData.getFleetMovementRemainingMs(fleetMovement);
+
+    if (remainingMs === null)
     {
         throw new Error(`Fleet movement ${fleetMovementRow.id} has no started_at or duration_at_start_time.`);
     }
-    const arrivalTime: number = fleetMovementRow.started_at + fleetMovementRow.duration_at_start_time;
-    const remainingMs: number = arrivalTime - Date.now();
-    const isUnknownResult = remainingMs < 0 && fleetMovement.resolutionState === CoreType.FleetMovementResolution.ResolveResultUnknown;
+
+    const isUnknownResult: boolean = remainingMs < 0 && fleetMovement.resolutionState === CoreType.FleetMovementResolution.ResolveResultUnknown;
 
     const element: ReactElement =
     (
