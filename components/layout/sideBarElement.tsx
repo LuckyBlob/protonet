@@ -4,6 +4,8 @@ import { ReactElement } from "react";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as MessagesView from "@/components/views/messagesView";
 
 type SideBarProps =
 {
@@ -18,6 +20,15 @@ type SideBarProps =
 export function SideBarElement(props: SideBarProps): ReactElement
 {
 	const navButtonClass: string = "px-4 py-1 text-center hover:bg-white/10 rounded transition-colors";
+
+	const messageDatas: CoreType.MessageData[] = props.clientDataStateResult.psController[0].predictedDBData.dynamicPlayerData.messageDatas;
+	const unreadMessageCount: number = MessagesView.computeUnreadMessageCount(messageDatas);
+	const unreadBadge: ReactElement | null = unreadMessageCount > 0
+	    ?
+	    (
+	        <span className="text-yellow-400 font-bold ml-1">({unreadMessageCount})</span>
+	    )
+	    : null;
 
 	const adminSection: ReactElement | null = props.cuController[0].user!.admin_level === 0
 	    ?
@@ -45,6 +56,7 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	            <button onClick={() => props.cvController[1]("shipyard")} className={navButtonClass}>Shipyard</button>
 	            <button onClick={() => props.cvController[1]("fleets")} className={navButtonClass}>Fleets</button>
 	            <button onClick={() => props.cvController[1]("planets")} className={navButtonClass}>Planets</button>
+	            <button onClick={() => props.cvController[1]("messages")} className={navButtonClass}>Messages{unreadBadge}</button>
 	            <button onClick={() => props.cvController[1]("stats")} className={navButtonClass}>Stats</button>
 	        </div>
 
