@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import * as ServerRequestFunctions from "@/lib/networkRequests/server/serverRequestFunctions";
+import * as RequestValidator from "@/lib/networkRequests/server/requestValidators";
 import * as APIEndPoint from "@/app/api/apiEndPoints";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 
 export async function POST(request: Request): Promise<NextResponse>
 {
-    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips> = await request.json();
-    return ServerRequestFunctions.handlePlayerStateActionRequest((playerId: number, serverData: CoreType.ServerData) => ServerRequestFunctions.tryBuildShipsLogic(playerId, serverData, clientRequest));
+    return ServerRequestFunctions.handlePlayerStateActionRequest(
+        request,
+        "BuildShips",
+        RequestValidator.validateBuildShipsRequest,
+        (clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips>, playerId: number, serverData: CoreType.ServerData) =>
+            ServerRequestFunctions.tryBuildShipsLogic(playerId, serverData, clientRequest),
+    );
 }
