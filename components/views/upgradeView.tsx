@@ -84,17 +84,9 @@ function renderBuildingCard(props: UpgradeViewProps, selectedPlanetDataPredicted
 	const remainingMs: number = BuildingUpgradeData.getBuildingUpgradeRemainingMs(selectedPlanetDataPredicted) ?? 0;
 	const canAfford: boolean = BuildingData.canAffordUpgrade(selectedPlanetDataPredicted, buildingType);
 
-	const handleBuyUpgrade: () => void = (): void =>
+	const handleBuyUpgrade: () => void = () =>
 	{
-		const runUpgrade = async (): Promise<void> =>
-		{
-			const errorMessage: string | null = await ClientRequestFunctions.clientTryUpgradeBuildingRequest(props.clientDataStateResult.psController, planetId, buildingType);
-			if (errorMessage !== null)
-			{
-				console.error("⚠️:", `Upgrade building failed for planetId ${planetId}, buildingType ${buildingType}: ${errorMessage}`);
-			}
-		};
-		runUpgrade();
+		ClientRequestFunctions.clientTryUpgradeBuildingRequest(props.clientDataStateResult.psController, planetId, buildingType);
 	};
 
 	const levelLine: ReactElement = isThisBuildingUpgrading === true
@@ -183,7 +175,7 @@ export function UpgradeView(props: UpgradeViewProps): ReactElement
 	}
 	catch (error: unknown)
 	{
-		console.error("⚠️:", "UpgradeView render failed:", error);
+		console.error("⚠️:", error);
 		return <HelperElements.EmptyElement></HelperElements.EmptyElement>;
 	}
 }

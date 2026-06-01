@@ -68,7 +68,7 @@ function renderDeleteAccountButton(props: TopBarProps, router: ReturnType<typeof
 		}
 		catch (error: unknown)
 		{
-			console.error("⚠️:", "Delete account failed:", error);
+			console.error("⚠️:", error);
 		}
 	};
 
@@ -140,7 +140,7 @@ export function TopBarElement(props: TopBarProps): ReactElement
 	}
 	catch (error: unknown)
 	{
-		console.error("⚠️:", "TopBarElement render failed:", error);
+		console.error("⚠️:", error); 
 		return <HelperElements.EmptyElement></HelperElements.EmptyElement>;
 	}
 }

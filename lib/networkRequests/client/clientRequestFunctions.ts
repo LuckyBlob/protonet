@@ -76,7 +76,7 @@ export async function clientTryLoginRequest(username: string, password: string):
     // Use != instead of !== here to catch everything that's very weird.
     if (response.username == null)
     {
-        throw new Error(`Login failed: Invalid response from server.`);
+        throw new Error(`Logout server failed: Invalid player data.`);
     }
     return response;
 }
@@ -99,7 +99,7 @@ export async function clientTryRegisterRequest(username: string, password: strin
     // Use != instead of !== here to catch everything that's very weird.
     if (response.username == null)
     {
-        throw new Error(`Register failed: Invalid response from server.`);
+        throw new Error(`Logout server failed: Invalid player data.`);
     }
 
     return response;
@@ -140,12 +140,12 @@ export async function clientTryLogoutRequest(): Promise<APIEndPoint.ResponseForA
     }
     catch (error: unknown)
     {
-        console.error("⚠️:", "clientTryLogoutRequest failed:", error);
+        console.error("⚠️:", error);
         return null;
     }
 }
 
-export async function clientTryRefreshServerRequest(clientDataStateResult: UseClientDataState.ClientDataStateResult): Promise<string | null>
+export async function clientTryRefreshServerRequest(clientDataStateResult: UseClientDataState.ClientDataStateResult): Promise<void>
 {
     try
     {
@@ -167,20 +167,14 @@ export async function clientTryRefreshServerRequest(clientDataStateResult: UseCl
         const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
         await setPlayerState(clientDataStateResult.psController, playerData);
         clientDataStateResult.sdsController[1](response.serverData);
-        return null;
     }
     catch (error: unknown)
     {
-        if (error instanceof Error)
-        {
-            return error.message;
-        }
-
-        return String(error);
+        console.error("⚠️:", error);
     }
 }
 
-export async function clientTryUpgradeBuildingRequest(psController: CoreType.PSController, planetId: number, buildingType: number): Promise<string | null>
+export async function clientTryUpgradeBuildingRequest(psController: CoreType.PSController, planetId: number, buildingType: number): Promise<void>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding> =
     {
@@ -198,25 +192,19 @@ export async function clientTryUpgradeBuildingRequest(psController: CoreType.PSC
         // Use != instead of !== here to catch everything that's very weird.
         if (response.serializedPlayerData == null)
         {
-            throw new Error(`Building upgrade failed for planetId ${planetId}: Invalid response from server.`);
+        throw new Error(`Building upgrade failed for planetId ${planetId}: Invalid response from server.`);
         }
 
         const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
         await setPlayerState(psController, playerData);
-        return null;
     }
     catch (error: unknown)
     {
-        if (error instanceof Error)
-        {
-            return error.message;
-        }
-
-        return String(error);
+        console.error("⚠️:", error);
     }
 }
 
-export async function clientTryBuildShipsRequest(psController: CoreType.PSController, planetId: number, shipQuantities: Map<number, number>): Promise<string | null>
+export async function clientTryBuildShipsRequest(psController: CoreType.PSController, planetId: number, shipQuantities: Map<number, number>): Promise<void>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips> =
     {
@@ -239,16 +227,10 @@ export async function clientTryBuildShipsRequest(psController: CoreType.PSContro
 
         const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
         await setPlayerState(psController, playerData);
-        return null;
     }
     catch (error: unknown)
     {
-        if (error instanceof Error)
-        {
-            return error.message;
-        }
-
-        return String(error);
+        console.error("⚠️:", error);
     }
 }
 
