@@ -35,7 +35,7 @@ export function useClientDataState(enabled: boolean): ClientDataStateResult
 			}
 			catch (error: unknown)
 			{
-				console.error("⚠️:", error);
+				console.error("⚠️:", "useClientDataState initial fetch failed:", error);
 				lsController[1]({ isLoading: true });
 			}
 		};

@@ -139,7 +139,7 @@ export function PlanetView(props: PlanetViewProps): ReactElement
     }
     catch (error: unknown)
     {
-        console.error("⚠️:", error);
+        console.error("⚠️:", "PlanetView render failed:", error);
         return <HelperElements.EmptyElement />;
     }
 }

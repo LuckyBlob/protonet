@@ -88,7 +88,7 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
         const associatedPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(targetPlayerData.planetDatas, planetId);
         if (associatedPlanetData === null)
         {
-            throw new Error(`⚠️: Can get full planet data for fleet.`); 
+            throw new Error(`Can get full planet data for fleet.`); 
         }
 
         const fleetPlayerData: FleetData.FleetPlayerData =
@@ -122,7 +122,7 @@ function resolveBuildingUpgradeAnchorEventToDB(playerData: CoreType.PlayerData, 
     const planetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, buildingAnchorEvent.event.buildingUpgradeRow.planet_id);
     if (planetData === null)
     {
-        throw new Error(`⚠️: Cant get full planet data for building upgrade.`);
+        throw new Error(`Cant get full planet data for building upgrade.`);
     }
 
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
@@ -140,7 +140,7 @@ function resolveShipConstructionAnchorEventToDB(playerData: CoreType.PlayerData,
     const planetData: CoreType.PlanetData | null= CoreType.getPlanetDataForId(playerData.planetDatas, shipConstructionAnchorEvent.event.shipConstructionRow.planet_id);
     if (planetData === null)
     {
-        throw new Error(`⚠️: Cant get full planet data for ship construction.`);
+        throw new Error(`Cant get full planet data for ship construction.`);
     }
 
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
