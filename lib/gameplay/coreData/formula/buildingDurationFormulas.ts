@@ -7,16 +7,29 @@ const BASE_DIVIDER: number = 2500;
 
 export function computeUpgradeDurationSeconds(currentUpgradeLevel: number, buildingType: number, playerData: CoreType.PlayerData, planetId: number, serverData: CoreType.ServerData | null): number | null
 {
-    const buildingStats: GameType.BuildingStats | undefined = GameType.BUILDING_STATS.get(buildingType);
-    if (buildingStats === undefined)
+    try
     {
+        const buildingStats: GameType.BuildingStats | undefined = GameType.BUILDING_STATS.get(buildingType);
+        if (buildingStats === undefined)
+        {
+            throw new Error(`⚠️: Building type ${buildingType} has no building stats.`); 
+        }
+        return computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel, buildingStats, buildingType, playerData, planetId, serverData);
+    }
+    catch (error: unknown)
+    {
+		console.error("⚠️ Failed:", error); 
         return null;
     }
+}
 
+function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: number, buildingStats: GameType.BuildingStats, buildingType: number, playerData: CoreType.PlayerData, planetId: number, serverData: CoreType.ServerData | null): number
+{
+	const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
     const nextUpgradeCostMap: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(currentUpgradeLevel, buildingType);
     if (nextUpgradeCostMap === null)
     {
-        return null;
+        throw new Error(`Building type ${buildingType} has no cost and thus no construction duration.`);
     }
 
     let totalCost: number = 0;
@@ -25,13 +38,12 @@ export function computeUpgradeDurationSeconds(currentUpgradeLevel: number, build
         // Each resources counts for 1 independantly of type
         totalCost = totalCost + cost;
     }
-
+    
     const planetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, planetId);
     const roboticFactoryLevel: number = planetData === null ? 0 : BuildingData.getBuildingLevel(planetData, GameType.BUILDING_ROBOTIC_FACTORY);
 
-    const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
     const durationHours: number = totalCost / (BASE_DIVIDER * (1 + roboticFactoryLevel));
-    const durationSeconds: number = durationHours * 3600;
+	const durationSeconds: number = durationHours * 3600;
 
-    return Math.floor(durationSeconds / timeMultiplier);
+	return Math.floor(durationSeconds / timeMultiplier);
 }

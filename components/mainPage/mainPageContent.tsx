@@ -71,11 +71,7 @@ export async function handleLogout(router: ReturnType<typeof useRouter>): Promis
 
 export async function handleRefreshServerData(clientDataStateResult: UseClientDataState.ClientDataStateResult): Promise<void>
 {
-    const errorMessage: string | null = await ClientRequestFunctions.clientTryRefreshServerRequest(clientDataStateResult);
-    if (errorMessage !== null)
-    {
-        console.error("⚠️:", `Refresh server data failed: ${errorMessage}`);
-    }
+    await ClientRequestFunctions.clientTryRefreshServerRequest(clientDataStateResult);
 };
 
 export function shouldShowLoading(cuController: UseCurrentUser.CUController, clientDataStateResult: UseClientDataState.ClientDataStateResult): boolean

@@ -585,7 +585,7 @@ export function FleetView(props: FleetViewProps): ReactElement
     }
     catch (error: unknown)
     {
-        console.error("⚠️:", "FleetView render failed:", error);
+        console.error("⚠️:", error);
         return <HelperElements.EmptyElement />;
     }
 }
