@@ -97,7 +97,7 @@ function modifyQuantity(op: string, type: number, quantity: number, get: (type: 
     const currentResourceQuantity: number | undefined = get(type); 
     if (currentResourceQuantity === undefined)
     {
-        throw new Error(`⚠️: Substracting non existing specific thing!`); 
+        throw new Error(`Substracting non existing specific thing!`); 
     }
 
     let newValue: number = currentResourceQuantity;
@@ -114,12 +114,12 @@ function modifyQuantity(op: string, type: number, quantity: number, get: (type: 
             break;
         }
         default:
-            throw new Error(`⚠️: quantity modification operator unknown: ${op}`); 
+            throw new Error(`quantity modification operator unknown: ${op}`); 
     }
     
     if (newValue < 0)
     {
-        throw new Error(`⚠️: Substracting too much specific thing!`); 
+        throw new Error(`Substracting too much specific thing!`); 
     }
 
     set(type, newValue);
