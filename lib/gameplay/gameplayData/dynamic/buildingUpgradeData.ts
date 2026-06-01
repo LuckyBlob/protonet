@@ -2,22 +2,14 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as DBType from "@/lib/db/dbTypes";
 import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
+import * as MathHelp from "@/lib/helper/mathHelp";
 
 export function getNextBuildingUpgrade(planetData: CoreType.PlanetData): CoreType.BuildingUpgrade | null
 {
-    let bestNextUpgrade: CoreType.BuildingUpgrade | null = null;
-    let currentTimeToBeat: number = Number.MAX_SAFE_INTEGER;
-    for (const buildingUpgrade of planetData.dynamicPlanetData.buildingUpgrades)
-    {
-
-        if (bestNextUpgrade === null || currentTimeToBeat > buildingUpgrade.buildingUpgradeRow.requested_at)
-        {
-            currentTimeToBeat = buildingUpgrade.buildingUpgradeRow.requested_at;
-            bestNextUpgrade = buildingUpgrade;
-        }
-    }
-
-    return bestNextUpgrade;
+    return MathHelp.getEarliestByRequestedAt(
+        planetData.dynamicPlanetData.buildingUpgrades,
+        (upgrade: CoreType.BuildingUpgrade): number => upgrade.buildingUpgradeRow.requested_at
+    );
 }
 
 export function getNextBuildingUpgradeBuildingRow(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, buildingUpgrade: CoreType.BuildingUpgrade, serverData: CoreType.ServerData): DBType.BuildingUpgradeBuildingRow | null
