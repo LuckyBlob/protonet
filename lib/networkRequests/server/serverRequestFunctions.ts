@@ -666,11 +666,16 @@ function claimPlanet(planetAddress: GameType.PlanetAddress | null, playerId: num
 function abandonPlanet(planetId: number, playerId: number): void
 {
     const serverData: CoreType.ServerData = ServerType.getServerData();
-    ServerProgress.applyPlayerUpdate(playerId, serverData, Date.now());
 
+    // applyPlayerUpdate detects inTransaction and skips starting a nested transaction,
+    // so it is safe to call from inside the transaction below. Wrapping both operations
+    // in one transaction eliminates the gap where a concurrent request could observe
+    // post-progress state while the planet is still present.
     // set null first before clean so we fail the "target player null" condition and dont pickup to delete and not re-add.
     DB.databaseConnection.transaction(() =>
     {
+        ServerProgress.applyPlayerUpdate(playerId, serverData, Date.now());
+
         DB.databaseConnection.prepare(
             "UPDATE fleet_movement SET player_target_id = null WHERE planet_target_id = ?"
         ).run(planetId);
@@ -678,7 +683,7 @@ function abandonPlanet(planetId: number, playerId: number): void
         DB.databaseConnection.prepare(
             "DELETE FROM fleet_movement WHERE planet_origin_id = ?"
         ).run(planetId);
-        
+
         DB.databaseConnection.prepare(
             "DELETE FROM planet WHERE id = ?"
         ).run(planetId);
@@ -937,9 +942,9 @@ export function tryBuildShipsLogic(playerId: number, serverData: CoreType.Server
             return { success: false, failureReason: "A ship doesn't meet requirements.", playerStateResult: playerData };
         }
 
-        if (shipQuantity < 0)
+        if (shipQuantity <= 0)
         {
-            return { success: false, failureReason: "Negative ship quantity.", playerStateResult: playerData };
+            return { success: false, failureReason: "Non-positive ship quantity.", playerStateResult: playerData };
         }
     }
 
@@ -956,18 +961,13 @@ export function tryBuildShipsLogic(playerId: number, serverData: CoreType.Server
     }
 
     const totalCost: Map<number, number> = ShipConstructionData.computeShipConstructionCost(possibleRequestedShipQuantities);
-    for (const [resourceType, resourceCost] of totalCost)
+
+    if (ResourceData.hasResourceQuantities(relevantPlanetData, totalCost) === false)
     {
-        try
-        {
-            ResourceData.subtractPlanetResource(relevantPlanetData, resourceType, resourceCost);
-        }
-        catch (error: unknown)
-        {
-            const errorMessage: string = error instanceof Error ? error.message : String(error);
-            return { success: false, failureReason: `Failed to substract planet resources for ship contruction.`, playerStateResult: playerData };
-        }
+        return { success: false, failureReason: "Not enough resources for ship construction.", playerStateResult: playerData };
     }
+
+    ResourceData.subtractPlanetResources(relevantPlanetData, totalCost);
 
     const newShipConstructionShipRows: DBType.ShipConstructionShipRow[] = [];
     for (const [shipType, shipQuantity] of possibleRequestedShipQuantities)
@@ -1089,19 +1089,14 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
 
     for (const [shipType, shipQuantity] of shipQuantities)
     {
-        if (shipQuantity === 0)
-		{
-			continue;
-		}
+        if (shipQuantity <= 0)
+        {
+            return { success: false, failureReason: "Non-positive ship quantity for fleet.", playerStateResult: playerData };
+        }
 
         if (Requirement.getFailedFleetMovementRequirements(playerData, shipType, originPlanetData.planetRow.id).length > 0)
         {
             return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
-        }
-
-        if (shipQuantity < 0)
-        {
-            return { success: false, failureReason: "Negative ship quantity for fleet.", playerStateResult: playerData };
         }
     }
 
@@ -1208,7 +1203,10 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         const fleetMovementRow: DBType.FleetMovementRow =
         {
             id: -1, // will be set on the update
-            seed: Math.random() * 0x7FFFFFFF, //random is float, SQLite takes ints, 0x7FFFFFFF is 2^31 - 1
+            // 0x7FFFFFFF is 2^31 - 1, the max signed 32-bit int that fits SQLite's INTEGER column.
+            // Math.floor is required because Math.random() returns a float, but SQLite would silently
+            // truncate the fractional part on insert and desync the in-memory row from the stored row.
+            seed: Math.floor(Math.random() * 0x7FFFFFFF),
             player_origin_id: playerData.playerRow.id,
             planet_origin_id: originPlanetData.planetRow.id,
             planet_origin_slot: originPlanetData.planetRow.slot,
