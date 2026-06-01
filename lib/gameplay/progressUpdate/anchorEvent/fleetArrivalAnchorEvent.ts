@@ -99,9 +99,7 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
         {
             if (resolvedData.event.fleetMovement.fleetMovementRow.player_target_id !== null)
             {
-                const arrivalTime: number =  resolvedData.event.fleetMovement.fleetMovementRow.started_at + resolvedData.event.fleetMovement.fleetMovementRow.duration_at_start_time;
-
-                anchorEvent.resolver.applyPlayerProgressAtTime(playerData, serverData, resolvedData.event.fleetMovement.fleetMovementRow.player_target_id, arrivalTime);
+                anchorEvent.resolver.applyPlayerProgressAtTime(playerData, serverData, resolvedData.event.fleetMovement.fleetMovementRow.player_target_id, resolvedData.event.time);
             }
         }
             
