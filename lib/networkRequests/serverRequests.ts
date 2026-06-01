@@ -18,7 +18,7 @@ export async function requestServerData<K extends keyof APIEndPoint.DataResponse
             error: `Unknown ${dataRequest.name} error.`,
         } as APIEndPoint.DataResponseMap[K]
 
-		console.error("⚠️:", error); 
+		console.error("⚠️:", `requestServerData ${dataRequest.name} failed:`, error);
         return responseFailure;
     }
 }
@@ -98,7 +98,7 @@ export async function requestServerAction<K extends keyof APIEndPoint.ActionResp
             error: `Unknown ${actionRequest.name} error.`,
         }
 
-		console.error("⚠️:", error); 
+		console.error("⚠️:", `requestServerAction ${actionRequest.name} failed:`, error);
         return responseFailure as APIEndPoint.ActionResponseMap[K];
     }
 }
