@@ -520,9 +520,21 @@ export function serverGetPlanetData(planetId: number): CoreType.PlanetData
     return planetData;
 }
 
+const PLAYER_ROW_ALLOWED_COLUMNS: ReadonlySet<string> = new Set<string>([
+    "user_id", "last_updated",
+]);
+
 export function serverUpdatePlayerColumns(playerId: number, columnUpdates: Partial<DBType.PlayerRow>): DBType.PlayerRow
 {
     const columnNames: string[] = Object.keys(columnUpdates);
+    for (const columnName of columnNames)
+    {
+        if (PLAYER_ROW_ALLOWED_COLUMNS.has(columnName) === false)
+        {
+            throw new Error(`UNREACHABLE: Unexpected player column name in update: ${columnName}`);
+        }
+    }
+
     const columnValues: unknown[] = Object.values(columnUpdates);
     const setClause: string = columnNames.map((columnName: string): string => `${columnName} = ?`).join(", ");
 
@@ -557,12 +569,24 @@ export function serverFindAllPlanetsPublic(): DBType.PublicPlanetRow[]
     return planetRows;
 }
 
+const PLANET_ROW_ALLOWED_COLUMNS: ReadonlySet<string> = new Set<string>([
+    "slot", "system", "galaxy", "size", "owner_player_id", "claimed_at", "last_updated",
+]);
+
 export function serverUpdatePlanetRow(planetId: number, columnUpdates: Partial<DBType.PlanetRow>): DBType.PlanetRow
 {
     const columnNames: string[] = Object.keys(columnUpdates);
     if (columnNames.length === 0)
     {
         return readPlanetRow(planetId);
+    }
+
+    for (const columnName of columnNames)
+    {
+        if (PLANET_ROW_ALLOWED_COLUMNS.has(columnName) === false)
+        {
+            throw new Error(`UNREACHABLE: Unexpected planet column name in update: ${columnName}`);
+        }
     }
 
     const columnValues: unknown[] = Object.values(columnUpdates);
@@ -721,11 +745,16 @@ function claimPlanet(planetAddress: GameType.PlanetAddress | null, playerId: num
 function abandonPlanet(planetId: number, playerId: number): void
 {
     const serverData: CoreType.ServerData = ServerType.getServerData();
-    ServerProgress.applyPlayerUpdate(playerId, serverData, Date.now());
 
+    // applyPlayerUpdate detects inTransaction and skips starting a nested transaction,
+    // so it is safe to call from inside the transaction below. Wrapping both operations
+    // in one transaction eliminates the gap where a concurrent request could observe
+    // post-progress state while the planet is still present.
     // set null first before clean so we fail the "target player null" condition and dont pickup to delete and not re-add.
     DB.databaseConnection.transaction(() =>
     {
+        ServerProgress.applyPlayerUpdate(playerId, serverData, Date.now());
+
         DB.databaseConnection.prepare(
             "UPDATE fleet_movement SET player_target_id = null WHERE planet_target_id = ?"
         ).run(planetId);
@@ -733,7 +762,7 @@ function abandonPlanet(planetId: number, playerId: number): void
         DB.databaseConnection.prepare(
             "DELETE FROM fleet_movement WHERE planet_origin_id = ?"
         ).run(planetId);
-        
+
         DB.databaseConnection.prepare(
             "DELETE FROM planet WHERE id = ?"
         ).run(planetId);
@@ -767,72 +796,39 @@ export function getPlanetDataByCoords(galaxy: number, system: number, slot: numb
     return { planetRow: planetRow, dynamicPlanetData: dynamicPlanetData };
 }
 
+type ActiveTimerRow = { id: number; started_at: number; duration_at_start_time: number };
+
+// tableName is always a hardcoded string literal from within this file — never user input.
+function rescaleActiveTimerRows(tableName: string, rescaleFactor: number, now: number): void
+{
+    const activeRows: ActiveTimerRow[] = DB.databaseConnection.prepare(
+        `SELECT id, started_at, duration_at_start_time FROM ${tableName} WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL AND (started_at + duration_at_start_time) > ?`
+    ).all(now) as ActiveTimerRow[];
+
+    for (const row of activeRows)
+    {
+        const realMsRemaining: number = row.started_at + row.duration_at_start_time - now;
+        const newDurationAtStartTime: number = (now - row.started_at) + Math.floor(realMsRemaining * rescaleFactor);
+
+        DB.databaseConnection.prepare(
+            `UPDATE ${tableName} SET duration_at_start_time = ? WHERE id = ?`
+        ).run(newDurationAtStartTime, row.id);
+    }
+}
+
 function rescaleBuildingUpgradeTimes(rescaleFactor: number, now: number): void
 {
-    const activeUpgradeRows: { id: number; started_at: number; duration_at_start_time: number }[] = DB.databaseConnection.prepare(
-        "SELECT id, started_at, duration_at_start_time FROM building_upgrade WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL"
-    ).all() as { id: number; started_at: number; duration_at_start_time: number }[];
-
-    for (const upgradeRow of activeUpgradeRows)
-    {
-        const completesAt: number = upgradeRow.started_at + upgradeRow.duration_at_start_time;
-        const realMsRemaining: number = completesAt - now;
-
-        if (realMsRemaining <= 0)
-        {
-            continue;
-        }
-
-        const newDurationAtStartTime: number = (now - upgradeRow.started_at) + Math.floor(realMsRemaining * rescaleFactor);
-        DB.databaseConnection.prepare(
-            "UPDATE building_upgrade SET duration_at_start_time = ? WHERE id = ?"
-        ).run(newDurationAtStartTime, upgradeRow.id);
-    }
+    rescaleActiveTimerRows("building_upgrade", rescaleFactor, now);
 }
 
 function rescaleFleetMovementTimes(rescaleFactor: number, now: number): void
 {
-    const activeFleetRows: { id: number; started_at: number; duration_at_start_time: number }[] = DB.databaseConnection.prepare(
-        "SELECT id, started_at, duration_at_start_time FROM fleet_movement WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL AND (started_at + duration_at_start_time) > ?"
-    ).all(now) as { id: number; started_at: number; duration_at_start_time: number }[];
-
-    for (const fleetRow of activeFleetRows)
-    {
-        const completesAt: number = fleetRow.started_at + fleetRow.duration_at_start_time;
-        const realMsRemaining: number = completesAt - now;
-        if (realMsRemaining <= 0)
-        {
-            continue;
-        }
-
-        const newDurationAtStartTime: number = (now - fleetRow.started_at) + Math.floor(realMsRemaining * rescaleFactor);
-        DB.databaseConnection.prepare(
-            "UPDATE fleet_movement SET duration_at_start_time = ? WHERE id = ?"
-        ).run(newDurationAtStartTime, fleetRow.id);
-    }
+    rescaleActiveTimerRows("fleet_movement", rescaleFactor, now);
 }
 
 function rescaleShipConstructionTimes(rescaleFactor: number, now: number): void
 {
-    const activeConstructionRows: { id: number; started_at: number; duration_at_start_time: number }[] = DB.databaseConnection.prepare(
-        "SELECT id, started_at, duration_at_start_time FROM ship_construction WHERE started_at IS NOT NULL AND duration_at_start_time IS NOT NULL"
-    ).all() as { id: number; started_at: number; duration_at_start_time: number }[];
-
-    for (const constructionRow of activeConstructionRows)
-    {
-        const completesAt: number = constructionRow.started_at + constructionRow.duration_at_start_time;
-        const realMsRemaining: number = completesAt - now;
-
-        if (realMsRemaining <= 0)
-        {
-            continue;
-        }
-
-        const newDurationAtStartTime: number = (now - constructionRow.started_at) + Math.floor(realMsRemaining * rescaleFactor);
-        DB.databaseConnection.prepare(
-            "UPDATE ship_construction SET duration_at_start_time = ? WHERE id = ?"
-        ).run(newDurationAtStartTime, constructionRow.id);
-    }
+    rescaleActiveTimerRows("ship_construction", rescaleFactor, now);
 }
 
 //#endregion
@@ -1025,9 +1021,9 @@ export function tryBuildShipsLogic(playerId: number, serverData: CoreType.Server
             return { success: false, failureReason: "A ship doesn't meet requirements.", playerStateResult: playerData };
         }
 
-        if (shipQuantity < 0)
+        if (shipQuantity <= 0)
         {
-            return { success: false, failureReason: "Negative ship quantity.", playerStateResult: playerData };
+            return { success: false, failureReason: "Non-positive ship quantity.", playerStateResult: playerData };
         }
     }
 
@@ -1044,18 +1040,13 @@ export function tryBuildShipsLogic(playerId: number, serverData: CoreType.Server
     }
 
     const totalCost: Map<number, number> = ShipConstructionData.computeShipConstructionCost(possibleRequestedShipQuantities);
-    for (const [resourceType, resourceCost] of totalCost)
+
+    if (ResourceData.hasResourceQuantities(relevantPlanetData, totalCost) === false)
     {
-        try
-        {
-            ResourceData.subtractPlanetResource(relevantPlanetData, resourceType, resourceCost);
-        }
-        catch (error: unknown)
-        {
-            const errorMessage: string = error instanceof Error ? error.message : String(error);
-            return { success: false, failureReason: `Failed to substract planet resources for ship contruction.`, playerStateResult: playerData };
-        }
+        return { success: false, failureReason: "Not enough resources for ship construction.", playerStateResult: playerData };
     }
+
+    ResourceData.subtractPlanetResources(relevantPlanetData, totalCost);
 
     const newShipConstructionShipRows: DBType.ShipConstructionShipRow[] = [];
     for (const [shipType, shipQuantity] of possibleRequestedShipQuantities)
@@ -1208,19 +1199,14 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
 
     for (const [shipType, shipQuantity] of shipQuantities)
     {
-        if (shipQuantity === 0)
-		{
-			continue;
-		}
+        if (shipQuantity <= 0)
+        {
+            return { success: false, failureReason: "Non-positive ship quantity for fleet.", playerStateResult: playerData };
+        }
 
         if (Requirement.getFailedFleetMovementRequirements(playerData, shipType, originPlanetData.planetRow.id).length > 0)
         {
             return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
-        }
-
-        if (shipQuantity < 0)
-        {
-            return { success: false, failureReason: "Negative ship quantity for fleet.", playerStateResult: playerData };
         }
     }
 
@@ -1327,7 +1313,10 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         const fleetMovementRow: DBType.FleetMovementRow =
         {
             id: -1, // will be set on the update
-            seed: Math.random() * 0x7FFFFFFF, //random is float, SQLite takes ints, 0x7FFFFFFF is 2^31 - 1
+            // 0x7FFFFFFF is 2^31 - 1, the max signed 32-bit int that fits SQLite's INTEGER column.
+            // Math.floor is required because Math.random() returns a float, but SQLite would silently
+            // truncate the fractional part on insert and desync the in-memory row from the stored row.
+            seed: Math.floor(Math.random() * 0x7FFFFFFF),
             player_origin_id: playerData.playerRow.id,
             planet_origin_id: originPlanetData.planetRow.id,
             planet_origin_slot: originPlanetData.planetRow.slot,

@@ -49,14 +49,7 @@ function buildSingleShipCostParts(shipType: number): string[]
         return [];
     }
 
-    const costParts: string[] = [];
-
-    for (const [resourceType, resourceCost] of singleCostMap)
-    {
-        costParts.push(`${resourceCost} ${ThingType.getSpecificThingName(ThingType.resource(resourceType))}`);
-    }
-
-    return costParts;
+    return HelperElement.buildCostParts(singleCostMap);
 }
 
 function buildRequestedQuantitiesMap(shipTypes: number[], requestedQuantities: Map<number, number>): Map<number, number>

@@ -49,13 +49,7 @@ function getBuildingImagePath(buildingType: number, level: number): string
 
 function renderCostLine(nextCostMap: Map<number, number>): ReactElement
 {
-	const parts: string[] = [];
-
-	for (const [resourceType, resourceCost] of nextCostMap)
-	{
-		const resourceName: string = ThingType.getSpecificThingName(ThingType.resource(resourceType));
-		parts.push(`${resourceCost} ${resourceName}`);
-	}
+	const parts: string[] = HelperElements.buildCostParts(nextCostMap);
 
 	return <span>{parts.join(" / ")}</span>;
 }

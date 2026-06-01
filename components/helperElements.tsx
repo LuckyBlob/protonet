@@ -2,6 +2,7 @@
 
 import { useState, ReactElement, ReactNode, ChangeEvent } from "react";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 
 export function EmptyElement(): ReactElement
 {
@@ -121,4 +122,16 @@ export function renderQuantityInput(type: number, min: number, max: number | nul
 	);
 
 	return element;
+}
+
+export function buildCostParts(costMap: Map<number, number>): string[]
+{
+	const costParts: string[] = [];
+
+	for (const [resourceType, resourceCost] of costMap)
+	{
+		costParts.push(`${resourceCost} ${ThingType.getSpecificThingName(ThingType.resource(resourceType))}`);
+	}
+
+	return costParts;
 }
