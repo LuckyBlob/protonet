@@ -163,7 +163,7 @@ export type MessagePreview =
 export function isPlayerData(value: PlayerData | PlanetData): value is PlayerData
 {
 	const key: keyof PlayerData = "planetDatas";
-	return key in value;
+	return key in value;  
 }
 
 type VariableNameMapType = typeof DataContextToVariableNameMap;

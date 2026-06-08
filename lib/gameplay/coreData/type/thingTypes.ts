@@ -22,7 +22,7 @@ export const THING_DISPLAY_NAMES: ReadonlyMap<Thing, string> = new Map
     [Thing.ShipConstruction, "ShipConstruction"],
     [Thing.FleetMovement, "FleetMovement"],
 ]);
-
+ 
 const THING_DEFINITIONS: ReadonlyMap<Thing, ThingDefinition> = new Map
 ([
     [Thing.Resource,
