@@ -7,7 +7,7 @@ import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 
-const PLANET_BUTTON_PATTERN: RegExp = /^Planet \[/;
+export const PLANET_BUTTON_PATTERN: RegExp = /^Planet \[/;
 
 //#region shared DB connection + types
 
@@ -66,13 +66,6 @@ export async function logout(page: Page): Promise<void>
     await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible()
 }
 
-export async function getSelectedPlanetAddress(page: Page): Promise<string>
-{
-    const text: string = await page.getByRole('button', { name: PLANET_BUTTON_PATTERN }).textContent() ?? ''
-    const match: RegExpMatchArray | null = text.match(/\((\d+:\d+:\d+)\)/)
-    return match !== null ? match[1] : ''
-}
-
 export async function openPlanetDropdown(page: Page): Promise<void>
 {
     await page.getByRole('button', { name: PLANET_BUTTON_PATTERN }).click()
@@ -82,7 +75,7 @@ export async function getDropdownAddresses(page: Page): Promise<string[]>
 {
     await openPlanetDropdown(page)
     const buttons: string[] = await page.getByRole('button').allTextContents()
-    const addresses: string[] = buttons.filter((text: string) => /^\d+:\d+:\d+$/.test(text))
+    const addresses: string[] = buttons.filter((text: string) => /^\[\d+:\d+:\d+\]$/.test(text))
     await openPlanetDropdown(page)
     return addresses
 }
