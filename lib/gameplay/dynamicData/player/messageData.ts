@@ -5,12 +5,19 @@ export const MAX_VISIBLE_MESSAGES: number = 50;
 export const VISIBLE_MESSAGE_ROW_COUNT: number = 5;
 //#endregion
 
+export type MessageType = typeof MessageType[keyof typeof MessageType];
+export const MessageType =
+{
+    Admin: 1,
+    FleetAction: 2,
+} as const;
+
 //#region message helpers
 export function computeUnreadMessageCount(messageDatas: CoreType.MessageData[]): number
 {
     const unreadCount: number = messageDatas.filter((messageData: CoreType.MessageData): boolean =>
     {
-        return messageData.messagePreview.isRead === false;
+        return messageData.messagePreview.isRead === 0;
     }).length;
 
     return unreadCount;

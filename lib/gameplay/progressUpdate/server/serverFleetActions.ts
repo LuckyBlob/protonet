@@ -1,11 +1,10 @@
 import Database from "better-sqlite3";
 import * as DB from "@/lib/db/db";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ServerDynamicData from "@/lib/gameplay/gameplayData/dynamic/serverDynamicData";
-import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as ServerDynamicData from "@/lib/gameplay/dynamicData/serverDynamicData";
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
-import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
+import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 
 export function resolveFleetMovementAtTargetToDB(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
 {
@@ -22,33 +21,44 @@ export function resolveFleetMovementAtTargetToDB(playerData: CoreType.PlayerData
         return;        
     }
 
-    resolveFleetActionToDB(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement, resolvedData.data, serverData);
+    if (resolvedData.data.origin === null)
+    {
+        throw new Error(`⚠️: Origin is null when writing fleet action to DB.`);
+    }
+
+    serverCompletePartialResolution(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement, playerData.playerRow.id, serverData);
+    resolveFleetActionToDB(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement);
     return;
 }
 
-function resolveFleetActionToDB(originPlayerData: FleetData.FleetPlayerData | null, targetPlayerData: FleetData.FleetPlayerData | null, fleetMovement: CoreType.FleetMovement, fleetPlayerDataPair: FleetData.FleetPlayerDataPair, serverData: CoreType.ServerData): void
+function serverCompletePartialResolution(originPlayerData: FleetData.FleetPlayerData, targetPlayerData: FleetData.FleetPlayerData | null, fleetMovement: CoreType.FleetMovement, resolvingPlayerId: number, serverData: CoreType.ServerData): void
 {
-    if (originPlayerData === null)
-    {
-        throw new Error(`⚠️: Origin is null when writing fleet action to DB.`); 
-    }
-    
     if (fleetMovement.resolutionState === CoreType.FleetMovementResolution.ResolveResultUnknown)
     {
         // Either we sent it and we didn't know about the target locally
         // or we received it and we didn't know about the origin locally
         // Now we do, since we are the server, so we must resolve it
-        FleetData.resolveFleetMovementAtTarget(targetPlayerData?.playerData ?? null, fleetMovement, fleetPlayerDataPair, serverData, originPlayerData.planetData);
+        FleetData.resolveFleetMovementAtTarget(targetPlayerData?.playerData ?? null, originPlayerData.playerData, fleetMovement, serverData);
     }
 
-    // Target can resolve, but doesnt have the origin data. If a one way trip, we must remove the fleet from the origin,
-    // if that fleet was to another player since it's over. But since we couldnt do that locally, we need to do it here.
-    if (fleetMovement.resolutionState === CoreType.FleetMovementResolution.ResolvedOneWayTripForTargetOnly)
+    if (originPlayerData.playerData.playerRow.id !== resolvingPlayerId)
     {
-        FleetData.removeFleetMovementSafe(originPlayerData.planetData, fleetMovement.fleetMovementRow.id);
-        fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved
+        FleetData.addFleetMessagesToPlayerData(originPlayerData.playerData, fleetMovement);
+        if (fleetMovement.resolutionState === CoreType.FleetMovementResolution.ResolvedOneWayTripForTargetOnly)
+        {
+            FleetData.removeFleetMovementSafe(originPlayerData.planetData, fleetMovement.fleetMovementRow.id);
+            fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
+        }
     }
 
+    if (targetPlayerData !== null && targetPlayerData.playerData.playerRow.id !== resolvingPlayerId)
+    {
+        FleetData.addFleetMessagesToPlayerData(targetPlayerData.playerData, fleetMovement);
+    }
+}
+
+function resolveFleetActionToDB(originPlayerData: FleetData.FleetPlayerData, targetPlayerData: FleetData.FleetPlayerData | null, fleetMovement: CoreType.FleetMovement): void
+{
     if (fleetMovement.resolutionState !== CoreType.FleetMovementResolution.Resolved)
     {
         throw new Error("Fleet action could not be resolved.")
@@ -60,6 +70,7 @@ function resolveFleetActionToDB(originPlayerData: FleetData.FleetPlayerData | nu
         {
             ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.planetData.planetRow.id, targetPlayerData.playerData.playerRow.id, CoreType.DataContext.ShipQuantity, targetPlayerData.planetData.dynamicPlanetData);
             ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.planetData.planetRow.id, targetPlayerData.playerData.playerRow.id, CoreType.DataContext.ResourceQuantity, targetPlayerData.planetData.dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlayerDataContext(targetPlayerData.playerData.playerRow.id, CoreType.DataContext.Messages, targetPlayerData.playerData.dynamicPlayerData);
             // Target never updates the fleet movement DB data, owner of that is origin only
         }
 
@@ -69,8 +80,9 @@ function resolveFleetActionToDB(originPlayerData: FleetData.FleetPlayerData | nu
             ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.planetData.planetRow.id, originPlayerData.playerData.playerRow.id, CoreType.DataContext.ShipQuantity, originPlayerData.planetData.dynamicPlanetData);
             ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.planetData.planetRow.id, originPlayerData.playerData.playerRow.id, CoreType.DataContext.ResourceQuantity, originPlayerData.planetData.dynamicPlanetData);
         }
-
+        
         ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.planetData.planetRow.id, originPlayerData.playerData.playerRow.id, CoreType.DataContext.FutureFleetArrivals, originPlayerData.planetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlayerDataContext(originPlayerData.playerData.playerRow.id, CoreType.DataContext.Messages, originPlayerData.playerData.dynamicPlayerData);
     });
 
     transaction();

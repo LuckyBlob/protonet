@@ -5,6 +5,24 @@ import * as DBType from "@/lib/db/dbTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 
 //#region Dynamic Player Data
+export function serverUpdatePlayerDataContext(playerId: number, dataContext: CoreType.DataContext, dynamicPlayerData: CoreType.DynamicPlayerData): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        switch (dataContext)
+        {
+            case CoreType.DataContext.Messages:
+            {
+                updateMessages(playerId, dynamicPlayerData);
+                break;
+            }
+            default:
+                throw new Error(`UNREACHABLE: Dynamic data update function undefined for data context ${dataContext}.`);
+        }
+    });
+    transaction();
+}
+
 export function getDynamicPlayerData(playerId: number): CoreType.DynamicPlayerData
 {
     return {
@@ -12,13 +30,71 @@ export function getDynamicPlayerData(playerId: number): CoreType.DynamicPlayerDa
     };
 }
 
-export function getDynamicMessageData(planetId: number): CoreType.MessageData[]
+export function getDynamicMessageData(playerId: number): CoreType.MessageData[]
 {
-    return DB.databaseConnection.transaction((): CoreType.MessageData[] =>
+    const messageRows: DBType.MessageRow[] = DB.databaseConnection.prepare(
+        "SELECT id, player_id, received_at, type, is_read, title FROM message WHERE player_id = ? ORDER BY received_at DESC"
+    ).all(playerId) as DBType.MessageRow[];
+
+    const messageDatas: CoreType.MessageData[] = [];
+    for (const messageRow of messageRows)
     {
-        const messageDatas: CoreType.MessageData[] = [];
-        return messageDatas;
-    })();
+        const messagePreview: CoreType.MessagePreview =
+        {
+            messageRowId: messageRow.id,
+            receivedAt: messageRow.received_at,
+            title: messageRow.title,
+            isRead: messageRow.is_read,
+            type: messageRow.type,
+        };
+        const messageData: CoreType.MessageData =
+        {
+            messagePreview: messagePreview,
+            messageRow: null,
+        };
+        messageDatas.push(messageData);
+    }
+
+    return messageDatas;
+}
+
+function updateMessages(playerId: number, dynamicPlayerData: CoreType.DynamicPlayerData): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO message (player_id, received_at, type, is_read, title, body) VALUES (?, ?, ?, ?, ?, ?) RETURNING id"
+        );
+
+        for (const messageData of dynamicPlayerData.messageDatas)
+        {
+            const messageRow: DBType.MessageRow | null = messageData.messageRow;
+            if (messageRow === null)
+            {
+                // Existing message not loaded client-side. Already persisted, nothing to do.
+                continue;
+            }
+
+            if (messageRow.id !== -1)
+            {
+                // Already persisted (id assigned by a previous INSERT). Nothing to do.
+                continue;
+            }
+
+            const insertResult: { id: number } = insertStatement.get(
+                playerId,
+                messageRow.received_at,
+                messageRow.type,
+                messageRow.is_read,
+                messageRow.title,
+                messageRow.body,
+            ) as { id: number };
+
+            messageRow.id = insertResult.id;
+            messageData.messagePreview.messageRowId = insertResult.id;
+        }
+    });
+    transaction();
 }
 //#endregion
 
@@ -200,6 +276,8 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): CoreTy
                 fleetMovementShipRows: fleetMovementShipRows,
                 fleetMovementResourceRows: fleetMovementResourceRows,
                 resolutionState: CoreType.FleetMovementResolution.Unresolved,
+                originMessageRow: null,
+                targetMessageRow: null,
             }
             
             fleetMovements.push(newFleetMovement);
@@ -452,6 +530,8 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: CoreType
                 fleetMovement.fleetMovementRow.duration_at_start_time,
                 fleetMovement.fleetMovementRow.started_at,
             ) as { id: number };
+
+            fleetMovement.fleetMovementRow.id = fleetIdResult.id;
             
             for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)
             {

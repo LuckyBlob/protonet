@@ -3,8 +3,11 @@ import { test, expect, Page, Locator } from "@playwright/test";
 import Database from "better-sqlite3";
 
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as DBType from "@/lib/db/dbTypes";
+import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 
-const PLANET_BUTTON_PATTERN: RegExp = /^Planet \(/;
+const PLANET_BUTTON_PATTERN: RegExp = /^Planet \[/;
 
 //#region shared DB connection + types
 
@@ -115,7 +118,7 @@ export function getPlanets(username: string, db: Database.Database): PlanetRow[]
 
 export function planetAddress(planet: PlanetRow): string
 {
-    return `${planet.slot}:${planet.system}:${planet.galaxy}`;
+    return GameType.formatPlanetAddress(planet.galaxy, planet.system, planet.slot);
 }
 
 export function setResource(planetId: number, playerId: number, resourceType: number, quantity: number, db: Database.Database): void
@@ -218,6 +221,65 @@ export function fleetExists(fleetId: number, db: Database.Database): boolean
     return row.count > 0;
 }
 
+//#region message helpers (DB side)
+
+// Seeds a message into the DB exactly the way the server would. Defaults: Admin type, unread,
+// received_at = now. Returns the assigned message row id so the test can target it later.
+export function insertMessage(
+    playerId: number,
+    title: string,
+    body: string,
+    db: Database.Database,
+    options?: { isRead?: 0 | 1, receivedAt?: number, type?: MessageData.MessageType },
+): number
+{
+    const isRead: number = options?.isRead ?? 0;
+    const receivedAt: number = options?.receivedAt ?? Date.now();
+    const type: MessageData.MessageType = options?.type ?? MessageData.MessageType.Admin;
+
+    const result: { id: number } = db.prepare(
+        "INSERT INTO message (player_id, received_at, type, is_read, title, body) VALUES (?, ?, ?, ?, ?, ?) RETURNING id"
+    ).get(playerId, receivedAt, type, isRead, title, body) as { id: number };
+
+    return result.id;
+}
+
+export function getMessageRow(messageRowId: number, db: Database.Database): DBType.MessageRow | null
+{
+    const row: DBType.MessageRow | undefined = db.prepare(
+        "SELECT id, player_id, received_at, type, is_read, title, body FROM message WHERE id = ?"
+    ).get(messageRowId) as DBType.MessageRow | undefined;
+
+    return row ?? null;
+}
+
+export function getMessageRowsForPlayer(playerId: number, db: Database.Database): DBType.MessageRow[]
+{
+    return db.prepare(
+        "SELECT id, player_id, received_at, type, is_read, title, body FROM message WHERE player_id = ? ORDER BY received_at DESC, id ASC"
+    ).all(playerId) as DBType.MessageRow[];
+}
+
+export function getMessageRowByTitle(playerId: number, title: string, db: Database.Database): DBType.MessageRow | null
+{
+    const row: DBType.MessageRow | undefined = db.prepare(
+        "SELECT id, player_id, received_at, type, is_read, title, body FROM message WHERE player_id = ? AND title = ? ORDER BY received_at DESC, id ASC LIMIT 1"
+    ).get(playerId, title) as DBType.MessageRow | undefined;
+
+    return row ?? null;
+}
+
+export function getMessageCount(playerId: number, db: Database.Database): number
+{
+    const row: { count: number } = db.prepare(
+        "SELECT COUNT(*) AS count FROM message WHERE player_id = ?"
+    ).get(playerId) as { count: number };
+
+    return row.count;
+}
+
+//#endregion
+
 // Rewind a started_at so `legs` completions (each one single-leg duration long) are already in
 // the past — the server resolves them all on the next reload. legs=1 finishes one ship/upgrade
 // or a one-way trip; legs=2 finishes a round trip or the 2nd ship of a batch.
@@ -263,16 +325,23 @@ export async function reloadGame(page: Page): Promise<void>
     await expect(page.getByRole("button", { name: PLANET_BUTTON_PATTERN })).toBeVisible();
 }
 
-export async function goToView(page: Page, view: "Game" | "Upgrades" | "Shipyard" | "Fleets" | "Planets" | "Stats"): Promise<void>
+export async function goToView(page: Page, view: "Game" | "Upgrades" | "Shipyard" | "Fleets" | "Planets" | "Messages" | "Stats"): Promise<void>
 {
+    // The sidebar's Messages button accessible name is "Messages" when there are no unread, and
+    // "Messages(N)" once the unread badge appears, so we can't rely on an exact name match here.
+    if (view === "Messages")
+    {
+        await page.getByRole("button", { name: /^Messages/ }).click();
+        return;
+    }
     await page.getByRole("button", { name: view, exact: true }).click();
 }
 
 export async function selectedPlanetAddress(page: Page): Promise<string>
 {
     const text: string = await page.getByRole("button", { name: PLANET_BUTTON_PATTERN }).textContent() ?? "";
-    const match: RegExpMatchArray | null = text.match(/\((\d+:\d+:\d+)\)/);
-    return match !== null ? match[1] : "";
+    const match: RegExpMatchArray | null = text.match(/\[\d+:\d+:\d+\]/);
+    return match !== null ? match[0] : "";
 }
 
 export function buildingCard(page: Page, buildingName: string): Locator
@@ -343,6 +412,48 @@ export async function sendFleet(page: Page, shipName: string, shipQuantity: numb
 export function fleetMovementRow(page: Page, origin: PlanetRow, target: PlanetRow): Locator
 {
     return page.getByText(`${planetAddress(origin)} → ${planetAddress(target)}`);
+}
+
+//#endregion
+
+//#region message UI helpers
+
+// The Messages list renders one cursor-pointer div per preview row. Filtering by the unique-per-test
+// title scopes the row down to that single message, even when several previews share a layout.
+export function messagePreviewRow(page: Page, title: string): Locator
+{
+    return page.locator("div.cursor-pointer").filter({ hasText: title });
+}
+
+// The unread-state styling is `font-bold`; once a message becomes read the title span flips to
+// `font-normal`. Scope to the title span (not the whole row) so the `✕` button doesn't trip us up.
+export function messagePreviewTitleSpan(page: Page, title: string): Locator
+{
+    return messagePreviewRow(page, title).locator("span", { hasText: title });
+}
+
+export async function selectMessageByTitle(page: Page, title: string): Promise<void>
+{
+    await messagePreviewRow(page, title).click();
+}
+
+export async function deleteMessageByTitle(page: Page, title: string): Promise<void>
+{
+    await messagePreviewRow(page, title).getByRole("button", { name: "Delete message" }).click();
+}
+
+// Reads the sidebar Messages button text and pulls "(N)" out of it. Returns 0 when the badge is
+// absent. Useful to assert the unread count without coupling tests to the exact button name.
+export async function getUnreadBadgeCount(page: Page): Promise<number>
+{
+    const text: string = await page.getByRole("button", { name: /^Messages/ }).textContent() ?? "";
+    const match: RegExpMatchArray | null = text.match(/\((\d+)\)/);
+    if (match === null)
+    {
+        return 0;
+    }
+
+    return Number.parseInt(match[1], 10);
 }
 
 //#endregion

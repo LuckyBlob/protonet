@@ -8,10 +8,10 @@ import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 import * as DB from "@/lib/db/db";
 import * as ServerRequestFunctions from "@/lib/networkRequests/server/serverRequestFunctions";
 import * as ServerProgress from "@/lib/gameplay/progressUpdate/server/serverProgress";
-import * as ServerDynamicData from "@/lib/gameplay/gameplayData/dynamic/serverDynamicData";
+import * as ServerDynamicData from "@/lib/gameplay/dynamicData/serverDynamicData";
 import * as ServerFleetAction from "@/lib/gameplay/progressUpdate/server/serverFleetActions";
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
-import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
+import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 
 class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
 {

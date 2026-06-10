@@ -5,7 +5,7 @@ import { ReactElement, MouseEvent, useEffect, useState } from "react";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as DBType from "@/lib/db/dbTypes";
-import * as MessageData from "@/lib/gameplay/gameplayData/dynamic/messageData";
+import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as APIEndPoint from "@/app/api/apiEndPoints";
 import * as HelperElements from "@/components/helperElements";
@@ -15,11 +15,13 @@ type MessagesViewProps =
     clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
-type MessageBody =
+const MessageBodyFetchState =
 {
-    isLoading: boolean;
-    body: string | null;
-};
+    Idle: 1,
+    Loading: 2,
+    Failed: 3,
+} as const;
+type MessageBodyFetchState = typeof MessageBodyFetchState[keyof typeof MessageBodyFetchState];
 
 type SelectedMessageRowIdState = [number | null, (value: number | null) => void];
 type DeletedMessageRowIdsState = [Set<number>, (value: Set<number>) => void];
@@ -29,7 +31,7 @@ type MessagesViewData =
     visibleMessageDatas: CoreType.MessageData[];
     selectedMessageRowIdState: SelectedMessageRowIdState;
     deletedMessageRowIdsState: DeletedMessageRowIdsState;
-    messageBody: MessageBody;
+    messageBodyFetchState: MessageBodyFetchState;
     psController: CoreType.PSController;
 };
 
@@ -48,20 +50,136 @@ function formatMessageTimestamp(epochMs: number): string
 }
 //#endregion
 
-//#region state hooks
-function useMessageBody(selectedMessageRowId: number | null): MessageBody
+//#region cache helpers
+function updateMessageDataInCache(
+    psController: CoreType.PSController,
+    messageRowId: number,
+    transformMessageData: (messageData: CoreType.MessageData) => CoreType.MessageData,
+): void
 {
-    const messageBodyState: [MessageBody, (value: MessageBody) => void] = useState<MessageBody>({ isLoading: false, body: null });
+    const writeToPlayerData = (playerData: CoreType.PlayerData): CoreType.PlayerData =>
+    {
+        const updatedMessageDatas: CoreType.MessageData[] = playerData.dynamicPlayerData.messageDatas.map((messageData: CoreType.MessageData): CoreType.MessageData =>
+        {
+            if (messageData.messagePreview.messageRowId !== messageRowId)
+            {
+                return messageData;
+            }
+
+            return transformMessageData(messageData);
+        });
+
+        const updatedDynamicPlayerData: CoreType.DynamicPlayerData =
+        {
+            messageDatas: updatedMessageDatas,
+        };
+        const updatedPlayerData: CoreType.PlayerData =
+        {
+            playerRow: playerData.playerRow,
+            dynamicPlayerData: updatedDynamicPlayerData,
+            planetDatas: playerData.planetDatas,
+            publicPlanetRows: playerData.publicPlanetRows,
+            publicPlayerRows: playerData.publicPlayerRows,
+        };
+        return updatedPlayerData;
+    };
+
+    psController[1]((mostRecentState: CoreType.PlayerState): CoreType.PlayerState =>
+    {
+        const newPlayerState: CoreType.PlayerState =
+        {
+            dbData: writeToPlayerData(mostRecentState.dbData),
+            predictedDBData: writeToPlayerData(mostRecentState.predictedDBData),
+            selectedPlanetId: mostRecentState.selectedPlanetId,
+            lastFetchTimestamp: mostRecentState.lastFetchTimestamp,
+        };
+        return newPlayerState;
+    });
+}
+
+function writeMessageRowToCache(psController: CoreType.PSController, messageRowId: number, fetchedMessageRow: DBType.MessageRow): void
+{
+    updateMessageDataInCache(psController, messageRowId, (messageData: CoreType.MessageData): CoreType.MessageData =>
+    {
+        // Mirror the server's read-on-fetch flip locally so the unread badge and the
+        // font-bold preview styling update without waiting for the next playerData refresh.
+        const updatedMessagePreview: CoreType.MessagePreview =
+        {
+            messageRowId: messageData.messagePreview.messageRowId,
+            receivedAt: messageData.messagePreview.receivedAt,
+            title: messageData.messagePreview.title,
+            isRead: 1,
+            type: messageData.messagePreview.type,
+        };
+        const updatedMessageData: CoreType.MessageData =
+        {
+            messagePreview: updatedMessagePreview,
+            messageRow: fetchedMessageRow,
+        };
+        return updatedMessageData;
+    });
+}
+
+function setMessagePreviewReadInCache(psController: CoreType.PSController, messageRowId: number, isRead: number): void
+{
+    updateMessageDataInCache(psController, messageRowId, (messageData: CoreType.MessageData): CoreType.MessageData =>
+    {
+        const updatedMessagePreview: CoreType.MessagePreview =
+        {
+            messageRowId: messageData.messagePreview.messageRowId,
+            receivedAt: messageData.messagePreview.receivedAt,
+            title: messageData.messagePreview.title,
+            isRead: isRead,
+            type: messageData.messagePreview.type,
+        };
+        const updatedMessageData: CoreType.MessageData =
+        {
+            messagePreview: updatedMessagePreview,
+            messageRow: messageData.messageRow,
+        };
+        return updatedMessageData;
+    });
+}
+//#endregion
+
+//#region state hooks
+function useEnsureMessageLoaded(selectedMessageRowId: number | null, psController: CoreType.PSController): MessageBodyFetchState
+{
+    const fetchStateState: [MessageBodyFetchState, (value: MessageBodyFetchState) => void] = useState<MessageBodyFetchState>(MessageBodyFetchState.Idle);
 
     useEffect((): (() => void) =>
     {
         if (selectedMessageRowId === null)
         {
-            messageBodyState[1]({ isLoading: false, body: null });
+            fetchStateState[1](MessageBodyFetchState.Idle);
             return (): void => {};
         }
 
-        messageBodyState[1]({ isLoading: true, body: null });
+        const cachedMessageData: CoreType.MessageData | null = MessageData.findMessageDataByMessageRowId(
+            psController[0].predictedDBData.dynamicPlayerData.messageDatas,
+            selectedMessageRowId,
+        );
+        if (cachedMessageData === null)
+        {
+            // Selected preview disappeared between click and effect (e.g., deleted).
+            fetchStateState[1](MessageBodyFetchState.Idle);
+            return (): void => {};
+        }
+
+        // Optimistic: every click marks the message as read so the badge clears immediately.
+        // Captured here so we can revert if the body fetch turns out to fail below.
+        const originalIsRead: number = cachedMessageData.messagePreview.isRead;
+        setMessagePreviewReadInCache(psController, selectedMessageRowId, 1);
+
+        if (cachedMessageData.messageRow !== null)
+        {
+            // Body already loaded — either from a previous fetch or from a local
+            // anchor-event resolver (which inserts with id === -1, so a fetch would 404).
+            fetchStateState[1](MessageBodyFetchState.Idle);
+            return (): void => {};
+        }
+
+        fetchStateState[1](MessageBodyFetchState.Loading);
 
         let isCancelled: boolean = false;
         const runFetch = async (): Promise<void> =>
@@ -76,12 +194,14 @@ function useMessageBody(selectedMessageRowId: number | null): MessageBody
             if (response === null || response.error != null || response.messageRow == null)
             {
                 console.error("⚠️:", `Failed to fetch messageRowId ${selectedMessageRowId}.`);
-                messageBodyState[1]({ isLoading: false, body: null });
+                setMessagePreviewReadInCache(psController, selectedMessageRowId, originalIsRead);
+                fetchStateState[1](MessageBodyFetchState.Failed);
                 return;
             }
 
-            const messageRow: DBType.MessageRow = response.messageRow;
-            messageBodyState[1]({ isLoading: false, body: messageRow.body });
+            const fetchedMessageRow: DBType.MessageRow = response.messageRow;
+            writeMessageRowToCache(psController, selectedMessageRowId, fetchedMessageRow);
+            fetchStateState[1](MessageBodyFetchState.Idle);
         };
         runFetch();
 
@@ -91,7 +211,7 @@ function useMessageBody(selectedMessageRowId: number | null): MessageBody
         };
     }, [selectedMessageRowId]);
 
-    return messageBodyState[0];
+    return fetchStateState[0];
 }
 //#endregion
 
@@ -99,7 +219,7 @@ function useMessageBody(selectedMessageRowId: number | null): MessageBody
 function renderMessagePreviewRow(messageData: CoreType.MessageData, isSelected: boolean, onSelect: (messageRowId: number) => void, onDelete: (messageRowId: number) => void): ReactElement
 {
     const messagePreview: CoreType.MessagePreview = messageData.messagePreview;
-    const isUnread: boolean = messagePreview.isRead === false;
+    const isUnread: boolean = messagePreview.isRead === 0;
     const messageRowId: number = messagePreview.messageRowId;
 
     const titleWeightClass: string = isUnread === true
@@ -125,7 +245,7 @@ function renderMessagePreviewRow(messageData: CoreType.MessageData, isSelected: 
         <div
             key={messageRowId}
             onClick={handleClick}
-            className={`flex flex-row items-center gap-2 px-3 py-2 border border-gray-600 rounded text-sm text-white text-left w-full cursor-pointer overflow-hidden ${selectedClass}`}
+            className={`flex flex-row items-center gap-2 px-3 py-2 border border-gray-600 rounded text-sm text-white text-left w-full cursor-pointer overflow-hidden shrink-0 ${selectedClass}`}
             style={{ height: `${MESSAGE_ROW_HEIGHT_PX}px` }}
         >
             <span className={`flex-1 min-w-0 truncate ${titleWeightClass}`}>{messagePreview.title}</span>
@@ -246,21 +366,22 @@ function renderMessageBodySection(data: MessagesViewData): ReactElement
         return renderMessageBodyPlaceholder();
     }
 
-    if (data.messageBody.isLoading === true)
-    {
-        return renderMessageBodyMessage("Loading message…");
-    }
-
-    if (data.messageBody.body === null)
-    {
-        return renderMessageBodyMessage("Could not load message.");
-    }
-
     const selectedMessageData: CoreType.MessageData | null = MessageData.findMessageDataByMessageRowId(data.visibleMessageDatas, selectedMessageRowId);
     if (selectedMessageData === null)
     {
         // The selected preview disappeared between fetch start and now (e.g. deleted from another tab).
         return renderMessageBodyPlaceholder();
+    }
+
+    const cachedMessageRow: DBType.MessageRow | null = selectedMessageData.messageRow;
+    if (cachedMessageRow === null)
+    {
+        if (data.messageBodyFetchState === MessageBodyFetchState.Failed)
+        {
+            return renderMessageBodyMessage("Could not load message.");
+        }
+
+        return renderMessageBodyMessage("Loading message…");
     }
 
     const messagePreview: CoreType.MessagePreview = selectedMessageData.messagePreview;
@@ -273,7 +394,7 @@ function renderMessageBodySection(data: MessagesViewData): ReactElement
         >
             <div className="font-semibold">{messagePreview.title}</div>
             <div className="text-xs text-gray-400">{formatMessageTimestamp(messagePreview.receivedAt)}</div>
-            <div className="whitespace-pre-wrap text-justify">{data.messageBody.body}</div>
+            <div className="whitespace-pre-wrap text-justify">{cachedMessageRow.body}</div>
         </div>
     );
 
@@ -319,7 +440,7 @@ export function MessagesView(props: MessagesViewProps): ReactElement
 {
     const selectedMessageRowIdState: SelectedMessageRowIdState = useState<number | null>(null);
     const deletedMessageRowIdsState: DeletedMessageRowIdsState = useState<Set<number>>(new Set<number>());
-    const messageBody: MessageBody = useMessageBody(selectedMessageRowIdState[0]);
+    const messageBodyFetchState: MessageBodyFetchState = useEnsureMessageLoaded(selectedMessageRowIdState[0], props.clientDataStateResult.psController);
 
     try
     {
@@ -331,7 +452,7 @@ export function MessagesView(props: MessagesViewProps): ReactElement
             visibleMessageDatas: visibleMessageDatas,
             selectedMessageRowIdState: selectedMessageRowIdState,
             deletedMessageRowIdsState: deletedMessageRowIdsState,
-            messageBody: messageBody,
+            messageBodyFetchState: messageBodyFetchState,
             psController: props.clientDataStateResult.psController,
         }
 

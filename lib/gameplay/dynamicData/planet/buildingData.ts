@@ -3,7 +3,7 @@ import * as BuildingProduction from "@/lib/gameplay/coreData/formula/buildingPro
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
-import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
+import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 
 export function setBuildingLevel(planetData: CoreType.PlanetData, buildingType: number, value: number): void

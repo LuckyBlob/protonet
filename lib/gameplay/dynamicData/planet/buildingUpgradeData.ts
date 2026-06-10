@@ -1,6 +1,6 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as DBType from "@/lib/db/dbTypes";
-import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
+import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
 import * as MathHelp from "@/lib/helper/mathHelp";
 

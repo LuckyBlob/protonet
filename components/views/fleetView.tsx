@@ -8,11 +8,11 @@ import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as HelperElements from "@/components/helperElements";
-import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
-import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
+import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
+import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
 import * as HelperElement from "@/components/helperElements";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
-import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
+import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as MathHelp from "@/lib/helper/mathHelp";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as DBType from "@/lib/db/dbTypes";
@@ -39,8 +39,8 @@ type FleetViewData =
 function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement, publicPlanetRows: DBType.PublicPlanetRow[]): ReactElement
 {
     const fleetMovementRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const originAddress: string = `${fleetMovementRow.planet_origin_slot}:${fleetMovementRow.planet_origin_system}:${fleetMovementRow.planet_origin_galaxy}`;
-    const targetAddress: string = `${fleetMovementRow.planet_target_slot}:${fleetMovementRow.planet_target_system}:${fleetMovementRow.planet_target_galaxy}`;
+    const originAddress: string = GameType.formatPlanetAddress(fleetMovementRow.planet_origin_galaxy, fleetMovementRow.planet_origin_system, fleetMovementRow.planet_origin_slot);
+    const targetAddress: string = GameType.formatPlanetAddress(fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot);
     const actionName: string = GameType.FLEET_ACTION_NAMES.get(fleetMovementRow.fleet_action_type) ?? `Unknown (${fleetMovementRow.fleet_action_type})`;
     const isReturnTrip: boolean = fleetMovementRow.is_return_trip === 1;
     const remainingMs: number | null = FleetData.getFleetMovementRemainingMs(fleetMovement);
@@ -244,7 +244,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
     const ownedPlanetOptionElements: ReactElement[] = ownedPlanetDatas.map((planetData: CoreType.PlanetData): ReactElement =>
     {
         const planetRow: DBType.PlanetRow = planetData.planetRow;
-        const addressLabel: string = `${planetRow.slot}:${planetRow.system}:${planetRow.galaxy}`;
+        const addressLabel: string = GameType.formatPlanetAddress(planetRow.galaxy, planetRow.system, planetRow.slot);
 
         const optionElement: ReactElement =
         (

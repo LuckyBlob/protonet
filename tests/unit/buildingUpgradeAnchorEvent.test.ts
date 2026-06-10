@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as BuildingUpgradeAnchorEvent from '@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent';
 import * as AnchorEvent from '@/lib/gameplay/progressUpdate/anchorEvent';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
-import * as BuildingData from '@/lib/gameplay/gameplayData/dynamic/buildingData';
+import * as BuildingData from '@/lib/gameplay/dynamicData/planet/buildingData';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as DBType from '@/lib/db/dbTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';

@@ -1,9 +1,9 @@
 import * as DBType from "@/lib/db/dbTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
+import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as ShipConstruction from "@/lib/gameplay/coreData/formula/shipConstructionFormulas";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
+import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as MathHelp from "@/lib/helper/mathHelp";
 
 export function getNextShipConstruction(planetData: CoreType.PlanetData): CoreType.ShipConstruction | null

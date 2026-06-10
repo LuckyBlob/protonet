@@ -4,6 +4,7 @@ import { ReactElement, ReactNode } from "react";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 
 type PlanetSelectorProps =
 {
@@ -16,11 +17,9 @@ export function PlanetSelector(props: PlanetSelectorProps): ReactElement
 	const isOpen: boolean = isOpenState[0];
 	const setIsOpen: (value: boolean) => void = isOpenState[1];
 
-	const dropdownClass: string = isOpen === true ? "block" : "hidden";
-
 	const planetsWithDisplayName: { planetData: CoreType.PlanetData; displayName: string }[] = props.clientDataStateResult.psController[0].dbData.planetDatas.map((planetData: CoreType.PlanetData) =>
 	{
-		const displayName: string = `${planetData.planetRow.slot}:${planetData.planetRow.system}:${planetData.planetRow.galaxy}`;
+		const displayName: string = GameType.formatPlanetAddress(planetData.planetRow.galaxy, planetData.planetRow.system, planetData.planetRow.slot);
 
 		return { planetData, displayName };
 	});
@@ -36,7 +35,7 @@ export function PlanetSelector(props: PlanetSelectorProps): ReactElement
 		return planetData.planetRow.id === props.clientDataStateResult.psController[0].selectedPlanetId;
 	});
 	const selectedPlanetDisplayName: string = selectedPlanetData !== undefined
-		? `(${selectedPlanetData.planetRow.slot}:${selectedPlanetData.planetRow.system}:${selectedPlanetData.planetRow.galaxy})`
+		? GameType.formatPlanetAddress(selectedPlanetData.planetRow.galaxy, selectedPlanetData.planetRow.system, selectedPlanetData.planetRow.slot)
 		: "...";
 
 	const selectorElement: ReactElement =
@@ -48,29 +47,30 @@ export function PlanetSelector(props: PlanetSelectorProps): ReactElement
 			>
 				Planet {selectedPlanetDisplayName}
 			</button>
-			<div
-				className={`absolute top-full left-0 mt-1 w-max bg-black/90 border border-white/20 rounded shadow-lg z-50 ${dropdownClass}`}
-			>
-			{
-				planetsWithDisplayName.map(({ planetData, displayName }: { planetData: CoreType.PlanetData; displayName: string }) =>
+			{isOpen === true ?
+			(
+				<div className="absolute top-full left-0 mt-1 w-max bg-black/90 border border-white/20 rounded shadow-lg z-50">
 				{
-					const isSelected: boolean = props.clientDataStateResult.psController[0].selectedPlanetId === planetData.planetRow.id;
-					const itemClass: string = isSelected === true
-						? "bg-white/30 text-white"
-						: "bg-transparent hover:bg-white/10 text-white/80 hover:text-white";
+					planetsWithDisplayName.map(({ planetData, displayName }: { planetData: CoreType.PlanetData; displayName: string }) =>
+					{
+						const isSelected: boolean = props.clientDataStateResult.psController[0].selectedPlanetId === planetData.planetRow.id;
+						const itemClass: string = isSelected === true
+							? "bg-white/30 text-white"
+							: "bg-transparent hover:bg-white/10 text-white/80 hover:text-white";
 
-					return (
-						<button
-							key={planetData.planetRow.id}
-							onClick={() => handleSelectPlanet(props.clientDataStateResult, planetData.planetRow.id, setIsOpen)}
-							className={`block w-full text-left px-4 py-2 text-sm transition-colors ${itemClass}`}
-						>
-							{displayName}
-						</button>
-					);
-				})
-			}
-			</div>
+						return (
+							<button
+								key={planetData.planetRow.id}
+								onClick={() => handleSelectPlanet(props.clientDataStateResult, planetData.planetRow.id, setIsOpen)}
+								className={`block w-full text-left px-4 py-2 text-sm transition-colors ${itemClass}`}
+							>
+								{displayName}
+							</button>
+						);
+					})
+				}
+				</div>
+			) : null}
 		</div>
 	);
 

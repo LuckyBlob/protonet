@@ -133,6 +133,8 @@ export type FleetMovement =
 	fleetMovementShipRows: DBType.FleetMovementShipRow[];
 	fleetMovementResourceRows: DBType.FleetMovementResourceRow[];
 	resolutionState: FleetMovementResolution;
+	originMessageRow: DBType.MessageRow | null;
+	targetMessageRow: DBType.MessageRow | null;
 };
 export type FleetMovementResolution = typeof FleetMovementResolution[keyof typeof FleetMovementResolution];
 export const FleetMovementResolution =
@@ -147,7 +149,7 @@ export const FleetMovementResolution =
 export type MessageData =
 {
 	messagePreview: MessagePreview,
-	messageRow: DBType.MessageRow,
+	messageRow: DBType.MessageRow | null;
 };
 
 export type MessagePreview =
@@ -155,9 +157,8 @@ export type MessagePreview =
 	messageRowId: number;
 	receivedAt: number;
 	title: string;
-	isRead: boolean;
+	isRead: number;
 	type: number;
-	createdAt: number;
 };
 
 export function isPlayerData(value: PlayerData | PlanetData): value is PlayerData

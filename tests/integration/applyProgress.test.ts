@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest';
 import * as ApplyProgress from '@/lib/gameplay/progressUpdate/applyProgress';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as dataType from '@/lib/gameplay/gameplayData/server/serverDataTypes';
-import * as ResourceData from '@/lib/gameplay/gameplayData/dynamic/resourceData';
-import * as BuildingData from '@/lib/gameplay/gameplayData/dynamic/buildingData';
+import * as ResourceData from '@/lib/gameplay/dynamicData/planet/resourceData';
+import * as BuildingData from '@/lib/gameplay/dynamicData/planet/buildingData';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as FleetArrival from '@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent';
-import * as FleetData from '@/lib/gameplay/gameplayData/dynamic/fleetData';
+import * as FleetData from '@/lib/gameplay/dynamicData/planet/fleet/fleetData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
 // Minimal concrete applier for tests — pure in-memory, no database, no fleet resolution.

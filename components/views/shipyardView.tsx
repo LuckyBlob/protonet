@@ -7,13 +7,13 @@ import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
+import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
 import * as HelperElements from "@/components/helperElements";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as HelperElement from "@/components/helperElements";
-import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipConstructionData";
+import * as ShipConstructionData from "@/lib/gameplay/dynamicData/planet/shipConstructionData";
 import * as DBType from "@/lib/db/dbTypes";
 
 const PREVIEW_MAX_SHIP_LINES: number = 7;

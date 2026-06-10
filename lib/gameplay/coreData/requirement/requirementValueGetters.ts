@@ -1,7 +1,7 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
+import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
-import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
+import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 
 function getPlanetData(playerData: CoreType.PlayerData, planetId: number): CoreType.PlanetData
 {

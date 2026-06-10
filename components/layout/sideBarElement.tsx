@@ -5,7 +5,7 @@ import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as MessageData from "@/lib/gameplay/gameplayData/dynamic/messageData";
+import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 
 type SideBarProps =
 {

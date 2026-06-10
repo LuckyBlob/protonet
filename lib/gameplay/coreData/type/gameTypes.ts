@@ -1,4 +1,5 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as DBType from "@/lib/db/dbTypes";
 
 export const GALAXY_COUNT: number = 2;
 export const SYSTEM_COUNT: number = 20;
@@ -114,6 +115,21 @@ export function getDistance(origin: PlanetAddress, target: PlanetAddress): numbe
 export function isSameAddress(origin: PlanetAddress, target: PlanetAddress): boolean
 {
     return (origin.galaxy === target.galaxy) && (origin.system === target.system) && (origin.slot === target.slot)
+}
+
+export function formatPlanetAddress(galaxy: number, system: number, slot: number): string
+{
+    return `[${galaxy}:${system}:${slot}]`;
+}
+
+export function getPlayerName(publicPlayerRows: DBType.PublicPlayerRow[], playerId: number | null): string
+{
+    if (playerId === null)
+    {
+        return "Unknown";
+    }
+    const matchingRow: DBType.PublicPlayerRow | undefined = publicPlayerRows.find((row: DBType.PublicPlayerRow): boolean => row.id === playerId);
+    return matchingRow?.username ?? "Unknown";
 }
 
 export type ProductionStats =

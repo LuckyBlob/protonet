@@ -158,8 +158,11 @@ export type FleetMovementResourceRow =
 
 export type MessageRow =
 {
+	id: number;
 	player_id: number;
+	received_at: number;
 	type: number;
-	is_read: boolean;
+	is_read: number;
+	title: string;
 	body: string;
 }

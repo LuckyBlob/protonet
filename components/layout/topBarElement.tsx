@@ -8,9 +8,9 @@ import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
-import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
-import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
+import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
+import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
+import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 
 type TopBarProps =

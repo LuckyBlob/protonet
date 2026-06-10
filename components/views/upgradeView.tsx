@@ -11,10 +11,10 @@ import * as HelperElements from "@/components/helperElements";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
-import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
+import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
-import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
+import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as DBType from "@/lib/db/dbTypes";
 
 type UpgradeViewProps =

@@ -1,6 +1,6 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
+import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 
 const COEFFICIENT: number = 10;
 const SPEED_NUMERATOR: number = 3500;

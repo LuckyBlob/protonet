@@ -20,7 +20,30 @@
       "Bash(pnpm test:e2e tests/e2e/gameplay.test.ts --workers=1 --reporter=list)",
       "Bash(pnpm test:e2e tests/e2e/gameplay.test.ts -g \"Bug probes\" --workers=1 --reporter=list)",
       "Bash(pnpm test:e2e tests/e2e/gameplay.test.ts -g \"defended by ships\" --workers=1 --reporter=list)",
-      "Bash(pnpm test:e2e tests/e2e/gameplay.test.ts -g \"conserves resources\" --workers=1 --reporter=list)"
+      "Bash(pnpm test:e2e tests/e2e/gameplay.test.ts -g \"conserves resources\" --workers=1 --reporter=list)",
+      "Bash(git show *)",
+      "Read(//tmp/**)",
+      "Bash(xxd components/views/fleetView.tsx)",
+      "Bash(ssh lawson@lawstrom \"ls -la /var/www/lawstrom/source/data/ 2>&1; echo '---'; ls -la /lib/lawstrom/ 2>&1; echo '---'; find /var/www/lawstrom /lib/lawstrom -name '*.db' -o -name '*.sqlite*' 2>/dev/null\")",
+      "Bash(grep -E '\\\\.\\(ts|tsx|js|jsx|css|sql|json|md\\)$')",
+      "Bash(xargs wc -l)",
+      "Bash(grep -E '\\\\.\\(ts|tsx\\)$')",
+      "Bash(grep -E '\\\\.\\(ts|tsx|js|jsx\\)$')",
+      "Bash(grep -E '\\\\.\\(css|sql\\)$')",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3001)",
+      "Bash(findstr LISTENING)",
+      "Bash(tasklist /FI \"PID eq 6972\")",
+      "PowerShell(Get-Process -Id 6972 -ErrorAction SilentlyContinue)",
+      "Bash(findstr /C:\"\\\\\"dev\\\\\"\" /C:\"\\\\\"start\\\\\"\")",
+      "Bash(findstr /N \"isRead\")",
+      "Bash(\\\\\")",
+      "Bash(PowerShell -Command \"& node -e 'const Database = require\\(`\\\\\"`./node_modules/better-sqlite3`\\\\\"`\\); const db = new Database\\(`\\\\\"`./data/game.db`\\\\\"`, {readonly: true}\\); console.log\\(JSON.stringify\\(db.prepare\\(`\\\\\"`SELECT id, player_id, type, is_read, title FROM message`\\\\\"`\\).all\\(\\)\\)\\);'\")",
+      "Bash(ls \"C:\\\\Users\\\\UTILIS~1\\\\AppData\\\\Local\\\\Temp\\\\protonet-e2e-test.db\" 2>&1)",
+      "Bash(rm \"C:\\\\Users\\\\UTILIS~1\\\\AppData\\\\Local\\\\Temp\\\\protonet-e2e-test.db\")",
+      "Bash(sqlite3 data/game.db \"SELECT id, name FROM player WHERE name = 'admin';\")",
+      "Bash(npx --yes better-sqlite3-cli)"
     ]
   }
 }

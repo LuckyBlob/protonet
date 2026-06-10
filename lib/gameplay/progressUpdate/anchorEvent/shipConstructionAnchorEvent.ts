@@ -1,7 +1,7 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
-import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipConstructionData";
+import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
+import * as ShipConstructionData from "@/lib/gameplay/dynamicData/planet/shipConstructionData";
 import * as DBType from "@/lib/db/dbTypes";
 
 export type ShipConstructionAnchorEvent = AnchorEvent.AnchorEvent &

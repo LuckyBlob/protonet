@@ -6,7 +6,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
-import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
+import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 
 class ClientPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier

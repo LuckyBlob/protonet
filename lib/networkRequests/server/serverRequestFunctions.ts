@@ -9,21 +9,21 @@ import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ServerType from "@/lib/gameplay/coreData/type/serverTypes";
-import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
-import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
-import * as ShipData from "@/lib/gameplay/gameplayData/dynamic/shipData";
+import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
+import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
+import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
 import * as ServerProgress from "@/lib/gameplay/progressUpdate/server/serverProgress";
 import * as Serialization from "@/lib/helper/serialization";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as APIEndPoint from "@/app/api/apiEndPoints";
-import * as ServerDynamicData from "@/lib/gameplay/gameplayData/dynamic/serverDynamicData";
+import * as ServerDynamicData from "@/lib/gameplay/dynamicData/serverDynamicData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMovementDurationFormulas";
-import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
-import * as ShipConstructionData from "@/lib/gameplay/gameplayData/dynamic/shipConstructionData";
-import * as BuildingUpgradeData from "@/lib/gameplay/gameplayData/dynamic/buildingUpgradeData";
+import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
+import * as ShipConstructionData from "@/lib/gameplay/dynamicData/planet/shipConstructionData";
+import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as MathHelp from "@/lib/helper/mathHelp";
 //#region Types
 
@@ -446,10 +446,13 @@ export async function serverTryRefreshServerRequest(): Promise<NextResponse>
 
 //#region DB functions
 
+// Reading a message also marks it as read. UPDATE ... RETURNING does the flip and the row fetch
+// in one round-trip, scoped by player_id so a request for another player's id matches no row and
+// returns undefined (preserving the 404 semantics the route relies on).
 export function serverGetMessageRow(messageRowId: number, playerId: number): DBType.MessageRow | null
 {
     const messageRow: DBType.MessageRow | undefined = DB.databaseConnection.prepare(
-        "SELECT * FROM message WHERE id = ? AND player_id = ?"
+        "UPDATE message SET is_read = 1 WHERE id = ? AND player_id = ? RETURNING *"
     ).get(messageRowId, playerId) as DBType.MessageRow | undefined;
 
     return messageRow ?? null;
@@ -1340,6 +1343,8 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
             fleetMovementShipRows: fleetMovementShipRows,
             fleetMovementResourceRows: fleetMovementResourceRows,
             resolutionState: CoreType.FleetMovementResolution.Unresolved,
+            originMessageRow: null,
+            targetMessageRow: null,
         }
         originPlanetData.dynamicPlanetData.futureFleetArrivals.push(newFleetMovement);
     

@@ -1,6 +1,6 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
+import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 
 const BASE_DIVIDER: number = 2500;

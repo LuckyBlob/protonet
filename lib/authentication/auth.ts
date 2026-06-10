@@ -29,12 +29,12 @@ export async function verifyPassword(plainPassword: string, passwordHash: string
 
 export function createUser(username: string, passwordHash: string): DBType.UserRow
 {
-	const createdAt: number = Date.now();
+	const receivedAt: number = Date.now();
 
 	const insertStatement: Database.Statement = DB.databaseConnection.prepare(
 		"INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?) RETURNING *"
 	);
-	const userRow: DBType.UserRow = insertStatement.get(username, passwordHash, createdAt) as DBType.UserRow;
+	const userRow: DBType.UserRow = insertStatement.get(username, passwordHash, receivedAt) as DBType.UserRow;
 	return userRow;
 }
 

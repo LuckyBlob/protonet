@@ -1,6 +1,7 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
+import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
+import * as DBType from "@/lib/db/dbTypes";
 
 export type FleetArrivalAnchorEvent = AnchorEvent.AnchorEvent &
 {
@@ -102,7 +103,9 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
                 anchorEvent.resolver.applyPlayerProgressAtTime(playerData, serverData, resolvedData.event.fleetMovement.fleetMovementRow.player_target_id, resolvedData.event.time);
             }
         }
-            
-        FleetData.resolveFleetMovementAtTarget(playerData, resolvedData.event.fleetMovement, resolvedData.data, serverData);
+        
+        const isTarget: boolean = playerData.playerRow.id === resolvedData.event.fleetMovement.fleetMovementRow.player_target_id;
+        const isOrigin: boolean = playerData.playerRow.id === resolvedData.event.fleetMovement.fleetMovementRow.player_origin_id;
+        FleetData.resolveFleetMovementAtTarget(isTarget === true ? playerData : null, isOrigin === true ? playerData : null, resolvedData.event.fleetMovement, serverData);
     }
 }

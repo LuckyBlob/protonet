@@ -1,12 +1,12 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ResourceData from "@/lib/gameplay/gameplayData/dynamic/resourceData";
-import * as BuildingData from "@/lib/gameplay/gameplayData/dynamic/buildingData";
+import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
+import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as ThingTypes from "@/lib/gameplay/coreData/type/thingTypes";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent"
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
-import * as FleetData from "@/lib/gameplay/gameplayData/dynamic/fleetData";
+import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 
 export abstract class PlayerProgressApplier
 {

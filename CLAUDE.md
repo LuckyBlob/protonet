@@ -2,6 +2,16 @@
 
 These standards are extracted from the existing codebase. Match them exactly when adding or modifying code.
 
+## Consult memory before exploring
+
+Before globbing the tree, reading type files, or tracing the request flow, read these auto-memory files — they are the index for the codebase and exist to save tokens vs. re-parsing source:
+
+- `project_architecture.md` — folder/module map: where every file lives. Read before `Glob`/`Grep`-ing to locate a file.
+- `project_domain_glossary.md` — `Thing`, `DataContext`, `AnchorEvent`, `PlayerData`/`DynamicPlanetData`, `FleetMovement`, `ServerData`, client state hooks. Read before re-opening `coreTypes.ts` / `thingTypes.ts` / `gameTypes.ts` / `applyProgress.ts`.
+- `project_request_flow.md` — client→server→DB action/data flow + the 7-step recipe to add a new endpoint. Read before tracing an existing endpoint or adding one.
+
+If a memory entry conflicts with the current code, trust the code and update the memory file. If a concept you need is missing from memory, add it when you finish — it pays for itself next session.
+
 ## Formatting
 
 ### Semicolons - Always require semicolons

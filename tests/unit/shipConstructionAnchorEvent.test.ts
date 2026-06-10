@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as ShipConstructionAnchorEvent from '@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent';
 import * as AnchorEvent from '@/lib/gameplay/progressUpdate/anchorEvent';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
-import * as ShipData from '@/lib/gameplay/gameplayData/dynamic/shipData';
+import * as ShipData from '@/lib/gameplay/dynamicData/planet/shipData';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
