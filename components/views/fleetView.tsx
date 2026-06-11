@@ -271,7 +271,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
                     value={data.galaxyIdState[0]}
                     onChange={data.galaxyIdState[2]}
                     className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-14 text-center"
-                    placeholder="P"
+                    placeholder="G"
                 />
                 <span className="text-gray-400 font-bold">:</span>
                 <input
@@ -291,7 +291,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
                     value={data.slotIdState[0]}
                     onChange={data.slotIdState[2]}
                     className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-14 text-center"
-                    placeholder="G"
+                    placeholder="P"
                 />
                 <select
                     value=""
