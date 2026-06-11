@@ -678,6 +678,67 @@ test.describe("Fleets", () =>
         await expect(page.getByText(victimMessages[0].body)).toBeVisible();
     });
 
+    // Regression: three Collect fleets from ONE planet to ANOTHER planet of the SAME player, all
+    // resolving in a single applyPlayerUpdate pass. Each resolution rewrites the origin planet's
+    // fleet rows (DELETE + re-INSERT), which reassigns the DB ids of the still-pending fleets. The
+    // target planet — owned by the same player, so loaded in the same in-memory tree — holds its
+    // own copy of each fleet. If those copies are separate objects their ids drift from the
+    // reassigned ones, and removeFleetMovement on the target throws "No fleet movement to remove!"
+    // on the 2nd/3rd resolution (the GET 500s). Sharing one FleetMovement instance across the
+    // player's planets keeps both copies in sync.
+    test("multiple same-player collect fleets to another owned planet all resolve in one pass without id drift", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("Fleet");
+        await E2EHelper.register(page, username, PASSWORD);
+
+        const playerId: number = E2EHelper.getPlayerId(username, db);
+        const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
+        const origin: E2EHelper.PlanetRow = planets[0];
+        const target: E2EHelper.PlanetRow = planets[1];
+
+        // Origin: ships + fuel for three collects. Target (also ours) keeps a defending ship, so
+        // each collect is "caught" and turned straight into a return trip — the path that removes
+        // the fleet from the target planet's arrivals (collectAction.ts:25 → removeFleetMovement).
+        E2EHelper.setShipQuantity(origin.id, playerId, GameType.SMALL_TRANSPORT, 9, db);
+        E2EHelper.setAllResources(origin.id, playerId, PLENTY, db);
+        E2EHelper.setShipQuantity(target.id, playerId, GameType.SMALL_TRANSPORT, 1, db);
+        E2EHelper.touchPlanet(origin.id, Date.now(), db);
+        E2EHelper.touchPlanet(target.id, Date.now(), db);
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
+        await E2EHelper.goToView(page, "Fleets");
+
+        // Wait for each send to persist before the next — sendFleet clicks without awaiting the
+        // round-trip, so back-to-back calls would drop fleets.
+        await E2EHelper.sendFleet(page, "Small Transport", 1, target, "Collect");
+        await expect.poll((): number => E2EHelper.getFleetsByOrigin(origin.id, db).length).toBe(1);
+        await E2EHelper.sendFleet(page, "Small Transport", 1, target, "Collect");
+        await expect.poll((): number => E2EHelper.getFleetsByOrigin(origin.id, db).length).toBe(2);
+        await E2EHelper.sendFleet(page, "Small Transport", 1, target, "Collect");
+        await expect.poll((): number => E2EHelper.getFleetsByOrigin(origin.id, db).length).toBe(3);
+
+        const fleets: E2EHelper.FleetRow[] = E2EHelper.getFleetsByOrigin(origin.id, db);
+        expect(fleets.length).toBe(3);
+        for (const fleet of fleets)
+        {
+            E2EHelper.forceComplete("fleet_movement", fleet.id, db, 2); // outbound + return both in the past
+        }
+
+        // One reload = one applyPlayerUpdate pass resolving all three arrivals back-to-back. Pre-fix
+        // the 2nd/3rd removeFleetMovement on the target threw and this GET 500'd, so the page never
+        // reached the resolved state.
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
+        await E2EHelper.goToView(page, "Fleets");
+        await expect(page.getByText("No fleet movements.")).toBeVisible();
+
+        // All three caught collects returned their ships; nothing left in transit on the origin.
+        expect(E2EHelper.getShipQuantityDb(origin.id, GameType.SMALL_TRANSPORT, db)).toBe(9);
+        expect(E2EHelper.getShipQuantityDb(target.id, GameType.SMALL_TRANSPORT, db)).toBe(1);
+        expect(E2EHelper.getFleetsByOrigin(origin.id, db).length).toBe(0);
+    });
+
     test("an in-transit fleet is seen as outgoing by origin and incoming by target; the result is unknown to origin until a refresh resolves it", async ({ page }) =>
     {
         const attacker: string = E2EHelper.uniqueUsername("Atk");

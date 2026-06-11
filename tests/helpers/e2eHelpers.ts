@@ -279,6 +279,15 @@ export function getFleetByOrigin(planetOriginId: number, db: Database.Database):
     return row;
 }
 
+export function getFleetsByOrigin(planetOriginId: number, db: Database.Database): FleetRow[]
+{
+    const rows: FleetRow[] = db.prepare(
+        "SELECT id, is_return_trip FROM fleet_movement WHERE planet_origin_id = ? ORDER BY id"
+    ).all(planetOriginId) as FleetRow[];
+
+    return rows;
+}
+
 export function fleetExists(fleetId: number, db: Database.Database): boolean
 {
     const row: { count: number } = db.prepare("SELECT COUNT(*) AS count FROM fleet_movement WHERE id = ?").get(fleetId) as { count: number };

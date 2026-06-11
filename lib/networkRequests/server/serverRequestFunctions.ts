@@ -529,6 +529,8 @@ export function serverGetPlanetDatas(playerId: number): CoreType.PlanetData[]
         planetDatas.push(planetData);
     }
 
+    FleetData.shareFleetMovementInstancesAcrossPlanets(planetDatas);
+
     return planetDatas;
 }
 

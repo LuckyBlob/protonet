@@ -374,13 +374,41 @@ export function removeFleetMovementSafe(planetData: CoreType.PlanetData, fleetId
 	}
 }
 
+// The same fleet movement is loaded independently on its origin planet and its target planet
+// (via separate per-planet queries). When both planets belong to one player, the two loads must
+// collapse to the SAME instance so a mutation on one (e.g. the id reassigned by a DB write) is
+// seen by the other. Canonicalize by fleet id across all of the player's planets.
+export function shareFleetMovementInstancesAcrossPlanets(planetDatas: CoreType.PlanetData[]): void
+{
+	const sharedFleetMovementsById: Map<number, CoreType.FleetMovement> = new Map<number, CoreType.FleetMovement>();
+
+	for (const planetData of planetDatas)
+	{
+		const futureFleetArrivals: CoreType.FleetMovement[] = planetData.dynamicPlanetData.futureFleetArrivals;
+		for (let fleetIndex: number = 0; fleetIndex < futureFleetArrivals.length; fleetIndex++)
+		{
+			const fleetMovement: CoreType.FleetMovement = futureFleetArrivals[fleetIndex];
+			const fleetId: number = fleetMovement.fleetMovementRow.id;
+			const existingFleetMovement: CoreType.FleetMovement | undefined = sharedFleetMovementsById.get(fleetId);
+
+			if (existingFleetMovement === undefined)
+			{
+				sharedFleetMovementsById.set(fleetId, fleetMovement);
+				continue;
+			}
+
+			futureFleetArrivals[fleetIndex] = existingFleetMovement;
+		}
+	}
+}
+
 export function removeFleetMovement(planetData: CoreType.PlanetData, fleetId: number): CoreType.PlanetData
 {
 	const index: number = planetData.dynamicPlanetData.futureFleetArrivals.findIndex((innerFleetMovement: CoreType.FleetMovement): boolean => innerFleetMovement.fleetMovementRow.id === fleetId);
   	
 	if (index === -1)
   	{
-		throw new Error("No fleet movement to remove!");
+		throw new Error(`No fleet movement to remove! ${fleetId} not found in planet ${planetData.planetRow.id} future arrivals.`);
 	}
 
 	planetData.dynamicPlanetData.futureFleetArrivals.splice(index, 1);

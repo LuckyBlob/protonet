@@ -12,7 +12,8 @@
     "db:transfer": "tsx db/runDataTransfers.ts",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:migration": "tsx tests/migration/runMigrationSafety.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
