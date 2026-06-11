@@ -22,9 +22,9 @@ class ClientPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
         return updatedPlayerData;
     }
 
-    getFleetPlayerData(playerId: number | null, planetId: number, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
+    getFleetPlayerData(playerId: number | null, planetId: number | null, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
     {
-        if (playerId === null || playerData.playerRow.id !== playerId)
+        if (playerId === null || planetId === null || playerData.playerRow.id !== playerId)
         {
             return null;
         }

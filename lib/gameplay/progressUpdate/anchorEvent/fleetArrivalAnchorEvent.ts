@@ -2,13 +2,14 @@ import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as DBType from "@/lib/db/dbTypes";
+import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 
 export type FleetArrivalAnchorEvent = AnchorEvent.AnchorEvent &
 {
     fleetMovement: CoreType.FleetMovement,
 }
 
-export function findNextAnchorEvent(playerData: CoreType.PlayerData): AnchorEvent.AnchorEvent | null
+export function findNextAnchorEvent(playerData: CoreType.PlayerData, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent | null
 {
     const getItems = (planet: CoreType.PlanetData): CoreType.FleetMovement[] =>
     {
@@ -34,19 +35,20 @@ export function findNextAnchorEvent(playerData: CoreType.PlayerData): AnchorEven
         
         return event.fleetMovementRow.started_at + event.fleetMovementRow.duration_at_start_time;
     };
-    const buildEvent = (event: CoreType.FleetMovement, time: number): AnchorEvent.AnchorEvent =>
+    const buildEvent = (event: CoreType.FleetMovement, time: number, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
     {
         const newEvent: FleetArrivalAnchorEvent =
         {
             type: AnchorEvent.AnchorEventType.FleetArrival,
             time: time,
             fleetMovement: event,
+            resolver: playerProgressApplier,
         };
 
         return newEvent;
     };
 
-    return AnchorEvent.findNextAnchorEvent(playerData, getItems, getTime, buildEvent);
+    return AnchorEvent.findNextAnchorEvent(playerData, playerProgressApplier, getItems, getTime, buildEvent);
 }
 
 export function resolveFleetArrivalData(playerData: CoreType.PlayerData, anchorEvent: AnchorEvent.AnchorEvent): { event: FleetArrivalAnchorEvent, data: FleetData.FleetPlayerDataPair }
@@ -61,7 +63,7 @@ export function resolveFleetArrivalData(playerData: CoreType.PlayerData, anchorE
     const targetPlayerId: number | null = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.player_target_id;
     
     const originPlanetId: number = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.planet_origin_id;
-    const targetPlanetId: number = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.planet_target_id;
+    const targetPlanetId: number | null = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.planet_target_id;
     const fleetPlayerDataPair: FleetData.FleetPlayerDataPair = 
     {
         origin: fleetArrivalAnchorEvent.resolver.getFleetPlayerData(originPlayerId, originPlanetId, playerData, fleetArrivalAnchorEvent),
@@ -106,6 +108,6 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
         
         const isTarget: boolean = playerData.playerRow.id === resolvedData.event.fleetMovement.fleetMovementRow.player_target_id;
         const isOrigin: boolean = playerData.playerRow.id === resolvedData.event.fleetMovement.fleetMovementRow.player_origin_id;
-        FleetData.resolveFleetMovementAtTarget(isTarget === true ? playerData : null, isOrigin === true ? playerData : null, resolvedData.event.fleetMovement, serverData);
+        FleetData.resolveFleetMovementAtTarget(isTarget === true ? playerData : null, isOrigin === true ? playerData : null, resolvedData.event.fleetMovement, serverData, anchorEvent.resolver.createFleetActionResolver());
     }
 }

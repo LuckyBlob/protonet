@@ -1,6 +1,31 @@
 import { test, expect, Page } from '@playwright/test'
+import Database from "better-sqlite3";
+import { tmpdir } from "os";
+import { join } from "path";
 
 import * as E2EHelper from "@/tests/helpers/e2eHelpers";
+
+const TEST_DB_PATH: string = join(tmpdir(), "protonet-e2e-test.db");
+
+let db: Database.Database;
+
+test.beforeAll((): void =>
+{
+    db = new Database(TEST_DB_PATH);
+    db.pragma("busy_timeout = 8000");
+});
+
+test.afterAll((): void =>
+{
+    db.close();
+});
+
+// Delete every account registered this test through the real Delete-account flow, so its planet
+// slots return to the shared universe (this spec leaves E2E2 behind otherwise).
+test.afterEach(async ({ page }): Promise<void> =>
+{
+    await E2EHelper.cleanupRegisteredUsers(page);
+});
 
 test('full user journey', async ({ page }) =>
 {
@@ -68,3 +93,34 @@ test('full user journey', async ({ page }) =>
 	await page.getByRole('button', { name: 'Delete account' }).click()
 	await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible()
 })
+
+test('registration is rejected once every starting slot in the universe is claimed', async ({ page }) =>
+{
+	// Capacity is derived entirely from live game state + constants, so this test keeps working with
+	// no edits if the universe grows/shrinks (more galaxies/systems, a wider starting-slot band) or
+	// a registration starts handing out a different number of starting planets.
+	const freeSlotsBefore: number = E2EHelper.countFreeStartingSlots(db);
+
+	// Register one player and measure how many starting planets a registration consumes — never
+	// hardcoded, so it tracks whatever a new account actually receives.
+	const firstUser: string = E2EHelper.uniqueUsername('Cap');
+	await E2EHelper.register(page, firstUser, '111111');
+	const planetsPerRegistration: number = E2EHelper.getPlanets(firstUser, db).length;
+	expect(planetsPerRegistration).toBeGreaterThan(0);
+
+	const maxRegistrations: number = Math.floor(freeSlotsBefore / planetsPerRegistration);
+	expect(maxRegistrations).toBeGreaterThan(0);
+
+	// Fill the remaining capacity (the first player above is registration #1). Registering requires
+	// being logged out, so drop the current session before each one.
+	for (let registration: number = 1; registration < maxRegistrations; registration++)
+	{
+		await E2EHelper.logout(page);
+		await E2EHelper.register(page, E2EHelper.uniqueUsername('Cap'), '111111');
+	}
+
+	// Every starting slot is now claimed: the next registration must fail with the real reason,
+	// surfaced all the way to the user instead of a generic message.
+	await E2EHelper.logout(page);
+	await E2EHelper.registerExpectingNoRoom(page, E2EHelper.uniqueUsername('Cap'), '111111');
+});

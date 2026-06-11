@@ -40,6 +40,19 @@ export function buildVisibleMessageDatas(messageDatas: CoreType.MessageData[], d
     return cappedMessageDatas;
 }
 
+// Identifies whether two previews refer to the same logical message. Used to reconcile
+// a predicted (id === -1) entry with its persisted counterpart from the server, where
+// the real id is not yet known on the client. Two previews with identical identifying
+// fields are mathematically interchangeable for this purpose.
+// SINGLE SOURCE OF TRUTH for the set of identifying fields — add any new field here
+// and mirror it into the corresponding WHERE clauses in
+// serverRequestFunctions.serverMarkMessageReadByPredictedFields and
+// serverRequestFunctions.serverDeleteMessageRowByPredictedFields.
+export function doMessagePreviewsMatch(a: CoreType.MessagePreview, b: CoreType.MessagePreview): boolean
+{
+    return a.receivedAt === b.receivedAt && a.title === b.title;
+}
+
 export function findMessageDataByMessageRowId(messageDatas: CoreType.MessageData[], messageRowId: number): CoreType.MessageData | null
 {
     const matchingMessageData: CoreType.MessageData | undefined = messageDatas.find((messageData: CoreType.MessageData): boolean =>

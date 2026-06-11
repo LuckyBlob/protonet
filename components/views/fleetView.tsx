@@ -26,6 +26,7 @@ type FleetViewProps =
 type FleetViewData = 
 {
     planetData: CoreType.PlanetData;
+    playerData: CoreType.PlayerData;
     galaxyIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void];
     systemIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void];
     slotIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void];
@@ -260,15 +261,15 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
     (
         <div>
             <div className="text-sm font-normal text-white">
-                Target planet (slot/system/galaxy)
+                Target planet (galaxy/system/slot)
             </div>
             <div className="flex flex-row items-center gap-2">
                 <input
                     type="number"
                     min={1}
-                    max={GameType.SLOT_COUNT}
-                    value={data.slotIdState[0]}
-                    onChange={data.slotIdState[2]}
+                    max={GameType.GALAXY_COUNT}
+                    value={data.galaxyIdState[0]}
+                    onChange={data.galaxyIdState[2]}
                     className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-14 text-center"
                     placeholder="P"
                 />
@@ -286,9 +287,9 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
                 <input
                     type="number"
                     min={1}
-                    max={GameType.GALAXY_COUNT}
-                    value={data.galaxyIdState[0]}
-                    onChange={data.galaxyIdState[2]}
+                    max={GameType.SLOT_COUNT}
+                    value={data.slotIdState[0]}
+                    onChange={data.slotIdState[2]}
                     className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-14 text-center"
                     placeholder="G"
                 />
@@ -435,7 +436,7 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
 
     const validActionIds: number[] = Array.from(GameType.FLEET_ACTION_NAMES.keys()).filter((actionId: number): boolean =>
     {
-        return FleetData.canExecuteFleetActionOnTargetAddress(data.planetData, targetOwnerPlayerId, data.requestedShipQuantitiesState.requestedQuantities, actionId);
+        return FleetData.canExecuteFleetActionOnTargetAddress(data.planetData, data.playerData, targetOwnerPlayerId, data.requestedShipQuantitiesState.requestedQuantities, actionId);
     });
 
     const isSelectedActionValid: boolean = validActionIds.includes(selectedAction);
@@ -573,6 +574,7 @@ export function FleetView(props: FleetViewProps): ReactElement
         const fleetViewData: FleetViewData =
         {
             planetData: SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]),
+            playerData: props.clientDataStateResult.psController[0].predictedDBData,
             galaxyIdState: galaxyIdState,
             systemIdState: systemIdState,
             slotIdState: slotIdState,

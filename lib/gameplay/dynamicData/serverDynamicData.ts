@@ -32,8 +32,9 @@ export function getDynamicPlayerData(playerId: number): CoreType.DynamicPlayerDa
 
 export function getDynamicMessageData(playerId: number): CoreType.MessageData[]
 {
+    // Bodies travel with playerData so the client never needs a separate body fetch.
     const messageRows: DBType.MessageRow[] = DB.databaseConnection.prepare(
-        "SELECT id, player_id, received_at, type, is_read, title FROM message WHERE player_id = ? ORDER BY received_at DESC"
+        "SELECT id, player_id, received_at, type, is_read, title, body FROM message WHERE player_id = ? ORDER BY received_at DESC"
     ).all(playerId) as DBType.MessageRow[];
 
     const messageDatas: CoreType.MessageData[] = [];
@@ -50,7 +51,7 @@ export function getDynamicMessageData(playerId: number): CoreType.MessageData[]
         const messageData: CoreType.MessageData =
         {
             messagePreview: messagePreview,
-            messageRow: null,
+            messageRow: messageRow,
         };
         messageDatas.push(messageData);
     }
@@ -99,6 +100,19 @@ function updateMessages(playerId: number, dynamicPlayerData: CoreType.DynamicPla
 //#endregion
 
 //#region Dynamic Planet Data
+export function serverUpdateAllPlanetData(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): CoreType.DynamicPlanetData
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        for (const dataContext of CoreType.getPlanetDataContexts())
+        {
+            serverUpdatePlanetDataContext(planetId, playerId, dataContext, dynamicPlanetData);
+        }
+    });
+    transaction();
+    return getDynamicPlanetData(planetId);
+}
+
 export function serverUpdatePlanetDataContext(planetId: number, playerId: number, dataContext: CoreType.DataContext, dynamicPlanetData: CoreType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>

@@ -178,3 +178,102 @@ describe('addQuantities', () =>
         }).toThrow();
     });
 });
+
+describe('subtractQuantity (singular)', () =>
+{
+    it('subtracts a single quantity and returns the new value', () =>
+    {
+        const store: Map<number, number> = new Map([[1, 100]]);
+        const result: number = MathHelp.subtractQuantity(
+            1, 30,
+            (type: number): number | undefined => store.get(type),
+            (type: number, value: number): void => { store.set(type, value); },
+        );
+        expect(result).toBe(70);
+        expect(store.get(1)).toBe(70);
+    });
+
+    it('throws when subtracting more than the stored amount', () =>
+    {
+        const store: Map<number, number> = new Map([[1, 10]]);
+        expect(() => MathHelp.subtractQuantity(
+            1, 50,
+            (type: number): number | undefined => store.get(type),
+            (type: number, value: number): void => { store.set(type, value); },
+        )).toThrow();
+    });
+});
+
+describe('addQuantity (singular)', () =>
+{
+    it('adds a single quantity and returns the new value', () =>
+    {
+        const store: Map<number, number> = new Map([[1, 100]]);
+        const result: number = MathHelp.addQuantity(
+            1, 25,
+            (type: number): number | undefined => store.get(type),
+            (type: number, value: number): void => { store.set(type, value); },
+        );
+        expect(result).toBe(125);
+        expect(store.get(1)).toBe(125);
+    });
+
+    it('throws when adding to a missing key', () =>
+    {
+        const store: Map<number, number> = new Map();
+        expect(() => MathHelp.addQuantity(
+            1, 25,
+            (type: number): number | undefined => store.get(type),
+            (type: number, value: number): void => { store.set(type, value); },
+        )).toThrow();
+    });
+});
+
+describe('getEarliestByRequestedAt', () =>
+{
+    it('returns null for an empty array', () =>
+    {
+        const result: { time: number } | null = MathHelp.getEarliestByRequestedAt<{ time: number }>(
+            [],
+            (item: { time: number }): number => item.time,
+        );
+        expect(result).toBeNull();
+    });
+
+    it('returns the only item when the array has one entry', () =>
+    {
+        const only: { time: number } = { time: 42 };
+        const result: { time: number } | null = MathHelp.getEarliestByRequestedAt<{ time: number }>(
+            [only],
+            (item: { time: number }): number => item.time,
+        );
+        expect(result).toBe(only);
+    });
+
+    it('returns the entry with the smallest time when multiple are present', () =>
+    {
+        const items: { time: number, label: string }[] =
+        [
+            { time: 500, label: "mid" },
+            { time: 100, label: "early" },
+            { time: 1000, label: "late" },
+        ];
+        const result: { time: number, label: string } | null = MathHelp.getEarliestByRequestedAt(
+            items,
+            (item: { time: number, label: string }): number => item.time,
+        );
+        expect(result).not.toBeNull();
+        expect(result!.label).toBe("early");
+    });
+
+    it('returns the first matching entry when multiple share the same minimum', () =>
+    {
+        const a: { time: number, label: string } = { time: 50, label: "first" };
+        const b: { time: number, label: string } = { time: 50, label: "second" };
+        const result: { time: number, label: string } | null = MathHelp.getEarliestByRequestedAt(
+            [a, b],
+            (item: { time: number, label: string }): number => item.time,
+        );
+        expect(result).toBe(a);
+    });
+});

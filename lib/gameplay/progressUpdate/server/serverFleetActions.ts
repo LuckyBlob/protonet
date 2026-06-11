@@ -26,19 +26,28 @@ export function resolveFleetMovementAtTargetToDB(playerData: CoreType.PlayerData
         throw new Error(`⚠️: Origin is null when writing fleet action to DB.`);
     }
 
-    serverCompletePartialResolution(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement, playerData.playerRow.id, serverData);
-    resolveFleetActionToDB(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement);
+    const fleetActionResolver: FleetData.FleetActionResolver = anchorEvent.resolver.createFleetActionResolver();
+    resolvedData.data.target = serverCompletePartialResolution(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement, playerData.playerRow.id, serverData, fleetActionResolver);
+    writeFleetActionToDB(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement);
     return;
 }
 
-function serverCompletePartialResolution(originPlayerData: FleetData.FleetPlayerData, targetPlayerData: FleetData.FleetPlayerData | null, fleetMovement: CoreType.FleetMovement, resolvingPlayerId: number, serverData: CoreType.ServerData): void
+function serverCompletePartialResolution(originPlayerData: FleetData.FleetPlayerData, targetPlayerData: FleetData.FleetPlayerData | null, fleetMovement: CoreType.FleetMovement, resolvingPlayerId: number, serverData: CoreType.ServerData, fleetActionResolver: FleetData.FleetActionResolver): FleetData.FleetPlayerData | null
 {
+    let updatedTargetFleetPlayerData: FleetData.FleetPlayerData | null = targetPlayerData;
     if (fleetMovement.resolutionState === CoreType.FleetMovementResolution.ResolveResultUnknown)
     {
-        // Either we sent it and we didn't know about the target locally
-        // or we received it and we didn't know about the origin locally
-        // Now we do, since we are the server, so we must resolve it
-        FleetData.resolveFleetMovementAtTarget(targetPlayerData?.playerData ?? null, originPlayerData.playerData, fleetMovement, serverData);
+        const updatedTargetPlayerData: CoreType.PlayerData | null = FleetData.resolveFleetMovementAtTarget(targetPlayerData?.playerData ?? null, originPlayerData.playerData, fleetMovement, serverData, fleetActionResolver);
+        const updatedTargetPlanetData: CoreType.PlanetData | null = updatedTargetPlayerData !== null ? CoreType.getPlanetDataForId(updatedTargetPlayerData.planetDatas, fleetMovement.fleetMovementRow.planet_target_id!) : null;
+
+        if (updatedTargetPlayerData !== null && updatedTargetPlanetData !== null)
+        {
+            updatedTargetFleetPlayerData =
+            {
+                playerData: updatedTargetPlayerData,
+                planetData: updatedTargetPlanetData!,
+            }
+        }
     }
 
     if (originPlayerData.playerData.playerRow.id !== resolvingPlayerId)
@@ -51,13 +60,15 @@ function serverCompletePartialResolution(originPlayerData: FleetData.FleetPlayer
         }
     }
 
-    if (targetPlayerData !== null && targetPlayerData.playerData.playerRow.id !== resolvingPlayerId)
+    if (updatedTargetFleetPlayerData !== null && updatedTargetFleetPlayerData.playerData.playerRow.id !== resolvingPlayerId)
     {
-        FleetData.addFleetMessagesToPlayerData(targetPlayerData.playerData, fleetMovement);
+        FleetData.addFleetMessagesToPlayerData(updatedTargetFleetPlayerData.playerData, fleetMovement);
     }
+
+    return updatedTargetFleetPlayerData;
 }
 
-function resolveFleetActionToDB(originPlayerData: FleetData.FleetPlayerData, targetPlayerData: FleetData.FleetPlayerData | null, fleetMovement: CoreType.FleetMovement): void
+function writeFleetActionToDB(originPlayerData: FleetData.FleetPlayerData, targetPlayerData: FleetData.FleetPlayerData | null, fleetMovement: CoreType.FleetMovement): void
 {
     if (fleetMovement.resolutionState !== CoreType.FleetMovementResolution.Resolved)
     {

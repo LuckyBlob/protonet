@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import * as AnchorEvent from '@/lib/gameplay/progressUpdate/anchorEvent';
+import * as ApplyProgress from '@/lib/gameplay/progressUpdate/applyProgress';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
-import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
+import * as TestProgressApplierHelper from '../helpers/testProgressApplier';
+
+const APPLIER: TestProgressApplierHelper.TestProgressApplier = new TestProgressApplierHelper.TestProgressApplier();
 
 function makeUpgrade(planetId: number, startedAt: number, durationMs: number): CoreType.BuildingUpgrade
 {
@@ -25,6 +28,7 @@ describe('findNextAnchorEvent (generic helper)', () =>
 
         const result: AnchorEvent.AnchorEvent | null = AnchorEvent.findNextAnchorEvent(
             playerData,
+            APPLIER,
             (planet: CoreType.PlanetData): CoreType.BuildingUpgrade[] => planet.dynamicPlanetData.buildingUpgrades,
             (event: CoreType.BuildingUpgrade): number | null =>
             {
@@ -34,9 +38,9 @@ describe('findNextAnchorEvent (generic helper)', () =>
                 }
                 return event.buildingUpgradeRow.started_at + event.buildingUpgradeRow.duration_at_start_time;
             },
-            (event: CoreType.BuildingUpgrade, time: number): AnchorEvent.AnchorEvent =>
+            (event: CoreType.BuildingUpgrade, time: number, applier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
             {
-                return { type: AnchorEvent.AnchorEventType.BuildingUpgrade, time };
+                return { type: AnchorEvent.AnchorEventType.BuildingUpgrade, time, resolver: applier };
             },
         );
 
@@ -63,6 +67,7 @@ describe('findNextAnchorEvent (generic helper)', () =>
 
         const result: AnchorEvent.AnchorEvent | null = AnchorEvent.findNextAnchorEvent(
             playerData,
+            APPLIER,
             (planet: CoreType.PlanetData): CoreType.BuildingUpgrade[] => planet.dynamicPlanetData.buildingUpgrades,
             (event: CoreType.BuildingUpgrade): number | null =>
             {
@@ -72,9 +77,9 @@ describe('findNextAnchorEvent (generic helper)', () =>
                 }
                 return event.buildingUpgradeRow.started_at + event.buildingUpgradeRow.duration_at_start_time;
             },
-            (event: CoreType.BuildingUpgrade, time: number): AnchorEvent.AnchorEvent =>
+            (event: CoreType.BuildingUpgrade, time: number, applier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
             {
-                return { type: AnchorEvent.AnchorEventType.BuildingUpgrade, time };
+                return { type: AnchorEvent.AnchorEventType.BuildingUpgrade, time, resolver: applier };
             },
         );
 
@@ -101,6 +106,7 @@ describe('findNextAnchorEvent (generic helper)', () =>
 
         const result: AnchorEvent.AnchorEvent | null = AnchorEvent.findNextAnchorEvent(
             playerData,
+            APPLIER,
             (p: CoreType.PlanetData): CoreType.BuildingUpgrade[] => p.dynamicPlanetData.buildingUpgrades,
             (event: CoreType.BuildingUpgrade): number | null =>
             {
@@ -110,9 +116,9 @@ describe('findNextAnchorEvent (generic helper)', () =>
                 }
                 return event.buildingUpgradeRow.started_at + (event.buildingUpgradeRow.duration_at_start_time ?? 0);
             },
-            (_event: CoreType.BuildingUpgrade, time: number): AnchorEvent.AnchorEvent =>
+            (_event: CoreType.BuildingUpgrade, time: number, applier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
             {
-                return { type: AnchorEvent.AnchorEventType.BuildingUpgrade, time };
+                return { type: AnchorEvent.AnchorEventType.BuildingUpgrade, time, resolver: applier };
             },
         );
 

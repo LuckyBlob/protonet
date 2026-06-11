@@ -12,6 +12,7 @@ import * as ServerDynamicData from "@/lib/gameplay/dynamicData/serverDynamicData
 import * as ServerFleetAction from "@/lib/gameplay/progressUpdate/server/serverFleetActions";
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
+import * as ServerFleetData from "@/lib/gameplay/dynamicData/planet/fleet/serverFleetData";
 
 class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
 {
@@ -76,9 +77,9 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
         }
     }
 
-    getFleetPlayerData(playerId: number | null, planetId: number, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
+    getFleetPlayerData(playerId: number | null, planetId: number | null, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
     {
-        if (playerId === null)
+        if (playerId === null || planetId === null)
         {
             return null;
         }
@@ -114,6 +115,10 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
         return fleetPlayerData;
     }
     
+    createFleetActionResolver(): FleetData.FleetActionResolver
+    {
+        return new ServerFleetData.ServerFleetActionResolver();
+    }
 }
 
 function resolveBuildingUpgradeAnchorEventToDB(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void

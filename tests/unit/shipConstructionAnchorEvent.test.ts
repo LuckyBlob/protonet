@@ -5,6 +5,9 @@ import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as ShipData from '@/lib/gameplay/dynamicData/planet/shipData';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
+import * as TestProgressApplierHelper from '../helpers/testProgressApplier';
+
+const APPLIER: TestProgressApplierHelper.TestProgressApplier = new TestProgressApplierHelper.TestProgressApplier();
 
 function buildSingleShipConstruction(planetId: number, shipType: number, quantity: number, startedAt: number, durationMs: number): CoreType.ShipConstruction
 {
@@ -34,7 +37,7 @@ describe('findNextAnchorEvent (ship construction)', () =>
     it('returns null when no constructions exist', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const result: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData);
+        const result: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
         expect(result).toBeNull();
     });
 
@@ -50,7 +53,7 @@ describe('findNextAnchorEvent (ship construction)', () =>
             dynamicPlanetData: { shipConstructions: [notStarted] },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
-        const result: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData);
+        const result: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
         expect(result).toBeNull();
     });
 
@@ -64,7 +67,7 @@ describe('findNextAnchorEvent (ship construction)', () =>
             dynamicPlanetData: { shipConstructions: [construction] },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
-        const result: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData);
+        const result: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
 
         expect(result).not.toBeNull();
         expect(result!.type).toBe(AnchorEvent.AnchorEventType.ShipConstruction);
@@ -86,7 +89,7 @@ describe('resolveAnchorEvent (ship construction)', () =>
 
         const quantityBefore: number = ShipData.getShipQuantity(planet, GameType.SMALL_TRANSPORT);
 
-        const anchorEventResult: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData);
+        const anchorEventResult: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
         expect(anchorEventResult).not.toBeNull();
         ShipConstructionAnchorEvent.resolveAnchorEvent(playerData, serverData, anchorEventResult!);
 
@@ -104,7 +107,7 @@ describe('resolveAnchorEvent (ship construction)', () =>
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
         const serverData = TestDataBuilders.buildServerData();
 
-        const anchorEventResult: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData);
+        const anchorEventResult: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
         expect(anchorEventResult).not.toBeNull();
         ShipConstructionAnchorEvent.resolveAnchorEvent(playerData, serverData, anchorEventResult!);
 
@@ -121,7 +124,7 @@ describe('resolveAnchorEvent (ship construction)', () =>
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
         const serverData = TestDataBuilders.buildServerData();
 
-        const anchorEventResult: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData);
+        const anchorEventResult: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
         expect(anchorEventResult).not.toBeNull();
         ShipConstructionAnchorEvent.resolveAnchorEvent(playerData, serverData, anchorEventResult!);
 

@@ -17,10 +17,10 @@ export type AnchorEvent =
 {
     type: AnchorEventType,
     time: number,
-    resolver?: ApplyProgress.PlayerProgressApplier,
+    resolver: ApplyProgress.PlayerProgressApplier,
 }
 
-export function findNextAnchorEvent<T>(playerData: CoreType.PlayerData, getItems: (planet: CoreType.PlanetData) => T[], getTime: (item: T) => number | null, buildEvent: (item: T, time: number) => AnchorEvent): AnchorEvent | null
+export function findNextAnchorEvent<T>(playerData: CoreType.PlayerData, playerProgressApplier: ApplyProgress.PlayerProgressApplier, getItems: (planet: CoreType.PlanetData) => T[], getTime: (item: T) => number | null, buildEvent: (item: T, time: number, playerProgressApplier: ApplyProgress.PlayerProgressApplier) => AnchorEvent): AnchorEvent | null
 {
     let nextTime: number | null = null;
     let bestItem: T | null = null;
@@ -49,5 +49,5 @@ export function findNextAnchorEvent<T>(playerData: CoreType.PlayerData, getItems
         return null;
     }
 
-    return buildEvent(bestItem, nextTime);
+    return buildEvent(bestItem, nextTime, playerProgressApplier);
 }

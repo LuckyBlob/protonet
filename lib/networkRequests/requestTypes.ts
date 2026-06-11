@@ -34,14 +34,6 @@ export type OwnedPlanetDataRequest = BaseServerResponse &
 	planetDatas: CoreType.PlanetData[];
 }
 
-export type Message_ClientRequest = BaseClientRequest &
-{
-	messageRowId: number;
-}
-export type Message_ServerResponse = BaseServerResponse &
-{
-	messageRow: DBType.MessageRow | null;
-}
 //#endregion
 
 //#region Action requests
@@ -110,8 +102,26 @@ export type AbandonPlanet_ServerResponse = BaseServerResponse &
 export type DeleteMessage_ClientRequest = BaseClientRequest &
 {
 	messageRowId: number;
+	// When messageRowId === -1 the client is asking about a predicted message — these
+	// fields let the server resolve it to its persisted row. Matching field set is
+	// declared in MessageData.doMessagePreviewsMatch (single source of truth) and
+	// mirrored into the corresponding WHERE clause server-side.
+	predictedReceivedAt?: number;
+	predictedTitle?: string;
 };
 export type DeleteMessage_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
+export type MarkMessageRead_ClientRequest = BaseClientRequest &
+{
+	messageRowId: number;
+	// See DeleteMessage_ClientRequest for the predicted-id contract.
+	predictedReceivedAt?: number;
+	predictedTitle?: string;
+};
+export type MarkMessageRead_ServerResponse = BaseServerResponse &
 {
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };

@@ -3,13 +3,14 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
 import * as ShipConstructionData from "@/lib/gameplay/dynamicData/planet/shipConstructionData";
 import * as DBType from "@/lib/db/dbTypes";
+import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 
 export type ShipConstructionAnchorEvent = AnchorEvent.AnchorEvent &
 {
     event: CoreType.ShipConstruction,
 }
 
-export function findNextAnchorEvent(playerData: CoreType.PlayerData): AnchorEvent.AnchorEvent | null
+export function findNextAnchorEvent(playerData: CoreType.PlayerData, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent | null
 {
     const getItems = (planet: CoreType.PlanetData): CoreType.ShipConstruction[] =>
     {
@@ -29,19 +30,20 @@ export function findNextAnchorEvent(playerData: CoreType.PlayerData): AnchorEven
         
         return event.shipConstructionRow.started_at + event.shipConstructionRow.duration_at_start_time;
     };
-    const buildEvent = (event: CoreType.ShipConstruction, time: number): AnchorEvent.AnchorEvent =>
+    const buildEvent = (event: CoreType.ShipConstruction, time: number, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
     {
         const newEvent: ShipConstructionAnchorEvent =
         {
             type: AnchorEvent.AnchorEventType.ShipConstruction,
             time: time,
             event: event,
+            resolver: playerProgressApplier,
         };
 
         return newEvent;
     };
 
-    return AnchorEvent.findNextAnchorEvent(playerData, getItems, getTime, buildEvent);
+    return AnchorEvent.findNextAnchorEvent(playerData, playerProgressApplier, getItems, getTime, buildEvent);
 }
 
 export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void

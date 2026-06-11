@@ -8,6 +8,11 @@ import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 
 export function resolveCollectAction(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
+    if (fleetMovement.fleetMovementRow.planet_target_id === null)
+    {
+        throw new Error(`⚠️: Failed to resolve collect action because target planet id was null.`);
+    }
+
     const targetPlanetData: CoreType.PlanetData | null = targetPlayerData !== null ? CoreType.getPlanetDataForId(targetPlayerData.planetDatas, fleetMovement.fleetMovementRow.planet_target_id) : null;
     if (targetPlanetData === null)
     {

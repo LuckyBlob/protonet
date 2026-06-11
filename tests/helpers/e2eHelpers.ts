@@ -42,6 +42,18 @@ export function uniqueUsername(prefix: string): string
 
 //#endregion
 
+// Credentials for every account registered during the current test, so afterEach can tear them
+// down through the real Delete-account flow and free their planet slots in the shared test DB.
+// Module-level state is per-worker, and Playwright runs one test at a time per worker, so this is
+// always drained by the same test that filled it.
+type TestCredentials =
+{
+    username: string;
+    password: string;
+};
+
+let registeredTestUsers: TestCredentials[] = [];
+
 export async function register(page: Page, username: string, password: string): Promise<void>
 {
     await page.goto('/register')
@@ -49,6 +61,65 @@ export async function register(page: Page, username: string, password: string): 
     await page.getByPlaceholder('Password (6+ chars)').fill(password)
     await page.getByRole('button', { name: 'Register' }).click()
     await expect(page.getByRole('button', { name: PLANET_BUTTON_PATTERN })).toBeVisible()
+
+    registeredTestUsers.push({ username: username, password: password });
+}
+
+export async function deleteAccount(page: Page): Promise<void>
+{
+    await page.getByRole('button', { name: 'Delete account' }).click()
+    await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible()
+}
+
+// Logs into each account registered this test and deletes it via the real Delete-account button,
+// so its planet slots return to the shared universe. Tolerant of accounts a test already deleted
+// itself: a failed login is swallowed and the next account is attempted.
+export async function cleanupRegisteredUsers(page: Page): Promise<void>
+{
+    const usersToDelete: TestCredentials[] = registeredTestUsers;
+    registeredTestUsers = [];
+
+    for (const user of usersToDelete)
+    {
+        try
+        {
+            await login(page, user.username, user.password);
+        }
+        catch (error: unknown)
+        {
+            // The test likely deleted this account itself; nothing left to clean up.
+            continue;
+        }
+
+        await deleteAccount(page);
+    }
+}
+
+// Attempts a registration expected to fail because the universe has no free starting slots left,
+// asserting the real "no room" reason surfaces to the user. Does not track the account: the server
+// rolls the half-created user back, so nothing persists to clean up.
+export async function registerExpectingNoRoom(page: Page, username: string, password: string): Promise<void>
+{
+    await page.goto('/register')
+    await page.getByPlaceholder('Username (3+ chars)').fill(username)
+    await page.getByPlaceholder('Password (6+ chars)').fill(password)
+    await page.getByRole('button', { name: 'Register' }).click()
+    await expect(page.getByText('No more planets for new player.')).toBeVisible()
+}
+
+// Free starting-slot addresses across the whole universe right now. Derived from the game constants
+// (galaxies × systems × the starting-slot band) minus the currently occupied starting slots, so it
+// auto-adjusts if the universe grows/shrinks or the starting-slot band changes.
+export function countFreeStartingSlots(db: Database.Database): number
+{
+    const startingSlotsPerSystem: number = GameType.MAX_SLOT_STARTING_PLANET - GameType.MIN_SLOT_STARTING_PLANET + 1;
+    const totalStartingSlots: number = GameType.GALAXY_COUNT * GameType.SYSTEM_COUNT * startingSlotsPerSystem;
+
+    const occupiedRow: { occupied: number } = db.prepare(
+        "SELECT COUNT(*) AS occupied FROM planet WHERE slot >= ? AND slot <= ?"
+    ).get(GameType.MIN_SLOT_STARTING_PLANET, GameType.MAX_SLOT_STARTING_PLANET) as { occupied: number };
+
+    return totalStartingSlots - occupiedRow.occupied;
 }
 
 export async function login(page: Page, username: string, password: string): Promise<void>
@@ -389,10 +460,16 @@ export function shipOwned(page: Page, shipName: string, count: number): Locator
 
 export function fleetActionSelect(page: Page): Locator
 {
-    return page.locator("select").filter({ has: page.getByRole("option", { name: "Station" }) });
+    // Anchor by ANY fleet-action name from the canonical map, not a single hard-coded label.
+    // Otherwise targets where only one action is valid (e.g. unowned address → only "Colonize")
+    // would render a dropdown that doesn't contain "Station", and a "Station"-only filter
+    // would never match it.
+    const actionNamesAlternation: string = Array.from(GameType.FLEET_ACTION_NAMES.values()).join("|");
+    const actionNamePattern: RegExp = new RegExp(`^(${actionNamesAlternation})$`);
+    return page.locator("select").filter({ has: page.getByRole("option", { name: actionNamePattern }) });
 }
 
-export async function sendFleet(page: Page, shipName: string, shipQuantity: number, target: PlanetRow, actionLabel: "Station" | "Collect"): Promise<void>
+export async function sendFleet(page: Page, shipName: string, shipQuantity: number, target: PlanetRow, actionLabel: "Station" | "Collect" | "Colonize"): Promise<void>
 {
     await shipRowQuantityInput(page, shipName).fill(String(shipQuantity));
     await page.getByPlaceholder("P").fill(String(target.slot));
@@ -402,9 +479,109 @@ export async function sendFleet(page: Page, shipName: string, shipQuantity: numb
     await page.getByRole("button", { name: "Send fleet" }).click();
 }
 
+// Fleet view resource rows have a span with the exact resource name, an input, and a "(max: N)"
+// button. Scope by the unique row class signature so the locator never collides with the top-bar
+// resource cards (which show "Iron : <amount>", not the bare resource name).
+export function fleetResourceQuantityInput(page: Page, resourceName: string): Locator
+{
+    return page.locator("div.flex.flex-row.items-center.justify-start.gap-2.h-10")
+        .filter({ has: page.getByText(resourceName, { exact: true }) })
+        .locator("input[type=\"number\"]");
+}
+
+// Drives the multi-ship + multi-resource colonize flow through the UI: fills each ship row,
+// the target address, each resource row, picks "Colonize" from the action dropdown and sends.
+export async function sendColonizeFleet(
+    page: Page,
+    target: PlanetRow,
+    ships: { shipName: string, quantity: number }[],
+    resources: { resourceName: string, quantity: number }[] = [],
+): Promise<void>
+{
+    for (const ship of ships)
+    {
+        await shipRowQuantityInput(page, ship.shipName).fill(String(ship.quantity));
+    }
+
+    await page.getByPlaceholder("P").fill(String(target.slot));
+    await page.getByPlaceholder("S").fill(String(target.system));
+    await page.getByPlaceholder("G").fill(String(target.galaxy));
+
+    for (const resource of resources)
+    {
+        await fleetResourceQuantityInput(page, resource.resourceName).fill(String(resource.quantity));
+    }
+
+    await fleetActionSelect(page).selectOption({ label: "Colonize" });
+    await page.getByRole("button", { name: "Send fleet" }).click();
+}
+
 export function fleetMovementRow(page: Page, origin: PlanetRow, target: PlanetRow): Locator
 {
     return page.getByText(`${planetAddress(origin)} → ${planetAddress(target)}`);
+}
+
+// Synthetic PlanetRow that the UI helpers can target via (slot/system/galaxy). The `id` is unused
+// because colonize doesn't need an existing planet — only an unowned address.
+export function findFreeColonizeTargetAddress(db: Database.Database): PlanetRow
+{
+    for (let galaxy: number = 1; galaxy <= GameType.GALAXY_COUNT; galaxy++)
+    {
+        for (let system: number = 1; system <= GameType.SYSTEM_COUNT; system++)
+        {
+            // Slot 5 is never used by registration (starts in 3-4) nor by colonize claims
+            // (which also pick from 3-4), so probing it never races with another test's planet.
+            const slot: number = 5;
+            const existing: { id: number } | undefined = db.prepare(
+                "SELECT id FROM planet WHERE galaxy = ? AND system = ? AND slot = ?"
+            ).get(galaxy, system, slot) as { id: number } | undefined;
+            if (existing === undefined)
+            {
+                return { id: -1, slot: slot, system: system, galaxy: galaxy };
+            }
+        }
+    }
+
+    throw new Error("No free colonize target address available.");
+}
+
+// Insert a planet directly into the DB owned by `playerId`. Used to inflate a player's planet count
+// for the cap test, and to forge another player's planet at a specific address for the race probe.
+// Uses slot 1 (also never used by registration or colonize claims) so it can't collide with starting
+// planets nor with colonize's slot-3-4 pick.
+export function insertSeededPlanetForPlayer(playerId: number, db: Database.Database): PlanetRow
+{
+    const claimedAt: number = Date.now();
+    for (let galaxy: number = 1; galaxy <= GameType.GALAXY_COUNT; galaxy++)
+    {
+        for (let system: number = 1; system <= GameType.SYSTEM_COUNT; system++)
+        {
+            const slot: number = 1;
+            const existing: { id: number } | undefined = db.prepare(
+                "SELECT id FROM planet WHERE galaxy = ? AND system = ? AND slot = ?"
+            ).get(galaxy, system, slot) as { id: number } | undefined;
+            if (existing === undefined)
+            {
+                const result: { id: number } = db.prepare(
+                    "INSERT INTO planet (slot, system, galaxy, size, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
+                ).get(slot, system, galaxy, GameType.STARTING_PLANET_SIZE, playerId, claimedAt, claimedAt) as { id: number };
+                return { id: result.id, slot: slot, system: system, galaxy: galaxy };
+            }
+        }
+    }
+
+    throw new Error("No free slot-1 address available to seed a planet.");
+}
+
+// Drop a planet at an EXACT address owned by `playerId`. Used in the race probe to make a previously
+// unowned colonize target suddenly owned by someone else while the fleet is in flight.
+export function insertPlanetAtAddressForPlayer(playerId: number, address: PlanetRow, db: Database.Database): number
+{
+    const claimedAt: number = Date.now();
+    const result: { id: number } = db.prepare(
+        "INSERT INTO planet (slot, system, galaxy, size, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
+    ).get(address.slot, address.system, address.galaxy, GameType.STARTING_PLANET_SIZE, playerId, claimedAt, claimedAt) as { id: number };
+    return result.id;
 }
 
 //#endregion

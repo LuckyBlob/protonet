@@ -13,14 +13,18 @@ export function computeFleetMovementDurationSecondsFromAddresses(originAddress: 
 	return computeFleetMovementDurationSeconds_Base(distance, speed, serverData);
 }
 
+export function computeFleetMovementDurationSecondsWithAddress(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: CoreType.ServerData | null): number
+{
+	const distance: number = GameType.getDistance(originAddress, targetAddress);
+    const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(shipQuantities);
+	return computeFleetMovementDurationSeconds_Base(distance, speed, serverData);
+}
+
 export function computeFleetMovementDurationSeconds(originPlanetData: CoreType.PlanetData, targetPlanetData: CoreType.PlanetData, shipQuantities: Map<number, number>, serverData: CoreType.ServerData | null): number
 {
 	const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
 	const targetAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(targetPlanetData);
-
-	const distance: number = GameType.getDistance(originAddress, targetAddress);
-    const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(shipQuantities);
-	return computeFleetMovementDurationSeconds_Base(distance, speed, serverData);
+	return computeFleetMovementDurationSecondsWithAddress(originAddress, targetAddress, shipQuantities, serverData);
 }
 
 function computeFleetMovementDurationSeconds_Base(distance: number, speed: number, serverData: CoreType.ServerData | null): number

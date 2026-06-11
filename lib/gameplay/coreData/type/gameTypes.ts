@@ -63,6 +63,7 @@ export const SHIP_DISPLAY_NAMES: ReadonlyMap<number, string> = new Map<number, s
 ([
     [SMALL_TRANSPORT, "Small Transport"],
     [LARGE_TRANSPORT, "Large Transport"],
+    [COLONY_SHIP, "Colony Ship"],
 ]);
 
 export const FLEET_ACTION_STATION: number = 1; // Go to planet and stay there
@@ -214,7 +215,7 @@ export const BUILDING_STATS: ReadonlyMap<number, BuildingStats> = new Map<number
 
 export const STARTING_PLANET_DATA: CoreType.DynamicPlanetData =
 {
-	...CoreType.EmptyPlanetData,
+	...structuredClone(CoreType.EmptyPlanetData),
 	resourceQuantity: new Map<number, number>
 	([
 		[RESOURCE_1, 2000],
@@ -253,4 +254,17 @@ export const SHIP_STATS: ReadonlyMap<number, ShipStats> = new Map<number, ShipSt
 			[RESOURCE_1, 6000],
 			[RESOURCE_2, 6000],
 		]),}],
+    [COLONY_SHIP, {
+		maxHealth: 30000,
+		space: 2500,
+		speed: 7500,
+		baseFuelConsumption: new Map<number, number>([
+			[RESOURCE_3, 1000]]),
+		costMap: new Map<number, number>([
+			[RESOURCE_1, 10000],
+			[RESOURCE_2, 20000],
+			[RESOURCE_3, 10000],
+		]),}],
 ]);
+
+export const MAX_ALLOWED_PLANETS: number = 9;

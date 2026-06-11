@@ -54,6 +54,14 @@ test.beforeAll((): void =>
     }
 });
 
+// Tear down every account a test registered, through the real Delete-account flow, so its planet
+// slots return to the shared universe. Without this the finite starting-slot pool (galaxies ×
+// systems × slots 3-4) is exhausted across a full run and later registrations fail.
+test.afterEach(async ({ page }): Promise<void> =>
+{
+    await E2EHelper.cleanupRegisteredUsers(page);
+});
+
 test.afterAll((): void =>
 {
     db.close();
@@ -491,7 +499,7 @@ test.describe("Fleets", () =>
 
         // Self-station produces exactly ONE message (origin only — the same-player check in
         // addStationActionMessages skips the duplicate target report). The badge reflects it, the
-        // body names the player and the target address, and clicking shows that body.
+        // body names the player and the target address.
         const messages: DBType.MessageRow[] = E2EHelper.getMessageRowsForPlayer(playerId, db);
         expect(messages.length).toBe(1);
         expect(messages[0].title).toBe("Station Fleet Action Report");
@@ -500,10 +508,45 @@ test.describe("Fleets", () =>
         expect(messages[0].body).toContain(username);
         expect(await E2EHelper.getUnreadBadgeCount(page)).toBe(1);
 
+        // Full lifecycle of the fleet-created report — appear → read-flip (persists) → delete
+        // (persists). Mirrors the standalone Admin-message probes (mark-as-read bug probe + delete
+        // persistence) but proves the chain works end-to-end starting from a real fleet resolution
+        // rather than a directly-seeded row.
+        const fleetMessageTitle: string = "Station Fleet Action Report";
+
+        // (1) Appears automatically when we navigate into Messages — the view's own playerData
+        // refresh carries the new row through, no manual reload needed — and styled unread.
         await E2EHelper.goToView(page, "Messages");
-        await expect(E2EHelper.messagePreviewRow(page, "Station Fleet Action Report")).toBeVisible();
-        await E2EHelper.selectMessageByTitle(page, "Station Fleet Action Report");
+        await expect(E2EHelper.messagePreviewRow(page, fleetMessageTitle)).toBeVisible();
+        await expect(E2EHelper.messagePreviewTitleSpan(page, fleetMessageTitle)).toHaveClass(/font-bold/);
+
+        // (2) Click → body shows (it travels with playerData), then the async mark-read action
+        // clears the badge, flips the preview to font-normal, and writes is_read=1 — all without
+        // a reload. Poll the surfaces that depend on the round-trip.
+        await E2EHelper.selectMessageByTitle(page, fleetMessageTitle);
         await expect(page.getByText(messages[0].body)).toBeVisible();
+        await expect.poll((): Promise<number> => E2EHelper.getUnreadBadgeCount(page)).toBe(0);
+        await expect(E2EHelper.messagePreviewTitleSpan(page, fleetMessageTitle)).toHaveClass(/font-normal/);
+        await expect.poll((): number => E2EHelper.getMessageRow(messages[0].id, db)?.is_read ?? 0).toBe(1);
+
+        // (2.1) Reload: the read state must survive — no font-bold or "(1)" resurrection from a
+        // stale fetch.
+        await E2EHelper.reloadGame(page);
+        expect(await E2EHelper.getUnreadBadgeCount(page)).toBe(0);
+        await E2EHelper.goToView(page, "Messages");
+        await expect(E2EHelper.messagePreviewTitleSpan(page, fleetMessageTitle)).toHaveClass(/font-normal/);
+
+        // (3) Delete → the preview disappears from the list and the DB row is dropped (re-poll the
+        // DB check to absorb the optimistic-delete + server roundtrip).
+        await E2EHelper.deleteMessageByTitle(page, fleetMessageTitle);
+        await expect(page.getByText("No messages.")).toBeVisible();
+        await expect.poll((): DBType.MessageRow | null => E2EHelper.getMessageRow(messages[0].id, db)).toBeNull();
+
+        // (3.1) Reload: deletion must persist — the row stays gone, not resurrected by a stale cache.
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.goToView(page, "Messages");
+        await expect(page.getByText("No messages.")).toBeVisible();
+        expect(E2EHelper.getMessageCount(playerId, db)).toBe(0);
     });
 
     test("a same-player station completing during the animation tick adds a message client-side, no refresh needed", async ({ page }) =>
@@ -1082,6 +1125,170 @@ test.describe("Fleets", () =>
     });
 });
 
+test.describe("Colonize", () =>
+{
+    test("at the planet cap, Colonize is hidden from the fleet action dropdown", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("Col");
+        await E2EHelper.register(page, username, PASSWORD);
+
+        const playerId: number = E2EHelper.getPlayerId(username, db);
+        const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
+        const origin: E2EHelper.PlanetRow = planets[0];
+
+        // The player starts with 2 planets. Seed (MAX_ALLOWED_PLANETS - 2) more directly into the
+        // DB so the cap is reached BEFORE the fleet view ever asks "can this player colonize?".
+        const planetsToSeed: number = GameType.MAX_ALLOWED_PLANETS - planets.length;
+        for (let i: number = 0; i < planetsToSeed; i++)
+        {
+            E2EHelper.insertSeededPlanetForPlayer(playerId, db);
+        }
+
+        // Enable colony ships at origin (shipyard L4 + one in stock + resources for fuel/cost).
+        E2EHelper.setBuildingLevel(origin.id, playerId, GameType.BUILDING_SHIPYARD, 4, db);
+        E2EHelper.setShipQuantity(origin.id, playerId, GameType.COLONY_SHIP, 1, db);
+        E2EHelper.setAllResources(origin.id, playerId, PLENTY, db);
+        E2EHelper.touchPlanet(origin.id, Date.now(), db);
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
+        await E2EHelper.goToView(page, "Fleets");
+
+        // Stage a colony ship + point at an unowned address — these are the conditions that would
+        // normally make Colonize show up. With the cap reached, canExecuteFleetActionOnTargetAddress
+        // must filter Colonize out of the dropdown.
+        const target: E2EHelper.PlanetRow = E2EHelper.findFreeColonizeTargetAddress(db);
+        await E2EHelper.shipRowQuantityInput(page, "Colony Ship").fill("1");
+        await page.getByPlaceholder("P").fill(String(target.slot));
+        await page.getByPlaceholder("S").fill(String(target.system));
+        await page.getByPlaceholder("G").fill(String(target.galaxy));
+
+        await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Colonize" })).toHaveCount(0);
+    });
+
+    test("targeting a planet owned by another player hides Colonize from the action dropdown", async ({ page }) =>
+    {
+        const colonizer: string = E2EHelper.uniqueUsername("Col");
+        const other: string = E2EHelper.uniqueUsername("Oth");
+        await E2EHelper.register(page, colonizer, PASSWORD);
+        await E2EHelper.logout(page);
+        await E2EHelper.register(page, other, PASSWORD);
+        await E2EHelper.logout(page);
+
+        const colonizerPlayerId: number = E2EHelper.getPlayerId(colonizer, db);
+        const colonizerOrigin: E2EHelper.PlanetRow = E2EHelper.getPlanets(colonizer, db)[0];
+        const otherPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(other, db)[0];
+
+        E2EHelper.setBuildingLevel(colonizerOrigin.id, colonizerPlayerId, GameType.BUILDING_SHIPYARD, 4, db);
+        E2EHelper.setShipQuantity(colonizerOrigin.id, colonizerPlayerId, GameType.COLONY_SHIP, 1, db);
+        E2EHelper.setAllResources(colonizerOrigin.id, colonizerPlayerId, PLENTY, db);
+        E2EHelper.touchPlanet(colonizerOrigin.id, Date.now(), db);
+
+        await E2EHelper.login(page, colonizer, PASSWORD);
+        await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(colonizerOrigin));
+        await E2EHelper.goToView(page, "Fleets");
+
+        // Stage a colony ship + point at the OTHER player's planet. The "target unclaimed" gate
+        // inside canExecuteFleetActionOnTargetAddress must exclude Colonize when ownership is set.
+        await E2EHelper.shipRowQuantityInput(page, "Colony Ship").fill("1");
+        await page.getByPlaceholder("P").fill(String(otherPlanet.slot));
+        await page.getByPlaceholder("S").fill(String(otherPlanet.system));
+        await page.getByPlaceholder("G").fill(String(otherPlanet.galaxy));
+
+        await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Colonize" })).toHaveCount(0);
+        // Sanity: Station IS valid for an owned target — proves the dropdown rendered correctly,
+        // it's just Colonize that was filtered out (not the whole dropdown).
+        await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Station" })).toHaveCount(1);
+    });
+
+    test("a completed colonize dumps resources and ships on the new planet, consumes the colony ship, and removes the fleet", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("Col");
+        await E2EHelper.register(page, username, PASSWORD);
+
+        const playerId: number = E2EHelper.getPlayerId(username, db);
+        const planetsBefore: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
+        const origin: E2EHelper.PlanetRow = planetsBefore[0];
+
+        // Origin: shipyard L4 + 1 colony ship + 2 small transports + plenty of resources.
+        E2EHelper.setBuildingLevel(origin.id, playerId, GameType.BUILDING_SHIPYARD, 4, db);
+        E2EHelper.setShipQuantity(origin.id, playerId, GameType.COLONY_SHIP, 1, db);
+        E2EHelper.setShipQuantity(origin.id, playerId, GameType.SMALL_TRANSPORT, 2, db);
+        E2EHelper.setAllResources(origin.id, playerId, PLENTY, db);
+        E2EHelper.touchPlanet(origin.id, Date.now(), db);
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
+        await E2EHelper.goToView(page, "Fleets");
+
+        // Stage 1 Colony Ship + 2 Small Transports + 1000 Iron + 1000 Crystal onto a fleet aimed
+        // at an unowned address. The colonize resolver claims this exact address at resolution time
+        // (verified below), so the colony must land where we aimed.
+        const target: E2EHelper.PlanetRow = E2EHelper.findFreeColonizeTargetAddress(db);
+        await E2EHelper.sendColonizeFleet(
+            page,
+            target,
+            [{ shipName: "Colony Ship", quantity: 1 }, { shipName: "Small Transport", quantity: 2 }],
+            [{ resourceName: "Iron", quantity: 1000 }, { resourceName: "Crystal", quantity: 1000 }],
+        );
+        // The fleet movement row appears with the chosen target address — proves the request landed.
+        await expect(page.getByText(`${E2EHelper.planetAddress(origin)} → ${E2EHelper.planetAddress(target)}`)).toBeVisible();
+
+        const fleet: E2EHelper.FleetRow = E2EHelper.getFleetByOrigin(origin.id, db);
+        E2EHelper.forceComplete("fleet_movement", fleet.id, db, 1);
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
+        await E2EHelper.goToView(page, "Fleets");
+        await expect(page.getByText("No fleet movements.")).toBeVisible();
+
+        // ── Fleet removed entirely (no return trip for a successful colonize).
+        expect(E2EHelper.fleetExists(fleet.id, db)).toBe(false);
+
+        // ── A new planet was added to the player (planet count went up by exactly 1).
+        const planetsAfter: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
+        expect(planetsAfter.length).toBe(planetsBefore.length + 1);
+
+        // The new colony is the planet present after but not before. We can't rely on claimed_at
+        // ordering: the colony's claimed_at is the fleet's arrival time (started_at + duration), and
+        // forceComplete backdates started_at into the past, so the colony can sort BEFORE the origin.
+        const planetIdsBefore: Set<number> = new Set<number>(planetsBefore.map((planet: E2EHelper.PlanetRow): number => planet.id));
+        const newPlanet: E2EHelper.PlanetRow | undefined = planetsAfter.find((planet: E2EHelper.PlanetRow): boolean => planetIdsBefore.has(planet.id) === false);
+        expect(newPlanet).toBeDefined();
+        if (newPlanet === undefined)
+        {
+            throw new Error("No new colony planet found after colonize resolved.");
+        }
+
+        // ── The colony landed on the address we actually targeted, not some other free slot.
+        expect(newPlanet.galaxy).toBe(target.galaxy);
+        expect(newPlanet.system).toBe(target.system);
+        expect(newPlanet.slot).toBe(target.slot);
+
+        // ── Ships dumped on new planet: 2 Small Transports were transported, the 1 Colony Ship
+        // was consumed by the colonize action (so 0 colony ships on the new planet).
+        expect(E2EHelper.getShipQuantityDb(newPlanet.id, GameType.SMALL_TRANSPORT, db)).toBe(2);
+        expect(E2EHelper.getShipQuantityDb(newPlanet.id, GameType.COLONY_SHIP, db)).toBe(0);
+        // Colony ship is also gone from origin (it left with the fleet and the fleet consumed it).
+        expect(E2EHelper.getShipQuantityDb(origin.id, GameType.COLONY_SHIP, db)).toBe(0);
+
+        // ── Resources dumped on new planet (>=1000 each — equality would be brittle if the new
+        // planet's last_updated picked up trickle production between resolve and read).
+        expect(E2EHelper.getResourceQuantity(newPlanet.id, GameType.RESOURCE_1, db)).toBeGreaterThanOrEqual(1000);
+        expect(E2EHelper.getResourceQuantity(newPlanet.id, GameType.RESOURCE_2, db)).toBeGreaterThanOrEqual(1000);
+
+        // ── Origin player receives a "Colonize Fleet Action Report" success message naming the
+        // resources + ships that landed. (The colonize resolver only creates the origin-side
+        // message — there's no other player to address.)
+        const messages: DBType.MessageRow[] = E2EHelper.getMessageRowsForPlayer(playerId, db);
+        expect(messages.length).toBe(1);
+        expect(messages[0].title).toBe("Colonize Fleet Action Report");
+        expect(messages[0].type).toBe(MessageData.MessageType.FleetAction);
+        expect(messages[0].body).toContain("Colonized planet");
+        expect(messages[0].body).toContain("Small Transport");
+    });
+});
+
 // These probe adversarial edge cases the happy-path suite skips. They assert the *intuitively
 // correct* behaviour; a failure here is a suspected product bug, not a flaky test. Run in default
 // (non-serial) mode so one failing probe doesn't skip the others.
@@ -1221,16 +1428,10 @@ test.describe("Bug probes", () =>
 
     test("selecting an unread message must mark it as read everywhere — sidebar badge clears with NO refresh, preview flips, DB persists", async ({ page }) =>
     {
-        // This is the bug observed live: open an unread message, body shows up, but the sidebar
-        // still reads "Messages (1)" and the preview row is still bold. Two missing pieces in the
-        // same flow, both currently no-ops:
-        //   1) Server: `serverGetMessageRow` is a pure SELECT — no `UPDATE message SET is_read=1`.
-        //      → after any refresh, the DB row is still unread, badge comes back.
-        //   2) Client: `writeMessageRowToCache` writes the fetched `messageRow` but copies the
-        //      existing `messagePreview` as-is, so `messagePreview.isRead` stays at 0.
-        //      → `computeUnreadMessageCount` still counts it and `font-bold` still applies until
-        //         the next playerData fetch (which today wouldn't help either, see #1).
-        // The probe asserts the full intended behaviour: instant UI flip AND DB persistence.
+        // Probe the read flip across all surfaces: opening the message must clear the sidebar
+        // badge (no reload), flip the preview row out of font-bold, persist is_read=1 in the
+        // DB, and survive a reload. Selecting a real-id message fires the mark-read action,
+        // which updates the DB and returns refreshed playerData.
         const username: string = E2EHelper.uniqueUsername("MsgRead");
         await E2EHelper.register(page, username, PASSWORD);
 
@@ -1245,14 +1446,14 @@ test.describe("Bug probes", () =>
         await E2EHelper.goToView(page, "Messages");
         await expect(E2EHelper.messagePreviewTitleSpan(page, title)).toHaveClass(/font-bold/);
 
-        // Open the message. Wait for the body fetch round-trip to land before asserting — the
-        // fetch is what should also be flipping is_read server-side.
+        // Open the message. The body is already in cache (bodies travel with playerData), so
+        // it shows immediately; the mark-read action then round-trips asynchronously to flip
+        // is_read server-side and refresh the previews.
         await E2EHelper.selectMessageByTitle(page, title);
         await expect(page.getByText(body)).toBeVisible();
 
-        // ── Immediate UI assertions (NO reload). This is the symptom the user sees in the live
-        //    app: the badge stays at (1) and the row stays bold even though the body is open.
-        expect(await E2EHelper.getUnreadBadgeCount(page)).toBe(0);
+        // ── UI assertions (NO reload). Both auto-retry to absorb the async mark-read round-trip.
+        await expect.poll((): Promise<number> => E2EHelper.getUnreadBadgeCount(page)).toBe(0);
         await expect(E2EHelper.messagePreviewTitleSpan(page, title)).toHaveClass(/font-normal/);
 
         // ── Persistence: the server-side UPDATE must have happened, so the DB column reflects it.
@@ -1260,8 +1461,70 @@ test.describe("Bug probes", () =>
 
         // ── Surviving a reload proves the persisted state, not just the optimistic client cache.
         await E2EHelper.reloadGame(page);
-        expect(await E2EHelper.getUnreadBadgeCount(page)).toBe(0);
+        await expect.poll((): Promise<number> => E2EHelper.getUnreadBadgeCount(page)).toBe(0);
         await E2EHelper.goToView(page, "Messages");
         await expect(E2EHelper.messagePreviewTitleSpan(page, title)).toHaveClass(/font-normal/);
+    });
+
+    test("a colony fleet whose target was claimed by another player mid-flight must return the colony ship", async ({ page }) =>
+    {
+        // The intuitively-correct behaviour: if the targeted address gets claimed by another player
+        // while the colony fleet is in transit, the colonization should fail at arrival and the
+        // colony ship should come back with the fleet — not silently grant the player a different
+        // random planet they never aimed for.
+        const colonizer: string = E2EHelper.uniqueUsername("Col");
+        const squatter: string = E2EHelper.uniqueUsername("Sqt");
+        await E2EHelper.register(page, colonizer, PASSWORD);
+        await E2EHelper.logout(page);
+        await E2EHelper.register(page, squatter, PASSWORD);
+        await E2EHelper.logout(page);
+
+        const colonizerPlayerId: number = E2EHelper.getPlayerId(colonizer, db);
+        const squatterPlayerId: number = E2EHelper.getPlayerId(squatter, db);
+        const colonizerOrigin: E2EHelper.PlanetRow = E2EHelper.getPlanets(colonizer, db)[0];
+        const planetsBefore: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(colonizer, db);
+
+        E2EHelper.setBuildingLevel(colonizerOrigin.id, colonizerPlayerId, GameType.BUILDING_SHIPYARD, 4, db);
+        E2EHelper.setShipQuantity(colonizerOrigin.id, colonizerPlayerId, GameType.COLONY_SHIP, 1, db);
+        E2EHelper.setAllResources(colonizerOrigin.id, colonizerPlayerId, PLENTY, db);
+        E2EHelper.touchPlanet(colonizerOrigin.id, Date.now(), db);
+
+        await E2EHelper.login(page, colonizer, PASSWORD);
+        await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(colonizerOrigin));
+        await E2EHelper.goToView(page, "Fleets");
+
+        // Pick a free address and send the colony fleet at it. (Target is unowned at send time —
+        // verified by the dropdown allowing Colonize through.)
+        const target: E2EHelper.PlanetRow = E2EHelper.findFreeColonizeTargetAddress(db);
+        await E2EHelper.sendColonizeFleet(
+            page,
+            target,
+            [{ shipName: "Colony Ship", quantity: 1 }],
+        );
+        await expect(page.getByText(`${E2EHelper.planetAddress(colonizerOrigin)} → ${E2EHelper.planetAddress(target)}`)).toBeVisible();
+        const fleet: E2EHelper.FleetRow = E2EHelper.getFleetByOrigin(colonizerOrigin.id, db);
+
+        // The squatter grabs the address before the fleet arrives.
+        E2EHelper.insertPlanetAtAddressForPlayer(squatterPlayerId, target, db);
+
+        // Resolve the round trip — outbound + return both in the past.
+        E2EHelper.forceComplete("fleet_movement", fleet.id, db, 2);
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(colonizerOrigin));
+        await E2EHelper.goToView(page, "Fleets");
+        await expect(page.getByText("No fleet movements.")).toBeVisible();
+
+        // ── No new planet for the colonizer: the address was taken, so the colony attempt failed.
+        const planetsAfter: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(colonizer, db);
+        expect(planetsAfter.length).toBe(planetsBefore.length);
+
+        // ── The colony ship comes home (it left with the fleet, and a failed colonize must return it).
+        expect(E2EHelper.getShipQuantityDb(colonizerOrigin.id, GameType.COLONY_SHIP, db)).toBe(1);
+
+        // ── The squatter's planet stays put — they own it, the colonizer did not steal/clobber it.
+        const squatterRow: { owner_player_id: number | null } | undefined = db.prepare(
+            "SELECT owner_player_id FROM planet WHERE galaxy = ? AND system = ? AND slot = ?"
+        ).get(target.galaxy, target.system, target.slot) as { owner_player_id: number | null } | undefined;
+        expect(squatterRow?.owner_player_id).toBe(squatterPlayerId);
     });
 });

@@ -45,11 +45,6 @@ export async function clientTryPlayerDataRequest(psController: CoreType.PSContro
     await setPlayerState(psController, playerData);
 }
 
-export async function clientTryMessageRequest(messageRowId: number): Promise<APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.Message> | null>
-{
-    return ServerRequest.requestServerData(APIEndPoint.DataRequest.Message, { messageRowId: messageRowId });
-}
-
 export async function clientTryServerConfigRequest(sdsController: CoreType.SDSController): Promise<void>
 {
     const response: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.ServerConfig> | null = await ServerRequest.requestServerData(APIEndPoint.DataRequest.ServerConfig);
@@ -280,12 +275,9 @@ export async function clientTrySendFleetRequest(psController: CoreType.PSControl
     }
 }
 
-export async function clientTryDeleteMessageRequest(psController: CoreType.PSController, messageRowId: number): Promise<string | null>
+export async function clientTryDeleteMessageRequest(psController: CoreType.PSController, messageRowId: number, predictedPreview: CoreType.MessagePreview | null): Promise<string | null>
 {
-    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.DeleteMessage> =
-    {
-        messageRowId: messageRowId,
-    };
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.DeleteMessage> = buildMessageActionRequest(messageRowId, predictedPreview);
 
     try
     {
@@ -313,6 +305,60 @@ export async function clientTryDeleteMessageRequest(psController: CoreType.PSCon
 
         return String(error);
     }
+}
+
+export async function clientTryMarkMessageReadRequest(psController: CoreType.PSController, messageRowId: number, predictedPreview: CoreType.MessagePreview | null): Promise<string | null>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.MarkMessageRead> = buildMessageActionRequest(messageRowId, predictedPreview);
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.MarkMessageRead> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.MarkMessageRead, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Mark message read failed for messageRowId ${messageRowId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+        return null;
+    }
+    catch (error: unknown)
+    {
+        if (error instanceof Error)
+        {
+            return error.message;
+        }
+
+        return String(error);
+    }
+}
+
+// Same payload shape is used by both mark-read and delete (id, plus predicted fields
+// when id === -1). Predicted fields identify a not-yet-reconciled local message; the
+// field set must stay aligned with MessageData.doMessagePreviewsMatch.
+function buildMessageActionRequest(messageRowId: number, predictedPreview: CoreType.MessagePreview | null): { messageRowId: number; predictedReceivedAt?: number; predictedTitle?: string }
+{
+    if (messageRowId === -1)
+    {
+        if (predictedPreview === null)
+        {
+            throw new Error(`Message action called with messageRowId -1 but no predictedPreview to identify it.`);
+        }
+
+        return {
+            messageRowId: messageRowId,
+            predictedReceivedAt: predictedPreview.receivedAt,
+            predictedTitle: predictedPreview.title,
+        };
+    }
+
+    return { messageRowId: messageRowId };
 }
 
 export async function clientTryAbandonPlanet(psController: CoreType.PSController): Promise<string | null>

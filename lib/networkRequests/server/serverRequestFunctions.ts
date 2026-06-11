@@ -25,6 +25,7 @@ import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as ShipConstructionData from "@/lib/gameplay/dynamicData/planet/shipConstructionData";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as MathHelp from "@/lib/helper/mathHelp";
+import * as ServerPlanetManagement from "@/lib/gameplay/progressUpdate/server/serverPlanetManagement";
 //#region Types
 
 type PlayerActionResult =
@@ -114,67 +115,6 @@ export async function serverTryPlayerDataRequest(): Promise<NextResponse>
     {
         error: null,
         serializedPlayerData: serializedPlayerData,
-    }, { status: 200 });
-}
-
-export async function serverTryMessageRequest(request: Request): Promise<NextResponse>
-{
-    const errorResponse: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.Message> =
-    {
-        error: "Unknown error.",
-        messageRow: null,
-    };
-
-    const user: DBType.UserRow | null = await Auth.getCurrentUser();
-    if (user === null)
-    {
-        errorResponse.error = "Not logged in.";
-        return NextResponse.json(errorResponse, { status: 401 });
-    }
-
-    const player: DBType.PlayerRow | null = serverFindPlayerByUserId(user.id);
-    if (player === null)
-    {
-        errorResponse.error = "Player not found.";
-        return NextResponse.json(errorResponse, { status: 404 });
-    }
-
-    const requestUrl: URL = new URL(request.url);
-    const messageRowIdParam: string | null = requestUrl.searchParams.get("messageRowId");
-    if (messageRowIdParam === null)
-    {
-        errorResponse.error = "Missing messageRowId.";
-        return NextResponse.json(errorResponse, { status: 400 });
-    }
-
-    const messageRowId: number = Number.parseInt(messageRowIdParam, 10);
-    if (Number.isNaN(messageRowId) === true)
-    {
-        errorResponse.error = `Invalid messageRowId: ${messageRowIdParam}.`;
-        return NextResponse.json(errorResponse, { status: 400 });
-    }
-
-    let messageRow: DBType.MessageRow | null;
-    try
-    {
-        messageRow = serverGetMessageRow(messageRowId, player.id);
-    }
-    catch (error: unknown)
-    {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
-        return NextResponse.json(errorResponse, { status: 500 });
-    }
-
-    if (messageRow === null)
-    {
-        errorResponse.error = `Message not found for messageRowId ${messageRowId}.`;
-        return NextResponse.json(errorResponse, { status: 404 });
-    }
-
-    return NextResponse.json<APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.Message>>(
-    {
-        error: null,
-        messageRow: messageRow,
     }, { status: 200 });
 }
 
@@ -280,11 +220,16 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
         const passwordHash: string = await Auth.hashPassword(clientRequest.password);
         const newUser: DBType.UserRow = Auth.createUser(clientRequest.username, passwordHash);
 
-        const playerCreated: boolean = createPlayer(newUser.id);
-        if (playerCreated === false)
+        try
         {
+            createPlayer(newUser.id);
+        }
+        catch (error: unknown)
+        {
+            // The player couldn't be created (e.g. no free starting slots). Roll back the user row
+            // we just made and surface the real reason instead of a generic message.
             Auth.deleteUser(newUser.id);
-            errorResponse.error = "Failed to create player.";
+            errorResponse.error = error instanceof Error ? error.message : String(error);
             return NextResponse.json(errorResponse, { status: 500 });
         }
 
@@ -334,7 +279,7 @@ export async function serverTryDeleteUserRequest(request: Request): Promise<Next
             const playerData: CoreType.PlayerData = serverGetPlayerData(playerRow.id);
             for (const planetData of playerData.planetDatas)
             {
-                abandonPlanet(planetData.planetRow.id, playerRow.id);
+                ServerPlanetManagement.abandonPlanet(planetData.planetRow.id, playerRow.id);
             }
         }
 
@@ -446,14 +391,25 @@ export async function serverTryRefreshServerRequest(): Promise<NextResponse>
 
 //#region DB functions
 
-// Reading a message also marks it as read. UPDATE ... RETURNING does the flip and the row fetch
-// in one round-trip, scoped by player_id so a request for another player's id matches no row and
-// returns undefined (preserving the 404 semantics the route relies on).
-export function serverGetMessageRow(messageRowId: number, playerId: number): DBType.MessageRow | null
+// Marks a message as read. UPDATE ... RETURNING does the flip and returns the row in
+// one round-trip, scoped by player_id so a request for another player's id matches no row.
+export function serverMarkMessageReadById(messageRowId: number, playerId: number): DBType.MessageRow | null
 {
     const messageRow: DBType.MessageRow | undefined = DB.databaseConnection.prepare(
         "UPDATE message SET is_read = 1 WHERE id = ? AND player_id = ? RETURNING *"
     ).get(messageRowId, playerId) as DBType.MessageRow | undefined;
+
+    return messageRow ?? null;
+}
+
+// Marks a predicted (client-side id=-1) message as read by its identifying fields. The
+// field set here MUST stay in sync with MessageData.doMessagePreviewsMatch — see that
+// function for the single source of truth.
+export function serverMarkMessageReadByPredictedFields(playerId: number, receivedAt: number, title: string): DBType.MessageRow | null
+{
+    const messageRow: DBType.MessageRow | undefined = DB.databaseConnection.prepare(
+        "UPDATE message SET is_read = 1 WHERE player_id = ? AND received_at = ? AND title = ? RETURNING *"
+    ).get(playerId, receivedAt, title) as DBType.MessageRow | undefined;
 
     return messageRow ?? null;
 }
@@ -463,6 +419,18 @@ export function serverDeleteMessageRow(messageRowId: number, playerId: number): 
     const result: { changes: number } = DB.databaseConnection.prepare(
         "DELETE FROM message WHERE id = ? AND player_id = ?"
     ).run(messageRowId, playerId) as { changes: number };
+
+    return result.changes > 0;
+}
+
+// Deletes a predicted (client-side id=-1) message by its identifying fields. Field set
+// MUST stay in sync with MessageData.doMessagePreviewsMatch — see that function for the
+// single source of truth.
+export function serverDeleteMessageRowByPredictedFields(playerId: number, receivedAt: number, title: string): boolean
+{
+    const result: { changes: number } = DB.databaseConnection.prepare(
+        "DELETE FROM message WHERE player_id = ? AND received_at = ? AND title = ?"
+    ).run(playerId, receivedAt, title) as { changes: number };
 
     return result.changes > 0;
 }
@@ -604,20 +572,10 @@ export function serverUpdatePlanetRow(planetId: number, columnUpdates: Partial<D
     return result;
 }
 
-export function serverUpdateAllPlanetData(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): CoreType.DynamicPlanetData
-{
-    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
-    {
-        for (const dataContext of CoreType.getPlanetDataContexts())
-        {
-            ServerDynamicData.serverUpdatePlanetDataContext(planetId, playerId, dataContext, dynamicPlanetData);
-        }
-    });
-    transaction();
-    return ServerDynamicData.getDynamicPlanetData(planetId);
-}
-
-function createPlayer(userId: number): boolean
+// Throws (rolling back the player + planet inserts) when the player can't be created — e.g. the
+// universe has no free starting slots left. The caller is responsible for surfacing the error and
+// cleaning up the already-created user row.
+function createPlayer(userId: number): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
@@ -626,150 +584,17 @@ function createPlayer(userId: number): boolean
         ).get(userId) as DBType.PlayerRow;
 
         const now: number = Date.now();
-        const firstPlanetId: number = claimPlanet(null, playerRow.id, now);
-        serverUpdateAllPlanetData(firstPlanetId, playerRow.id, GameType.STARTING_PLANET_DATA);
+        const firstPlanetId: number = ServerPlanetManagement.claimPlanet(null, playerRow.id, now);
+        const secondPlanetId: number = ServerPlanetManagement.claimPlanet(null, playerRow.id, now + 1);
 
-        const secondPlanetId: number = claimPlanet(null, playerRow.id, now + 1);
-        serverUpdateAllPlanetData(secondPlanetId, playerRow.id, GameType.STARTING_PLANET_DATA);
+        ServerDynamicData.serverUpdateAllPlanetData(firstPlanetId, playerRow.id, GameType.STARTING_PLANET_DATA);
+        ServerDynamicData.serverUpdateAllPlanetData(secondPlanetId, playerRow.id, GameType.STARTING_PLANET_DATA);
+
+        const serverData: CoreType.ServerData = ServerType.getServerData();
+        ServerProgress.applyPlayerUpdate(playerRow.id, serverData, now + 1);
     });
 
-    try
-    {
-        transaction();
-        return true;
-    }
-    catch (error: unknown)
-    {
-        console.error("⚠️:", error);
-        return false;
-    }
-}
-
-function findFreePlanetAddress(minSlot: number, maxSlot:number): GameType.PlanetAddress | null
-{
-    const freeCoordinate: GameType.PlanetAddress | undefined = DB.databaseConnection.prepare
-    (
-        `WITH RECURSIVE
-            galaxies(galaxy) AS (
-                SELECT @galaxyMin
-                UNION ALL SELECT galaxy + 1 FROM galaxies WHERE galaxy < @galaxyMax
-            ),
-            systems(system) AS (
-                SELECT @systemMin
-                UNION ALL SELECT system + 1 FROM systems WHERE system < @systemMax
-            ),
-            slots(slot) AS (
-                SELECT @slotMin
-                UNION ALL SELECT slot + 1 FROM slots WHERE slot < @slotMax
-            )
-            SELECT g.galaxy AS galaxy, s.system AS system, sl.slot AS slot
-            FROM galaxies g
-            CROSS JOIN systems s
-            CROSS JOIN slots sl
-            WHERE NOT EXISTS
-            (
-                SELECT 1 FROM planet p
-                WHERE p.galaxy = g.galaxy AND p.system = s.system AND p.slot = sl.slot
-            )
-            ORDER BY random()
-            LIMIT 1`
-    ).get({
-        galaxyMin: 1,
-        galaxyMax: GameType.GALAXY_COUNT,
-        systemMin: 1,
-        systemMax: GameType.SYSTEM_COUNT,
-        slotMin: minSlot,
-        slotMax: maxSlot,
-    }) as GameType.PlanetAddress | undefined;
-
-    return freeCoordinate ?? null;
-}
-
-function claimPlanet(planetAddress: GameType.PlanetAddress | null, playerId: number, claimedAt: number): number
-{
-    const claimedPlanetId: number | null = DB.databaseConnection.transaction(() =>
-    {
-        const isNew: boolean = planetAddress === null;
-        if (isNew)
-        {
-            planetAddress = findFreePlanetAddress(GameType.MIN_SLOT_STARTING_PLANET, GameType.MAX_SLOT_STARTING_PLANET);
-        }
-
-        if (planetAddress === null)
-        {
-            throw new Error("No more planets for new player.")
-        }
-
-        const claimedPlanet: { id: number } = DB.databaseConnection.prepare(
-            "INSERT INTO planet (slot, system, galaxy, size, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
-        ).get(
-            planetAddress.slot,
-            planetAddress.system,
-            planetAddress.galaxy,
-            GameType.STARTING_PLANET_SIZE,
-            playerId,
-            claimedAt,
-            claimedAt
-        ) as { id: number };
-
-        let size: number = GameType.STARTING_PLANET_SIZE;
-        if (isNew === false)
-        {
-            const slotRow: { slot: number } = DB.databaseConnection.prepare(
-                "SELECT slot FROM planet WHERE id = ?"
-            ).get(claimedPlanet.id) as { slot: number };
-            size = GameType.rollSizeForSlot(slotRow.slot);
-        }
-
-        DB.databaseConnection.prepare(
-            "UPDATE planet SET size = ?, owner_player_id = ?, claimed_at = ?, last_updated = ? WHERE id = ?"
-        ).run(
-            size,
-            playerId,
-            claimedAt,
-            claimedAt,
-            claimedPlanet.id
-        );
-
-        // do this last so the update fleet sees the new player target and acts accordingly
-        DB.databaseConnection.prepare(
-            "UPDATE fleet_movement SET player_target_id = ? WHERE planet_target_id = ?"
-        ).run(playerId, claimedPlanet.id);
-
-        return claimedPlanet.id;
-    })();
-
-    const serverData: CoreType.ServerData = ServerType.getServerData();
-    ServerProgress.applyPlayerUpdate(playerId, serverData, Date.now());
-
-    return claimedPlanetId;
-}
-
-function abandonPlanet(planetId: number, playerId: number): void
-{
-    const serverData: CoreType.ServerData = ServerType.getServerData();
-
-    // applyPlayerUpdate detects inTransaction and skips starting a nested transaction,
-    // so it is safe to call from inside the transaction below. Wrapping both operations
-    // in one transaction eliminates the gap where a concurrent request could observe
-    // post-progress state while the planet is still present.
-    // set null first before clean so we fail the "target player null" condition and dont pickup to delete and not re-add.
-    DB.databaseConnection.transaction(() =>
-    {
-        ServerProgress.applyPlayerUpdate(playerId, serverData, Date.now());
-
-        DB.databaseConnection.prepare(
-            "UPDATE fleet_movement SET player_target_id = null WHERE planet_target_id = ?"
-        ).run(planetId);
-
-        DB.databaseConnection.prepare(
-            "DELETE FROM fleet_movement WHERE planet_origin_id = ?"
-        ).run(planetId);
-
-        DB.databaseConnection.prepare(
-            "DELETE FROM planet WHERE id = ?"
-        ).run(planetId);
-    })();
+    transaction();
 }
 
 function readPlanetRow(planetId: number): DBType.PlanetRow
@@ -1123,7 +948,19 @@ export function tryDeleteMessageLogic(playerId: number, serverData: CoreType.Ser
     let didDelete: boolean = false;
     try
     {
-        didDelete = serverDeleteMessageRow(requestData.messageRowId, playerId);
+        if (requestData.messageRowId === -1)
+        {
+            if (requestData.predictedReceivedAt === undefined || requestData.predictedTitle === undefined)
+            {
+                return { success: false, failureReason: "Missing predicted preview fields for messageRowId -1.", playerStateResult: playerData };
+            }
+
+            didDelete = serverDeleteMessageRowByPredictedFields(playerId, requestData.predictedReceivedAt, requestData.predictedTitle);
+        }
+        else
+        {
+            didDelete = serverDeleteMessageRow(requestData.messageRowId, playerId);
+        }
     }
     catch (error: unknown)
     {
@@ -1132,6 +969,49 @@ export function tryDeleteMessageLogic(playerId: number, serverData: CoreType.Ser
     }
 
     if (didDelete === false)
+    {
+        return { success: false, failureReason: `Message not found for messageRowId ${requestData.messageRowId}.`, playerStateResult: playerData };
+    }
+
+    const playerActionResult: PlayerActionResult =
+    {
+        success: true,
+        failureReason: null,
+        playerStateResult: serverGetPlayerData(playerId),
+    }
+
+    return playerActionResult;
+}
+
+export function tryMarkMessageReadLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.MarkMessageRead>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    let updatedMessageRow: DBType.MessageRow | null = null;
+    try
+    {
+        if (requestData.messageRowId === -1)
+        {
+            if (requestData.predictedReceivedAt === undefined || requestData.predictedTitle === undefined)
+            {
+                return { success: false, failureReason: "Missing predicted preview fields for messageRowId -1.", playerStateResult: playerData };
+            }
+
+            updatedMessageRow = serverMarkMessageReadByPredictedFields(playerId, requestData.predictedReceivedAt, requestData.predictedTitle);
+        }
+        else
+        {
+            updatedMessageRow = serverMarkMessageReadById(requestData.messageRowId, playerId);
+        }
+    }
+    catch (error: unknown)
+    {
+        const errorMessage: string = error instanceof Error ? error.message : String(error);
+        return { success: false, failureReason: `Failed to mark messageRowId ${requestData.messageRowId} as read: ${errorMessage}`, playerStateResult: playerData };
+    }
+
+    if (updatedMessageRow === null)
     {
         return { success: false, failureReason: `Message not found for messageRowId ${requestData.messageRowId}.`, playerStateResult: playerData };
     }
@@ -1164,7 +1044,7 @@ export function tryAbandonPlanetLogic(playerId: number, serverData: CoreType.Ser
 
     try
     {
-        abandonPlanet(requestData.planetId, playerId);
+        ServerPlanetManagement.abandonPlanet(requestData.planetId, playerId);
     }
     catch (error: unknown)
     {
@@ -1195,7 +1075,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     }
 
     const targetPlanetData: CoreType.PlanetData | null = getPlanetDataByCoords(requestData.targetPlanetGalaxy, requestData.targetPlanetSystem, requestData.targetPlanetPosition);
-    if (targetPlanetData === null)
+    if (targetPlanetData === null && requestData.fleetAction !== GameType.FLEET_ACTION_COLONIZE)
     {
         return { success: false, failureReason: "Target planet is invalid.", playerStateResult: playerData };
     }
@@ -1213,14 +1093,19 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         }
     }
 
-    const canExecuteFleetAction: boolean = FleetData.canExecuteFleetActionOnTargetPlanet(originPlanetData, targetPlanetData, shipQuantities, requestData.fleetAction);
+    const canExecuteFleetAction: boolean = FleetData.canExecuteFleetActionOnTargetPlanet(originPlanetData, playerData, targetPlanetData, shipQuantities, requestData.fleetAction);
     if (canExecuteFleetAction === false)
     {
         return { success: false, failureReason: `Cannot execute fleet action ${requestData.fleetAction}.`, playerStateResult: playerData };
     }
 
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
-    const targetAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(targetPlanetData);
+    const targetAddress: GameType.PlanetAddress = 
+    {
+        galaxy: requestData.targetPlanetGalaxy,
+        system: requestData.targetPlanetSystem,
+        slot: requestData.targetPlanetPosition,
+    }
 
     const isSamePlanet: boolean = GameType.isSameAddress(originAddress, targetAddress);
     if (isSamePlanet === true)
@@ -1242,7 +1127,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     let fleetMovementDurationSeconds: number = 0;
     try
     {
-         fleetMovementDurationSeconds = FleetMovementDuration.computeFleetMovementDurationSeconds(originPlanetData, targetPlanetData, shipQuantities, serverData);
+         fleetMovementDurationSeconds = FleetMovementDuration.computeFleetMovementDurationSecondsWithAddress(originAddress, targetAddress, shipQuantities, serverData);
     }
     catch (error: unknown)
     {
@@ -1325,11 +1210,11 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
             planet_origin_slot: originPlanetData.planetRow.slot,
 	        planet_origin_system: originPlanetData.planetRow.system,
 	        planet_origin_galaxy: originPlanetData.planetRow.galaxy,
-            player_target_id: targetPlanetData.planetRow.owner_player_id,
-            planet_target_id: targetPlanetData.planetRow.id,
-            planet_target_slot: targetPlanetData.planetRow.slot,
-	        planet_target_system: targetPlanetData.planetRow.system,
-	        planet_target_galaxy: targetPlanetData.planetRow.galaxy,
+            player_target_id: targetPlanetData ? targetPlanetData.planetRow.owner_player_id : null,
+            planet_target_id: targetPlanetData ? targetPlanetData.planetRow.id : null,
+            planet_target_slot: targetAddress.slot,
+	        planet_target_system: targetAddress.system,
+	        planet_target_galaxy: targetAddress.galaxy,
             is_return_trip: 0,
             fleet_action_type: requestData.fleetAction,
             requested_at: now,

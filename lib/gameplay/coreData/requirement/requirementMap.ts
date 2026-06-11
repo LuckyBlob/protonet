@@ -121,5 +121,18 @@ export const REQUIREMENT_MAP: RequirementMap = new Map
                 },
             },
         ]],
+        [GameType.COLONY_SHIP, [
+            {
+                hideDataWhenRequirementFailed: true,
+                specificThingRequirement:
+                {
+                    thingType: ThingType.Thing.Building,
+                    specificThingType: GameType.BUILDING_SHIPYARD,
+                    operator: RequirementType.RequirementOperator.GreaterOrEqual,
+                    value: 4,
+                    valueGetter: RequirementValueGetters.buildingLevel(GameType.BUILDING_SHIPYARD),
+                },
+            },
+        ]],
     ])],
 ]);

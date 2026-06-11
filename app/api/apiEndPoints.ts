@@ -15,6 +15,7 @@ export const ActionRequest =
     SendFleet:   { endpoint: "buy/sendFleet",   name: "SendFleet" },
     AbandonPlanet:   { endpoint: "planets/abandon",   name: "AbandonPlanet" },
     DeleteMessage:   { endpoint: "message/delete",   name: "DeleteMessage" },
+    MarkMessageRead: { endpoint: "message/markRead", name: "MarkMessageRead" },
 } as const satisfies Record<string, validEndpoint>;
 export type ActionRequestMap =
 {
@@ -28,6 +29,7 @@ export type ActionRequestMap =
     SendFleet: RequestType.SendFleet_ClientRequest;
     AbandonPlanet: RequestType.AbandonPlanet_ClientRequest;
     DeleteMessage: RequestType.DeleteMessage_ClientRequest;
+    MarkMessageRead: RequestType.MarkMessageRead_ClientRequest;
 }
 export type ActionResponseMap =
 {
@@ -41,6 +43,7 @@ export type ActionResponseMap =
     SendFleet: RequestType.SendFleet_ServerResponse;
     AbandonPlanet: RequestType.AbandonPlanet_ServerResponse;
     DeleteMessage: RequestType.DeleteMessage_ServerResponse;
+    MarkMessageRead: RequestType.MarkMessageRead_ServerResponse;
 }
 //#endregion
 
@@ -52,7 +55,6 @@ export const DataRequest =
     ServerConfig: { endpoint: "serverDataState",       name: "ServerConfig" },
     AllPlanets: { endpoint: "planets/all",       name: "AllPlanets" },
     OwnedPlanets: { endpoint: "planets/owned",       name: "OwnedPlanets" },
-    Message: { endpoint: "message/get",       name: "Message" },
 } as const satisfies Record<string, validEndpoint>;
 export type DataRequestMap =
 {
@@ -61,7 +63,6 @@ export type DataRequestMap =
     ServerConfig: null;
     AllPlanets: null;
     OwnedPlanets: null;
-    Message: RequestType.Message_ClientRequest;
 }
 export type DataResponseMap =
 {
@@ -70,7 +71,6 @@ export type DataResponseMap =
     ServerConfig: RequestType.ServerDataStateRequest;
     AllPlanets: RequestType.AllPlanetDataRequest;
     OwnedPlanets: RequestType.OwnedPlanetDataRequest;
-    Message: RequestType.Message_ServerResponse;
 }
 //#endregion
 

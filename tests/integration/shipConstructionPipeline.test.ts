@@ -1,28 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import * as ApplyProgress from '@/lib/gameplay/progressUpdate/applyProgress';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
-import * as dataType from '@/lib/gameplay/gameplayData/server/serverDataTypes';
 import * as ShipData from '@/lib/gameplay/dynamicData/planet/shipData';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
-import * as FleetArrival from '@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent';
-import * as FleetData from '@/lib/gameplay/dynamicData/planet/fleet/fleetData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
+import * as TestProgressApplierHelper from '../helpers/testProgressApplier';
 
-// Minimal concrete applier for tests — pure in-memory, no database, no fleet resolution.
-class TestProgressApplier extends ApplyProgress.PlayerProgressApplier
-{
-    applyPlayerProgressAtTime(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, _targetPlayerId: number, time: number): CoreType.PlayerData | null
-    {
-        return ApplyProgress.applyProgressToPlayerData(playerData, serverData, time, this);
-    }
-
-    getFleetPlayerData(_playerId: number | null, _planetId: number, _playerData: CoreType.PlayerData, _anchorEvent: FleetArrival.FleetArrivalAnchorEvent): FleetData.FleetPlayerData | null
-    {
-        return null;
-    }
-}
-
-const APPLIER: TestProgressApplier = new TestProgressApplier();
+const APPLIER: TestProgressApplierHelper.TestProgressApplier = new TestProgressApplierHelper.TestProgressApplier();
 const BASE_TIME: number = 1_000_000;
 
 // Small Transport: maxHealth=4000, divider=2500, shipyard level 0 → 5760s duration

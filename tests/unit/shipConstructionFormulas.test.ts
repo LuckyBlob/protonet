@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as ShipConstructionFormulas from '@/lib/gameplay/coreData/formula/shipConstructionFormulas';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
-import * as dataType from '@/lib/gameplay/gameplayData/server/serverDataTypes';
+import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 
 describe('computeConstructionDurationSeconds', () =>
 {

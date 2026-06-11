@@ -7,6 +7,7 @@ import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as CollectAction from "@/lib/gameplay/dynamicData/planet/fleet/collectAction";
 import * as StationAction from "@/lib/gameplay/dynamicData/planet/fleet/stationAction";
+import * as ColonizeAction from "@/lib/gameplay/dynamicData/planet/fleet/colonizeAction";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 
@@ -22,7 +23,38 @@ export type FleetPlayerDataPair =
     target: FleetPlayerData | null,
 }
 
-export function canExecuteFleetActionOnTargetAddress(originPlanetData: CoreType.PlanetData, targetPlanetOwnedPlayerId: number | null, shipQuantities: Map<number, number>, fleetAction: number): boolean
+export class FleetActionResolver
+{
+    resolveFleetAction(targetPlayerData: CoreType.PlayerData | null, originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): CoreType.PlayerData | null
+    {
+		switch (fleetMovement.fleetMovementRow.fleet_action_type)
+		{
+			case GameType.FLEET_ACTION_STATION:
+			{
+				StationAction.resolveStationAction(originPlayerData, targetPlayerData!, fleetMovement, serverData);
+				break;
+			}
+			case GameType.FLEET_ACTION_COLLECT:
+			{
+				CollectAction.resolveCollectAction(originPlayerData, targetPlayerData!, fleetMovement, serverData);
+				break;
+			}
+			case GameType.FLEET_ACTION_COLONIZE:
+			{
+				fleetMovement.resolutionState = CoreType.FleetMovementResolution.ResolveResultUnknown;
+				break;
+			}
+			default:
+			{
+				throw new Error(`UNREACHABLE: No resolver found for fleet action ${fleetMovement.fleetMovementRow.fleet_action_type}`);
+			}
+		}
+
+		return targetPlayerData;
+    }
+}
+
+export function canExecuteFleetActionOnTargetAddress(originPlanetData: CoreType.PlanetData, originPlayerData: CoreType.PlayerData, targetPlanetOwnedPlayerId: number | null, shipQuantities: Map<number, number>, fleetAction: number): boolean
 {
     switch (fleetAction)
     {
@@ -53,6 +85,11 @@ export function canExecuteFleetActionOnTargetAddress(originPlanetData: CoreType.
                 return false;
             }
 
+			if (originPlayerData.planetDatas.length >= GameType.MAX_ALLOWED_PLANETS)
+			{
+				return false;
+			}
+
             return true;
         }
         case GameType.FLEET_ACTION_COLLECT:
@@ -71,9 +108,9 @@ export function canExecuteFleetActionOnTargetAddress(originPlanetData: CoreType.
     }
 }
 
-export function canExecuteFleetActionOnTargetPlanet(originPlanetData: CoreType.PlanetData, targetPlanetData: CoreType.PlanetData, shipQuantities: Map<number, number>, fleetAction: number): boolean
+export function canExecuteFleetActionOnTargetPlanet(originPlanetData: CoreType.PlanetData, originPlayerData: CoreType.PlayerData, targetPlanetData: CoreType.PlanetData | null, shipQuantities: Map<number, number>, fleetAction: number): boolean
 {
-	const canExecuteActionWithPublicInfo: boolean = canExecuteFleetActionOnTargetAddress(originPlanetData, targetPlanetData.planetRow.owner_player_id, shipQuantities, fleetAction) 
+	const canExecuteActionWithPublicInfo: boolean = canExecuteFleetActionOnTargetAddress(originPlanetData, originPlayerData, targetPlanetData ? targetPlanetData.planetRow.owner_player_id : null, shipQuantities, fleetAction) 
 	if (canExecuteActionWithPublicInfo === false)
 	{
 		return false;
@@ -188,69 +225,47 @@ export function clampResoucesToAddToFleet(shipQuantities: Map<number, number>, f
     return resourcesActuallyOnBoard;
 }
 
-export function resolveFleetMovementAtTarget(targetPlayerData: CoreType.PlayerData | null, originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
+export function resolveFleetMovementAtTarget(targetPlayerData: CoreType.PlayerData | null, originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData, fleetActionResolver: FleetActionResolver): CoreType.PlayerData | null
 {
-	if (fleetMovement.fleetMovementRow.player_target_id === null)
+	const canTargetBeNull: boolean = fleetMovement.fleetMovementRow.fleet_action_type === GameType.FLEET_ACTION_COLONIZE;
+	if (fleetMovement.fleetMovementRow.player_target_id === null && !canTargetBeNull)
 	{
-		if (fleetMovement.fleetMovementRow.fleet_action_type === GameType.FLEET_ACTION_COLONIZE)
-		{
-			// Colonize is not yet implemented. Mark Invalid so the DB writer deletes the fleet row
-			// rather than throwing on Unresolved, which would freeze the originating player's account.
-			fleetMovement.resolutionState = CoreType.FleetMovementResolution.Invalid;
-		}
-		else
-		{
-			setFleetReturnTrip(null, fleetMovement);
-			fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
-			addInvalidTargetFleetActionMessage(originPlayerData, fleetMovement);
-		}
-		return;
+		setFleetReturnTrip(null, fleetMovement);
+		fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
+		addInvalidTargetFleetActionMessage(originPlayerData, fleetMovement);
+		return targetPlayerData;
 	}
 
-	if (targetPlayerData === null)
+	if (targetPlayerData === null && !canTargetBeNull)
 	{
 		// To resolve a fleet we need the target data since all the origin data is in the fleet itself
 		fleetMovement.resolutionState = CoreType.FleetMovementResolution.ResolveResultUnknown;
-		return;
+		return targetPlayerData;
 	}
 
-	const targetPlanetData: CoreType.PlanetData | undefined = targetPlayerData.planetDatas.find((planetData: CoreType.PlanetData) => 
+	const targetPlanetData: CoreType.PlanetData | undefined = targetPlayerData?.planetDatas.find((planetData: CoreType.PlanetData) => 
 	{
 		return planetData.planetRow.id === fleetMovement.fleetMovementRow.planet_target_id;
 	});
 
-	if (targetPlanetData === undefined)
+	if (targetPlanetData === undefined && !canTargetBeNull)
 	{
-		throw new Error(`Didnt find target planet ${fleetMovement.fleetMovementRow.planet_target_id} for player ${targetPlayerData.playerRow.id}.`)
+		throw new Error(`Didnt find target planet ${fleetMovement.fleetMovementRow.planet_target_id} for player ${targetPlayerData?.playerRow.id}.`)
 	}
 
-	switch (fleetMovement.fleetMovementRow.fleet_action_type)
-	{
-		case GameType.FLEET_ACTION_STATION:
-		{
-			StationAction.resolveStationAction(originPlayerData, targetPlayerData, fleetMovement, serverData);
-			break;
-		}
-		case GameType.FLEET_ACTION_COLLECT:
-		{
-			CollectAction.resolveCollectAction(originPlayerData, targetPlayerData, fleetMovement, serverData);
-			break;
-		}
-		default:
-		{
-			throw new Error(`UNREACHABLE: No resolver found for fleet action ${fleetMovement.fleetMovementRow.fleet_action_type}`);
-		}
-	}
+	const updatedTargetPlayerData: CoreType.PlayerData | null = fleetActionResolver.resolveFleetAction(targetPlayerData, originPlayerData, fleetMovement, serverData);
 
 	if (originPlayerData !== null)
     {
 		addFleetMessagesToPlayerData(originPlayerData, fleetMovement);
 	}
 
-	if (targetPlayerData !== null && (originPlayerData === null || targetPlayerData.playerRow.id !== originPlayerData.playerRow.id))
+	if (updatedTargetPlayerData !== null && (originPlayerData === null || updatedTargetPlayerData.playerRow.id !== originPlayerData.playerRow.id))
     {
-		addFleetMessagesToPlayerData(targetPlayerData, fleetMovement);
+		addFleetMessagesToPlayerData(updatedTargetPlayerData, fleetMovement);
 	}
+
+	return updatedTargetPlayerData;
 }
 
 export function addFleetMessagesToPlayerData(playerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement): void
@@ -445,3 +460,4 @@ export function buildShipsListFromFleetMovement(fleetMovementShipRows: DBType.Fl
 	}
 	return parts.join(", ");
 }
+

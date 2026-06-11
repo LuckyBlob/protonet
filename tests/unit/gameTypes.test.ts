@@ -75,6 +75,39 @@ describe('isSameAddress', () =>
     });
 });
 
+describe('formatPlanetAddress', () =>
+{
+    it('produces "[g:s:p]" formatted output', () =>
+    {
+        expect(GameType.formatPlanetAddress(1, 5, 3)).toBe("[1:5:3]");
+    });
+
+    it('uses the values as-is without padding', () =>
+    {
+        expect(GameType.formatPlanetAddress(2, 20, 5)).toBe("[2:20:5]");
+    });
+});
+
+describe('getPlayerName', () =>
+{
+    it('returns "Unknown" when playerId is null', () =>
+    {
+        expect(GameType.getPlayerName([], null)).toBe("Unknown");
+    });
+
+    it('returns "Unknown" when playerId is not in the public rows', () =>
+    {
+        const rows = [{ id: 1, username: "Alice" }];
+        expect(GameType.getPlayerName(rows, 42)).toBe("Unknown");
+    });
+
+    it('returns the matching username when a public row exists', () =>
+    {
+        const rows = [{ id: 1, username: "Alice" }, { id: 2, username: "Bob" }];
+        expect(GameType.getPlayerName(rows, 2)).toBe("Bob");
+    });
+});
+
 describe('rollSizeForSlot', () =>
 {
     const SLOT_RANGES: { min: number; max: number; }[] =

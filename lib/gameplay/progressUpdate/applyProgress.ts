@@ -15,9 +15,9 @@ export abstract class PlayerProgressApplier
     getNextAnchorEvent(playerData: CoreType.PlayerData): AnchorEvent.AnchorEvent | null
     {
         const anchorEvents: (AnchorEvent.AnchorEvent | null)[] = [];
-        anchorEvents.push(BuildingUpgrade.findNextAnchorEvent(playerData));
-        anchorEvents.push(ShipConstruction.findNextAnchorEvent(playerData));
-        anchorEvents.push(FleetArrival.findNextAnchorEvent(playerData));
+        anchorEvents.push(BuildingUpgrade.findNextAnchorEvent(playerData, this));
+        anchorEvents.push(ShipConstruction.findNextAnchorEvent(playerData, this));
+        anchorEvents.push(FleetArrival.findNextAnchorEvent(playerData, this));
         
         let nextAnchorEvent: AnchorEvent.AnchorEvent | null = null;
         for (const anchorEvent of anchorEvents)
@@ -31,11 +31,6 @@ export abstract class PlayerProgressApplier
             {
                 nextAnchorEvent = anchorEvent;
             }
-        }
-        
-        if (nextAnchorEvent !== null)
-        {
-            nextAnchorEvent.resolver = this;
         }
 
         return nextAnchorEvent;
@@ -71,7 +66,12 @@ export abstract class PlayerProgressApplier
         updateResourcesToTime(playerData, serverData, time);
     }
 
-    abstract getFleetPlayerData(playerId: number | null, planetId: number, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null;
+    abstract getFleetPlayerData(playerId: number | null, planetId: number | null, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null;
+
+    createFleetActionResolver(): FleetData.FleetActionResolver
+    {
+        return new FleetData.FleetActionResolver();
+    }
 }
 
 export function applyProgressToPlayerData(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, now: number, playerProgressResolver: PlayerProgressApplier): CoreType.PlayerData

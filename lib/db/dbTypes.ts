@@ -130,7 +130,7 @@ export type FleetMovementRow =
 	planet_origin_system: number;
 	planet_origin_galaxy: number;
     player_target_id: number | null; // == 0 for colonizing
-    planet_target_id: number;
+    planet_target_id: number | null; // == 0 for colonizing
 	planet_target_slot: number;
 	planet_target_system: number;
 	planet_target_galaxy: number;

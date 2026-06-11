@@ -43,7 +43,14 @@
       "Bash(ls \"C:\\\\Users\\\\UTILIS~1\\\\AppData\\\\Local\\\\Temp\\\\protonet-e2e-test.db\" 2>&1)",
       "Bash(rm \"C:\\\\Users\\\\UTILIS~1\\\\AppData\\\\Local\\\\Temp\\\\protonet-e2e-test.db\")",
       "Bash(sqlite3 data/game.db \"SELECT id, name FROM player WHERE name = 'admin';\")",
-      "Bash(npx --yes better-sqlite3-cli)"
+      "Bash(npx --yes better-sqlite3-cli)",
+      "Bash(dir \"D:\\\\Claude\\\\WebsiteProject\\\\protonet\\\\lib\\\\gameplay\\\\dynamicData\\\\planet\\\\fleet\")",
+      "Bash(gh auth *)",
+      "Bash(gh api *)",
+      "Bash(npm run *)",
+      "PowerShell(\"GH_TOKEN=$\\($env:GH_TOKEN.Length\\) chars\"; \"GITHUB_TOKEN=$\\($env:GITHUB_TOKEN.Length\\) chars\"; \"GH_ENTERPRISE_TOKEN=$\\($env:GH_ENTERPRISE_TOKEN.Length\\) chars\"; \\(Get-Command gh\\).Source)",
+      "PowerShell($hosts = \"$env:APPDATA\\\\GitHub CLI\\\\hosts.yml\"; if \\(Test-Path $hosts\\) { \"--- $hosts ---\"; Get-Content $hosts } else { \"no hosts.yml at $hosts\" }; \"\"; $hosts2 = \"$env:USERPROFILE\\\\.config\\\\gh\\\\hosts.yml\"; if \\(Test-Path $hosts2\\) { \"--- $hosts2 ---\"; Get-Content $hosts2 } else { \"no hosts.yml at $hosts2\" })",
+      "Bash(node -e ' *)"
     ]
   }
 }

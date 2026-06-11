@@ -173,3 +173,109 @@ export function buildShipConstructionShipRow(overrides?: Partial<DBType.ShipCons
 
     return row;
 }
+
+export function buildFleetMovementRow(overrides?: Partial<DBType.FleetMovementRow>): DBType.FleetMovementRow
+{
+    const row: DBType.FleetMovementRow =
+    {
+        id: 1,
+        seed: 0,
+        player_origin_id: 1,
+        planet_origin_id: 1,
+        planet_origin_slot: 3,
+        planet_origin_system: 1,
+        planet_origin_galaxy: 1,
+        player_target_id: 2,
+        planet_target_id: 2,
+        planet_target_slot: 4,
+        planet_target_system: 1,
+        planet_target_galaxy: 1,
+        is_return_trip: 0,
+        fleet_action_type: GameType.FLEET_ACTION_STATION,
+        requested_at: 1_000_000,
+        duration_at_request_time: 10_000,
+        duration_at_start_time: 10_000,
+        started_at: 1_000_000,
+        ...overrides,
+    };
+
+    return row;
+}
+
+export function buildFleetMovementShipRow(overrides?: Partial<DBType.FleetMovementShipRow>): DBType.FleetMovementShipRow
+{
+    const row: DBType.FleetMovementShipRow =
+    {
+        fleet_id: 1,
+        ship_type: GameType.SMALL_TRANSPORT,
+        ship_quantity: 1,
+        ...overrides,
+    };
+
+    return row;
+}
+
+export function buildFleetMovementResourceRow(overrides?: Partial<DBType.FleetMovementResourceRow>): DBType.FleetMovementResourceRow
+{
+    const row: DBType.FleetMovementResourceRow =
+    {
+        fleet_id: 1,
+        resource_type: GameType.RESOURCE_1,
+        resource_quantity: 0,
+        ...overrides,
+    };
+
+    return row;
+}
+
+export type FleetMovementOverrides =
+{
+    fleetMovementRow?: Partial<DBType.FleetMovementRow>;
+    fleetMovementShipRows?: DBType.FleetMovementShipRow[];
+    fleetMovementResourceRows?: DBType.FleetMovementResourceRow[];
+    resolutionState?: CoreType.FleetMovementResolution;
+    originMessageRow?: DBType.MessageRow | null;
+    targetMessageRow?: DBType.MessageRow | null;
+};
+
+export function buildFleetMovement(overrides?: FleetMovementOverrides): CoreType.FleetMovement
+{
+    const fleetMovement: CoreType.FleetMovement =
+    {
+        fleetMovementRow: buildFleetMovementRow(overrides?.fleetMovementRow),
+        fleetMovementShipRows: overrides?.fleetMovementShipRows ?? [buildFleetMovementShipRow()],
+        fleetMovementResourceRows: overrides?.fleetMovementResourceRows ?? [],
+        resolutionState: overrides?.resolutionState ?? CoreType.FleetMovementResolution.Unresolved,
+        originMessageRow: overrides?.originMessageRow ?? null,
+        targetMessageRow: overrides?.targetMessageRow ?? null,
+    };
+
+    return fleetMovement;
+}
+
+export function buildPublicPlayerRow(overrides?: Partial<DBType.PublicPlayerRow>): DBType.PublicPlayerRow
+{
+    const row: DBType.PublicPlayerRow =
+    {
+        id: 1,
+        username: "Player1",
+        ...overrides,
+    };
+
+    return row;
+}
+
+export function buildPublicPlanetRow(overrides?: Partial<DBType.PublicPlanetRow>): DBType.PublicPlanetRow
+{
+    const row: DBType.PublicPlanetRow =
+    {
+        id: 1,
+        slot: 3,
+        system: 1,
+        galaxy: 1,
+        owner_player_id: 1,
+        ...overrides,
+    };
+
+    return row;
+}

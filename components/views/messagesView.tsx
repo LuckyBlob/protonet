@@ -1,27 +1,18 @@
 "use client";
 
-import { ReactElement, MouseEvent, useEffect, useState } from "react";
+import { ReactElement, MouseEvent, useEffect, useRef, useState } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
-import * as APIEndPoint from "@/app/api/apiEndPoints";
 import * as HelperElements from "@/components/helperElements";
 
 type MessagesViewProps =
 {
     clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
-
-const MessageBodyFetchState =
-{
-    Idle: 1,
-    Loading: 2,
-    Failed: 3,
-} as const;
-type MessageBodyFetchState = typeof MessageBodyFetchState[keyof typeof MessageBodyFetchState];
 
 type SelectedMessageRowIdState = [number | null, (value: number | null) => void];
 type DeletedMessageRowIdsState = [Set<number>, (value: Set<number>) => void];
@@ -31,8 +22,8 @@ type MessagesViewData =
     visibleMessageDatas: CoreType.MessageData[];
     selectedMessageRowIdState: SelectedMessageRowIdState;
     deletedMessageRowIdsState: DeletedMessageRowIdsState;
-    messageBodyFetchState: MessageBodyFetchState;
     psController: CoreType.PSController;
+    pendingReselectionRef: { current: CoreType.MessagePreview | null };
 };
 
 const MESSAGE_ROW_HEIGHT_PX: number = 48;
@@ -48,175 +39,112 @@ function formatMessageTimestamp(epochMs: number): string
     const date: Date = new Date(epochMs);
     return date.toLocaleString();
 }
-//#endregion
 
-//#region cache helpers
-function updateMessageDataInCache(
-    psController: CoreType.PSController,
-    messageRowId: number,
-    transformMessageData: (messageData: CoreType.MessageData) => CoreType.MessageData,
-): void
+function buildPredictedPreviewKey(messagePreview: CoreType.MessagePreview): string
 {
-    const writeToPlayerData = (playerData: CoreType.PlayerData): CoreType.PlayerData =>
-    {
-        const updatedMessageDatas: CoreType.MessageData[] = playerData.dynamicPlayerData.messageDatas.map((messageData: CoreType.MessageData): CoreType.MessageData =>
-        {
-            if (messageData.messagePreview.messageRowId !== messageRowId)
-            {
-                return messageData;
-            }
-
-            return transformMessageData(messageData);
-        });
-
-        const updatedDynamicPlayerData: CoreType.DynamicPlayerData =
-        {
-            messageDatas: updatedMessageDatas,
-        };
-        const updatedPlayerData: CoreType.PlayerData =
-        {
-            playerRow: playerData.playerRow,
-            dynamicPlayerData: updatedDynamicPlayerData,
-            planetDatas: playerData.planetDatas,
-            publicPlanetRows: playerData.publicPlanetRows,
-            publicPlayerRows: playerData.publicPlayerRows,
-        };
-        return updatedPlayerData;
-    };
-
-    psController[1]((mostRecentState: CoreType.PlayerState): CoreType.PlayerState =>
-    {
-        const newPlayerState: CoreType.PlayerState =
-        {
-            dbData: writeToPlayerData(mostRecentState.dbData),
-            predictedDBData: writeToPlayerData(mostRecentState.predictedDBData),
-            selectedPlanetId: mostRecentState.selectedPlanetId,
-            lastFetchTimestamp: mostRecentState.lastFetchTimestamp,
-        };
-        return newPlayerState;
-    });
+    return `${messagePreview.receivedAt}|${messagePreview.title}`;
 }
 
-function writeMessageRowToCache(psController: CoreType.PSController, messageRowId: number, fetchedMessageRow: DBType.MessageRow): void
+function collectPredictedPreviewKeys(messageDatas: CoreType.MessageData[]): Set<string>
 {
-    updateMessageDataInCache(psController, messageRowId, (messageData: CoreType.MessageData): CoreType.MessageData =>
+    const keys: Set<string> = new Set<string>();
+    for (const messageData of messageDatas)
     {
-        // Mirror the server's read-on-fetch flip locally so the unread badge and the
-        // font-bold preview styling update without waiting for the next playerData refresh.
-        const updatedMessagePreview: CoreType.MessagePreview =
+        if (messageData.messagePreview.messageRowId === -1)
         {
-            messageRowId: messageData.messagePreview.messageRowId,
-            receivedAt: messageData.messagePreview.receivedAt,
-            title: messageData.messagePreview.title,
-            isRead: 1,
-            type: messageData.messagePreview.type,
-        };
-        const updatedMessageData: CoreType.MessageData =
-        {
-            messagePreview: updatedMessagePreview,
-            messageRow: fetchedMessageRow,
-        };
-        return updatedMessageData;
-    });
-}
+            keys.add(buildPredictedPreviewKey(messageData.messagePreview));
+        }
+    }
 
-function setMessagePreviewReadInCache(psController: CoreType.PSController, messageRowId: number, isRead: number): void
-{
-    updateMessageDataInCache(psController, messageRowId, (messageData: CoreType.MessageData): CoreType.MessageData =>
-    {
-        const updatedMessagePreview: CoreType.MessagePreview =
-        {
-            messageRowId: messageData.messagePreview.messageRowId,
-            receivedAt: messageData.messagePreview.receivedAt,
-            title: messageData.messagePreview.title,
-            isRead: isRead,
-            type: messageData.messagePreview.type,
-        };
-        const updatedMessageData: CoreType.MessageData =
-        {
-            messagePreview: updatedMessagePreview,
-            messageRow: messageData.messageRow,
-        };
-        return updatedMessageData;
-    });
+    return keys;
 }
 //#endregion
 
 //#region state hooks
-function useEnsureMessageLoaded(selectedMessageRowId: number | null, psController: CoreType.PSController): MessageBodyFetchState
+function useEntryRefresh(psController: CoreType.PSController): void
 {
-    const fetchStateState: [MessageBodyFetchState, (value: MessageBodyFetchState) => void] = useState<MessageBodyFetchState>(MessageBodyFetchState.Idle);
-
-    useEffect((): (() => void) =>
+    useEffect((): void =>
     {
-        if (selectedMessageRowId === null)
+        const runRefresh = async (): Promise<void> =>
         {
-            fetchStateState[1](MessageBodyFetchState.Idle);
-            return (): void => {};
-        }
-
-        const cachedMessageData: CoreType.MessageData | null = MessageData.findMessageDataByMessageRowId(
-            psController[0].predictedDBData.dynamicPlayerData.messageDatas,
-            selectedMessageRowId,
-        );
-        if (cachedMessageData === null)
-        {
-            // Selected preview disappeared between click and effect (e.g., deleted).
-            fetchStateState[1](MessageBodyFetchState.Idle);
-            return (): void => {};
-        }
-
-        // Optimistic: every click marks the message as read so the badge clears immediately.
-        // Captured here so we can revert if the body fetch turns out to fail below.
-        const originalIsRead: number = cachedMessageData.messagePreview.isRead;
-        setMessagePreviewReadInCache(psController, selectedMessageRowId, 1);
-
-        if (cachedMessageData.messageRow !== null)
-        {
-            // Body already loaded — either from a previous fetch or from a local
-            // anchor-event resolver (which inserts with id === -1, so a fetch would 404).
-            fetchStateState[1](MessageBodyFetchState.Idle);
-            return (): void => {};
-        }
-
-        fetchStateState[1](MessageBodyFetchState.Loading);
-
-        let isCancelled: boolean = false;
-        const runFetch = async (): Promise<void> =>
-        {
-            const response: APIEndPoint.ResponseForData<typeof APIEndPoint.DataRequest.Message> | null = await ClientRequestFunctions.clientTryMessageRequest(selectedMessageRowId);
-            if (isCancelled === true)
+            try
             {
-                return;
+                await ClientRequestFunctions.clientTryPlayerDataRequest(psController);
             }
-
-            // Use != instead of !== here to catch everything that's very weird.
-            if (response === null || response.error != null || response.messageRow == null)
+            catch (error: unknown)
             {
-                console.error("⚠️:", `Failed to fetch messageRowId ${selectedMessageRowId}.`);
-                setMessagePreviewReadInCache(psController, selectedMessageRowId, originalIsRead);
-                fetchStateState[1](MessageBodyFetchState.Failed);
-                return;
+                console.error("⚠️:", error);
             }
-
-            const fetchedMessageRow: DBType.MessageRow = response.messageRow;
-            writeMessageRowToCache(psController, selectedMessageRowId, fetchedMessageRow);
-            fetchStateState[1](MessageBodyFetchState.Idle);
         };
-        runFetch();
+        runRefresh();
+    }, []);
+}
 
-        return (): void =>
+function useDeselectOnNewPredicted(allMessageDatas: CoreType.MessageData[], selectedMessageRowIdState: SelectedMessageRowIdState): void
+{
+    const previousKeysRef: { current: Set<string> | null } = useRef<Set<string> | null>(null);
+
+    useEffect((): void =>
+    {
+        const currentKeys: Set<string> = collectPredictedPreviewKeys(allMessageDatas);
+        const previousKeys: Set<string> | null = previousKeysRef.current;
+        previousKeysRef.current = currentKeys;
+
+        if (previousKeys === null)
         {
-            isCancelled = true;
-        };
-    }, [selectedMessageRowId]);
+            return;
+        }
 
-    return fetchStateState[0];
+        let hasNewPredicted: boolean = false;
+        for (const key of currentKeys)
+        {
+            if (previousKeys.has(key) === false)
+            {
+                hasNewPredicted = true;
+                break;
+            }
+        }
+
+        if (hasNewPredicted === true)
+        {
+            selectedMessageRowIdState[1](null);
+        }
+    }, [allMessageDatas]);
+}
+
+function useReselectAfterPredictedReconciles(
+    allMessageDatas: CoreType.MessageData[],
+    selectedMessageRowIdState: SelectedMessageRowIdState,
+    pendingReselectionRef: { current: CoreType.MessagePreview | null },
+): void
+{
+    useEffect((): void =>
+    {
+        const pending: CoreType.MessagePreview | null = pendingReselectionRef.current;
+        if (pending === null)
+        {
+            return;
+        }
+
+        const replacement: CoreType.MessageData | undefined = allMessageDatas.find((messageData: CoreType.MessageData): boolean =>
+        {
+            return messageData.messagePreview.messageRowId !== -1
+                && MessageData.doMessagePreviewsMatch(messageData.messagePreview, pending);
+        });
+
+        if (replacement === undefined)
+        {
+            return;
+        }
+
+        pendingReselectionRef.current = null;
+        selectedMessageRowIdState[1](replacement.messagePreview.messageRowId);
+    }, [allMessageDatas]);
 }
 //#endregion
 
 //#region rendering helpers
-function renderMessagePreviewRow(messageData: CoreType.MessageData, isSelected: boolean, onSelect: (messageRowId: number) => void, onDelete: (messageRowId: number) => void): ReactElement
+function renderMessagePreviewRow(messageData: CoreType.MessageData, isSelected: boolean, onSelect: (messageData: CoreType.MessageData) => void, onDelete: (messageData: CoreType.MessageData) => void): ReactElement
 {
     const messagePreview: CoreType.MessagePreview = messageData.messagePreview;
     const isUnread: boolean = messagePreview.isRead === 0;
@@ -231,19 +159,24 @@ function renderMessagePreviewRow(messageData: CoreType.MessageData, isSelected: 
 
     const handleClick = (): void =>
     {
-        onSelect(messageRowId);
+        onSelect(messageData);
     };
 
     const handleDeleteClick = (e: MouseEvent<HTMLButtonElement>): void =>
     {
         e.stopPropagation();
-        onDelete(messageRowId);
+        onDelete(messageData);
     };
+
+    // A -1 id is not unique within the list, so use a stable composite when predicted.
+    const reactKey: string = messageRowId === -1
+        ? `predicted:${buildPredictedPreviewKey(messagePreview)}`
+        : `real:${messageRowId}`;
 
     const element: ReactElement =
     (
         <div
-            key={messageRowId}
+            key={reactKey}
             onClick={handleClick}
             className={`flex flex-row items-center gap-2 px-3 py-2 border border-gray-600 rounded text-sm text-white text-left w-full cursor-pointer overflow-hidden shrink-0 ${selectedClass}`}
             style={{ height: `${MESSAGE_ROW_HEIGHT_PX}px` }}
@@ -280,31 +213,78 @@ function renderMessageListSection(data: MessagesViewData): ReactElement
         return emptyElement;
     }
 
-    const handleSelect = (messageRowId: number): void =>
+    const handleSelect = (messageData: CoreType.MessageData): void =>
     {
+        const messagePreview: CoreType.MessagePreview = messageData.messagePreview;
+        const messageRowId: number = messagePreview.messageRowId;
         data.selectedMessageRowIdState[1](messageRowId);
+
+        if (messageRowId === -1)
+        {
+            // Predicted message: mark-read with predicted fields. This both persists
+            // is_read=1 server-side and returns refreshed playerData; the reselection
+            // effect then swaps the selection over to the real id once it appears.
+            data.pendingReselectionRef.current = messagePreview;
+            const runMarkRead = async (): Promise<void> =>
+            {
+                const errorMessage: string | null = await ClientRequestFunctions.clientTryMarkMessageReadRequest(data.psController, -1, messagePreview);
+                if (errorMessage !== null)
+                {
+                    console.error("⚠️:", `Mark predicted message read failed: ${errorMessage}`);
+                    data.pendingReselectionRef.current = null;
+                }
+            };
+            runMarkRead();
+            return;
+        }
+
+        if (messagePreview.isRead === 1)
+        {
+            return;
+        }
+
+        const runMarkRead = async (): Promise<void> =>
+        {
+            const errorMessage: string | null = await ClientRequestFunctions.clientTryMarkMessageReadRequest(data.psController, messageRowId, null);
+            if (errorMessage !== null)
+            {
+                console.error("⚠️:", `Mark message read failed for messageRowId ${messageRowId}: ${errorMessage}`);
+            }
+        };
+        runMarkRead();
     };
 
-    const handleDelete = (messageRowId: number): void =>
+    const handleDelete = (messageData: CoreType.MessageData): void =>
     {
-        const optimisticDeleted: Set<number> = new Set<number>(data.deletedMessageRowIdsState[0]);
-        optimisticDeleted.add(messageRowId);
-        data.deletedMessageRowIdsState[1](optimisticDeleted);
+        const messagePreview: CoreType.MessagePreview = messageData.messagePreview;
+        const messageRowId: number = messagePreview.messageRowId;
+
+        if (messageRowId !== -1)
+        {
+            const optimisticDeleted: Set<number> = new Set<number>(data.deletedMessageRowIdsState[0]);
+            optimisticDeleted.add(messageRowId);
+            data.deletedMessageRowIdsState[1](optimisticDeleted);
+        }
 
         if (data.selectedMessageRowIdState[0] === messageRowId)
         {
             data.selectedMessageRowIdState[1](null);
         }
 
+        const predictedPreview: CoreType.MessagePreview | null = messageRowId === -1 ? messagePreview : null;
         const runDelete = async (): Promise<void> =>
         {
-            const errorMessage: string | null = await ClientRequestFunctions.clientTryDeleteMessageRequest(data.psController, messageRowId);
+            const errorMessage: string | null = await ClientRequestFunctions.clientTryDeleteMessageRequest(data.psController, messageRowId, predictedPreview);
             if (errorMessage !== null)
             {
                 console.error("⚠️:", `Delete message ${messageRowId} failed: ${errorMessage}`);
-                const revertedDeleted: Set<number> = new Set<number>(data.deletedMessageRowIdsState[0]);
-                revertedDeleted.delete(messageRowId);
-                data.deletedMessageRowIdsState[1](revertedDeleted);
+
+                if (messageRowId !== -1)
+                {
+                    const revertedDeleted: Set<number> = new Set<number>(data.deletedMessageRowIdsState[0]);
+                    revertedDeleted.delete(messageRowId);
+                    data.deletedMessageRowIdsState[1](revertedDeleted);
+                }
             }
         };
         runDelete();
@@ -343,21 +323,6 @@ function renderMessageBodyPlaceholder(): ReactElement
     return placeholderElement;
 }
 
-function renderMessageBodyMessage(message: string): ReactElement
-{
-    const messageElement: ReactElement =
-    (
-        <div
-            className="w-full border border-gray-600 rounded p-3 text-sm text-white overflow-y-auto flex items-center justify-center text-gray-400"
-            style={{ height: `${SECTION_HEIGHT_PX}px` }}
-        >
-            {message}
-        </div>
-    );
-
-    return messageElement;
-}
-
 function renderMessageBodySection(data: MessagesViewData): ReactElement
 {
     const selectedMessageRowId: number | null = data.selectedMessageRowIdState[0];
@@ -369,19 +334,13 @@ function renderMessageBodySection(data: MessagesViewData): ReactElement
     const selectedMessageData: CoreType.MessageData | null = MessageData.findMessageDataByMessageRowId(data.visibleMessageDatas, selectedMessageRowId);
     if (selectedMessageData === null)
     {
-        // The selected preview disappeared between fetch start and now (e.g. deleted from another tab).
         return renderMessageBodyPlaceholder();
     }
 
-    const cachedMessageRow: DBType.MessageRow | null = selectedMessageData.messageRow;
-    if (cachedMessageRow === null)
+    const messageRow: DBType.MessageRow | null = selectedMessageData.messageRow;
+    if (messageRow === null)
     {
-        if (data.messageBodyFetchState === MessageBodyFetchState.Failed)
-        {
-            return renderMessageBodyMessage("Could not load message.");
-        }
-
-        return renderMessageBodyMessage("Loading message…");
+        return renderMessageBodyPlaceholder();
     }
 
     const messagePreview: CoreType.MessagePreview = selectedMessageData.messagePreview;
@@ -394,7 +353,7 @@ function renderMessageBodySection(data: MessagesViewData): ReactElement
         >
             <div className="font-semibold">{messagePreview.title}</div>
             <div className="text-xs text-gray-400">{formatMessageTimestamp(messagePreview.receivedAt)}</div>
-            <div className="whitespace-pre-wrap text-justify">{cachedMessageRow.body}</div>
+            <div className="whitespace-pre-wrap text-justify">{messageRow.body}</div>
         </div>
     );
 
@@ -438,13 +397,19 @@ function renderMessagesViewLayout(data: MessagesViewData): ReactElement
 
 export function MessagesView(props: MessagesViewProps): ReactElement
 {
+    const psController: CoreType.PSController = props.clientDataStateResult.psController;
     const selectedMessageRowIdState: SelectedMessageRowIdState = useState<number | null>(null);
     const deletedMessageRowIdsState: DeletedMessageRowIdsState = useState<Set<number>>(new Set<number>());
-    const messageBodyFetchState: MessageBodyFetchState = useEnsureMessageLoaded(selectedMessageRowIdState[0], props.clientDataStateResult.psController);
+    const pendingReselectionRef: { current: CoreType.MessagePreview | null } = useRef<CoreType.MessagePreview | null>(null);
+
+    const allMessageDatas: CoreType.MessageData[] = psController[0].predictedDBData.dynamicPlayerData.messageDatas;
+
+    useEntryRefresh(psController);
+    useDeselectOnNewPredicted(allMessageDatas, selectedMessageRowIdState);
+    useReselectAfterPredictedReconciles(allMessageDatas, selectedMessageRowIdState, pendingReselectionRef);
 
     try
     {
-        const allMessageDatas: CoreType.MessageData[] = props.clientDataStateResult.psController[0].predictedDBData.dynamicPlayerData.messageDatas;
         const visibleMessageDatas: CoreType.MessageData[] = MessageData.buildVisibleMessageDatas(allMessageDatas, deletedMessageRowIdsState[0]);
 
         const messagesViewData: MessagesViewData =
@@ -452,8 +417,8 @@ export function MessagesView(props: MessagesViewProps): ReactElement
             visibleMessageDatas: visibleMessageDatas,
             selectedMessageRowIdState: selectedMessageRowIdState,
             deletedMessageRowIdsState: deletedMessageRowIdsState,
-            messageBodyFetchState: messageBodyFetchState,
-            psController: props.clientDataStateResult.psController,
+            psController: psController,
+            pendingReselectionRef: pendingReselectionRef,
         }
 
         return renderMessagesViewLayout(messagesViewData);
