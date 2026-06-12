@@ -105,7 +105,8 @@ export function updateResourcesToTime(playerData: CoreType.PlayerData, serverDat
 // Keep server data param here even if unused for future ease when we will use it
 function setUpdatedTimeStamp(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, time: number): void
 {
-    playerData.playerRow.last_updated = time;
+    const newPlayerTime: number = Math.max(playerData.playerRow.last_updated, time);
+    playerData.playerRow.last_updated = newPlayerTime;
     for (const planetData of playerData.planetDatas)
     {
         planetData.planetRow.last_updated = time;
