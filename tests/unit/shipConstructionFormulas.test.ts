@@ -15,21 +15,21 @@ describe('computeConstructionDurationSeconds', () =>
     it('computes duration for Small Transport at shipyard level 0 without serverData', () =>
     {
         // maxHealth=4000, divider=2500, level=0 → 4000/(2500*1)*3600 = 5760s
-        const result: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.SMALL_TRANSPORT, 0, null);
+        const result: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.ShipType.SmallTransport, 0, null);
         expect(result).toBe(5760);
     });
 
     it('computes duration for Large Transport at shipyard level 0', () =>
     {
         // maxHealth=12000 → 12000/(2500*1)*3600 = 17280s
-        const result: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.LARGE_TRANSPORT, 0, null);
+        const result: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.ShipType.LargeTransport, 0, null);
         expect(result).toBe(17280);
     });
 
     it('decreases duration with a higher shipyard level', () =>
     {
-        const level0: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.SMALL_TRANSPORT, 0, null);
-        const level1: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.SMALL_TRANSPORT, 1, null);
+        const level0: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.ShipType.SmallTransport, 0, null);
+        const level1: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.ShipType.SmallTransport, 1, null);
         expect(level0).not.toBeNull();
         expect(level1).not.toBeNull();
         // level1 → 4000/(2500*2)*3600 = 2880s
@@ -40,8 +40,8 @@ describe('computeConstructionDurationSeconds', () =>
     it('applies time_multiplier from serverData', () =>
     {
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData(2);
-        const base: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.SMALL_TRANSPORT, 0, null);
-        const accelerated: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.SMALL_TRANSPORT, 0, serverData);
+        const base: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.ShipType.SmallTransport, 0, null);
+        const accelerated: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.ShipType.SmallTransport, 0, serverData);
         expect(base).not.toBeNull();
         expect(accelerated).not.toBeNull();
         // 5760 / 2 = 2880
@@ -50,8 +50,8 @@ describe('computeConstructionDurationSeconds', () =>
 
     it('Large Transport takes longer than Small Transport at same shipyard level', () =>
     {
-        const small: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.SMALL_TRANSPORT, 0, null);
-        const large: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.LARGE_TRANSPORT, 0, null);
+        const small: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.ShipType.SmallTransport, 0, null);
+        const large: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(GameType.ShipType.LargeTransport, 0, null);
         expect(small).not.toBeNull();
         expect(large).not.toBeNull();
         expect(large!).toBeGreaterThan(small!);

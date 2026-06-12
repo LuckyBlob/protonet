@@ -8,6 +8,7 @@ import * as DBType from "@/lib/db/dbTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 type PlanetViewProps =
 {
@@ -50,7 +51,7 @@ function renderPlanetRow(slot: number, selectedGalaxy: number, selectedSystem: n
 
 function renderPlanetGrid(selectedGalaxy: number, selectedSystem: number, playerData: CoreType.PlayerData): ReactElement
 {
-    const slotNumbers: number[] = Array.from({ length: GameType.SLOT_COUNT }, (_: unknown, index: number): number => index + 1);
+    const slotNumbers: number[] = Array.from({ length: StaticData.SLOT_COUNT }, (_: unknown, index: number): number => index + 1);
 
     const rowElements: ReactElement[] = slotNumbers.map((slot: number): ReactElement =>
     {
@@ -71,8 +72,8 @@ function renderBody(props: PlanetViewProps, selectedGalaxy: number, selectedSyst
 {
     const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 
-    const galaxyNumbers: number[] = Array.from({ length: GameType.GALAXY_COUNT }, (_: unknown, index: number): number => index + 1);
-    const systemNumbers: number[] = Array.from({ length: GameType.SYSTEM_COUNT }, (_: unknown, index: number): number => index + 1);
+    const galaxyNumbers: number[] = Array.from({ length: StaticData.GALAXY_COUNT }, (_: unknown, index: number): number => index + 1);
+    const systemNumbers: number[] = Array.from({ length: StaticData.SYSTEM_COUNT }, (_: unknown, index: number): number => index + 1);
 
     const galaxyOptionElements: ReactElement[] = galaxyNumbers.map((galaxy: number): ReactElement =>
     {
@@ -126,13 +127,13 @@ export function PlanetView(props: PlanetViewProps): ReactElement
         const handleGalaxyChange = (e: ChangeEvent<HTMLSelectElement>): void =>
         {
             const parsedValue: number = Number.parseInt(e.target.value, 10);
-            selectedGalaxyState[1](Math.min(Math.max(parsedValue, 1), GameType.GALAXY_COUNT));
+            selectedGalaxyState[1](Math.min(Math.max(parsedValue, 1), StaticData.GALAXY_COUNT));
         };
 
         const handleSystemChange = (e: ChangeEvent<HTMLSelectElement>): void =>
         {
             const parsedValue: number = Number.parseInt(e.target.value, 10);
-            selectedSystemState[1](Math.min(Math.max(parsedValue, 1), GameType.SYSTEM_COUNT));
+            selectedSystemState[1](Math.min(Math.max(parsedValue, 1), StaticData.SYSTEM_COUNT));
         };
 
         return renderBody(props, selectedGalaxyState[0], selectedSystemState[0], handleGalaxyChange, handleSystemChange);

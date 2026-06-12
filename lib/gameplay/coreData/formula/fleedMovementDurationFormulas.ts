@@ -1,4 +1,5 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 
@@ -8,14 +9,14 @@ const DISTANCE_FACTOR: number = 10;
 
 export function computeFleetMovementDurationSecondsFromAddresses(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: CoreType.ServerData | null): number
 {
-	const distance: number = GameType.getDistance(originAddress, targetAddress);
+	const distance: number = StaticDataHelper.getDistance(originAddress, targetAddress);
 	const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(shipQuantities);
 	return computeFleetMovementDurationSeconds_Base(distance, speed, serverData);
 }
 
 export function computeFleetMovementDurationSecondsWithAddress(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: CoreType.ServerData | null): number
 {
-	const distance: number = GameType.getDistance(originAddress, targetAddress);
+	const distance: number = StaticDataHelper.getDistance(originAddress, targetAddress);
     const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(shipQuantities);
 	return computeFleetMovementDurationSeconds_Base(distance, speed, serverData);
 }

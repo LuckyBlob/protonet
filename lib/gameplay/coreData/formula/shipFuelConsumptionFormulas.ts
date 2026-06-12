@@ -1,5 +1,7 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 type BaseFuelConsumptionData =
 {
@@ -30,7 +32,7 @@ function computeFuelConsumption_Base(shipQuantities: Map<number, number>, distan
         	continue;
     	}
 
-		const shipStats: GameType.ShipStats | undefined = GameType.SHIP_STATS.get(shipType);
+		const shipStats: GameType.ShipStats | undefined = StaticDataHelper.getShipStats(shipType);
 		if (shipStats === undefined)
 		{
 			throw new Error(`⚠️: Building type ${shipType} has no ship stats.`); 

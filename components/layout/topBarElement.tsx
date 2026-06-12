@@ -6,11 +6,11 @@ import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as PlanetValueData from "@/lib/gameplay/dynamicData/planet/planetValueData";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 type TopBarProps =
 {
@@ -170,7 +170,7 @@ function getPlanetValueCardDisplayValues(planetDataPredicted: CoreType.PlanetDat
 	const planetValueDisplayValues: PlanetValueCardDisplayValues[] = [];
 
 	// Only the planet values flagged for the top bar are shown; the rest are still tracked, just not here.
-	for (const [planetValueType, planetValueInfo] of GameType.PLANET_VALUE_INFOS)
+	for (const [planetValueType, planetValueInfo] of StaticData.PLANET_VALUE_INFOS)
 	{
 		if (planetValueInfo.showInTopBar === false)
 		{

@@ -1,11 +1,13 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 export function computeProductionRatePerHour(buildingType: number, currentLevel: number, serverData: CoreType.ServerData | null): Map<number, number> | null
 {
     try
     {
-        const buildingStats: GameType.BuildingStats | undefined = GameType.BUILDING_STATS.get(buildingType);
+        const buildingStats: GameType.BuildingStats | undefined = StaticDataHelper.getBuildingStats(buildingType);
         if (buildingStats === undefined)
         {
             throw new Error(`⚠️: Building type ${buildingType} has no building stats.`); 

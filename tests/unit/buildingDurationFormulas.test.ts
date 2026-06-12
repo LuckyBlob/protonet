@@ -17,7 +17,7 @@ describe('computeUpgradeDurationSeconds', () =>
     {
         // cost: resource1=60+resource2=15=75 total; robotics=0 → 75/(2500*1)*3600=108s
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const result: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 1, null);
+        const result: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerData, 1, null);
         expect(result).toBe(108);
     });
 
@@ -32,14 +32,14 @@ describe('computeUpgradeDurationSeconds', () =>
                 {
                     dynamicPlanetData:
                     {
-                        buildingLevels: new Map([[GameType.BUILDING_ROBOTIC_FACTORY, 1]]),
+                        buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 1]]),
                     },
                 }),
             ],
         });
 
-        const durationWithout: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerDataNoRobotics, 1, null);
-        const durationWith: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerDataWithRobotics, 1, null);
+        const durationWithout: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerDataNoRobotics, 1, null);
+        const durationWith: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerDataWithRobotics, 1, null);
 
         expect(durationWithout).not.toBeNull();
         expect(durationWith).not.toBeNull();
@@ -53,8 +53,8 @@ describe('computeUpgradeDurationSeconds', () =>
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData(2);
 
-        const base: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 1, null);
-        const accelerated: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 1, serverData);
+        const base: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerData, 1, null);
+        const accelerated: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerData, 1, serverData);
 
         expect(base).not.toBeNull();
         expect(accelerated).not.toBeNull();
@@ -65,8 +65,8 @@ describe('computeUpgradeDurationSeconds', () =>
     it('duration increases for higher upgrade levels (higher cost)', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const durationLevel0: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 1, null);
-        const durationLevel5: number | null = BuildingDuration.computeUpgradeDurationSeconds(5, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 1, null);
+        const durationLevel0: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerData, 1, null);
+        const durationLevel5: number | null = BuildingDuration.computeUpgradeDurationSeconds(5, GameType.BuildingType.MetalMine, playerData, 1, null);
 
         expect(durationLevel0).not.toBeNull();
         expect(durationLevel5).not.toBeNull();
@@ -77,8 +77,8 @@ describe('computeUpgradeDurationSeconds', () =>
     {
         // planetId 999 does not exist → falls back to robotics=0, same as no-robotics case
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const resultUnknownPlanet: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 999, null);
-        const resultKnownPlanet: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BUILDING_RESOURCE_PRODUCTION_1, playerData, 1, null);
+        const resultUnknownPlanet: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerData, 999, null);
+        const resultKnownPlanet: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerData, 1, null);
 
         expect(resultUnknownPlanet).toBe(resultKnownPlanet);
     });

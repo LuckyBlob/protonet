@@ -20,12 +20,14 @@ import * as ServerDynamicData from "@/lib/gameplay/dynamicData/serverDynamicData
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMovementDurationFormulas";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as ShipConstructionData from "@/lib/gameplay/dynamicData/planet/shipConstructionData";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as MathHelp from "@/lib/helper/mathHelp";
 import * as ServerPlanetManagement from "@/lib/gameplay/progressUpdate/server/serverPlanetManagement";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 //#region Types
 
 type PlayerActionResult =
@@ -589,8 +591,8 @@ function createPlayer(userId: number): void
         const firstPlanetId: number = ServerPlanetManagement.claimPlanet(null, playerRow.id, now);
         const secondPlanetId: number = ServerPlanetManagement.claimPlanet(null, playerRow.id, now + 1);
 
-        ServerDynamicData.serverUpdateAllPlanetData(firstPlanetId, playerRow.id, GameType.STARTING_PLANET_DATA);
-        ServerDynamicData.serverUpdateAllPlanetData(secondPlanetId, playerRow.id, GameType.STARTING_PLANET_DATA);
+        ServerDynamicData.serverUpdateAllPlanetData(firstPlanetId, playerRow.id, StaticData.STARTING_PLANET_DATA);
+        ServerDynamicData.serverUpdateAllPlanetData(secondPlanetId, playerRow.id, StaticData.STARTING_PLANET_DATA);
 
         const serverData: CoreType.ServerData = ServerType.getServerData();
         ServerProgress.applyPlayerUpdate(playerRow.id, serverData, now + 1);
@@ -1077,7 +1079,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     }
 
     const targetPlanetData: CoreType.PlanetData | null = getPlanetDataByCoords(requestData.targetPlanetGalaxy, requestData.targetPlanetSystem, requestData.targetPlanetPosition);
-    if (targetPlanetData === null && requestData.fleetAction !== GameType.FLEET_ACTION_COLONIZE)
+    if (targetPlanetData === null && requestData.fleetAction !== GameType.FleetActionType.Colonize)
     {
         return { success: false, failureReason: "Target planet is invalid.", playerStateResult: playerData };
     }
@@ -1109,7 +1111,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         slot: requestData.targetPlanetPosition,
     }
 
-    const isSamePlanet: boolean = GameType.isSameAddress(originAddress, targetAddress);
+    const isSamePlanet: boolean = StaticDataHelper.isSameAddress(originAddress, targetAddress);
     if (isSamePlanet === true)
     {
         return { success: false, failureReason: `Fleet action must have a different target than origin planet.`, playerStateResult: playerData };

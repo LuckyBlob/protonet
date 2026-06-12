@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as ColonizeAction from '@/lib/gameplay/dynamicData/planet/fleet/colonizeAction';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
+import * as StaticData from '@/lib/gameplay/coreData/static/staticData';
 import * as MessageData from '@/lib/gameplay/dynamicData/player/messageData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
@@ -14,7 +15,7 @@ describe('resolveColonizeAction — too many planets', () =>
     function buildPlayerAtPlanetCap(): CoreType.PlayerData
     {
         const planets: CoreType.PlanetData[] = [];
-        for (let i: number = 0; i < GameType.MAX_ALLOWED_PLANETS; i++)
+        for (let i: number = 0; i < StaticData.MAX_ALLOWED_PLANETS; i++)
         {
             planets.push(TestDataBuilders.buildPlanetData({ planetRow: { id: i + 1 } }));
         }
@@ -32,11 +33,11 @@ describe('resolveColonizeAction — too many planets', () =>
                 planet_origin_id: 1,
                 player_target_id: null,
                 planet_target_id: null,
-                fleet_action_type: GameType.FLEET_ACTION_COLONIZE,
+                fleet_action_type: GameType.FleetActionType.Colonize,
                 started_at: 1_000_000,
                 duration_at_start_time: 60_000,
             },
-            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 99, ship_type: GameType.COLONY_SHIP, ship_quantity: 1 })],
+            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 99, ship_type: GameType.ShipType.ColonyShip, ship_quantity: 1 })],
         });
     }
 
@@ -78,11 +79,11 @@ describe('resolveColonizeAction — too many planets', () =>
             fleetMovementRow:
             {
                 planet_origin_id: 999,
-                fleet_action_type: GameType.FLEET_ACTION_COLONIZE,
+                fleet_action_type: GameType.FleetActionType.Colonize,
                 started_at: 1_000_000,
                 duration_at_start_time: 60_000,
             },
-            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.COLONY_SHIP, ship_quantity: 1 })],
+            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.ShipType.ColonyShip, ship_quantity: 1 })],
         });
         const player: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
 

@@ -1,0 +1,64 @@
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as DBType from "@/lib/db/dbTypes";
+
+export function getBuildingStats(buildingType: number): GameType.BuildingStats | undefined
+{
+    return StaticData.BUILDING_STATS.get(buildingType as GameType.BuildingType);
+}
+
+export function getShipStats(shipType: number): GameType.ShipStats | undefined
+{
+    return StaticData.SHIP_STATS.get(shipType as GameType.ShipType);
+}
+
+export function rollSizeForSlot(slot: number): number
+{
+	const range: GameType.SlotSizeRange = StaticData.SLOT_SIZE_RANGES[slot - 1];
+	const span: number = range.max - range.min;
+	const rolledSize: number = range.min + Math.floor(Math.random() * (span + 1));
+	return rolledSize;
+}
+
+export function getDistance(origin: GameType.PlanetAddress, target: GameType.PlanetAddress): number
+{
+    const galaxyDifference: number = Math.abs(origin.galaxy - target.galaxy);
+    if (galaxyDifference !== 0)
+    {
+        return galaxyDifference * StaticData.GALAXY_DISTANCE;
+    }
+
+    const systemDifference: number = Math.abs(origin.system - target.system);
+    if (systemDifference !== 0)
+    {
+        return StaticData.SYSTEM_DISTANCE + systemDifference * StaticData.SYSTEM_DISTANCE_FACTOR;
+    }
+
+    const slotDifference: number = Math.abs(origin.slot - target.slot);
+    if (slotDifference !== 0)
+    {
+        return StaticData.SLOT_DISTANCE + slotDifference * StaticData.SLOT_DISTANCE_FACTOR;
+    }
+
+    return 0;
+}
+
+export function isSameAddress(origin: GameType.PlanetAddress, target: GameType.PlanetAddress): boolean
+{
+    return (origin.galaxy === target.galaxy) && (origin.system === target.system) && (origin.slot === target.slot)
+}
+
+export function formatPlanetAddress(galaxy: number, system: number, slot: number): string
+{
+    return `[${galaxy}:${system}:${slot}]`;
+}
+
+export function getPlayerName(publicPlayerRows: DBType.PublicPlayerRow[], playerId: number | null): string
+{
+    if (playerId === null)
+    {
+        return "Unknown";
+    }
+    const matchingRow: DBType.PublicPlayerRow | undefined = publicPlayerRows.find((row: DBType.PublicPlayerRow): boolean => row.id === playerId);
+    return matchingRow?.username ?? "Unknown";
+}

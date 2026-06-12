@@ -12,6 +12,7 @@ import { join } from "path";
 
 import * as E2EHelper from "@/tests/helpers/e2eHelpers";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 const TEST_DB_PATH: string = join(tmpdir(), "protonet-e2e-test.db");
 const PASSWORD: string = "111111";
@@ -69,7 +70,7 @@ test.describe("Energy", () =>
 
         // Iron Mine level 1 consumes 11 energy with no Solar Plant to offset it → ratio 0, so EVERY
         // resource (iron and the base crystal alike) is multiplied by 0.
-        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BUILDING_RESOURCE_PRODUCTION_1, 1, db);
+        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.MetalMine, 1, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 0, 11);
@@ -84,8 +85,8 @@ test.describe("Energy", () =>
         await E2EHelper.register(page, username, PASSWORD);
 
         // Solar Plant level 1 produces 22 energy, Iron Mine level 1 consumes 11 → ratio 2 → full output.
-        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BUILDING_RESOURCE_PRODUCTION_1, 1, db);
-        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 1, db);
+        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.MetalMine, 1, db);
+        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.SolarPlant, 1, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 22, 11);
@@ -101,8 +102,8 @@ test.describe("Energy", () =>
 
         // Iron Mine level 2 consumes 24.2, Solar Plant level 1 produces 22 → ratio ~0.91. Production is
         // scaled by 0.91, NOT floored to 0 (the regression this guards): iron 72 → 65, crystal 15 → 13.
-        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BUILDING_RESOURCE_PRODUCTION_1, 2, db);
-        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 1, db);
+        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.MetalMine, 2, db);
+        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.SolarPlant, 1, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 22, 24);
@@ -120,8 +121,8 @@ test.describe("Energy", () =>
         // Solar Plant level 1 (+22) against a Deuterium Synthesizer level 2 (-48.4) gives X = 22/48.4 =
         // 0.4545 (the card floors consumption to 48). Every resource is produced at floor(base x 0.4545):
         // iron 30 -> 13, crystal 15 -> 6, deuterium 24 -> 10.
-        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 1, db);
-        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BUILDING_RESOURCE_PRODUCTION_3, 2, db);
+        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.SolarPlant, 1, db);
+        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.DeuteriumSynthesizer, 2, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 22, 48);
@@ -138,8 +139,8 @@ test.describe("Energy", () =>
 
         // Solar Plant level 3 (~79 energy) dwarfs the Iron Mine level 1 demand (11) → ratio ~7, but
         // min(ratio, 1) caps the multiplier at 1: iron holds its full level-1 rate of 33/h, no higher.
-        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BUILDING_RESOURCE_PRODUCTION_1, 1, db);
-        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 3, db);
+        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.MetalMine, 1, db);
+        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.SolarPlant, 3, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 79, 11);
@@ -154,9 +155,9 @@ test.describe("Energy", () =>
 
         // Iron Mine L1 (-11) + Crystal Mine L1 (-11) = -22 against Solar Plant L1 (+22) → ratio exactly 1
         // → white and full output. Guards consumption aggregation across multiple buildings.
-        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BUILDING_RESOURCE_PRODUCTION_1, 1, db);
-        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BUILDING_RESOURCE_PRODUCTION_2, 1, db);
-        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 1, db);
+        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.MetalMine, 1, db);
+        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.CrystalGrower, 1, db);
+        E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.SolarPlant, 1, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 22, 22);

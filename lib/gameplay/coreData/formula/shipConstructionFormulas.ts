@@ -1,5 +1,7 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 type SimpleShipConstructionDurationData =
 {
@@ -13,7 +15,7 @@ const SHIP_CONSTRUCTION_GENERIC_DATA: SimpleShipConstructionDurationData =
 
 export function computeConstructionDurationSeconds(shipType: number, currentShipyardLevel: number, serverData: CoreType.ServerData | null): number | null
 {
-    const shipStats: GameType.ShipStats | undefined = GameType.SHIP_STATS.get(shipType);
+    const shipStats: GameType.ShipStats | undefined = StaticDataHelper.getShipStats(shipType);
     if (shipStats === undefined)
     {
         return null;

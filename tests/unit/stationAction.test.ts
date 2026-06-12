@@ -23,7 +23,7 @@ function buildFleetMovement(overrides?: Parameters<typeof TestDataBuilders.build
             planet_origin_id: ORIGIN_PLANET_ID,
             player_target_id: TARGET_PLAYER_ID,
             planet_target_id: TARGET_PLANET_ID,
-            fleet_action_type: GameType.FLEET_ACTION_STATION,
+            fleet_action_type: GameType.FleetActionType.Station,
             started_at: 1_000_000,
             duration_at_start_time: 30_000,
             ...(overrides?.fleetMovementRow ?? {}),
@@ -57,14 +57,14 @@ describe('resolveStationAction', () =>
 
         StationAction.resolveStationAction(originPlayer, targetPlayer, fleet, TestDataBuilders.buildServerData());
 
-        expect(ShipData.getShipQuantity(targetPlanet, GameType.SMALL_TRANSPORT)).toBe(2);
+        expect(ShipData.getShipQuantity(targetPlanet, GameType.ShipType.SmallTransport)).toBe(2);
     });
 
     it('adds resources to the target planet', () =>
     {
         const fleet: CoreType.FleetMovement = buildFleetMovement(
         {
-            fleetMovementResourceRows: [TestDataBuilders.buildFleetMovementResourceRow({ resource_type: GameType.RESOURCE_1, resource_quantity: 750 })],
+            fleetMovementResourceRows: [TestDataBuilders.buildFleetMovementResourceRow({ resource_type: GameType.ResourceType.Metal, resource_quantity: 750 })],
         });
         const originFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
         const originPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
@@ -81,10 +81,10 @@ describe('resolveStationAction', () =>
         const originPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: ORIGIN_PLAYER_ID }, planetDatas: [originPlanet] });
         const targetPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: TARGET_PLAYER_ID }, planetDatas: [targetPlanet] });
 
-        const initialResource1: number = ResourceData.getResourceQuantity(targetPlanet, GameType.RESOURCE_1);
+        const initialResource1: number = ResourceData.getResourceQuantity(targetPlanet, GameType.ResourceType.Metal);
         StationAction.resolveStationAction(originPlayer, targetPlayer, fleet, TestDataBuilders.buildServerData());
 
-        expect(ResourceData.getResourceQuantity(targetPlanet, GameType.RESOURCE_1)).toBe(initialResource1 + 750);
+        expect(ResourceData.getResourceQuantity(targetPlanet, GameType.ResourceType.Metal)).toBe(initialResource1 + 750);
     });
 
     it('marks the fleet Resolved and removes from both planets when origin is known', () =>

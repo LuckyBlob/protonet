@@ -25,7 +25,7 @@ describe('building upgrade queue — single-upgrade invariant', () =>
 {
     it('removes the upgrade after resolution, leaving the queue empty', () =>
     {
-        const upgrade: CoreType.BuildingUpgrade = buildUpgrade(1, 1, GameType.BUILDING_RESOURCE_PRODUCTION_1, BASE_TIME, 30_000);
+        const upgrade: CoreType.BuildingUpgrade = buildUpgrade(1, 1, GameType.BuildingType.MetalMine, BASE_TIME, 30_000);
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
             planetRow: { last_updated: BASE_TIME },
@@ -38,15 +38,15 @@ describe('building upgrade queue — single-upgrade invariant', () =>
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, after, APPLIER);
 
         expect(result.planetDatas[0]!.dynamicPlanetData.buildingUpgrades).toHaveLength(0);
-        expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BUILDING_RESOURCE_PRODUCTION_1)).toBe(1);
+        expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BuildingType.MetalMine)).toBe(1);
     });
 
     it('throws when two upgrades are queued on the same planet (state is illegal)', () =>
     {
         // The resolveAnchorEvent for building upgrades throws UNREACHABLE if there's still
         // a queued upgrade after the head is removed. This pins that invariant.
-        const upgradeA: CoreType.BuildingUpgrade = buildUpgrade(1, 1, GameType.BUILDING_RESOURCE_PRODUCTION_1, BASE_TIME, 30_000);
-        const upgradeB: CoreType.BuildingUpgrade = buildUpgrade(2, 1, GameType.BUILDING_RESOURCE_PRODUCTION_2, BASE_TIME + 5_000, 30_000);
+        const upgradeA: CoreType.BuildingUpgrade = buildUpgrade(1, 1, GameType.BuildingType.MetalMine, BASE_TIME, 30_000);
+        const upgradeB: CoreType.BuildingUpgrade = buildUpgrade(2, 1, GameType.BuildingType.CrystalGrower, BASE_TIME + 5_000, 30_000);
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
@@ -84,6 +84,6 @@ describe('building upgrade queue — single-upgrade invariant', () =>
 
         // Still queued, never resolved
         expect(result.planetDatas[0]!.dynamicPlanetData.buildingUpgrades).toHaveLength(1);
-        expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BUILDING_RESOURCE_PRODUCTION_1)).toBe(0);
+        expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BuildingType.MetalMine)).toBe(0);
     });
 });

@@ -8,7 +8,7 @@ type RequirementMap = Map<ThingType.Thing, ReadonlyMap<ThingType.SpecificThing, 
 export const REQUIREMENT_MAP: RequirementMap = new Map
 ([
     [ThingType.Thing.BuildingUpgrade, new Map<ThingType.SpecificThing, RequirementType.Requirement[]>([
-        [GameType.BUILDING_RESOURCE_PRODUCTION_1, [{
+        [GameType.BuildingType.MetalMine, [{
             hideDataWhenRequirementFailed: false,
             thingRequirement:
             {
@@ -18,7 +18,7 @@ export const REQUIREMENT_MAP: RequirementMap = new Map
                 valueGetter: RequirementValueGetters.isAnyBuildingUpgradeInProgress(),
             },
         }]],
-        [GameType.BUILDING_RESOURCE_PRODUCTION_2, [{
+        [GameType.BuildingType.CrystalGrower, [{
             hideDataWhenRequirementFailed: false,
             thingRequirement:
             {
@@ -28,7 +28,7 @@ export const REQUIREMENT_MAP: RequirementMap = new Map
                 valueGetter: RequirementValueGetters.isAnyBuildingUpgradeInProgress(),
             },
         }]],
-/*3*/   [GameType.BUILDING_SHIPYARD, [
+/*3*/   [GameType.BuildingType.Shipyard, [
             {
                 hideDataWhenRequirementFailed: false,
                 thingRequirement:
@@ -44,14 +44,14 @@ export const REQUIREMENT_MAP: RequirementMap = new Map
                 specificThingRequirement:
                 {
                     thingType: ThingType.Thing.Building,
-                    specificThingType: GameType.BUILDING_ROBOTIC_FACTORY,
+                    specificThingType: GameType.BuildingType.RoboticFactory,
                     operator: RequirementType.RequirementOperator.GreaterOrEqual,
                     value: 2,
-                    valueGetter: RequirementValueGetters.buildingLevel(GameType.BUILDING_ROBOTIC_FACTORY),
+                    valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.RoboticFactory),
                 },
             },
         ]],
-/*4*/   [GameType.BUILDING_ROBOTIC_FACTORY, [{
+/*4*/   [GameType.BuildingType.RoboticFactory, [{
             hideDataWhenRequirementFailed: false,
             thingRequirement:
             {
@@ -61,7 +61,7 @@ export const REQUIREMENT_MAP: RequirementMap = new Map
                 valueGetter: RequirementValueGetters.isAnyBuildingUpgradeInProgress(),
             },
         }]],
-/*5*/   [GameType.BUILDING_RESOURCE_PRODUCTION_3, [{
+/*5*/   [GameType.BuildingType.DeuteriumSynthesizer, [{
             hideDataWhenRequirementFailed: false,
             thingRequirement:
             {
@@ -73,16 +73,16 @@ export const REQUIREMENT_MAP: RequirementMap = new Map
         }]],
     ])],
     [ThingType.Thing.ShipConstruction, new Map<ThingType.SpecificThing, RequirementType.Requirement[]>([
-        [GameType.SMALL_TRANSPORT, [
+        [GameType.ShipType.SmallTransport, [
             {
                 hideDataWhenRequirementFailed: true,
                 specificThingRequirement:
                 {
                     thingType: ThingType.Thing.Building,
-                    specificThingType: GameType.BUILDING_SHIPYARD,
+                    specificThingType: GameType.BuildingType.Shipyard,
                     operator: RequirementType.RequirementOperator.GreaterOrEqual,
                     value: 2,
-                    valueGetter: RequirementValueGetters.buildingLevel(GameType.BUILDING_SHIPYARD),
+                    valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),
                 },
             },
             {
@@ -90,23 +90,23 @@ export const REQUIREMENT_MAP: RequirementMap = new Map
                 specificThingRequirement:
                 {
                     thingType: ThingType.Thing.BuildingUpgrade,
-                    specificThingType: GameType.BUILDING_SHIPYARD,
+                    specificThingType: GameType.BuildingType.Shipyard,
                     operator: RequirementType.RequirementOperator.Equal,
                     value: false,
-                    valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BUILDING_SHIPYARD),
+                    valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.Shipyard),
                 },
             },
         ]],
-        [GameType.LARGE_TRANSPORT, [
+        [GameType.ShipType.LargeTransport, [
             {
                 hideDataWhenRequirementFailed: true,
                 specificThingRequirement:
                 {
                     thingType: ThingType.Thing.Building,
-                    specificThingType: GameType.BUILDING_SHIPYARD,
+                    specificThingType: GameType.BuildingType.Shipyard,
                     operator: RequirementType.RequirementOperator.GreaterOrEqual,
                     value: 6,
-                    valueGetter: RequirementValueGetters.buildingLevel(GameType.BUILDING_SHIPYARD),
+                    valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),
                 },
             },
             {
@@ -114,23 +114,23 @@ export const REQUIREMENT_MAP: RequirementMap = new Map
                 specificThingRequirement:
                 {
                     thingType: ThingType.Thing.BuildingUpgrade,
-                    specificThingType: GameType.BUILDING_SHIPYARD,
+                    specificThingType: GameType.BuildingType.Shipyard,
                     operator: RequirementType.RequirementOperator.Equal,
                     value: false,
-                    valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BUILDING_SHIPYARD),
+                    valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.Shipyard),
                 },
             },
         ]],
-        [GameType.COLONY_SHIP, [
+        [GameType.ShipType.ColonyShip, [
             {
                 hideDataWhenRequirementFailed: true,
                 specificThingRequirement:
                 {
                     thingType: ThingType.Thing.Building,
-                    specificThingType: GameType.BUILDING_SHIPYARD,
+                    specificThingType: GameType.BuildingType.Shipyard,
                     operator: RequirementType.RequirementOperator.GreaterOrEqual,
                     value: 4,
-                    valueGetter: RequirementValueGetters.buildingLevel(GameType.BUILDING_SHIPYARD),
+                    valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),
                 },
             },
         ]],

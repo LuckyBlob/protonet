@@ -1,6 +1,7 @@
 // This should be server only!
 
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
@@ -10,6 +11,7 @@ import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 import * as DB from "@/lib/db/db";
 import * as ServerPlanetManagement from "@/lib/gameplay/progressUpdate/server/serverPlanetManagement";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): CoreType.PlayerData | null
 {
@@ -25,7 +27,7 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | nu
     }
 
     // Too many planets
-    if (originPlayerData.planetDatas.length >= GameType.MAX_ALLOWED_PLANETS)
+    if (originPlayerData.planetDatas.length >= StaticData.MAX_ALLOWED_PLANETS)
     {
         FleetData.setFleetReturnTrip(null, fleetMovement);
         fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
@@ -87,7 +89,7 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | nu
 function addColonizeActionMessages(fleetMovement: CoreType.FleetMovement): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const targetAddress: string = GameType.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
     const shipsList: string = FleetData.buildShipsListFromFleetMovement(fleetMovement.fleetMovementShipRows);
     const resourcesList: string = FleetData.buildResourcesListFromFleetMovement(fleetMovement.fleetMovementResourceRows);
@@ -108,7 +110,7 @@ function removeSingleColonyShipFromFleetMovement(fleetMovement: CoreType.FleetMo
 {
     for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)
     {
-        if (fleetMovementShipRow.ship_type === GameType.COLONY_SHIP)
+        if (fleetMovementShipRow.ship_type === GameType.ShipType.ColonyShip)
         {
             if (fleetMovementShipRow.ship_quantity > 0)
             {
@@ -122,7 +124,7 @@ function removeSingleColonyShipFromFleetMovement(fleetMovement: CoreType.FleetMo
 function addTooManyPlanetsFailureMessage(fleetMovement: CoreType.FleetMovement): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const targetAddress: string = GameType.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
 
     fleetMovement.originMessageRow =
@@ -149,7 +151,7 @@ function addressIsTaken(address: GameType.PlanetAddress): boolean
 function addColonizeFailedTargetTakenMessage(fleetMovement: CoreType.FleetMovement): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const targetAddress: string = GameType.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
 
     fleetMovement.originMessageRow =

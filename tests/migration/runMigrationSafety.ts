@@ -134,8 +134,8 @@ const SYNTHETIC_PLAYER_COHORTS: Cohort[] = ["before-end", "after-end", "before-e
 const SYNTHETIC_PLANETS_PER_PLAYER: number = 3;
 const SYNTHETIC_ACTIONS_PER_PLANET: number = 6;
 const SYNTHETIC_GALAXY: number = 999999;
-const BUILDING_TYPES: number[] = [GameType.BUILDING_RESOURCE_PRODUCTION_1, GameType.BUILDING_RESOURCE_PRODUCTION_2, GameType.BUILDING_SHIPYARD, GameType.BUILDING_ROBOTIC_FACTORY, GameType.BUILDING_RESOURCE_PRODUCTION_3];
-const RESOURCE_TYPES: number[] = [GameType.RESOURCE_1, GameType.RESOURCE_2, GameType.RESOURCE_3];
+const BUILDING_TYPES: number[] = [GameType.BuildingType.MetalMine, GameType.BuildingType.CrystalGrower, GameType.BuildingType.Shipyard, GameType.BuildingType.RoboticFactory, GameType.BuildingType.DeuteriumSynthesizer];
+const RESOURCE_TYPES: number[] = [GameType.ResourceType.Metal, GameType.ResourceType.Crystal, GameType.ResourceType.Deuterium];
 
 // The `started_at` of the first (active) action in each queue. For "after-end" it sits far enough in the
 // past that the active action — and several queued behind it — have all completed.
@@ -219,7 +219,7 @@ function injectSyntheticPlanet(databaseConnection: Database.Database, playerId: 
 
     databaseConnection.prepare(
         "INSERT INTO planet_ship (planet_id, player_id, ship_type, ship_quantity) VALUES (?, ?, ?, 5)"
-    ).run(planetId, playerId, GameType.SMALL_TRANSPORT);
+    ).run(planetId, playerId, GameType.ShipType.SmallTransport);
 
     injectBuildingUpgrade(databaseConnection, planetId, playerId, cohort, now);
     injectShipConstructionQueue(databaseConnection, planetId, playerId, cohort, now);
@@ -240,7 +240,7 @@ function injectBuildingUpgrade(databaseConnection: Database.Database, planetId: 
 
     const buildingInsert: { id: number } = databaseConnection.prepare(
         "INSERT INTO building_upgrade_building (building_upgrade_id, building_type) VALUES (?, ?) RETURNING id"
-    ).get(upgradeInsert.id, GameType.BUILDING_RESOURCE_PRODUCTION_1) as { id: number };
+    ).get(upgradeInsert.id, GameType.BuildingType.MetalMine) as { id: number };
 
     databaseConnection.prepare(
         "UPDATE building_upgrade SET current_building_upgrade_building_row_id = ? WHERE id = ?"
@@ -266,7 +266,7 @@ function injectShipConstructionQueue(databaseConnection: Database.Database, plan
         const durationAtStart: number | null = isStarted ? startedActionDurationMs(cohort) : null;
 
         const constructionInsert: { id: number } = insertConstruction.get(planetId, playerId, now - ONE_DAY_MS, ONE_DAY_MS, durationAtStart, startedAt) as { id: number };
-        const shipInsert: { id: number } = insertShip.get(constructionInsert.id, GameType.SMALL_TRANSPORT) as { id: number };
+        const shipInsert: { id: number } = insertShip.get(constructionInsert.id, GameType.ShipType.SmallTransport) as { id: number };
         updateCurrent.run(shipInsert.id, constructionInsert.id);
     }
 }
@@ -286,7 +286,7 @@ function injectFleetMovements(databaseConnection: Database.Database, planetId: n
     for (let actionIndex: number = 0; actionIndex < SYNTHETIC_ACTIONS_PER_PLANET; actionIndex = actionIndex + 1)
     {
         const fleetInsert: { id: number } = insertFleet.get(12345 + actionIndex, playerId, planetId, slot, system, SYNTHETIC_GALAXY, slot + 1, system, SYNTHETIC_GALAXY, now, FAR_FUTURE_MS, FAR_FUTURE_MS, now) as { id: number };
-        insertFleetShip.run(fleetInsert.id, GameType.SMALL_TRANSPORT);
+        insertFleetShip.run(fleetInsert.id, GameType.ShipType.SmallTransport);
     }
 }
 

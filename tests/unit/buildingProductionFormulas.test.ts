@@ -14,93 +14,93 @@ describe('computeProductionRatePerHour', () =>
 
     it('returns null for Shipyard which has no production stats', () =>
     {
-        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_SHIPYARD, 5, null);
+        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.Shipyard, 5, null);
         expect(result).toBeNull();
     });
 
     it('returns null for Robotics Factory which has no production stats', () =>
     {
-        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_ROBOTIC_FACTORY, 5, null);
+        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.RoboticFactory, 5, null);
         expect(result).toBeNull();
     });
 
     it('uses minProduction floor at level 0 for Iron Mine', () =>
     {
         // formula: max(30, 30*0*1.1^0) = max(30, 0) = 30
-        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_1, 0, null);
+        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.MetalMine, 0, null);
         expect(result).not.toBeNull();
-        expect(result!.get(GameType.RESOURCE_1)).toBe(30);
+        expect(result!.get(GameType.ResourceType.Metal)).toBe(30);
     });
 
     it('computes production above the floor at level 1 for Iron Mine', () =>
     {
         // formula: max(30, 30*1*1.1^1) = max(30, 33) = 33
-        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_1, 1, null);
+        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.MetalMine, 1, null);
         expect(result).not.toBeNull();
-        expect(result!.get(GameType.RESOURCE_1)).toBe(33);
+        expect(result!.get(GameType.ResourceType.Metal)).toBe(33);
     });
 
     it('production grows with level', () =>
     {
-        const level1: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_1, 1, null);
-        const level5: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_1, 5, null);
+        const level1: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.MetalMine, 1, null);
+        const level5: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.MetalMine, 5, null);
         expect(level1).not.toBeNull();
         expect(level5).not.toBeNull();
-        const rate1: number = level1!.get(GameType.RESOURCE_1) ?? 0;
-        const rate5: number = level5!.get(GameType.RESOURCE_1) ?? 0;
+        const rate1: number = level1!.get(GameType.ResourceType.Metal) ?? 0;
+        const rate5: number = level5!.get(GameType.ResourceType.Metal) ?? 0;
         expect(rate5).toBeGreaterThan(rate1);
     });
 
     it('Crystal Mine produces only RESOURCE_2', () =>
     {
-        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_2, 1, null);
+        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.CrystalGrower, 1, null);
         expect(result).not.toBeNull();
-        expect(result!.has(GameType.RESOURCE_1)).toBe(false);
-        expect(result!.get(GameType.RESOURCE_2)).toBeGreaterThan(0);
+        expect(result!.has(GameType.ResourceType.Metal)).toBe(false);
+        expect(result!.get(GameType.ResourceType.Crystal)).toBeGreaterThan(0);
     });
 
     it('applies time_multiplier from serverData', () =>
     {
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData(2);
-        const base: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_1, 1, null);
-        const accelerated: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_1, 1, serverData);
+        const base: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.MetalMine, 1, null);
+        const accelerated: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.MetalMine, 1, serverData);
         expect(base).not.toBeNull();
         expect(accelerated).not.toBeNull();
-        const baseRate: number = base!.get(GameType.RESOURCE_1)!;
-        const acceleratedRate: number = accelerated!.get(GameType.RESOURCE_1)!;
+        const baseRate: number = base!.get(GameType.ResourceType.Metal)!;
+        const acceleratedRate: number = accelerated!.get(GameType.ResourceType.Metal)!;
         expect(acceleratedRate).toBe(baseRate * 2);
     });
 
     it('uses Crystal Mine minProduction floor at level 0', () =>
     {
         // baseProduction = max(15, 20*0*1.1^0) = max(15, 0) = 15
-        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_2, 0, null);
+        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.CrystalGrower, 0, null);
         expect(result).not.toBeNull();
-        expect(result!.get(GameType.RESOURCE_2)).toBe(15);
+        expect(result!.get(GameType.ResourceType.Crystal)).toBe(15);
     });
 
     it('Deuterium Synthesizer produces 0 at level 0 (minProductionPerHour: 0)', () =>
     {
         // max(0, 10*0*1.1^0) = 0
-        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_3, 0, null);
+        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.DeuteriumSynthesizer, 0, null);
         expect(result).not.toBeNull();
-        expect(result!.get(GameType.RESOURCE_3)).toBe(0);
+        expect(result!.get(GameType.ResourceType.Deuterium)).toBe(0);
     });
 
     it('Deuterium Synthesizer at level 1 produces RESOURCE_3 only', () =>
     {
-        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_3, 1, null);
+        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.DeuteriumSynthesizer, 1, null);
         expect(result).not.toBeNull();
-        expect(result!.has(GameType.RESOURCE_1)).toBe(false);
-        expect(result!.has(GameType.RESOURCE_2)).toBe(false);
-        expect(result!.get(GameType.RESOURCE_3)).toBeGreaterThan(0);
+        expect(result!.has(GameType.ResourceType.Metal)).toBe(false);
+        expect(result!.has(GameType.ResourceType.Crystal)).toBe(false);
+        expect(result!.get(GameType.ResourceType.Deuterium)).toBeGreaterThan(0);
     });
 
     it('returns a finite, non-negative production rate at very high levels (no overflow)', () =>
     {
-        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BUILDING_RESOURCE_PRODUCTION_1, 30, null);
+        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.MetalMine, 30, null);
         expect(result).not.toBeNull();
-        const rate: number = result!.get(GameType.RESOURCE_1) ?? 0;
+        const rate: number = result!.get(GameType.ResourceType.Metal) ?? 0;
         expect(Number.isFinite(rate)).toBe(true);
         expect(rate).toBeGreaterThan(0);
     });

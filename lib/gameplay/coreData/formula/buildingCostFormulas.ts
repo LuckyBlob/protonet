@@ -1,8 +1,10 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 export function computeBuildingUpgradeCost(currentUpgradeLevel: number, buildingType: number): Map<number, number> | null
 {
-	const buildingStats: GameType.BuildingStats | undefined = GameType.BUILDING_STATS.get(buildingType);
+	const buildingStats: GameType.BuildingStats | undefined = StaticDataHelper.getBuildingStats(buildingType);
 	if (buildingStats === undefined)
 	{
 		console.error("⚠️:", `Building type ${buildingType} has no calculatable cost.`); 

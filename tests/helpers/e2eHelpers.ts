@@ -6,6 +6,8 @@ import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 export const PLANET_BUTTON_PATTERN: RegExp = /^Planet \[/;
 
@@ -122,12 +124,12 @@ export async function registerExpectingNoRoom(page: Page, username: string, pass
 // auto-adjusts if the universe grows/shrinks or the starting-slot band changes.
 export function countFreeStartingSlots(db: Database.Database): number
 {
-    const startingSlotsPerSystem: number = GameType.MAX_SLOT_STARTING_PLANET - GameType.MIN_SLOT_STARTING_PLANET + 1;
-    const totalStartingSlots: number = GameType.GALAXY_COUNT * GameType.SYSTEM_COUNT * startingSlotsPerSystem;
+    const startingSlotsPerSystem: number = StaticData.MAX_SLOT_STARTING_PLANET - StaticData.MIN_SLOT_STARTING_PLANET + 1;
+    const totalStartingSlots: number = StaticData.GALAXY_COUNT * StaticData.SYSTEM_COUNT * startingSlotsPerSystem;
 
     const occupiedRow: { occupied: number } = db.prepare(
         "SELECT COUNT(*) AS occupied FROM planet WHERE slot >= ? AND slot <= ?"
-    ).get(GameType.MIN_SLOT_STARTING_PLANET, GameType.MAX_SLOT_STARTING_PLANET) as { occupied: number };
+    ).get(StaticData.MIN_SLOT_STARTING_PLANET, StaticData.MAX_SLOT_STARTING_PLANET) as { occupied: number };
 
     return totalStartingSlots - occupiedRow.occupied;
 }
@@ -192,7 +194,7 @@ export function getPlanets(username: string, db: Database.Database): PlanetRow[]
 
 export function planetAddress(planet: PlanetRow): string
 {
-    return GameType.formatPlanetAddress(planet.galaxy, planet.system, planet.slot);
+    return StaticDataHelper.formatPlanetAddress(planet.galaxy, planet.system, planet.slot);
 }
 
 export function setResource(planetId: number, playerId: number, resourceType: number, quantity: number, db: Database.Database): void
@@ -523,7 +525,9 @@ export function fleetActionSelect(page: Page): Locator
     // Otherwise targets where only one action is valid (e.g. unowned address → only "Colonize")
     // would render a dropdown that doesn't contain "Station", and a "Station"-only filter
     // would never match it.
-    const actionNamesAlternation: string = Array.from(GameType.FLEET_ACTION_NAMES.values()).join("|");
+    const actionNames: string[] = Array.from(StaticData.FLEET_ACTION_INFOS.keys()).map(
+        (fleetActionType: GameType.FleetActionType): string => ThingType.getSpecificThingName(ThingType.fleetAction(fleetActionType)));
+    const actionNamesAlternation: string = actionNames.join("|");
     const actionNamePattern: RegExp = new RegExp(`^(${actionNamesAlternation})$`);
     return page.locator("select").filter({ has: page.getByRole("option", { name: actionNamePattern }) });
 }
@@ -584,9 +588,9 @@ export function fleetMovementRow(page: Page, origin: PlanetRow, target: PlanetRo
 // because colonize doesn't need an existing planet — only an unowned address.
 export function findFreeColonizeTargetAddress(db: Database.Database): PlanetRow
 {
-    for (let galaxy: number = 1; galaxy <= GameType.GALAXY_COUNT; galaxy++)
+    for (let galaxy: number = 1; galaxy <= StaticData.GALAXY_COUNT; galaxy++)
     {
-        for (let system: number = 1; system <= GameType.SYSTEM_COUNT; system++)
+        for (let system: number = 1; system <= StaticData.SYSTEM_COUNT; system++)
         {
             // Slot 5 is never used by registration (starts in 3-4) nor by colonize claims
             // (which also pick from 3-4), so probing it never races with another test's planet.
@@ -611,9 +615,9 @@ export function findFreeColonizeTargetAddress(db: Database.Database): PlanetRow
 export function insertSeededPlanetForPlayer(playerId: number, db: Database.Database): PlanetRow
 {
     const claimedAt: number = Date.now();
-    for (let galaxy: number = 1; galaxy <= GameType.GALAXY_COUNT; galaxy++)
+    for (let galaxy: number = 1; galaxy <= StaticData.GALAXY_COUNT; galaxy++)
     {
-        for (let system: number = 1; system <= GameType.SYSTEM_COUNT; system++)
+        for (let system: number = 1; system <= StaticData.SYSTEM_COUNT; system++)
         {
             const slot: number = 1;
             const existing: { id: number } | undefined = db.prepare(
@@ -623,7 +627,7 @@ export function insertSeededPlanetForPlayer(playerId: number, db: Database.Datab
             {
                 const result: { id: number } = db.prepare(
                     "INSERT INTO planet (slot, system, galaxy, size, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
-                ).get(slot, system, galaxy, GameType.STARTING_PLANET_SIZE, playerId, claimedAt, claimedAt) as { id: number };
+                ).get(slot, system, galaxy, StaticData.STARTING_PLANET_SIZE, playerId, claimedAt, claimedAt) as { id: number };
                 return { id: result.id, slot: slot, system: system, galaxy: galaxy };
             }
         }
@@ -639,7 +643,7 @@ export function insertPlanetAtAddressForPlayer(playerId: number, address: Planet
     const claimedAt: number = Date.now();
     const result: { id: number } = db.prepare(
         "INSERT INTO planet (slot, system, galaxy, size, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
-    ).get(address.slot, address.system, address.galaxy, GameType.STARTING_PLANET_SIZE, playerId, claimedAt, claimedAt) as { id: number };
+    ).get(address.slot, address.system, address.galaxy, StaticData.STARTING_PLANET_SIZE, playerId, claimedAt, claimedAt) as { id: number };
     return result.id;
 }
 

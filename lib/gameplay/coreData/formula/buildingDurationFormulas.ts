@@ -2,6 +2,8 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 const BASE_DIVIDER: number = 2500;
 
@@ -9,7 +11,7 @@ export function computeUpgradeDurationSeconds(currentUpgradeLevel: number, build
 {
     try
     {
-        const buildingStats: GameType.BuildingStats | undefined = GameType.BUILDING_STATS.get(buildingType);
+        const buildingStats: GameType.BuildingStats | undefined = StaticDataHelper.getBuildingStats(buildingType);
         if (buildingStats === undefined)
         {
             throw new Error(`⚠️: Building type ${buildingType} has no building stats.`); 
@@ -40,7 +42,7 @@ function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: numbe
     }
     
     const planetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, planetId);
-    const roboticFactoryLevel: number = planetData === null ? 0 : BuildingData.getBuildingLevel(planetData, GameType.BUILDING_ROBOTIC_FACTORY);
+    const roboticFactoryLevel: number = planetData === null ? 0 : BuildingData.getBuildingLevel(planetData, GameType.BuildingType.RoboticFactory);
 
     const durationHours: number = totalCost / (BASE_DIVIDER * (1 + roboticFactoryLevel));
 	const durationSeconds: number = durationHours * 3600;

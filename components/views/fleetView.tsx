@@ -17,6 +17,8 @@ import * as MathHelp from "@/lib/helper/mathHelp";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as DBType from "@/lib/db/dbTypes";
 import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMovementDurationFormulas";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 type FleetViewProps =
 {
@@ -40,9 +42,9 @@ type FleetViewData =
 function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement, publicPlanetRows: DBType.PublicPlanetRow[]): ReactElement
 {
     const fleetMovementRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const originAddress: string = GameType.formatPlanetAddress(fleetMovementRow.planet_origin_galaxy, fleetMovementRow.planet_origin_system, fleetMovementRow.planet_origin_slot);
-    const targetAddress: string = GameType.formatPlanetAddress(fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot);
-    const actionName: string = GameType.FLEET_ACTION_NAMES.get(fleetMovementRow.fleet_action_type) ?? `Unknown (${fleetMovementRow.fleet_action_type})`;
+    const originAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_origin_galaxy, fleetMovementRow.planet_origin_system, fleetMovementRow.planet_origin_slot);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot);
+    const actionName: string = ThingType.getSpecificThingName(ThingType.fleetAction(fleetMovementRow.fleet_action_type));
     const isReturnTrip: boolean = fleetMovementRow.is_return_trip === 1;
     const remainingMs: number | null = FleetData.getFleetMovementRemainingMs(fleetMovement);
 
@@ -245,7 +247,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
     const ownedPlanetOptionElements: ReactElement[] = ownedPlanetDatas.map((planetData: CoreType.PlanetData): ReactElement =>
     {
         const planetRow: DBType.PlanetRow = planetData.planetRow;
-        const addressLabel: string = GameType.formatPlanetAddress(planetRow.galaxy, planetRow.system, planetRow.slot);
+        const addressLabel: string = StaticDataHelper.formatPlanetAddress(planetRow.galaxy, planetRow.system, planetRow.slot);
 
         const optionElement: ReactElement =
         (
@@ -267,7 +269,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
                 <input
                     type="number"
                     min={1}
-                    max={GameType.GALAXY_COUNT}
+                    max={StaticData.GALAXY_COUNT}
                     value={data.galaxyIdState[0]}
                     onChange={data.galaxyIdState[2]}
                     className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-14 text-center"
@@ -277,7 +279,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
                 <input
                     type="number"
                     min={1}
-                    max={GameType.SYSTEM_COUNT}
+                    max={StaticData.SYSTEM_COUNT}
                     value={data.systemIdState[0]}
                     onChange={data.systemIdState[2]}
                     className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-14 text-center"
@@ -287,7 +289,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
                 <input
                     type="number"
                     min={1}
-                    max={GameType.SLOT_COUNT}
+                    max={StaticData.SLOT_COUNT}
                     value={data.slotIdState[0]}
                     onChange={data.slotIdState[2]}
                     className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-14 text-center"
@@ -434,14 +436,14 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
 
     const targetOwnerPlayerId: number | null = targetPublicRow?.owner_player_id ?? null;
 
-    const validActionIds: number[] = Array.from(GameType.FLEET_ACTION_NAMES.keys()).filter((actionId: number): boolean =>
+    const validActionIds: number[] = Array.from(StaticData.FLEET_ACTION_INFOS.keys()).filter((actionId: GameType.FleetActionType): boolean =>
     {
         return FleetData.canExecuteFleetActionOnTargetAddress(data.planetData, data.playerData, targetOwnerPlayerId, data.requestedShipQuantitiesState.requestedQuantities, actionId);
     });
 
     const isSelectedActionValid: boolean = validActionIds.includes(selectedAction);
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
-    const isSamePlanet: boolean = GameType.isSameAddress(originAddress, targetPlanetAddress);
+    const isSamePlanet: boolean = StaticDataHelper.isSameAddress(originAddress, targetPlanetAddress);
     const isSendDisabled: boolean = (totalShipsRequested === 0) || (isSelectedActionValid === false) || (isSamePlanet === true);
 
     const handleChange = (e: ChangeEvent<HTMLSelectElement>): void =>
@@ -471,7 +473,7 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
 
     const optionElements: ReactElement[] = validActionIds.map((actionId: number): ReactElement =>
     {
-        const actionName: string = GameType.FLEET_ACTION_NAMES.get(actionId) ?? "";
+        const actionName: string = ThingType.getSpecificThingName(ThingType.fleetAction(actionId));
 
         const optionElement: ReactElement =
         (
@@ -550,12 +552,12 @@ function renderFleetViewLayout(props: FleetViewProps, data: FleetViewData): Reac
 export function FleetView(props: FleetViewProps): ReactElement
 {
     const selectedPlanetId: number = props.clientDataStateResult.psController[0].selectedPlanetId;
-    const galaxyIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(GameType.GALAXY_COUNT);
-    const systemIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(GameType.SYSTEM_COUNT);
-    const slotIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(GameType.SLOT_COUNT);
+    const galaxyIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(StaticData.GALAXY_COUNT);
+    const systemIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(StaticData.SYSTEM_COUNT);
+    const slotIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(StaticData.SLOT_COUNT);
     const requestedShipQuantitiesState: HelperElement.RequestedQuantitiesState = HelperElement.useRequestedQuantities();
     const requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState = HelperElement.useRequestedQuantities();
-    const fleetActionState: [number, (value: number) => void] = useState<number>(GameType.FLEET_ACTION_STATION);
+    const fleetActionState: [number, (value: number) => void] = useState<number>(GameType.FleetActionType.Station);
     const sendErrorState: [string | null, (value: string | null) => void] = useState<string | null>(null);
 
     useEffect((): void =>
@@ -565,7 +567,7 @@ export function FleetView(props: FleetViewProps): ReactElement
         galaxyIdState[1](1);
         systemIdState[1](1);
         slotIdState[1](1);
-        fleetActionState[1](GameType.FLEET_ACTION_STATION);
+        fleetActionState[1](GameType.FleetActionType.Station);
         sendErrorState[1](null);
     }, [selectedPlanetId]);
 

@@ -5,6 +5,8 @@ import * as ShipConstruction from "@/lib/gameplay/coreData/formula/shipConstruct
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as MathHelp from "@/lib/helper/mathHelp";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 export function getNextShipConstruction(planetData: CoreType.PlanetData): CoreType.ShipConstruction | null
 {
@@ -41,7 +43,7 @@ export function sortShipConstructionShipRowByConstructionTime(planetData: CoreTy
 
 export function getShipConstructionDurationSeconds(shipType: number, planetData: CoreType.PlanetData, serverData: CoreType.ServerData): number | null
 {
-    const currentShipyardLevel: number = BuildingData.getBuildingLevel(planetData, GameType.BUILDING_SHIPYARD);
+    const currentShipyardLevel: number = BuildingData.getBuildingLevel(planetData, GameType.BuildingType.Shipyard);
     return ShipConstruction.computeConstructionDurationSeconds(shipType, currentShipyardLevel, serverData);
 }
 
@@ -142,7 +144,7 @@ function computeSingleShipTypeConstructionCost(shipType: number, shipQuantity: n
 
 export function getSingleShipCost(shipType: number): Map<number, number> | null
 {
-	const singleShipCost: Map<number, number> | undefined = GameType.SHIP_STATS.get(shipType)?.costMap;
+	const singleShipCost: Map<number, number> | undefined = StaticDataHelper.getShipStats(shipType)?.costMap;
 	if (singleShipCost === undefined)
 	{
 		return null;

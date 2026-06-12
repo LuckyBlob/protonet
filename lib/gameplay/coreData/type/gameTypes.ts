@@ -1,160 +1,44 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as DBType from "@/lib/db/dbTypes";
 
-export const GALAXY_COUNT: number = 2;
-export const SYSTEM_COUNT: number = 20;
-export const SLOT_COUNT: number = 5;
-export const MIN_SLOT_STARTING_PLANET: number = 3;
-export const MAX_SLOT_STARTING_PLANET: number = 4;
-export const STARTING_PLANET_SIZE: number = 163;
-
-type SlotSizeRange =
+//#region Resource
+export const ResourceType =
 {
-	min: number;
-	max: number;
-};
-const SLOT_SIZE_RANGES: SlotSizeRange[] =
-[
-	{ min: 40,  max: 70  },  // slot 1
-	{ min: 120, max: 310 },  // slot 2
-	{ min: 125, max: 255 },  // slot 3
-	{ min: 75,  max: 125 },  // slot 4
-	{ min: 60,  max: 90  },  // slot 5
-];
-export function rollSizeForSlot(slot: number): number
-{
-	const range: SlotSizeRange = SLOT_SIZE_RANGES[slot - 1];
-	const span: number = range.max - range.min;
-	const rolledSize: number = range.min + Math.floor(Math.random() * (span + 1));
-	return rolledSize;
-}
-
-export const BUILDING_RESOURCE_PRODUCTION_1: number = 1; // prod resource 1
-export const BUILDING_RESOURCE_PRODUCTION_2: number = 2; // prod resource 1
-export const BUILDING_SHIPYARD: number = 3; // shipyard
-export const BUILDING_ROBOTIC_FACTORY: number = 4; // Robotic factory
-export const BUILDING_RESOURCE_PRODUCTION_3: number = 5; // prod resource 3
-export const BUILDING_PLANET_VALUE_PRODUCTION_1: number = 6; // solar plant
-
-export const BUILDING_DISPLAY_NAMES: ReadonlyMap<number, string> = new Map<number, string>
-([
-    [BUILDING_RESOURCE_PRODUCTION_1, "Iron Mine"],
-    [BUILDING_RESOURCE_PRODUCTION_2, "Crystal Mine"],
-    [BUILDING_SHIPYARD, "Shipyard"],
-    [BUILDING_ROBOTIC_FACTORY, "Robotics Factory"],
-    [BUILDING_RESOURCE_PRODUCTION_3, "Deuterium Synthesizer"],
-    [BUILDING_PLANET_VALUE_PRODUCTION_1, "Solar Plant"],
-]);
-
-export const RESOURCE_1: number = 1;
-export const RESOURCE_2: number = 2;
-export const RESOURCE_3: number = 3;
-
-export const RESOURCE_DISPLAY_NAMES: ReadonlyMap<number, string> = new Map<number, string>
-([
-    [RESOURCE_1, "Iron"],
-    [RESOURCE_2, "Crystal"],
-    [RESOURCE_3, "Deuterium"],
-]);
-
-export const PlanetValueType =
-{
-    Energy: 1,
+    Metal: 1,
+    Crystal: 2,
+    Deuterium: 3,
 } as const;
-export type PlanetValueType = typeof PlanetValueType[keyof typeof PlanetValueType];
-export type PlanetValueInfo =
+export type ResourceType = typeof ResourceType[keyof typeof ResourceType];
+export type ResourceInfo =
 {
 	displayName: string;
-	showInTopBar: boolean;
-	ratioImpactsResourceProduction?: boolean,
-	associatedResource?: number;
-	limitsResourceMax?: boolean;
 }
-export const PLANET_VALUE_INFOS: ReadonlyMap<PlanetValueType, PlanetValueInfo> = new Map<PlanetValueType, PlanetValueInfo>
-([
-    [PlanetValueType.Energy, {
-		displayName: "Energy",
-		showInTopBar: true,
-		ratioImpactsResourceProduction: true}],
-]);
+//#endregion
 
-export const SMALL_TRANSPORT: number = 1;
-export const LARGE_TRANSPORT: number = 2;
-export const COLONY_SHIP: number = 3;
-
-export const SHIP_DISPLAY_NAMES: ReadonlyMap<number, string> = new Map<number, string>
-([
-    [SMALL_TRANSPORT, "Small Transport"],
-    [LARGE_TRANSPORT, "Large Transport"],
-    [COLONY_SHIP, "Colony Ship"],
-]);
-
-export const FLEET_ACTION_STATION: number = 1; // Go to planet and stay there
-export const FLEET_ACTION_TRANSPORT: number = 2; // Drop off resources and/or ships on target planet and go back to origin planet
-export const FLEET_ACTION_COLONIZE: number = 3; // go to unclaimed planet and colonize it, turning it into a new planet owned by the player
-export const FLEET_ACTION_COLLECT: number = 4; // go to planet, collect resources and/or ships, and go back to origin planet) - fails if there are enemy ships on the target planet
-
-export const FLEET_ACTION_NAMES: ReadonlyMap<number, string> = new Map<number, string>
-([
-    [FLEET_ACTION_STATION, "Station"],
-    [FLEET_ACTION_TRANSPORT, "Transport"],
-    [FLEET_ACTION_COLONIZE, "Colonize"],
-    [FLEET_ACTION_COLLECT, "Collect"],
-]);
-
-const GALAXY_DISTANCE: number = 20000;
-const SYSTEM_DISTANCE: number = 2700;
-const SYSTEM_DISTANCE_FACTOR: number = 95;
-const SLOT_DISTANCE: number = 1000;
-const SLOT_DISTANCE_FACTOR: number = 55;
-export type PlanetAddress =
+//#region Buildings
+export const BuildingType =
 {
-    galaxy: number,
-    system: number,
-    slot: number
-}
-export function getDistance(origin: PlanetAddress, target: PlanetAddress): number
+    MetalMine: 1,
+    CrystalGrower: 2,
+    DeuteriumSynthesizer: 3,
+	SolarPlant: 4,
+	MetalStorage: 5,
+	CrystalContainement: 6,
+	DeuteriumTank: 7,
+    Shipyard: 8,
+    RoboticFactory: 9,
+} as const;
+export type BuildingType = typeof BuildingType[keyof typeof BuildingType];
+export type BuildingStats =
 {
-    const galaxyDifference: number = Math.abs(origin.galaxy - target.galaxy);
-    if (galaxyDifference !== 0)
-    {
-        return galaxyDifference * GALAXY_DISTANCE;
-    }
-
-    const systemDifference: number = Math.abs(origin.system - target.system);
-    if (systemDifference !== 0)
-    {
-        return SYSTEM_DISTANCE + systemDifference * SYSTEM_DISTANCE_FACTOR;
-    }
-
-    const slotDifference: number = Math.abs(origin.slot - target.slot);
-    if (slotDifference !== 0)
-    {
-        return SLOT_DISTANCE + slotDifference * SLOT_DISTANCE_FACTOR;
-    }
-
-    return 0;
-}
-
-export function isSameAddress(origin: PlanetAddress, target: PlanetAddress): boolean
-{
-    return (origin.galaxy === target.galaxy) && (origin.system === target.system) && (origin.slot === target.slot)
-}
-
-export function formatPlanetAddress(galaxy: number, system: number, slot: number): string
-{
-    return `[${galaxy}:${system}:${slot}]`;
-}
-
-export function getPlayerName(publicPlayerRows: DBType.PublicPlayerRow[], playerId: number | null): string
-{
-    if (playerId === null)
-    {
-        return "Unknown";
-    }
-    const matchingRow: DBType.PublicPlayerRow | undefined = publicPlayerRows.find((row: DBType.PublicPlayerRow): boolean => row.id === playerId);
-    return matchingRow?.username ?? "Unknown";
-}
+	displayName: string,
+	costFunctionType?: BuildingCostFunctionType;
+	costStats?: CostStats;
+	productionFunctionType?: ProductionFunctionType;
+	productionStats?: Map<number, ProductionStats>;
+	planetValueProductionFormulasType?: BuildingPlanetValueProductionFormulasType;
+	planetValueStats?: PlanetValueStats;
+};
 
 export const BuildingCostFunctionType =
 {
@@ -189,153 +73,67 @@ export type PlanetValueStats =
 	basePlanetValueExponent: number;
 	basePlanetValueFactor: Map<number, number>;
 };
+//#endregion
 
-export type BuildingStats =
+//#region PlanetValue
+export const PlanetValueType =
 {
-	costFunctionType?: BuildingCostFunctionType;
-	costStats?: CostStats;
-	productionFunctionType?: ProductionFunctionType;
-	productionStats?: Map<number, ProductionStats>;
-	planetValueProductionFormulasType?: BuildingPlanetValueProductionFormulasType;
-	planetValueStats?: PlanetValueStats;
-};
-
-export const BUILDING_STATS: ReadonlyMap<number, BuildingStats> = new Map<number, BuildingStats>
-([
-    [BUILDING_RESOURCE_PRODUCTION_1, {
-		costFunctionType: BuildingCostFunctionType.SimpleExponential,
-		costStats: {
-			baseCostExponent: 1.5,
-			baseCost: new Map<number, number>([
-				[RESOURCE_1, 60],
-				[RESOURCE_2, 15],]),},
-		productionFunctionType: ProductionFunctionType.SimpleProductionBuilding,
-		productionStats: new Map<number, ProductionStats>([
-			[RESOURCE_1, {
-				minProductionPerHour: 30,
-				productionFactor: 30,
-				exponentBase: 1.1,}]]),
-		planetValueProductionFormulasType: BuildingPlanetValueProductionFormulasType.SimpleExponential,
-		planetValueStats: {
-			basePlanetValueExponent: 1.1,
-			basePlanetValueFactor: new Map<number, number>([
-				[PlanetValueType.Energy, -10],]),},}],
-	[BUILDING_RESOURCE_PRODUCTION_2, {
-		costFunctionType: BuildingCostFunctionType.SimpleExponential,
-		costStats: {
-			baseCostExponent: 1.6,
-			baseCost: new Map<number, number>([
-				[RESOURCE_1, 48],
-				[RESOURCE_2, 24],]),},
-		productionFunctionType: ProductionFunctionType.SimpleProductionBuilding,
-		productionStats: new Map<number, ProductionStats>([
-			[RESOURCE_2, {
-				minProductionPerHour: 15,
-				productionFactor: 20,
-				exponentBase: 1.1,}]]),
-		planetValueProductionFormulasType: BuildingPlanetValueProductionFormulasType.SimpleExponential,
-		planetValueStats: {
-			basePlanetValueExponent: 1.1,
-			basePlanetValueFactor: new Map<number, number>([
-				[PlanetValueType.Energy, -10],]),},}],
-	[BUILDING_SHIPYARD, {
-		costFunctionType: BuildingCostFunctionType.SimpleExponential,
-		costStats: {
-			baseCostExponent: 2,
-			baseCost: new Map<number, number>([
-				[RESOURCE_1, 400],
-				[RESOURCE_2, 200],]),},},],
-	[BUILDING_ROBOTIC_FACTORY, {
-		costFunctionType: BuildingCostFunctionType.SimpleExponential,
-		costStats: {
-			baseCostExponent: 1.5,
-			baseCost: new Map<number, number>([
-				[RESOURCE_1, 400],
-				[RESOURCE_2, 120],]),},},],
-	[BUILDING_RESOURCE_PRODUCTION_3, {
-		costFunctionType: BuildingCostFunctionType.SimpleExponential,
-		costStats: {
-			baseCostExponent: 2,
-			baseCost: new Map<number, number>([
-				[RESOURCE_1, 225],
-				[RESOURCE_2, 75],]),},
-		productionFunctionType: ProductionFunctionType.SimpleProductionBuilding,
-		productionStats: new Map<number, ProductionStats>([
-			[RESOURCE_3, {
-				minProductionPerHour: 0,
-				productionFactor: 10,
-				exponentBase: 1.1,}]]),
-		planetValueProductionFormulasType: BuildingPlanetValueProductionFormulasType.SimpleExponential,
-		planetValueStats: {
-			basePlanetValueExponent: 1.1,
-			basePlanetValueFactor: new Map<number, number>([
-				[PlanetValueType.Energy, -20],]),},}],
-	[BUILDING_PLANET_VALUE_PRODUCTION_1, {
-		costFunctionType: BuildingCostFunctionType.SimpleExponential,
-		costStats: {
-			baseCostExponent: 1.5,
-			baseCost: new Map<number, number>([
-				[RESOURCE_1, 75],
-				[RESOURCE_2, 30],]),},
-		planetValueProductionFormulasType: BuildingPlanetValueProductionFormulasType.SimpleExponential,
-		planetValueStats: {
-			basePlanetValueExponent: 1.1,
-			basePlanetValueFactor: new Map<number, number>([
-				[PlanetValueType.Energy, 20],]),},}],
-]);
-
-export const STARTING_PLANET_DATA: CoreType.DynamicPlanetData =
-{
-	...structuredClone(CoreType.EmptyPlanetData),
-	resourceQuantity: new Map<number, number>
-	([
-		[RESOURCE_1, 2000],
-		[RESOURCE_2, 500],
-		[RESOURCE_3, 0],
-	]),
+    Energy: 1,
 } as const;
+export type PlanetValueType = typeof PlanetValueType[keyof typeof PlanetValueType];
+export type PlanetValueInfo =
+{
+	displayName: string;
+	showInTopBar: boolean;
+	ratioImpactsResourceProduction?: boolean,
+	associatedResource?: number;
+	limitsResourceMax?: boolean;
+}
+//#endregion 
 
+//#region Ships
+export const ShipType =
+{
+    SmallTransport: 1,
+    LargeTransport: 2,
+    ColonyShip: 3,
+} as const;
+export type ShipType = typeof ShipType[keyof typeof ShipType];
 export type ShipStats =
 {
+	displayName: string;
 	maxHealth: number;
 	speed: number;
 	space: number;
 	baseFuelConsumption: Map<number, number>;
 	costMap: Map<number, number>;
 };
-export const SHIP_STATS: ReadonlyMap<number, ShipStats> = new Map<number, ShipStats>
-([
-    [SMALL_TRANSPORT, {
-		maxHealth: 4000,
-		space: 5000,
-		speed: 5000,
-		baseFuelConsumption: new Map<number, number>([
-			[RESOURCE_3, 10]]),
-		costMap: new Map<number, number>([
-			[RESOURCE_1, 2000],
-			[RESOURCE_2, 2000],
-		]),}],
-    [LARGE_TRANSPORT, {
-		maxHealth: 12000,
-		space: 25000,
-		speed: 7500,
-		baseFuelConsumption: new Map<number, number>([
-			[RESOURCE_3, 50]]),
-		costMap: new Map<number, number>([
-			[RESOURCE_1, 6000],
-			[RESOURCE_2, 6000],
-		]),}],
-    [COLONY_SHIP, {
-		maxHealth: 30000,
-		space: 2500,
-		speed: 7500,
-		baseFuelConsumption: new Map<number, number>([
-			[RESOURCE_3, 1000]]),
-		costMap: new Map<number, number>([
-			[RESOURCE_1, 10000],
-			[RESOURCE_2, 20000],
-			[RESOURCE_3, 10000],
-		]),}],
-]);
+//#endregion
 
-export const MAX_ALLOWED_PLANETS: number = 9;
+//#region Fleet Actions
+export const FleetActionType =
+{
+    Station: 1,
+    Collect: 2,
+    Colonize: 3,
+} as const;
+export type FleetActionType = typeof FleetActionType[keyof typeof FleetActionType];
+export type FleetActionInfo =
+{
+	displayName: string;
+};
+//#endregion
+
+//#region Planet
+export type SlotSizeRange =
+{
+	min: number;
+	max: number;
+};
+export type PlanetAddress =
+{
+    galaxy: number,
+    system: number,
+    slot: number
+}
+//#endregion

@@ -9,7 +9,7 @@ export class ServerFleetActionResolver extends FleetData.FleetActionResolver
     {
         const updatedTargetPlayerData: CoreType.PlayerData | null = super.resolveFleetAction(targetPlayerData, originPlayerData, fleetMovement, serverData);
 
-        if (fleetMovement.fleetMovementRow.fleet_action_type === GameType.FLEET_ACTION_COLONIZE)
+        if (fleetMovement.fleetMovementRow.fleet_action_type === GameType.FleetActionType.Colonize)
         {
             return ColonizeAction.resolveColonizeAction(originPlayerData, fleetMovement, serverData);
         }

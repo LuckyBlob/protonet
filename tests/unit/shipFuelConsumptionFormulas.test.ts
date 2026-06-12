@@ -15,29 +15,29 @@ describe('computeFuelConsumption', () =>
 
     it('skips ship entries whose quantity is 0', () =>
     {
-        const zeros: Map<number, number> = new Map([[GameType.SMALL_TRANSPORT, 0]]);
+        const zeros: Map<number, number> = new Map([[GameType.ShipType.SmallTransport, 0]]);
         const result: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(zeros, 1000, 10, null);
         expect(result.size).toBe(0);
     });
 
     it('returns deuterium (RESOURCE_3) consumption for a Small Transport', () =>
     {
-        const shipQuantities: Map<number, number> = new Map([[GameType.SMALL_TRANSPORT, 1]]);
+        const shipQuantities: Map<number, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
         const result: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(shipQuantities, 1000, 10, null);
-        expect(result.has(GameType.RESOURCE_3)).toBe(true);
-        expect(result.get(GameType.RESOURCE_3)).toBeGreaterThan(0);
+        expect(result.has(GameType.ResourceType.Deuterium)).toBe(true);
+        expect(result.get(GameType.ResourceType.Deuterium)).toBeGreaterThan(0);
     });
 
     it('aggregates fuel across multiple ships of the same type linearly in baseCost', () =>
     {
-        const single: Map<number, number> = new Map([[GameType.SMALL_TRANSPORT, 1]]);
-        const five: Map<number, number> = new Map([[GameType.SMALL_TRANSPORT, 5]]);
+        const single: Map<number, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const five: Map<number, number> = new Map([[GameType.ShipType.SmallTransport, 5]]);
 
         const singleResult: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(single, 1000, 10, null);
         const fiveResult: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(five, 1000, 10, null);
 
-        const singleFuel: number = singleResult.get(GameType.RESOURCE_3) ?? 0;
-        const fiveFuel: number = fiveResult.get(GameType.RESOURCE_3) ?? 0;
+        const singleFuel: number = singleResult.get(GameType.ResourceType.Deuterium) ?? 0;
+        const fiveFuel: number = fiveResult.get(GameType.ResourceType.Deuterium) ?? 0;
 
         // Larger fleet should always cost more fuel than a smaller one over the same distance.
         expect(fiveFuel).toBeGreaterThan(singleFuel);
@@ -45,32 +45,32 @@ describe('computeFuelConsumption', () =>
 
     it('aggregates fuel across mixed ship types', () =>
     {
-        const onlySmall: Map<number, number> = new Map([[GameType.SMALL_TRANSPORT, 1]]);
-        const mixed: Map<number, number> = new Map([[GameType.SMALL_TRANSPORT, 1], [GameType.LARGE_TRANSPORT, 1]]);
+        const onlySmall: Map<number, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const mixed: Map<number, number> = new Map([[GameType.ShipType.SmallTransport, 1], [GameType.ShipType.LargeTransport, 1]]);
 
         const smallResult: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(onlySmall, 1000, 10, null);
         const mixedResult: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(mixed, 1000, 10, null);
 
-        const smallFuel: number = smallResult.get(GameType.RESOURCE_3) ?? 0;
-        const mixedFuel: number = mixedResult.get(GameType.RESOURCE_3) ?? 0;
+        const smallFuel: number = smallResult.get(GameType.ResourceType.Deuterium) ?? 0;
+        const mixedFuel: number = mixedResult.get(GameType.ResourceType.Deuterium) ?? 0;
         expect(mixedFuel).toBeGreaterThan(smallFuel);
     });
 
     it('grows with distance', () =>
     {
-        const shipQuantities: Map<number, number> = new Map([[GameType.SMALL_TRANSPORT, 1]]);
+        const shipQuantities: Map<number, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
         const short: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(shipQuantities, 1000, 10, null);
         const long: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(shipQuantities, 50_000, 10, null);
 
-        expect((long.get(GameType.RESOURCE_3) ?? 0)).toBeGreaterThan((short.get(GameType.RESOURCE_3) ?? 0));
+        expect((long.get(GameType.ResourceType.Deuterium) ?? 0)).toBeGreaterThan((short.get(GameType.ResourceType.Deuterium) ?? 0));
     });
 
     it('returns at least 1 for any included resource at distance 0 due to the +1 floor', () =>
     {
         // The formula has `1 + Math.round(...)`, so the floor at distance 0 is 1 (not 0)
-        const shipQuantities: Map<number, number> = new Map([[GameType.SMALL_TRANSPORT, 1]]);
+        const shipQuantities: Map<number, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
         const result: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(shipQuantities, 0, 10, null);
-        expect(result.get(GameType.RESOURCE_3)).toBe(1);
+        expect(result.get(GameType.ResourceType.Deuterium)).toBe(1);
     });
 
     it('throws when an unknown ship type is included with non-zero quantity', () =>
@@ -83,12 +83,12 @@ describe('computeFuelConsumption', () =>
     {
         // Pinned behaviour: serverData is accepted but does NOT scale fuel today.
         // If that changes, this test will catch the divergence.
-        const shipQuantities: Map<number, number> = new Map([[GameType.SMALL_TRANSPORT, 1]]);
+        const shipQuantities: Map<number, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData(5);
 
         const withoutServer: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(shipQuantities, 1000, 10, null);
         const withServer: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(shipQuantities, 1000, 10, serverData);
 
-        expect(withServer.get(GameType.RESOURCE_3)).toBe(withoutServer.get(GameType.RESOURCE_3));
+        expect(withServer.get(GameType.ResourceType.Deuterium)).toBe(withoutServer.get(GameType.ResourceType.Deuterium));
     });
 });

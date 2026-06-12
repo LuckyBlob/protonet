@@ -22,6 +22,7 @@ import * as E2EHelper from "@/tests/helpers/e2eHelpers";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 //#region constants (mirror lib/gameplay/coreData/type/gameTypes.ts)
 
@@ -162,7 +163,7 @@ test.describe("Buildings", () =>
         await E2EHelper.goToView(page, "Upgrades");
         await expect(E2EHelper.buildingCard(page, "Iron Mine")).toContainText("Level 1");
         await expect(E2EHelper.buildUpgradeButton(page, "Iron Mine")).toBeEnabled();
-        expect(E2EHelper.getBuildingLevelDb(selectedPlanet.id, GameType.BUILDING_RESOURCE_PRODUCTION_1, db)).toBe(1);
+        expect(E2EHelper.getBuildingLevelDb(selectedPlanet.id, GameType.BuildingType.MetalMine, db)).toBe(1);
     });
 
     test("cannot start a second upgrade while one is already in progress", async ({ page }) =>
@@ -206,7 +207,7 @@ test.describe("Buildings", () =>
 
         for (const planet of planets)
         {
-            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BUILDING_ROBOTIC_FACTORY, 2, db);
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.RoboticFactory, 2, db);
             E2EHelper.touchPlanet(planet.id, Date.now(), db);
         }
 
@@ -227,7 +228,7 @@ test.describe("Ships", () =>
         const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
         for (const planet of planets)
         {
-            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BUILDING_SHIPYARD, 2, db);
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.Shipyard, 2, db);
             E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
             E2EHelper.touchPlanet(planet.id, Date.now(), db);
         }
@@ -249,7 +250,7 @@ test.describe("Ships", () =>
         await E2EHelper.goToView(page, "Shipyard");
         await expect(E2EHelper.shipOwned(page, "Small Transport", 1)).toBeVisible();
         await expect(page.getByText("Small Transport x 1")).toBeVisible();
-        expect(E2EHelper.getShipQuantityDb(selectedPlanet.id, GameType.SMALL_TRANSPORT, db)).toBe(1);
+        expect(E2EHelper.getShipQuantityDb(selectedPlanet.id, GameType.ShipType.SmallTransport, db)).toBe(1);
 
         // Finish the remaining ship → owned 2, nothing left building. The server rewrites the
         // construction row (new id) each time it resolves a ship, so re-read the id first.
@@ -259,7 +260,7 @@ test.describe("Ships", () =>
         await E2EHelper.goToView(page, "Shipyard");
         await expect(E2EHelper.shipOwned(page, "Small Transport", 2)).toBeVisible();
         await expect(page.getByText("No ship construction in progress.")).toBeVisible();
-        expect(E2EHelper.getShipQuantityDb(selectedPlanet.id, GameType.SMALL_TRANSPORT, db)).toBe(2);
+        expect(E2EHelper.getShipQuantityDb(selectedPlanet.id, GameType.ShipType.SmallTransport, db)).toBe(2);
     });
 });
 
@@ -469,7 +470,7 @@ test.describe("Fleets", () =>
         const origin: E2EHelper.PlanetRow = planets[0];
         const target: E2EHelper.PlanetRow = planets[1];
 
-        E2EHelper.setShipQuantity(origin.id, playerId, GameType.SMALL_TRANSPORT, 5, db);
+        E2EHelper.setShipQuantity(origin.id, playerId, GameType.ShipType.SmallTransport, 5, db);
         E2EHelper.setAllResources(origin.id, playerId, PLENTY, db);
         E2EHelper.touchPlanet(origin.id, Date.now(), db);
         E2EHelper.touchPlanet(target.id, Date.now(), db);
@@ -493,8 +494,8 @@ test.describe("Fleets", () =>
 
         // Ships ended up on the target, were removed from origin, and the fleet is gone entirely
         // (no return trip was created).
-        expect(E2EHelper.getShipQuantityDb(target.id, GameType.SMALL_TRANSPORT, db)).toBe(2);
-        expect(E2EHelper.getShipQuantityDb(origin.id, GameType.SMALL_TRANSPORT, db)).toBe(3);
+        expect(E2EHelper.getShipQuantityDb(target.id, GameType.ShipType.SmallTransport, db)).toBe(2);
+        expect(E2EHelper.getShipQuantityDb(origin.id, GameType.ShipType.SmallTransport, db)).toBe(3);
         expect(E2EHelper.fleetExists(fleet.id, db)).toBe(false);
 
         // Self-station produces exactly ONE message (origin only — the same-player check in
@@ -559,7 +560,7 @@ test.describe("Fleets", () =>
         const origin: E2EHelper.PlanetRow = planets[0];
         const target: E2EHelper.PlanetRow = planets[1];
 
-        E2EHelper.setShipQuantity(origin.id, playerId, GameType.SMALL_TRANSPORT, 5, db);
+        E2EHelper.setShipQuantity(origin.id, playerId, GameType.ShipType.SmallTransport, 5, db);
         E2EHelper.setAllResources(origin.id, playerId, PLENTY, db);
         E2EHelper.touchPlanet(origin.id, Date.now(), db);
         E2EHelper.touchPlanet(target.id, Date.now(), db);
@@ -611,12 +612,12 @@ test.describe("Fleets", () =>
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
         // Attacker: enough ships + fuel. Victim: a known stash and no defending ships.
-        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.SMALL_TRANSPORT, 3, db);
+        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 3, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
         E2EHelper.touchPlanet(attackerPlanet.id, Date.now(), db);
-        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.RESOURCE_1, 5000, db);
-        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.RESOURCE_2, 0, db);
-        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.RESOURCE_3, 0, db);
+        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Metal, 5000, db);
+        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Crystal, 0, db);
+        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Deuterium, 0, db);
         E2EHelper.touchPlanet(victimPlanet.id, Date.now(), db);
 
         await E2EHelper.login(page, attacker, PASSWORD);
@@ -637,11 +638,11 @@ test.describe("Fleets", () =>
         // Victim drained, attacker richer by the stolen iron, ships returned. The attacker planet
         // also produced a little iron during the (multi-hour, time-warped) round trip, so allow
         // for that on top of the looted 5000.
-        expect(E2EHelper.getResourceQuantity(victimPlanet.id, GameType.RESOURCE_1, db)).toBe(0);
-        const attackerIron: number = E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.RESOURCE_1, db);
+        expect(E2EHelper.getResourceQuantity(victimPlanet.id, GameType.ResourceType.Metal, db)).toBe(0);
+        const attackerIron: number = E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.ResourceType.Metal, db);
         expect(attackerIron).toBeGreaterThanOrEqual(PLENTY + 5000);
         expect(attackerIron).toBeLessThan(PLENTY + 5000 + 5000);
-        expect(E2EHelper.getShipQuantityDb(attackerPlanet.id, GameType.SMALL_TRANSPORT, db)).toBe(3);
+        expect(E2EHelper.getShipQuantityDb(attackerPlanet.id, GameType.ShipType.SmallTransport, db)).toBe(3);
 
         // Cross-player collect produces TWO messages — one for each side — with bodies that name
         // the counterpart and the target planet, and the type set to FleetAction.
@@ -699,9 +700,9 @@ test.describe("Fleets", () =>
         // Origin: ships + fuel for three collects. Target (also ours) keeps a defending ship, so
         // each collect is "caught" and turned straight into a return trip — the path that removes
         // the fleet from the target planet's arrivals (collectAction.ts:25 → removeFleetMovement).
-        E2EHelper.setShipQuantity(origin.id, playerId, GameType.SMALL_TRANSPORT, 9, db);
+        E2EHelper.setShipQuantity(origin.id, playerId, GameType.ShipType.SmallTransport, 9, db);
         E2EHelper.setAllResources(origin.id, playerId, PLENTY, db);
-        E2EHelper.setShipQuantity(target.id, playerId, GameType.SMALL_TRANSPORT, 1, db);
+        E2EHelper.setShipQuantity(target.id, playerId, GameType.ShipType.SmallTransport, 1, db);
         E2EHelper.touchPlanet(origin.id, Date.now(), db);
         E2EHelper.touchPlanet(target.id, Date.now(), db);
 
@@ -734,8 +735,8 @@ test.describe("Fleets", () =>
         await expect(page.getByText("No fleet movements.")).toBeVisible();
 
         // All three caught collects returned their ships; nothing left in transit on the origin.
-        expect(E2EHelper.getShipQuantityDb(origin.id, GameType.SMALL_TRANSPORT, db)).toBe(9);
-        expect(E2EHelper.getShipQuantityDb(target.id, GameType.SMALL_TRANSPORT, db)).toBe(1);
+        expect(E2EHelper.getShipQuantityDb(origin.id, GameType.ShipType.SmallTransport, db)).toBe(9);
+        expect(E2EHelper.getShipQuantityDb(target.id, GameType.ShipType.SmallTransport, db)).toBe(1);
         expect(E2EHelper.getFleetsByOrigin(origin.id, db).length).toBe(0);
     });
 
@@ -753,10 +754,10 @@ test.describe("Fleets", () =>
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
-        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.SMALL_TRANSPORT, 3, db);
+        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 3, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
         E2EHelper.touchPlanet(attackerPlanet.id, Date.now(), db);
-        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.RESOURCE_1, 5000, db);
+        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Metal, 5000, db);
         E2EHelper.touchPlanet(victimPlanet.id, Date.now(), db);
 
         await E2EHelper.login(page, attacker, PASSWORD);
@@ -831,10 +832,10 @@ test.describe("Fleets", () =>
         const victimPlanets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(victim, db);
         const victimTarget: E2EHelper.PlanetRow = victimPlanets[0];
 
-        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.SMALL_TRANSPORT, 3, db);
+        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 3, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
         E2EHelper.touchPlanet(attackerPlanet.id, Date.now(), db);
-        E2EHelper.setResource(victimTarget.id, victimPlayerId, GameType.RESOURCE_1, 5000, db);
+        E2EHelper.setResource(victimTarget.id, victimPlayerId, GameType.ResourceType.Metal, 5000, db);
         E2EHelper.touchPlanet(victimTarget.id, Date.now(), db);
 
         await E2EHelper.login(page, attacker, PASSWORD);
@@ -864,8 +865,8 @@ test.describe("Fleets", () =>
 
         // Nothing was collected (target vanished before arrival): iron only grew by the planet's
         // small own production, nowhere near the 5000 a successful collect would have added.
-        expect(E2EHelper.getShipQuantityDb(attackerPlanet.id, GameType.SMALL_TRANSPORT, db)).toBe(3);
-        const ironAfter: number = E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.RESOURCE_1, db);
+        expect(E2EHelper.getShipQuantityDb(attackerPlanet.id, GameType.ShipType.SmallTransport, db)).toBe(3);
+        const ironAfter: number = E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.ResourceType.Metal, db);
         expect(ironAfter).toBeGreaterThanOrEqual(PLENTY);
         expect(ironAfter).toBeLessThan(PLENTY + 5000);
 
@@ -895,10 +896,10 @@ test.describe("Fleets", () =>
         const victimPlanets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(victim, db);
         const victimTarget: E2EHelper.PlanetRow = victimPlanets[0];
 
-        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.SMALL_TRANSPORT, 3, db);
+        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 3, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
         E2EHelper.touchPlanet(attackerPlanet.id, Date.now(), db);
-        E2EHelper.setResource(victimTarget.id, victimPlayerId, GameType.RESOURCE_1, 5000, db);
+        E2EHelper.setResource(victimTarget.id, victimPlayerId, GameType.ResourceType.Metal, 5000, db);
         E2EHelper.touchPlanet(victimTarget.id, Date.now(), db);
 
         await E2EHelper.login(page, attacker, PASSWORD);
@@ -914,7 +915,7 @@ test.describe("Fleets", () =>
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(attackerPlanet));
         await E2EHelper.goToView(page, "Fleets");
         await expect(page.getByText("Collect (return)")).toBeVisible();
-        expect(E2EHelper.getResourceQuantity(victimTarget.id, GameType.RESOURCE_1, db)).toBe(0);
+        expect(E2EHelper.getResourceQuantity(victimTarget.id, GameType.ResourceType.Metal, db)).toBe(0);
 
         // The collect resolution creates one message per side immediately (return-trip resolution
         // later won't add more — return arrival is messageless).
@@ -939,8 +940,8 @@ test.describe("Fleets", () =>
         await E2EHelper.goToView(page, "Fleets");
         await expect(page.getByText("No fleet movements.")).toBeVisible();
 
-        expect(E2EHelper.getShipQuantityDb(attackerPlanet.id, GameType.SMALL_TRANSPORT, db)).toBe(3);
-        const finalIron: number = E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.RESOURCE_1, db);
+        expect(E2EHelper.getShipQuantityDb(attackerPlanet.id, GameType.ShipType.SmallTransport, db)).toBe(3);
+        const finalIron: number = E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.ResourceType.Metal, db);
         expect(finalIron).toBeGreaterThanOrEqual(PLENTY + 5000);
         expect(finalIron).toBeLessThan(PLENTY + 5000 + 5000);
 
@@ -962,7 +963,7 @@ test.describe("Fleets", () =>
         const origin: E2EHelper.PlanetRow = planets[0];
         const target: E2EHelper.PlanetRow = planets[1];
 
-        E2EHelper.setShipQuantity(origin.id, playerId, GameType.SMALL_TRANSPORT, 5, db);
+        E2EHelper.setShipQuantity(origin.id, playerId, GameType.ShipType.SmallTransport, 5, db);
         E2EHelper.setAllResources(origin.id, playerId, PLENTY, db);
         E2EHelper.touchPlanet(origin.id, Date.now(), db);
         E2EHelper.touchPlanet(target.id, Date.now(), db);
@@ -1006,10 +1007,10 @@ test.describe("Fleets", () =>
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
-        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.SMALL_TRANSPORT, 3, db);
+        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 3, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
         E2EHelper.touchPlanet(attackerPlanet.id, Date.now(), db);
-        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.RESOURCE_1, 5000, db);
+        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Metal, 5000, db);
         E2EHelper.touchPlanet(victimPlanet.id, Date.now(), db);
 
         // Attacker sends the fleet, then logs out WITHOUT reloading. forceComplete shifts arrival
@@ -1069,12 +1070,12 @@ test.describe("Fleets", () =>
         const victimPlanet1: E2EHelper.PlanetRow = victimPlanets[0];
         const victimPlanet2: E2EHelper.PlanetRow = victimPlanets[1];
 
-        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.SMALL_TRANSPORT, 6, db);
+        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 6, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
         E2EHelper.touchPlanet(attackerPlanet.id, Date.now(), db);
-        E2EHelper.setResource(victimPlanet1.id, victimPlayerId, GameType.RESOURCE_1, 5000, db);
+        E2EHelper.setResource(victimPlanet1.id, victimPlayerId, GameType.ResourceType.Metal, 5000, db);
         E2EHelper.touchPlanet(victimPlanet1.id, Date.now(), db);
-        E2EHelper.setResource(victimPlanet2.id, victimPlayerId, GameType.RESOURCE_1, 5000, db);
+        E2EHelper.setResource(victimPlanet2.id, victimPlayerId, GameType.ResourceType.Metal, 5000, db);
         E2EHelper.touchPlanet(victimPlanet2.id, Date.now(), db);
 
         await E2EHelper.login(page, attacker, PASSWORD);
@@ -1139,12 +1140,12 @@ test.describe("Fleets", () =>
         // One transport (~5000 hold minus fuel) against a 100k iron + 100k crystal + 0 deuterium
         // stash → the proportional split takes a non-zero slice of BOTH iron and crystal, while
         // deuterium stays untouched (must not appear in the body).
-        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.SMALL_TRANSPORT, 1, db);
+        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 1, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
         E2EHelper.touchPlanet(attackerPlanet.id, Date.now(), db);
-        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.RESOURCE_1, 100000, db);
-        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.RESOURCE_2, 100000, db);
-        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.RESOURCE_3, 0, db);
+        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Metal, 100000, db);
+        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Crystal, 100000, db);
+        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Deuterium, 0, db);
         E2EHelper.touchPlanet(victimPlanet.id, Date.now(), db);
 
         await E2EHelper.login(page, attacker, PASSWORD);
@@ -1163,8 +1164,8 @@ test.describe("Fleets", () =>
         await E2EHelper.goToView(page, "Fleets");
         await expect(page.getByText("Collect (return)")).toBeVisible();
 
-        const ironLostByVictim: number = 100000 - E2EHelper.getResourceQuantity(victimPlanet.id, GameType.RESOURCE_1, db);
-        const crystalLostByVictim: number = 100000 - E2EHelper.getResourceQuantity(victimPlanet.id, GameType.RESOURCE_2, db);
+        const ironLostByVictim: number = 100000 - E2EHelper.getResourceQuantity(victimPlanet.id, GameType.ResourceType.Metal, db);
+        const crystalLostByVictim: number = 100000 - E2EHelper.getResourceQuantity(victimPlanet.id, GameType.ResourceType.Crystal, db);
         // Sanity: the proportional split took strictly positive amounts of BOTH (1:1 stash ratio).
         expect(ironLostByVictim).toBeGreaterThan(0);
         expect(crystalLostByVictim).toBeGreaterThan(0);
@@ -1198,15 +1199,15 @@ test.describe("Colonize", () =>
 
         // The player starts with 2 planets. Seed (MAX_ALLOWED_PLANETS - 2) more directly into the
         // DB so the cap is reached BEFORE the fleet view ever asks "can this player colonize?".
-        const planetsToSeed: number = GameType.MAX_ALLOWED_PLANETS - planets.length;
+        const planetsToSeed: number = StaticData.MAX_ALLOWED_PLANETS - planets.length;
         for (let i: number = 0; i < planetsToSeed; i++)
         {
             E2EHelper.insertSeededPlanetForPlayer(playerId, db);
         }
 
         // Enable colony ships at origin (shipyard L4 + one in stock + resources for fuel/cost).
-        E2EHelper.setBuildingLevel(origin.id, playerId, GameType.BUILDING_SHIPYARD, 4, db);
-        E2EHelper.setShipQuantity(origin.id, playerId, GameType.COLONY_SHIP, 1, db);
+        E2EHelper.setBuildingLevel(origin.id, playerId, GameType.BuildingType.Shipyard, 4, db);
+        E2EHelper.setShipQuantity(origin.id, playerId, GameType.ShipType.ColonyShip, 1, db);
         E2EHelper.setAllResources(origin.id, playerId, PLENTY, db);
         E2EHelper.touchPlanet(origin.id, Date.now(), db);
 
@@ -1239,8 +1240,8 @@ test.describe("Colonize", () =>
         const colonizerOrigin: E2EHelper.PlanetRow = E2EHelper.getPlanets(colonizer, db)[0];
         const otherPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(other, db)[0];
 
-        E2EHelper.setBuildingLevel(colonizerOrigin.id, colonizerPlayerId, GameType.BUILDING_SHIPYARD, 4, db);
-        E2EHelper.setShipQuantity(colonizerOrigin.id, colonizerPlayerId, GameType.COLONY_SHIP, 1, db);
+        E2EHelper.setBuildingLevel(colonizerOrigin.id, colonizerPlayerId, GameType.BuildingType.Shipyard, 4, db);
+        E2EHelper.setShipQuantity(colonizerOrigin.id, colonizerPlayerId, GameType.ShipType.ColonyShip, 1, db);
         E2EHelper.setAllResources(colonizerOrigin.id, colonizerPlayerId, PLENTY, db);
         E2EHelper.touchPlanet(colonizerOrigin.id, Date.now(), db);
 
@@ -1271,9 +1272,9 @@ test.describe("Colonize", () =>
         const origin: E2EHelper.PlanetRow = planetsBefore[0];
 
         // Origin: shipyard L4 + 1 colony ship + 2 small transports + plenty of resources.
-        E2EHelper.setBuildingLevel(origin.id, playerId, GameType.BUILDING_SHIPYARD, 4, db);
-        E2EHelper.setShipQuantity(origin.id, playerId, GameType.COLONY_SHIP, 1, db);
-        E2EHelper.setShipQuantity(origin.id, playerId, GameType.SMALL_TRANSPORT, 2, db);
+        E2EHelper.setBuildingLevel(origin.id, playerId, GameType.BuildingType.Shipyard, 4, db);
+        E2EHelper.setShipQuantity(origin.id, playerId, GameType.ShipType.ColonyShip, 1, db);
+        E2EHelper.setShipQuantity(origin.id, playerId, GameType.ShipType.SmallTransport, 2, db);
         E2EHelper.setAllResources(origin.id, playerId, PLENTY, db);
         E2EHelper.touchPlanet(origin.id, Date.now(), db);
 
@@ -1327,15 +1328,15 @@ test.describe("Colonize", () =>
 
         // ── Ships dumped on new planet: 2 Small Transports were transported, the 1 Colony Ship
         // was consumed by the colonize action (so 0 colony ships on the new planet).
-        expect(E2EHelper.getShipQuantityDb(newPlanet.id, GameType.SMALL_TRANSPORT, db)).toBe(2);
-        expect(E2EHelper.getShipQuantityDb(newPlanet.id, GameType.COLONY_SHIP, db)).toBe(0);
+        expect(E2EHelper.getShipQuantityDb(newPlanet.id, GameType.ShipType.SmallTransport, db)).toBe(2);
+        expect(E2EHelper.getShipQuantityDb(newPlanet.id, GameType.ShipType.ColonyShip, db)).toBe(0);
         // Colony ship is also gone from origin (it left with the fleet and the fleet consumed it).
-        expect(E2EHelper.getShipQuantityDb(origin.id, GameType.COLONY_SHIP, db)).toBe(0);
+        expect(E2EHelper.getShipQuantityDb(origin.id, GameType.ShipType.ColonyShip, db)).toBe(0);
 
         // ── Resources dumped on new planet (>=1000 each — equality would be brittle if the new
         // planet's last_updated picked up trickle production between resolve and read).
-        expect(E2EHelper.getResourceQuantity(newPlanet.id, GameType.RESOURCE_1, db)).toBeGreaterThanOrEqual(1000);
-        expect(E2EHelper.getResourceQuantity(newPlanet.id, GameType.RESOURCE_2, db)).toBeGreaterThanOrEqual(1000);
+        expect(E2EHelper.getResourceQuantity(newPlanet.id, GameType.ResourceType.Metal, db)).toBeGreaterThanOrEqual(1000);
+        expect(E2EHelper.getResourceQuantity(newPlanet.id, GameType.ResourceType.Crystal, db)).toBeGreaterThanOrEqual(1000);
 
         // ── Origin player receives a "Colonize Fleet Action Report" success message naming the
         // resources + ships that landed. (The colonize resolver only creates the origin-side
@@ -1369,7 +1370,7 @@ test.describe("Bug probes", () =>
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
-        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.SMALL_TRANSPORT, 4, db);
+        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 4, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
         E2EHelper.touchPlanet(attackerPlanet.id, Date.now(), db);
         E2EHelper.touchPlanet(victimPlanet.id, Date.now(), db);
@@ -1389,7 +1390,7 @@ test.describe("Bug probes", () =>
 
         // Expected behavior: resolveStationAction adds the ships to the target planet's owner, so the
         // enemy gains ships they never built (and the attacker loses them for free).
-        expect(E2EHelper.getShipQuantityDb(victimPlanet.id, GameType.SMALL_TRANSPORT, db)).toBe(2);
+        expect(E2EHelper.getShipQuantityDb(victimPlanet.id, GameType.ShipType.SmallTransport, db)).toBe(2);
     });
 
     test("collecting from a planet defended by ships must steal nothing", async ({ page }) =>
@@ -1406,11 +1407,11 @@ test.describe("Bug probes", () =>
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
-        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.SMALL_TRANSPORT, 3, db);
+        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 3, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
         E2EHelper.touchPlanet(attackerPlanet.id, Date.now(), db);
-        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.RESOURCE_1, 5000, db);
-        E2EHelper.setShipQuantity(victimPlanet.id, victimPlayerId, GameType.SMALL_TRANSPORT, 1, db); // a defender
+        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Metal, 5000, db);
+        E2EHelper.setShipQuantity(victimPlanet.id, victimPlayerId, GameType.ShipType.SmallTransport, 1, db); // a defender
         E2EHelper.touchPlanet(victimPlanet.id, Date.now(), db);
 
         await E2EHelper.login(page, attacker, PASSWORD);
@@ -1428,9 +1429,9 @@ test.describe("Bug probes", () =>
 
         // Defender present → the raid is repelled: victim keeps everything, attacker gains nothing
         // and gets its ships back.
-        expect(E2EHelper.getResourceQuantity(victimPlanet.id, GameType.RESOURCE_1, db)).toBe(5000);
-        expect(E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.RESOURCE_1, db)).toBeLessThan(PLENTY + 5000);
-        expect(E2EHelper.getShipQuantityDb(attackerPlanet.id, GameType.SMALL_TRANSPORT, db)).toBe(3);
+        expect(E2EHelper.getResourceQuantity(victimPlanet.id, GameType.ResourceType.Metal, db)).toBe(5000);
+        expect(E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.ResourceType.Metal, db)).toBeLessThan(PLENTY + 5000);
+        expect(E2EHelper.getShipQuantityDb(attackerPlanet.id, GameType.ShipType.SmallTransport, db)).toBe(3);
     });
 
     test("a cargo-limited collect conserves resources (no duplication or loss)", async ({ page }) =>
@@ -1449,12 +1450,12 @@ test.describe("Bug probes", () =>
 
         // One transport (space 5000) against a 200k-iron+crystal stash → must collect only a
         // capacity-limited slice, split across both resource types.
-        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.SMALL_TRANSPORT, 1, db);
+        E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 1, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
         E2EHelper.touchPlanet(attackerPlanet.id, Date.now(), db);
-        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.RESOURCE_1, 100000, db);
-        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.RESOURCE_2, 100000, db);
-        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.RESOURCE_3, 0, db);
+        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Metal, 100000, db);
+        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Crystal, 100000, db);
+        E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Deuterium, 0, db);
         E2EHelper.touchPlanet(victimPlanet.id, Date.now(), db);
 
         await E2EHelper.login(page, attacker, PASSWORD);
@@ -1471,11 +1472,11 @@ test.describe("Bug probes", () =>
         await expect(page.getByText("No fleet movements.")).toBeVisible();
 
         const victimLost: number =
-            (100000 - E2EHelper.getResourceQuantity(victimPlanet.id, GameType.RESOURCE_1, db)) +
-            (100000 - E2EHelper.getResourceQuantity(victimPlanet.id, GameType.RESOURCE_2, db));
+            (100000 - E2EHelper.getResourceQuantity(victimPlanet.id, GameType.ResourceType.Metal, db)) +
+            (100000 - E2EHelper.getResourceQuantity(victimPlanet.id, GameType.ResourceType.Crystal, db));
         const attackerGained: number =
-            (E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.RESOURCE_1, db) - PLENTY) +
-            (E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.RESOURCE_2, db) - PLENTY);
+            (E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.ResourceType.Metal, db) - PLENTY) +
+            (E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.ResourceType.Crystal, db) - PLENTY);
 
         // Something was taken, but no more than one transport can carry...
         expect(victimLost).toBeGreaterThan(0);
@@ -1544,8 +1545,8 @@ test.describe("Bug probes", () =>
         const colonizerOrigin: E2EHelper.PlanetRow = E2EHelper.getPlanets(colonizer, db)[0];
         const planetsBefore: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(colonizer, db);
 
-        E2EHelper.setBuildingLevel(colonizerOrigin.id, colonizerPlayerId, GameType.BUILDING_SHIPYARD, 4, db);
-        E2EHelper.setShipQuantity(colonizerOrigin.id, colonizerPlayerId, GameType.COLONY_SHIP, 1, db);
+        E2EHelper.setBuildingLevel(colonizerOrigin.id, colonizerPlayerId, GameType.BuildingType.Shipyard, 4, db);
+        E2EHelper.setShipQuantity(colonizerOrigin.id, colonizerPlayerId, GameType.ShipType.ColonyShip, 1, db);
         E2EHelper.setAllResources(colonizerOrigin.id, colonizerPlayerId, PLENTY, db);
         E2EHelper.touchPlanet(colonizerOrigin.id, Date.now(), db);
 
@@ -1579,7 +1580,7 @@ test.describe("Bug probes", () =>
         expect(planetsAfter.length).toBe(planetsBefore.length);
 
         // ── The colony ship comes home (it left with the fleet, and a failed colonize must return it).
-        expect(E2EHelper.getShipQuantityDb(colonizerOrigin.id, GameType.COLONY_SHIP, db)).toBe(1);
+        expect(E2EHelper.getShipQuantityDb(colonizerOrigin.id, GameType.ShipType.ColonyShip, db)).toBe(1);
 
         // ── The squatter's planet stays put — they own it, the colonizer did not steal/clobber it.
         const squatterRow: { owner_player_id: number | null } | undefined = db.prepare(

@@ -12,7 +12,7 @@ const BASE_TIME: number = 1_000_000;
 
 function buildPlayerWithIronMineAndUpgrade(buildingLevel: number, durationMs: number): CoreType.PlayerData
 {
-    const upgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BUILDING_RESOURCE_PRODUCTION_1 });
+    const upgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine });
     const upgrade: CoreType.BuildingUpgrade =
     {
         buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow(
@@ -30,7 +30,7 @@ function buildPlayerWithIronMineAndUpgrade(buildingLevel: number, durationMs: nu
         planetRow: { last_updated: BASE_TIME },
         dynamicPlanetData:
         {
-            buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, buildingLevel]]),
+            buildingLevels: new Map([[GameType.BuildingType.MetalMine, buildingLevel]]),
             buildingUpgrades: [upgrade],
         },
     });
@@ -51,7 +51,7 @@ describe('applyProgressToPlayerData — completion-time boundary', () =>
 
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, exactCompletion, APPLIER);
 
-        expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BUILDING_RESOURCE_PRODUCTION_1)).toBe(0);
+        expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BuildingType.MetalMine)).toBe(0);
         expect(result.planetDatas[0]!.dynamicPlanetData.buildingUpgrades).toHaveLength(1);
     });
 
@@ -63,7 +63,7 @@ describe('applyProgressToPlayerData — completion-time boundary', () =>
 
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, justAfter, APPLIER);
 
-        expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BUILDING_RESOURCE_PRODUCTION_1)).toBe(1);
+        expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BuildingType.MetalMine)).toBe(1);
         expect(result.planetDatas[0]!.dynamicPlanetData.buildingUpgrades).toHaveLength(0);
     });
 });
@@ -77,7 +77,7 @@ describe('applyProgressToPlayerData — negative elapsed time', () =>
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1]]),
+                buildingLevels: new Map([[GameType.BuildingType.MetalMine, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
@@ -87,7 +87,7 @@ describe('applyProgressToPlayerData — negative elapsed time', () =>
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, before, APPLIER);
 
         // No resource gain (or loss) when called for a past time
-        expect(ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.RESOURCE_1)).toBe(2000);
+        expect(ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Metal)).toBe(2000);
     });
 });
 
@@ -102,7 +102,7 @@ describe('applyProgressToPlayerData — idempotence at same now', () =>
             {
                 // Solar Plant level 1 keeps the energy ratio >= 1 so production actually accrues and the
                 // idempotence check isn't satisfied trivially by a throttled-to-zero rate.
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 1]]),
+                buildingLevels: new Map([[GameType.BuildingType.MetalMine, 1], [GameType.BuildingType.SolarPlant, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
@@ -112,8 +112,8 @@ describe('applyProgressToPlayerData — idempotence at same now', () =>
         const first: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, oneHourLater, APPLIER);
         const second: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(first, serverData, oneHourLater, APPLIER);
 
-        const firstAmount: number = ResourceData.getResourceQuantity(first.planetDatas[0]!, GameType.RESOURCE_1);
-        const secondAmount: number = ResourceData.getResourceQuantity(second.planetDatas[0]!, GameType.RESOURCE_1);
+        const firstAmount: number = ResourceData.getResourceQuantity(first.planetDatas[0]!, GameType.ResourceType.Metal);
+        const secondAmount: number = ResourceData.getResourceQuantity(second.planetDatas[0]!, GameType.ResourceType.Metal);
         expect(secondAmount).toBe(firstAmount);
     });
 
@@ -126,7 +126,7 @@ describe('applyProgressToPlayerData — idempotence at same now', () =>
         const first: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, afterCompletion, APPLIER);
         const second: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(first, serverData, afterCompletion, APPLIER);
 
-        expect(BuildingData.getBuildingLevel(second.planetDatas[0]!, GameType.BUILDING_RESOURCE_PRODUCTION_1)).toBe(1);
+        expect(BuildingData.getBuildingLevel(second.planetDatas[0]!, GameType.BuildingType.MetalMine)).toBe(1);
         expect(second.planetDatas[0]!.dynamicPlanetData.buildingUpgrades).toHaveLength(0);
     });
 });

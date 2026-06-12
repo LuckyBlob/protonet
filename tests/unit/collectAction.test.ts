@@ -34,11 +34,11 @@ function setup(targetShipQuantities: Map<number, number> = new Map(), targetReso
             planet_target_id: TARGET_PLANET_ID,
             planet_origin_galaxy: 1, planet_origin_system: 1, planet_origin_slot: 3,
             planet_target_galaxy: 1, planet_target_system: 1, planet_target_slot: 4,
-            fleet_action_type: GameType.FLEET_ACTION_COLLECT,
+            fleet_action_type: GameType.FleetActionType.Collect,
             started_at: 1_000_000,
             duration_at_start_time: 30_000,
         },
-        fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 1, ship_type: GameType.LARGE_TRANSPORT, ship_quantity: 1 })],
+        fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 1, ship_type: GameType.ShipType.LargeTransport, ship_quantity: 1 })],
     });
 
     const originFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
@@ -78,7 +78,7 @@ describe('resolveCollectAction — defender has ships ("caught you")', () =>
 {
     it('sets fleet to a return trip and Resolved', () =>
     {
-        const result: SetupResult = setup(new Map([[GameType.SMALL_TRANSPORT, 1]]));
+        const result: SetupResult = setup(new Map([[GameType.ShipType.SmallTransport, 1]]));
         CollectAction.resolveCollectAction(result.originPlayer, result.targetPlayer, result.fleet, TestDataBuilders.buildServerData());
 
         expect(result.fleet.fleetMovementRow.is_return_trip).toBe(1);
@@ -88,17 +88,17 @@ describe('resolveCollectAction — defender has ships ("caught you")', () =>
     it('does not collect any resources from the target', () =>
     {
         const result: SetupResult = setup(
-            new Map([[GameType.SMALL_TRANSPORT, 1]]),
-            new Map([[GameType.RESOURCE_1, 5000]]),
+            new Map([[GameType.ShipType.SmallTransport, 1]]),
+            new Map([[GameType.ResourceType.Metal, 5000]]),
         );
         CollectAction.resolveCollectAction(result.originPlayer, result.targetPlayer, result.fleet, TestDataBuilders.buildServerData());
 
-        expect(ResourceData.getResourceQuantity(result.targetPlanet, GameType.RESOURCE_1)).toBe(5000);
+        expect(ResourceData.getResourceQuantity(result.targetPlanet, GameType.ResourceType.Metal)).toBe(5000);
     });
 
     it('attaches a failure message mentioning enemy ships', () =>
     {
-        const result: SetupResult = setup(new Map([[GameType.SMALL_TRANSPORT, 1]]));
+        const result: SetupResult = setup(new Map([[GameType.ShipType.SmallTransport, 1]]));
         CollectAction.resolveCollectAction(result.originPlayer, result.targetPlayer, result.fleet, TestDataBuilders.buildServerData());
 
         expect(result.fleet.originMessageRow).not.toBeNull();
@@ -112,8 +112,8 @@ describe('resolveCollectAction — defender has no ships', () =>
     it('collects resources from the target up to available space', () =>
     {
         const result: SetupResult = setup(
-            new Map([[GameType.SMALL_TRANSPORT, 0]]),
-            new Map([[GameType.RESOURCE_1, 10_000], [GameType.RESOURCE_2, 10_000]]),
+            new Map([[GameType.ShipType.SmallTransport, 0]]),
+            new Map([[GameType.ResourceType.Metal, 10_000], [GameType.ResourceType.Crystal, 10_000]]),
         );
         CollectAction.resolveCollectAction(result.originPlayer, result.targetPlayer, result.fleet, TestDataBuilders.buildServerData());
 
@@ -121,8 +121,8 @@ describe('resolveCollectAction — defender has no ships', () =>
         expect(result.fleet.resolutionState).toBe(CoreType.FleetMovementResolution.Resolved);
 
         // Some resources should have been moved off the target into the fleet
-        const targetAfter1: number = ResourceData.getResourceQuantity(result.targetPlanet, GameType.RESOURCE_1);
-        const targetAfter2: number = ResourceData.getResourceQuantity(result.targetPlanet, GameType.RESOURCE_2);
+        const targetAfter1: number = ResourceData.getResourceQuantity(result.targetPlanet, GameType.ResourceType.Metal);
+        const targetAfter2: number = ResourceData.getResourceQuantity(result.targetPlanet, GameType.ResourceType.Crystal);
         const collectedSomething: boolean = targetAfter1 < 10_000 || targetAfter2 < 10_000;
         expect(collectedSomething).toBe(true);
     });
@@ -131,7 +131,7 @@ describe('resolveCollectAction — defender has no ships', () =>
     {
         const result: SetupResult = setup(
             new Map(),
-            new Map([[GameType.RESOURCE_1, 10_000]]),
+            new Map([[GameType.ResourceType.Metal, 10_000]]),
         );
         CollectAction.resolveCollectAction(result.originPlayer, result.targetPlayer, result.fleet, TestDataBuilders.buildServerData());
 

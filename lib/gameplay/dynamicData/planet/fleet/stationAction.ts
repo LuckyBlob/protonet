@@ -1,4 +1,5 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
@@ -48,9 +49,9 @@ function addStationActionMessages(targetPlayerData: CoreType.PlayerData, fleetMo
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
     const publicPlayerRows: DBType.PublicPlayerRow[] = targetPlayerData.publicPlayerRows;
-    const originPlayerName: string = GameType.getPlayerName(publicPlayerRows, fleetRow.player_origin_id);
-    const targetPlayerName: string = GameType.getPlayerName(publicPlayerRows, fleetRow.player_target_id);
-    const targetAddress: string = GameType.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
+    const originPlayerName: string = StaticDataHelper.getPlayerName(publicPlayerRows, fleetRow.player_origin_id);
+    const targetPlayerName: string = StaticDataHelper.getPlayerName(publicPlayerRows, fleetRow.player_target_id);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
     const shipsList: string = FleetData.buildShipsListFromFleetMovement(fleetMovement.fleetMovementShipRows);
     const resourcesList: string = FleetData.buildResourcesListFromFleetMovement(fleetMovement.fleetMovementResourceRows);

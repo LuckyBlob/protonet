@@ -10,7 +10,7 @@ describe('getFailedBuildingUpgradeRequirements', () =>
     it('returns no failures for Iron Mine when no upgrade is in progress', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BUILDING_RESOURCE_PRODUCTION_1, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalMine, 1);
         expect(failed).toHaveLength(0);
     });
 
@@ -27,7 +27,7 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BUILDING_RESOURCE_PRODUCTION_1, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalMine, 1);
         expect(failed).toHaveLength(1);
     });
 
@@ -37,12 +37,12 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_ROBOTIC_FACTORY, 1]]),
+                buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BUILDING_SHIPYARD, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.Shipyard, 1);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -52,12 +52,12 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_ROBOTIC_FACTORY, 2]]),
+                buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 2]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BUILDING_SHIPYARD, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.Shipyard, 1);
         expect(failed).toHaveLength(0);
     });
 
@@ -67,12 +67,12 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_ROBOTIC_FACTORY, 5]]),
+                buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 5]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BUILDING_SHIPYARD, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.Shipyard, 1);
         expect(failed).toHaveLength(0);
     });
 
@@ -92,12 +92,12 @@ describe('getFailedShipBuildRequirements', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_SHIPYARD, 1]]),
+                buildingLevels: new Map([[GameType.BuildingType.Shipyard, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.SMALL_TRANSPORT, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.SmallTransport, 1);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -107,18 +107,18 @@ describe('getFailedShipBuildRequirements', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_SHIPYARD, 2]]),
+                buildingLevels: new Map([[GameType.BuildingType.Shipyard, 2]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.SMALL_TRANSPORT, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.SmallTransport, 1);
         expect(failed).toHaveLength(0);
     });
 
     it('blocks Small Transport when Shipyard is currently being upgraded', () =>
     {
-        const shipyardUpgradeRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BUILDING_SHIPYARD });
+        const shipyardUpgradeRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.Shipyard });
         const ongoingUpgrade: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 1 }),
@@ -128,19 +128,19 @@ describe('getFailedShipBuildRequirements', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_SHIPYARD, 2]]),
+                buildingLevels: new Map([[GameType.BuildingType.Shipyard, 2]]),
                 buildingUpgrades: [ongoingUpgrade],
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.SMALL_TRANSPORT, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.SmallTransport, 1);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('does not block Small Transport when Iron Mine (not Shipyard) is being upgraded', () =>
     {
-        const ironMineUpgradeRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BUILDING_RESOURCE_PRODUCTION_1 });
+        const ironMineUpgradeRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine });
         const ongoingUpgrade: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 1 }),
@@ -150,13 +150,13 @@ describe('getFailedShipBuildRequirements', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_SHIPYARD, 2]]),
+                buildingLevels: new Map([[GameType.BuildingType.Shipyard, 2]]),
                 buildingUpgrades: [ongoingUpgrade],
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.SMALL_TRANSPORT, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.SmallTransport, 1);
         expect(failed).toHaveLength(0);
     });
 
@@ -166,12 +166,12 @@ describe('getFailedShipBuildRequirements', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_SHIPYARD, 5]]),
+                buildingLevels: new Map([[GameType.BuildingType.Shipyard, 5]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.LARGE_TRANSPORT, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.LargeTransport, 1);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -181,12 +181,12 @@ describe('getFailedShipBuildRequirements', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_SHIPYARD, 6]]),
+                buildingLevels: new Map([[GameType.BuildingType.Shipyard, 6]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.LARGE_TRANSPORT, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.LargeTransport, 1);
         expect(failed).toHaveLength(0);
     });
 
@@ -196,12 +196,12 @@ describe('getFailedShipBuildRequirements', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_SHIPYARD, 3]]),
+                buildingLevels: new Map([[GameType.BuildingType.Shipyard, 3]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.COLONY_SHIP, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.ColonyShip, 1);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -211,12 +211,12 @@ describe('getFailedShipBuildRequirements', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_SHIPYARD, 4]]),
+                buildingLevels: new Map([[GameType.BuildingType.Shipyard, 4]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.COLONY_SHIP, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.ColonyShip, 1);
         expect(failed).toHaveLength(0);
     });
 });
@@ -236,12 +236,12 @@ describe('getRequirementDescriptions', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_ROBOTIC_FACTORY, 1]]),
+                buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BUILDING_SHIPYARD, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.Shipyard, 1);
         const descriptions: string[] = Requirements.getRequirementDescriptions(failed, playerData, 1);
 
         for (const description of descriptions)
@@ -256,12 +256,12 @@ describe('getRequirementDescriptions', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_SHIPYARD, 1]]),
+                buildingLevels: new Map([[GameType.BuildingType.Shipyard, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.SMALL_TRANSPORT, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.SmallTransport, 1);
         const descriptions: string[] = Requirements.getRequirementDescriptions(failed, playerData, 1);
 
         const containsShipyardClause: boolean = descriptions.some((line: string): boolean => line.includes("Shipyard"));

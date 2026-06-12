@@ -60,7 +60,14 @@
       "PowerShell($f=\"Z:\\\\www\\\\deploy.sh\"; \\(Get-Item $f\\).IsReadOnly; Test-Path $f; try { [System.IO.File]::OpenWrite\\($f\\).Close\\(\\); \"writable\" } catch { \"NOT writable: $\\($_.Exception.Message\\)\" })",
       "Bash(python -c \"import sys,json; print\\(json.dumps\\(json.load\\(sys.stdin\\).get\\('scripts',{}\\), indent=2\\)\\)\")",
       "Bash(npx tsx *)",
-      "Bash(echo \"TSC EXIT: $?\")"
+      "Bash(echo \"TSC EXIT: $?\")",
+      "Bash(cd /d/Claude/WebsiteProject/protonet *)",
+      "Bash(sed -n '168,185p' components/layout/topBarElement.tsx)",
+      "Bash(sed -n '5,25p' lib/gameplay/dynamicData/planet/planetValueData.ts)",
+      "Bash(sed -n '520,535p' tests/helpers/e2eHelpers.ts)",
+      "Bash(sed -n '435,445p' components/views/fleetView.tsx)",
+      "Bash(sed -i 's/StaticData\\\\.BUILDING_STATS\\\\.get\\(buildingType as GameType\\\\.BuildingType\\)/StaticDataHelper.getBuildingStats\\(buildingType\\)/' lib/gameplay/coreData/formula/buildingCostFormulas.ts lib/gameplay/coreData/formula/buildingDurationFormulas.ts lib/gameplay/coreData/formula/buildingPlanetValueProductionFormulas.ts lib/gameplay/coreData/formula/buildingProductionFormulas.ts)",
+      "Bash(sed -i 's/StaticData\\\\.SHIP_STATS\\\\.get\\(shipType as GameType\\\\.ShipType\\)/StaticDataHelper.getShipStats\\(shipType\\)/g' lib/gameplay/coreData/formula/shipConstructionFormulas.ts lib/gameplay/coreData/formula/shipFuelConsumptionFormulas.ts lib/gameplay/dynamicData/planet/fleet/fleetData.ts lib/gameplay/dynamicData/planet/shipConstructionData.ts)"
     ]
   }
 }

@@ -7,9 +7,11 @@ import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as CollectAction from "@/lib/gameplay/dynamicData/planet/fleet/collectAction";
 import * as StationAction from "@/lib/gameplay/dynamicData/planet/fleet/stationAction";
-import * as ColonizeAction from "@/lib/gameplay/dynamicData/planet/fleet/colonizeAction";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
+import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 
 export type FleetPlayerData =
 {
@@ -29,17 +31,17 @@ export class FleetActionResolver
     {
 		switch (fleetMovement.fleetMovementRow.fleet_action_type)
 		{
-			case GameType.FLEET_ACTION_STATION:
+			case GameType.FleetActionType.Station:
 			{
 				StationAction.resolveStationAction(originPlayerData, targetPlayerData!, fleetMovement, serverData);
 				break;
 			}
-			case GameType.FLEET_ACTION_COLLECT:
+			case GameType.FleetActionType.Collect:
 			{
 				CollectAction.resolveCollectAction(originPlayerData, targetPlayerData!, fleetMovement, serverData);
 				break;
 			}
-			case GameType.FLEET_ACTION_COLONIZE:
+			case GameType.FleetActionType.Colonize:
 			{
 				fleetMovement.resolutionState = CoreType.FleetMovementResolution.ResolveResultUnknown;
 				break;
@@ -58,7 +60,7 @@ export function canExecuteFleetActionOnTargetAddress(originPlanetData: CoreType.
 {
     switch (fleetAction)
     {
-        case GameType.FLEET_ACTION_STATION:
+        case GameType.FleetActionType.Station:
         {
             if (targetPlanetOwnedPlayerId === null)
             {
@@ -67,13 +69,9 @@ export function canExecuteFleetActionOnTargetAddress(originPlanetData: CoreType.
 
             return true;
         }
-        case GameType.FLEET_ACTION_TRANSPORT:
+        case GameType.FleetActionType.Colonize:
         {
-            return false;
-        }
-        case GameType.FLEET_ACTION_COLONIZE:
-        {
-            const colonyShipQuantityRequest: number | undefined = shipQuantities.get(GameType.COLONY_SHIP);
+            const colonyShipQuantityRequest: number | undefined = shipQuantities.get(GameType.ShipType.ColonyShip);
             if ((colonyShipQuantityRequest === undefined) || (colonyShipQuantityRequest === 0))
             {
                 return false;
@@ -85,14 +83,14 @@ export function canExecuteFleetActionOnTargetAddress(originPlanetData: CoreType.
                 return false;
             }
 
-			if (originPlayerData.planetDatas.length >= GameType.MAX_ALLOWED_PLANETS)
+			if (originPlayerData.planetDatas.length >= StaticData.MAX_ALLOWED_PLANETS)
 			{
 				return false;
 			}
 
             return true;
         }
-        case GameType.FLEET_ACTION_COLLECT:
+        case GameType.FleetActionType.Collect:
         {
 			if (targetPlanetOwnedPlayerId === null)
             {
@@ -119,19 +117,15 @@ export function canExecuteFleetActionOnTargetPlanet(originPlanetData: CoreType.P
 	// do extra server checks if needed
 	switch (fleetAction)
 	{
-		case GameType.FLEET_ACTION_STATION:
+		case GameType.FleetActionType.Station:
 		{
 			return true;
 		}
-		case GameType.FLEET_ACTION_TRANSPORT:
+		case GameType.FleetActionType.Colonize:
 		{
 			return true;
 		}
-		case GameType.FLEET_ACTION_COLONIZE:
-		{
-			return true;
-		}
-		case GameType.FLEET_ACTION_COLLECT:
+		case GameType.FleetActionType.Collect:
 		{
 			return true;
 		}
@@ -150,8 +144,8 @@ export function calculateShipQuantitiesLowestMovementSpeed(shipQuantities: Map<n
 		{
 			continue;
 		}
-
-		const shipStats: GameType.ShipStats | undefined = GameType.SHIP_STATS.get(shipType);
+		
+		const shipStats: GameType.ShipStats | undefined = StaticDataHelper.getShipStats(shipType);
 		if (shipStats === undefined)
 		{
 			throw new Error(`⚠️: Building type ${shipType} has no ship stats.`); 
@@ -174,7 +168,7 @@ export function calculateShipQuantitiesLowestMovementSpeed(shipQuantities: Map<n
 
 export function calculateTotalFleetFuel(from: GameType.PlanetAddress, to: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: CoreType.ServerData): Map<number, number>
 {
-	const distance: number = GameType.getDistance(from, to);
+	const distance: number = StaticDataHelper.getDistance(from, to);
 	const speed: number = 10;
 	return ShipFuelConsumption.computeFuelConsumption(shipQuantities, distance, speed, serverData);
 }
@@ -184,7 +178,7 @@ export function calculateTotalFleetSpace(shipQuantities: Map<number, number>): n
 	let totalSpace: number = 0;
 	for (const [shipType, shipQuantity] of shipQuantities)
 	{
-		const shipStats: GameType.ShipStats | undefined = GameType.SHIP_STATS.get(shipType);
+		const shipStats: GameType.ShipStats | undefined = StaticDataHelper.getShipStats(shipType);
 		if (shipStats === undefined)
 		{
 			throw new Error(`⚠️: Building type ${shipType} has no ship stats.`); 
@@ -227,7 +221,7 @@ export function clampResoucesToAddToFleet(shipQuantities: Map<number, number>, f
 
 export function resolveFleetMovementAtTarget(targetPlayerData: CoreType.PlayerData | null, originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData, fleetActionResolver: FleetActionResolver): CoreType.PlayerData | null
 {
-	const canTargetBeNull: boolean = fleetMovement.fleetMovementRow.fleet_action_type === GameType.FLEET_ACTION_COLONIZE;
+	const canTargetBeNull: boolean = fleetMovement.fleetMovementRow.fleet_action_type === GameType.FleetActionType.Colonize;
 	if (fleetMovement.fleetMovementRow.player_target_id === null && !canTargetBeNull)
 	{
 		setFleetReturnTrip(null, fleetMovement);
@@ -310,11 +304,7 @@ function addInvalidTargetFleetActionMessage(originPlayerData: CoreType.PlayerDat
 		return;
 	}
 	
-	const actionName: string | undefined = GameType.FLEET_ACTION_NAMES.get(fleetMovement.fleetMovementRow.fleet_action_type);
-	if (actionName === undefined)
-	{
-		throw new Error(`UNREACHABLE: No name found for fleet action ${fleetMovement.fleetMovementRow.fleet_action_type}`);
-	}
+	const actionName: string = ThingType.getSpecificThingName(ThingType.fleetAction(fleetMovement.fleetMovementRow.fleet_action_type));
 	
 	fleetMovement.originMessageRow =
 	{
@@ -467,7 +457,7 @@ export function buildResourcesListFromFleetMovement(fleetMovementResourceRows: D
 	const parts: string[] = [];
 	for (const fleetMovementResourceRow of fleetMovementResourceRows)
 	{
-		const resourceName: string = GameType.RESOURCE_DISPLAY_NAMES.get(fleetMovementResourceRow.resource_type) ?? "Unknown";
+		const resourceName: string = ThingType.getSpecificThingName(ThingType.resource(fleetMovementResourceRow.resource_type)) ?? "Unknown";
 		parts.push(`${fleetMovementResourceRow.resource_quantity} ${resourceName}`);
 	}
 	return parts.join(", ");
@@ -483,7 +473,7 @@ export function buildShipsListFromFleetMovement(fleetMovementShipRows: DBType.Fl
 	const parts: string[] = [];
 	for (const fleetMovementShipRow of fleetMovementShipRows)
 	{
-		const shipName: string = GameType.SHIP_DISPLAY_NAMES.get(fleetMovementShipRow.ship_type) ?? "Unknown";
+		const shipName: string = ThingType.getSpecificThingName(ThingType.ship(fleetMovementShipRow.ship_type)) ?? "Unknown";
 		parts.push(`${fleetMovementShipRow.ship_quantity} ${shipName}`);
 	}
 	return parts.join(", ");

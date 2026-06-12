@@ -24,7 +24,7 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
             planetRow: { id: 1, last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 5], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 5]]),
+                buildingLevels: new Map([[GameType.BuildingType.MetalMine, 5], [GameType.BuildingType.SolarPlant, 5]]),
             },
         });
         const planet2: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
@@ -32,7 +32,7 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
             planetRow: { id: 2, last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_2, 5], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 5]]),
+                buildingLevels: new Map([[GameType.BuildingType.CrystalGrower, 5], [GameType.BuildingType.SolarPlant, 5]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet1, planet2] });
@@ -41,10 +41,10 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
         const oneHourLater: number = BASE_TIME + 3_600_000;
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, oneHourLater, APPLIER);
 
-        const p1Iron: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.RESOURCE_1);
-        const p2Iron: number = ResourceData.getResourceQuantity(result.planetDatas[1]!, GameType.RESOURCE_1);
-        const p1Crystal: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.RESOURCE_2);
-        const p2Crystal: number = ResourceData.getResourceQuantity(result.planetDatas[1]!, GameType.RESOURCE_2);
+        const p1Iron: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Metal);
+        const p2Iron: number = ResourceData.getResourceQuantity(result.planetDatas[1]!, GameType.ResourceType.Metal);
+        const p1Crystal: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Crystal);
+        const p2Crystal: number = ResourceData.getResourceQuantity(result.planetDatas[1]!, GameType.ResourceType.Crystal);
 
         expect(p1Iron).toBeGreaterThan(p2Iron);
         expect(p2Crystal).toBeGreaterThan(p1Crystal);
@@ -52,7 +52,7 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
 
     it('resolves a building upgrade only on the planet that owns it', () =>
     {
-        const upgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BUILDING_RESOURCE_PRODUCTION_1 });
+        const upgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine });
         const upgrade: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow(
@@ -80,13 +80,13 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
         const afterCompletion: number = BASE_TIME + 30_001;
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, afterCompletion, APPLIER);
 
-        expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BUILDING_RESOURCE_PRODUCTION_1)).toBe(1);
-        expect(BuildingData.getBuildingLevel(result.planetDatas[1]!, GameType.BUILDING_RESOURCE_PRODUCTION_1)).toBe(0);
+        expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BuildingType.MetalMine)).toBe(1);
+        expect(BuildingData.getBuildingLevel(result.planetDatas[1]!, GameType.BuildingType.MetalMine)).toBe(0);
     });
 
     it('resolves a ship construction only on the planet that owns it', () =>
     {
-        const shipRow = TestDataBuilders.buildShipConstructionShipRow({ id: 1, ship_type: GameType.SMALL_TRANSPORT, ship_quantity: 1 });
+        const shipRow = TestDataBuilders.buildShipConstructionShipRow({ id: 1, ship_type: GameType.ShipType.SmallTransport, ship_quantity: 1 });
         const construction: CoreType.ShipConstruction =
         {
             shipConstructionRow: TestDataBuilders.buildShipConstructionRow(
@@ -114,14 +114,14 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
         const afterCompletion: number = BASE_TIME + 30_001;
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, afterCompletion, APPLIER);
 
-        expect(ShipData.getShipQuantity(result.planetDatas[1]!, GameType.SMALL_TRANSPORT)).toBe(1);
-        expect(ShipData.getShipQuantity(result.planetDatas[0]!, GameType.SMALL_TRANSPORT)).toBe(0);
+        expect(ShipData.getShipQuantity(result.planetDatas[1]!, GameType.ShipType.SmallTransport)).toBe(1);
+        expect(ShipData.getShipQuantity(result.planetDatas[0]!, GameType.ShipType.SmallTransport)).toBe(0);
     });
 
     it('handles the earliest event across planets first, then later ones', () =>
     {
         // Planet 1 upgrade completes at +10_000, planet 2 upgrade at +20_000.
-        const buildingRowA = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BUILDING_RESOURCE_PRODUCTION_1 });
+        const buildingRowA = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine });
         const upgradeEarly: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow(
@@ -130,7 +130,7 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
             }),
             buildingUpgradeBuildingRows: [buildingRowA],
         };
-        const buildingRowB = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 2, building_type: GameType.BUILDING_RESOURCE_PRODUCTION_2 });
+        const buildingRowB = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 2, building_type: GameType.BuildingType.CrystalGrower });
         const upgradeLate: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow(
@@ -156,7 +156,7 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
         const afterBoth: number = BASE_TIME + 30_000;
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, afterBoth, APPLIER);
 
-        expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BUILDING_RESOURCE_PRODUCTION_1)).toBe(1);
-        expect(BuildingData.getBuildingLevel(result.planetDatas[1]!, GameType.BUILDING_RESOURCE_PRODUCTION_2)).toBe(1);
+        expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BuildingType.MetalMine)).toBe(1);
+        expect(BuildingData.getBuildingLevel(result.planetDatas[1]!, GameType.BuildingType.CrystalGrower)).toBe(1);
     });
 });

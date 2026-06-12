@@ -61,7 +61,7 @@ describe('findNextAnchorEvent (ship construction)', () =>
     {
         const startedAt: number = 1_000_000;
         const durationMs: number = 5_760_000;
-        const construction: CoreType.ShipConstruction = buildSingleShipConstruction(1, GameType.SMALL_TRANSPORT, 1, startedAt, durationMs);
+        const construction: CoreType.ShipConstruction = buildSingleShipConstruction(1, GameType.ShipType.SmallTransport, 1, startedAt, durationMs);
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({
             dynamicPlanetData: { shipConstructions: [construction] },
@@ -79,7 +79,7 @@ describe('resolveAnchorEvent (ship construction)', () =>
 {
     it('adds one ship of the correct type to the planet', () =>
     {
-        const construction: CoreType.ShipConstruction = buildSingleShipConstruction(1, GameType.SMALL_TRANSPORT, 1, 1_000_000, 5_760_000);
+        const construction: CoreType.ShipConstruction = buildSingleShipConstruction(1, GameType.ShipType.SmallTransport, 1, 1_000_000, 5_760_000);
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({
             dynamicPlanetData: { shipConstructions: [construction] },
@@ -87,19 +87,19 @@ describe('resolveAnchorEvent (ship construction)', () =>
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
         const serverData = TestDataBuilders.buildServerData();
 
-        const quantityBefore: number = ShipData.getShipQuantity(planet, GameType.SMALL_TRANSPORT);
+        const quantityBefore: number = ShipData.getShipQuantity(planet, GameType.ShipType.SmallTransport);
 
         const anchorEventResult: AnchorEvent.AnchorEvent | null = ShipConstructionAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
         expect(anchorEventResult).not.toBeNull();
         ShipConstructionAnchorEvent.resolveAnchorEvent(playerData, serverData, anchorEventResult!);
 
-        const quantityAfter: number = ShipData.getShipQuantity(playerData.planetDatas[0]!, GameType.SMALL_TRANSPORT);
+        const quantityAfter: number = ShipData.getShipQuantity(playerData.planetDatas[0]!, GameType.ShipType.SmallTransport);
         expect(quantityAfter).toBe(quantityBefore + 1);
     });
 
     it('removes the construction entry after the last ship is built', () =>
     {
-        const construction: CoreType.ShipConstruction = buildSingleShipConstruction(1, GameType.SMALL_TRANSPORT, 1, 1_000_000, 5_760_000);
+        const construction: CoreType.ShipConstruction = buildSingleShipConstruction(1, GameType.ShipType.SmallTransport, 1, 1_000_000, 5_760_000);
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({
             dynamicPlanetData: { shipConstructions: [construction] },
@@ -116,7 +116,7 @@ describe('resolveAnchorEvent (ship construction)', () =>
 
     it('decrements ship_quantity by 1 but keeps construction alive when quantity > 1', () =>
     {
-        const construction: CoreType.ShipConstruction = buildSingleShipConstruction(1, GameType.SMALL_TRANSPORT, 3, 1_000_000, 5_760_000);
+        const construction: CoreType.ShipConstruction = buildSingleShipConstruction(1, GameType.ShipType.SmallTransport, 3, 1_000_000, 5_760_000);
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({
             dynamicPlanetData: { shipConstructions: [construction] },

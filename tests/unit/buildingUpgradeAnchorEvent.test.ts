@@ -61,7 +61,7 @@ describe('findNextAnchorEvent (building upgrade)', () =>
     {
         const startedAt: number = 1_000_000;
         const durationMs: number = 30_000;
-        const upgrade: CoreType.BuildingUpgrade = buildUpgradeOnPlanet(1, startedAt, durationMs, GameType.BUILDING_RESOURCE_PRODUCTION_1);
+        const upgrade: CoreType.BuildingUpgrade = buildUpgradeOnPlanet(1, startedAt, durationMs, GameType.BuildingType.MetalMine);
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({
             dynamicPlanetData: { buildingUpgrades: [upgrade] },
@@ -76,8 +76,8 @@ describe('findNextAnchorEvent (building upgrade)', () =>
 
     it('picks the earliest upgrade across multiple planets', () =>
     {
-        const earlyUpgrade: CoreType.BuildingUpgrade = buildUpgradeOnPlanet(1, 1_000_000, 5_000, GameType.BUILDING_RESOURCE_PRODUCTION_1);
-        const lateUpgrade: CoreType.BuildingUpgrade = buildUpgradeOnPlanet(2, 1_000_000, 20_000, GameType.BUILDING_RESOURCE_PRODUCTION_2);
+        const earlyUpgrade: CoreType.BuildingUpgrade = buildUpgradeOnPlanet(1, 1_000_000, 5_000, GameType.BuildingType.MetalMine);
+        const lateUpgrade: CoreType.BuildingUpgrade = buildUpgradeOnPlanet(2, 1_000_000, 20_000, GameType.BuildingType.CrystalGrower);
 
         const planet1: CoreType.PlanetData = TestDataBuilders.buildPlanetData({
             planetRow: { id: 1 },
@@ -102,7 +102,7 @@ describe('resolveAnchorEvent (building upgrade)', () =>
 {
     it('increments the building level on the correct planet', () =>
     {
-        const upgrade: CoreType.BuildingUpgrade = buildUpgradeOnPlanet(1, 1_000_000, 30_000, GameType.BUILDING_RESOURCE_PRODUCTION_1);
+        const upgrade: CoreType.BuildingUpgrade = buildUpgradeOnPlanet(1, 1_000_000, 30_000, GameType.BuildingType.MetalMine);
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({
             dynamicPlanetData: { buildingUpgrades: [upgrade] },
@@ -110,7 +110,7 @@ describe('resolveAnchorEvent (building upgrade)', () =>
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
         const serverData = TestDataBuilders.buildServerData();
 
-        const levelBefore: number = BuildingData.getBuildingLevel(planet, GameType.BUILDING_RESOURCE_PRODUCTION_1);
+        const levelBefore: number = BuildingData.getBuildingLevel(planet, GameType.BuildingType.MetalMine);
 
         const anchorEventResult: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
         expect(anchorEventResult).not.toBeNull();
@@ -118,7 +118,7 @@ describe('resolveAnchorEvent (building upgrade)', () =>
 
         const levelAfter: number = BuildingData.getBuildingLevel(
             playerData.planetDatas[0]!,
-            GameType.BUILDING_RESOURCE_PRODUCTION_1,
+            GameType.BuildingType.MetalMine,
         );
 
         expect(levelAfter).toBe(levelBefore + 1);
@@ -126,7 +126,7 @@ describe('resolveAnchorEvent (building upgrade)', () =>
 
     it('removes the upgrade from the planet after resolution', () =>
     {
-        const upgrade: CoreType.BuildingUpgrade = buildUpgradeOnPlanet(1, 1_000_000, 30_000, GameType.BUILDING_RESOURCE_PRODUCTION_1);
+        const upgrade: CoreType.BuildingUpgrade = buildUpgradeOnPlanet(1, 1_000_000, 30_000, GameType.BuildingType.MetalMine);
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({
             dynamicPlanetData: { buildingUpgrades: [upgrade] },

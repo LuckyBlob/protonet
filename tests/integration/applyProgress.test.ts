@@ -19,14 +19,14 @@ describe('applyProgressToPlayerData — resource accumulation', () =>
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1]]),
+                buildingLevels: new Map([[GameType.BuildingType.MetalMine, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
 
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, BASE_TIME, APPLIER);
-        const resource1: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.RESOURCE_1);
+        const resource1: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Metal);
         expect(resource1).toBe(2000);
     });
 
@@ -38,7 +38,7 @@ describe('applyProgressToPlayerData — resource accumulation', () =>
             dynamicPlanetData:
             {
                 // Solar Plant level 1 keeps the energy ratio >= 1 so the iron rate isn't throttled.
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 1]]),
+                buildingLevels: new Map([[GameType.BuildingType.MetalMine, 1], [GameType.BuildingType.SolarPlant, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
@@ -48,7 +48,7 @@ describe('applyProgressToPlayerData — resource accumulation', () =>
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, oneHourLater, APPLIER);
 
         // Iron Mine level 1: 33 resource1/hr → 2000 + 33 = 2033
-        const resource1: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.RESOURCE_1);
+        const resource1: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Metal);
         expect(resource1).toBe(2033);
     });
 
@@ -59,7 +59,7 @@ describe('applyProgressToPlayerData — resource accumulation', () =>
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1]]),
+                buildingLevels: new Map([[GameType.BuildingType.MetalMine, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
@@ -67,7 +67,7 @@ describe('applyProgressToPlayerData — resource accumulation', () =>
 
         ApplyProgress.applyProgressToPlayerData(playerData, serverData, BASE_TIME + 3_600_000, APPLIER);
 
-        const originalResource1: number = ResourceData.getResourceQuantity(playerData.planetDatas[0]!, GameType.RESOURCE_1);
+        const originalResource1: number = ResourceData.getResourceQuantity(playerData.planetDatas[0]!, GameType.ResourceType.Metal);
         expect(originalResource1).toBe(2000);
     });
 
@@ -79,7 +79,7 @@ describe('applyProgressToPlayerData — resource accumulation', () =>
             dynamicPlanetData:
             {
                 // Solar Plant level 1 keeps the energy ratio >= 1 so the iron rate isn't throttled.
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 1]]),
+                buildingLevels: new Map([[GameType.BuildingType.MetalMine, 1], [GameType.BuildingType.SolarPlant, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
@@ -91,8 +91,8 @@ describe('applyProgressToPlayerData — resource accumulation', () =>
         const normalResult: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, normalServer, afterOneHour, APPLIER);
         const fastResult: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, fastServer, afterOneHour, APPLIER);
 
-        const normalGain: number = ResourceData.getResourceQuantity(normalResult.planetDatas[0]!, GameType.RESOURCE_1) - 2000;
-        const fastGain: number = ResourceData.getResourceQuantity(fastResult.planetDatas[0]!, GameType.RESOURCE_1) - 2000;
+        const normalGain: number = ResourceData.getResourceQuantity(normalResult.planetDatas[0]!, GameType.ResourceType.Metal) - 2000;
+        const fastGain: number = ResourceData.getResourceQuantity(fastResult.planetDatas[0]!, GameType.ResourceType.Metal) - 2000;
 
         // fast server produces 66/hr (2× multiplier) vs normal 33/hr
         expect(fastGain).toBe(normalGain * 2);
@@ -103,7 +103,7 @@ describe('applyProgressToPlayerData — building upgrade resolution', () =>
 {
     it('resolves a building upgrade when time passes the completion mark', () =>
     {
-        const buildingUpgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BUILDING_RESOURCE_PRODUCTION_1 });
+        const buildingUpgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine });
         const upgrade: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow(
@@ -127,14 +127,14 @@ describe('applyProgressToPlayerData — building upgrade resolution', () =>
         const afterCompletion: number = BASE_TIME + 30_000 + 1;
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, afterCompletion, APPLIER);
 
-        const level: number = BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BUILDING_RESOURCE_PRODUCTION_1);
+        const level: number = BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BuildingType.MetalMine);
         expect(level).toBe(1);
         expect(result.planetDatas[0]!.dynamicPlanetData.buildingUpgrades).toHaveLength(0);
     });
 
     it('leaves a building upgrade in place when it has not yet completed', () =>
     {
-        const buildingUpgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BUILDING_RESOURCE_PRODUCTION_1 });
+        const buildingUpgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine });
         const upgrade: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow(
@@ -158,7 +158,7 @@ describe('applyProgressToPlayerData — building upgrade resolution', () =>
         const beforeCompletion: number = BASE_TIME + 10_000;
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, beforeCompletion, APPLIER);
 
-        const level: number = BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BUILDING_RESOURCE_PRODUCTION_1);
+        const level: number = BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BuildingType.MetalMine);
         expect(level).toBe(0);
         expect(result.planetDatas[0]!.dynamicPlanetData.buildingUpgrades).toHaveLength(1);
     });
@@ -170,7 +170,7 @@ describe('applyProgressToPlayerData — building upgrade resolution', () =>
         // Phase 2: Iron Mine level 2 → 72 resource1/hr for 1 hour
         // Total gain: 33 + 72 = 105; final resource1: 2105
 
-        const buildingUpgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BUILDING_RESOURCE_PRODUCTION_1 });
+        const buildingUpgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine });
         const upgrade: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow(
@@ -189,7 +189,7 @@ describe('applyProgressToPlayerData — building upgrade resolution', () =>
             dynamicPlanetData:
             {
                 // Solar Plant level 2 keeps the energy ratio >= 1 across the upgrade to mine level 2.
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 2]]),
+                buildingLevels: new Map([[GameType.BuildingType.MetalMine, 1], [GameType.BuildingType.SolarPlant, 2]]),
                 buildingUpgrades: [upgrade],
             },
         });
@@ -200,10 +200,10 @@ describe('applyProgressToPlayerData — building upgrade resolution', () =>
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, twoHoursLater, APPLIER);
 
         // Building level should be 2 (from 1, upgraded once)
-        const level: number = BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BUILDING_RESOURCE_PRODUCTION_1);
+        const level: number = BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BuildingType.MetalMine);
         expect(level).toBe(2);
 
-        const resource1: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.RESOURCE_1);
+        const resource1: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Metal);
         expect(resource1).toBe(2105);
     });
 });

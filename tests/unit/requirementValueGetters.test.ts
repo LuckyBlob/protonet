@@ -47,19 +47,19 @@ describe('buildingLevel', () =>
         {
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_ROBOTIC_FACTORY, 3]]),
+                buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 3]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.buildingLevel(GameType.BUILDING_ROBOTIC_FACTORY);
+        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.buildingLevel(GameType.BuildingType.RoboticFactory);
         expect(getter(playerData, 1)).toBe(3);
     });
 
     it('returns 0 when the building has never been built', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.buildingLevel(GameType.BUILDING_SHIPYARD);
+        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard);
         expect(getter(playerData, 1)).toBe(0);
     });
 });
@@ -68,7 +68,7 @@ describe('isSpecificBuildingBeingUpgraded', () =>
 {
     it('returns 1 when the specified building is upgrading', () =>
     {
-        const shipyardRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 7, building_type: GameType.BUILDING_SHIPYARD });
+        const shipyardRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 7, building_type: GameType.BuildingType.Shipyard });
         const upgrade: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 7 }),
@@ -80,13 +80,13 @@ describe('isSpecificBuildingBeingUpgraded', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BUILDING_SHIPYARD);
+        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.Shipyard);
         expect(getter(playerData, 1)).toBe(1);
     });
 
     it('returns 0 when a different building is upgrading', () =>
     {
-        const ironMineRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 7, building_type: GameType.BUILDING_RESOURCE_PRODUCTION_1 });
+        const ironMineRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 7, building_type: GameType.BuildingType.MetalMine });
         const upgrade: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 7 }),
@@ -98,14 +98,14 @@ describe('isSpecificBuildingBeingUpgraded', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BUILDING_SHIPYARD);
+        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.Shipyard);
         expect(getter(playerData, 1)).toBe(0);
     });
 
     it('returns 0 when no upgrade is in progress at all', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BUILDING_SHIPYARD);
+        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.Shipyard);
         expect(getter(playerData, 1)).toBe(0);
     });
 });

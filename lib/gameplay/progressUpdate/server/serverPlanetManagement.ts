@@ -3,7 +3,8 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ServerType from "@/lib/gameplay/coreData/type/serverTypes";
 import * as ServerProgress from "@/lib/gameplay/progressUpdate/server/serverProgress";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 function findFreePlanetAddress(minSlot: number, maxSlot:number): GameType.PlanetAddress | null
 {
@@ -35,9 +36,9 @@ function findFreePlanetAddress(minSlot: number, maxSlot:number): GameType.Planet
             LIMIT 1`
     ).get({
         galaxyMin: 1,
-        galaxyMax: GameType.GALAXY_COUNT,
+        galaxyMax: StaticData.GALAXY_COUNT,
         systemMin: 1,
-        systemMax: GameType.SYSTEM_COUNT,
+        systemMax: StaticData.SYSTEM_COUNT,
         slotMin: minSlot,
         slotMax: maxSlot,
     }) as GameType.PlanetAddress | undefined;
@@ -52,7 +53,7 @@ export function claimPlanet(planetAddress: GameType.PlanetAddress | null, player
         const isNew: boolean = planetAddress === null;
         if (isNew)
         {
-            planetAddress = findFreePlanetAddress(GameType.MIN_SLOT_STARTING_PLANET, GameType.MAX_SLOT_STARTING_PLANET);
+            planetAddress = findFreePlanetAddress(StaticData.MIN_SLOT_STARTING_PLANET, StaticData.MAX_SLOT_STARTING_PLANET);
         }
 
         if (planetAddress === null)
@@ -66,19 +67,19 @@ export function claimPlanet(planetAddress: GameType.PlanetAddress | null, player
             planetAddress.slot,
             planetAddress.system,
             planetAddress.galaxy,
-            GameType.STARTING_PLANET_SIZE,
+            StaticData.STARTING_PLANET_SIZE,
             playerId,
             claimedAt,
             claimedAt
         ) as { id: number };
 
-        let size: number = GameType.STARTING_PLANET_SIZE;
+        let size: number = StaticData.STARTING_PLANET_SIZE;
         if (isNew === false)
         {
             const slotRow: { slot: number } = DB.databaseConnection.prepare(
                 "SELECT slot FROM planet WHERE id = ?"
             ).get(claimedPlanet.id) as { slot: number };
-            size = GameType.rollSizeForSlot(slotRow.slot);
+            size = StaticDataHelper.rollSizeForSlot(slotRow.slot);
         }
 
         DB.databaseConnection.prepare(

@@ -6,6 +6,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 export function setBuildingLevel(planetData: CoreType.PlanetData, buildingType: number, value: number): void
 {
@@ -34,7 +35,7 @@ function computeProductionRatePerHourForResource(planetData: CoreType.PlanetData
 {
 	let totalResourceTypeProductionRatePerHour: number = 0;
 
-	for (const buildingType of GameType.BUILDING_STATS.keys())
+	for (const buildingType of StaticData.BUILDING_STATS.keys())
 	{
 		const currentLevel: number = buildingLevelMap.get(buildingType) ?? 0;
 		const productionRatePerHourMap: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(buildingType, currentLevel, serverData);
@@ -83,7 +84,7 @@ function getProductionBuildingTypeArrayForResourceType(resourceType: number): nu
 {
 	const productionBuildingTypeArray: number[] = [];
 
-	for (const buildingType of GameType.BUILDING_STATS.keys())
+	for (const buildingType of StaticData.BUILDING_STATS.keys())
 	{
 		const productionMap: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(buildingType, 1, null);
 		if (productionMap !== null && productionMap.has(resourceType) === true)

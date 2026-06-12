@@ -1,13 +1,13 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes"
-import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 import * as BuildingPlanetValueProduction from "@/lib/gameplay/coreData/formula/buildingPlanetValueProductionFormulas";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 export function computeResourceProductionPlanetValueRatio(planetData: CoreType.PlanetData, resourceType: ThingType.SpecificThing): number
 {
     let totalRatio: number = 1;
 
-    for (const [planetValueType, planetValueInfo] of GameType.PLANET_VALUE_INFOS)
+    for (const [planetValueType, planetValueInfo] of StaticData.PLANET_VALUE_INFOS)
     {
         if (planetValueInfo.ratioImpactsResourceProduction === undefined)
         {

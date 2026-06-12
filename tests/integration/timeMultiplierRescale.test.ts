@@ -18,7 +18,7 @@ function buildPlayerWithIronMine(level: number): CoreType.PlayerData
         {
             // A Solar Plant at the same level keeps the energy ratio >= 1 (a -10 mine vs a +20 plant
             // gives ratio 2), so the iron rate isn't throttled and these tests isolate time-multiplier.
-            buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, level], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, level]]),
+            buildingLevels: new Map([[GameType.BuildingType.MetalMine, level], [GameType.BuildingType.SolarPlant, level]]),
         },
     });
     return TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
@@ -42,7 +42,7 @@ describe('applyProgressToPlayerData — time_multiplier transitions', () =>
         const afterFirstHalf: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, slow, halfHour, APPLIER);
         const afterSecondHalf: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(afterFirstHalf, fast, fullHour, APPLIER);
 
-        const finalAmount: number = ResourceData.getResourceQuantity(afterSecondHalf.planetDatas[0]!, GameType.RESOURCE_1);
+        const finalAmount: number = ResourceData.getResourceQuantity(afterSecondHalf.planetDatas[0]!, GameType.ResourceType.Metal);
         // 2000 base + ~16 (slow half) + ~33 (fast half) ≈ 2049 (Math.floor at read)
         expect(finalAmount).toBeGreaterThanOrEqual(2049);
         expect(finalAmount).toBeLessThanOrEqual(2050);
@@ -68,8 +68,8 @@ describe('applyProgressToPlayerData — time_multiplier transitions', () =>
         // All slow
         const slowOnly: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerSlow, slow, t3, APPLIER);
 
-        const mixedAmount: number = ResourceData.getResourceQuantity(mixedT3.planetDatas[0]!, GameType.RESOURCE_1);
-        const slowAmount: number = ResourceData.getResourceQuantity(slowOnly.planetDatas[0]!, GameType.RESOURCE_1);
+        const mixedAmount: number = ResourceData.getResourceQuantity(mixedT3.planetDatas[0]!, GameType.ResourceType.Metal);
+        const slowAmount: number = ResourceData.getResourceQuantity(slowOnly.planetDatas[0]!, GameType.ResourceType.Metal);
         expect(mixedAmount).toBeGreaterThan(slowAmount);
     });
 
@@ -84,8 +84,8 @@ describe('applyProgressToPlayerData — time_multiplier transitions', () =>
         const slowResult: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(player, slow, oneHourLater, APPLIER);
         const fastResult: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(player, fast, oneHourLater, APPLIER);
 
-        const slowGain: number = ResourceData.getResourceQuantity(slowResult.planetDatas[0]!, GameType.RESOURCE_1) - 2000;
-        const fastGain: number = ResourceData.getResourceQuantity(fastResult.planetDatas[0]!, GameType.RESOURCE_1) - 2000;
+        const slowGain: number = ResourceData.getResourceQuantity(slowResult.planetDatas[0]!, GameType.ResourceType.Metal) - 2000;
+        const fastGain: number = ResourceData.getResourceQuantity(fastResult.planetDatas[0]!, GameType.ResourceType.Metal) - 2000;
 
         expect(fastGain).toBe(slowGain * 2);
     });

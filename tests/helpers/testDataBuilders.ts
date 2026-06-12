@@ -1,6 +1,7 @@
 import * as DBType from "@/lib/db/dbTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 export function buildPlayerRow(overrides?: Partial<DBType.PlayerRow>): DBType.PlayerRow
 {
@@ -26,7 +27,7 @@ export function buildPlanetRow(overrides?: Partial<DBType.PlanetRow>): DBType.Pl
         slot: 3,
         system: 1,
         galaxy: 1,
-        size: GameType.STARTING_PLANET_SIZE,
+        size: StaticData.STARTING_PLANET_SIZE,
         owner_player_id: 1,
         claimed_at: 0,
         last_updated: 1_000_000,
@@ -42,15 +43,15 @@ export function buildDynamicPlanetData(overrides?: Partial<CoreType.DynamicPlane
     {
         resourceQuantity: new Map<number, number>
         ([
-            [GameType.RESOURCE_1, 2000],
-            [GameType.RESOURCE_2, 500],
-            [GameType.RESOURCE_3, 0],
+            [GameType.ResourceType.Metal, 2000],
+            [GameType.ResourceType.Crystal, 500],
+            [GameType.ResourceType.Deuterium, 0],
         ]),
         buildingLevels: new Map<number, number>(),
         shipQuantity: new Map<number, number>
         ([
-            [GameType.SMALL_TRANSPORT, 0],
-            [GameType.LARGE_TRANSPORT, 0],
+            [GameType.ShipType.SmallTransport, 0],
+            [GameType.ShipType.LargeTransport, 0],
         ]),
         shipConstructions: [],
         futureFleetArrivals: [],
@@ -135,7 +136,7 @@ export function buildBuildingUpgradeBuildingRow(overrides?: Partial<DBType.Build
     {
         id: 1,
         building_upgrade_id: 1,
-        building_type: GameType.BUILDING_RESOURCE_PRODUCTION_1,
+        building_type: GameType.BuildingType.MetalMine,
         ...overrides,
     };
 
@@ -166,7 +167,7 @@ export function buildShipConstructionShipRow(overrides?: Partial<DBType.ShipCons
     {
         id: 1,
         ship_construction_id: 1,
-        ship_type: GameType.SMALL_TRANSPORT,
+        ship_type: GameType.ShipType.SmallTransport,
         ship_quantity: 1,
         ...overrides,
     };
@@ -191,7 +192,7 @@ export function buildFleetMovementRow(overrides?: Partial<DBType.FleetMovementRo
         planet_target_system: 1,
         planet_target_galaxy: 1,
         is_return_trip: 0,
-        fleet_action_type: GameType.FLEET_ACTION_STATION,
+        fleet_action_type: GameType.FleetActionType.Station,
         requested_at: 1_000_000,
         duration_at_request_time: 10_000,
         duration_at_start_time: 10_000,
@@ -207,7 +208,7 @@ export function buildFleetMovementShipRow(overrides?: Partial<DBType.FleetMoveme
     const row: DBType.FleetMovementShipRow =
     {
         fleet_id: 1,
-        ship_type: GameType.SMALL_TRANSPORT,
+        ship_type: GameType.ShipType.SmallTransport,
         ship_quantity: 1,
         ...overrides,
     };
@@ -220,7 +221,7 @@ export function buildFleetMovementResourceRow(overrides?: Partial<DBType.FleetMo
     const row: DBType.FleetMovementResourceRow =
     {
         fleet_id: 1,
-        resource_type: GameType.RESOURCE_1,
+        resource_type: GameType.ResourceType.Metal,
         resource_quantity: 0,
         ...overrides,
     };

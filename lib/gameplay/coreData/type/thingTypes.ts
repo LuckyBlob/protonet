@@ -1,5 +1,6 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 export type SpecificThing = number;
 export const Thing =
@@ -29,37 +30,43 @@ const THING_DEFINITIONS: ReadonlyMap<Thing, ThingDefinition> = new Map
 ([
     [Thing.Resource,
     {
-        specificThingDisplayNames: GameType.RESOURCE_DISPLAY_NAMES,
+        specificThingDisplayNames: new Map<SpecificThing, string>([...StaticData.RESOURCE_INFOS].map(
+            ([resourceType, resourceTypeInfo]) => [resourceType, resourceTypeInfo.displayName])),
         contexts: [CoreType.DataContext.ResourceQuantity],
     }],
     [Thing.Building,
     {
-        specificThingDisplayNames: GameType.BUILDING_DISPLAY_NAMES,
+        specificThingDisplayNames: new Map<SpecificThing, string>([...StaticData.BUILDING_STATS].map(
+            ([buildingType, buildingStats]) => [buildingType, buildingStats.displayName])),
         contexts: [CoreType.DataContext.BuildingLevel],
     }],
     [Thing.Ship,
     {
-        specificThingDisplayNames: GameType.SHIP_DISPLAY_NAMES,
+        specificThingDisplayNames: new Map<SpecificThing, string>([...StaticData.SHIP_STATS].map(
+            ([shipType, shipTypeStats]) => [shipType, shipTypeStats.displayName])),
         contexts: [CoreType.DataContext.ShipQuantity, CoreType.DataContext.ShipConstruction],
     }],
     [Thing.BuildingUpgrade,
     {
-        specificThingDisplayNames: GameType.BUILDING_DISPLAY_NAMES,
+        specificThingDisplayNames: new Map<SpecificThing, string>([...StaticData.BUILDING_STATS].map(
+            ([buildingType, buildingStats]) => [buildingType, buildingStats.displayName])),
         contexts: [CoreType.DataContext.BuildingLevel],
     }],
     [Thing.ShipConstruction,
     {
-        specificThingDisplayNames: GameType.SHIP_DISPLAY_NAMES,
+        specificThingDisplayNames: new Map<SpecificThing, string>([...StaticData.SHIP_STATS].map(
+            ([shipType, shipTypeStats]) => [shipType, shipTypeStats.displayName])),
         contexts: [CoreType.DataContext.ShipConstruction],
     }],
     [Thing.FleetMovement,
     {
-        specificThingDisplayNames: GameType.SHIP_DISPLAY_NAMES,
+        specificThingDisplayNames: new Map<SpecificThing, string>([...StaticData.FLEET_ACTION_INFOS].map(
+            ([fleetActionType, fleetActionInfo]) => [fleetActionType, fleetActionInfo.displayName])),
         contexts: [CoreType.DataContext.FutureFleetArrivals],
     }],
     [Thing.PlanetValue,
     {
-        specificThingDisplayNames: new Map<SpecificThing, string>([...GameType.PLANET_VALUE_INFOS].map(
+        specificThingDisplayNames: new Map<SpecificThing, string>([...StaticData.PLANET_VALUE_INFOS].map(
             ([planetValueType, planetValueInfo]) => [planetValueType, planetValueInfo.displayName])),
         contexts: [],
     }],
@@ -83,19 +90,19 @@ export function getAllSpecificThings(thingType: Thing): SpecificThing[]
     {
         case Thing.Building:
         {
-            return [...GameType.BUILDING_DISPLAY_NAMES.keys()];
+            return [...StaticData.BUILDING_STATS.keys()];
         }
         case Thing.Ship:
         {
-            return [...GameType.SHIP_DISPLAY_NAMES.keys()];
+            return [...StaticData.SHIP_STATS.keys()];
         }
         case Thing.Resource:
         {
-            return [...GameType.RESOURCE_DISPLAY_NAMES.keys()];
+            return [...StaticData.RESOURCE_INFOS.keys()];
         }
         case Thing.PlanetValue:
         {
-            return [...GameType.PLANET_VALUE_INFOS.keys()];
+            return [...StaticData.PLANET_VALUE_INFOS.keys()];
         }
     }
 
@@ -105,9 +112,10 @@ export function getAllSpecificThings(thingType: Thing): SpecificThing[]
 export function resource(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.Resource, specificThingType: specificThing }; }
 export function building(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.Building, specificThingType: specificThing }; }
 export function ship(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.Ship, specificThingType: specificThing }; }
+export function fleetAction(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.FleetMovement, specificThingType: specificThing }; }
 export function planetValue(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.PlanetValue, specificThingType: specificThing }; }
 
-function getSpecificThingNameMap(thingType: Thing): ReadonlyMap<SpecificThing, string>
+export function getSpecificThingNameMap(thingType: Thing): ReadonlyMap<SpecificThing, string>
 {
 	const thingDefinition: ThingDefinition | undefined = THING_DEFINITIONS.get(thingType);
 
