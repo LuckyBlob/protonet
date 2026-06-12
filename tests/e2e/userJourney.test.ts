@@ -38,6 +38,10 @@ test('full user journey', async ({ page }) =>
 	await E2EHelper.expectResourceCard(page, 'Crystal', 500, 15)
 	await E2EHelper.expectResourceCard(page, 'Deuterium', 0, 0)
 
+	// With no buildings there is no energy production or consumption, so the energy ratio defaults to 1
+	// and the base mine rates above are unthrottled. The card shows the empty 0/0 pair.
+	await E2EHelper.expectPlanetValueCard(page, 'Energy', 0, 0)
+
 	// Notice (cont.): the Shipyard is blocked by an unmet *requirement*, not by affordability. A
 	// resource shortfall would leave the Build Upgrade button present but disabled; here the button
 	// is absent entirely and the card shows the unmet-requirement notice instead.
@@ -77,7 +81,7 @@ test('full user journey', async ({ page }) =>
 	await E2EHelper.selectPlanetByAddress(page, e2e1SecondAddress)
 	expect(await E2EHelper.selectedPlanetAddress(page)).toBe(e2e1SecondAddress)
 
-	await page.getByRole('button', { name: 'Abandon planet' }).click()
+	await E2EHelper.abandonSelectedPlanet(page)
 	// The abandon is async: the planet button is already visible, so waiting on visibility alone
 	// races the network round-trip. Instead wait for the selection to fall off the abandoned
 	// planet (it resolves to the remaining one), which only happens once the new state lands.
@@ -90,8 +94,7 @@ test('full user journey', async ({ page }) =>
 	const selectedAfterAbandon: string = await E2EHelper.selectedPlanetAddress(page)
 	expect(selectedAfterAbandon).not.toBe(e2e1SecondAddress)
 
-	await page.getByRole('button', { name: 'Delete account' }).click()
-	await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible()
+	await E2EHelper.deleteAccount(page)
 })
 
 test('registration is rejected once every starting slot in the universe is claimed', async ({ page }) =>

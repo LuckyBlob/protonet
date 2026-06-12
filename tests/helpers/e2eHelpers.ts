@@ -65,10 +65,20 @@ export async function register(page: Page, username: string, password: string): 
     registeredTestUsers.push({ username: username, password: password });
 }
 
+// The Delete-account button moved from the top bar onto the Account view, so navigate there first.
 export async function deleteAccount(page: Page): Promise<void>
 {
+    await goToView(page, "Account")
     await page.getByRole('button', { name: 'Delete account' }).click()
     await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible()
+}
+
+// Abandon the currently selected planet. The Abandon button also moved onto the Account view; callers
+// assert the resulting state themselves (top-bar selection change, or the button disabling at 1 planet).
+export async function abandonSelectedPlanet(page: Page): Promise<void>
+{
+    await goToView(page, "Account")
+    await page.getByRole('button', { name: 'Abandon planet' }).click()
 }
 
 // Logs into each account registered this test and deletes it via the real Delete-account button,
@@ -195,7 +205,7 @@ export function setResource(planetId: number, playerId: number, resourceType: nu
 
 export function setAllResources(planetId: number, playerId: number, quantity: number, db: Database.Database): void
 {
-    const resourceTypes: number[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
+    const resourceTypes: ThingType.SpecificThing[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
     for (const resourceType of resourceTypes)
     {
         setResource(planetId, playerId, resourceType, quantity, db);
@@ -208,6 +218,18 @@ export function setBuildingLevel(planetId: number, playerId: number, buildingTyp
         `INSERT INTO planet_building (planet_id, player_id, building_type, building_level) VALUES (?, ?, ?, ?)
          ON CONFLICT (planet_id, building_type) DO UPDATE SET building_level = excluded.building_level, player_id = excluded.player_id`
     ).run(planetId, playerId, buildingType, level);
+}
+
+// Sets the same building level on every planet the player owns. The top bar only shows the selected
+// planet, so seeding all of them means the assertions hold whichever one registration left selected.
+export function setBuildingLevelOnAllPlanets(username: string, buildingType: number, level: number, db: Database.Database): void
+{
+    const playerId: number = getPlayerId(username, db);
+    const planets: PlanetRow[] = getPlanets(username, db);
+    for (const planet of planets)
+    {
+        setBuildingLevel(planet.id, playerId, buildingType, level, db);
+    }
 }
 
 export function setShipQuantity(planetId: number, playerId: number, shipType: number, quantity: number, db: Database.Database): void
@@ -398,7 +420,7 @@ export async function reloadGame(page: Page): Promise<void>
     await expect(page.getByRole("button", { name: PLANET_BUTTON_PATTERN })).toBeVisible();
 }
 
-export async function goToView(page: Page, view: "Game" | "Upgrades" | "Shipyard" | "Fleets" | "Planets" | "Messages" | "Stats"): Promise<void>
+export async function goToView(page: Page, view: "Game" | "Upgrades" | "Shipyard" | "Fleets" | "Planets" | "Messages" | "Stats" | "Account"): Promise<void>
 {
     // The sidebar's Messages button accessible name is "Messages" when there are no unread, and
     // "Messages(N)" once the unread badge appears, so we can't rely on an exact name match here.
@@ -436,6 +458,34 @@ export async function expectResourceCard(page: Page, resourceName: string, quant
     const card: Locator = resourceCard(page, resourceName);
     await expect(card).toContainText(`${resourceName} : ${quantity}`);
     await expect(card).toContainText(`${productionPerHour}/h`);
+}
+
+// Assert just the hourly production line of a resource card, independent of the current stockpile, so
+// energy-throttled rates can be checked without pinning the (time-dependent) resource amount.
+export async function expectResourceProductionPerHour(page: Page, resourceName: string, productionPerHour: number): Promise<void>
+{
+    await expect(resourceCard(page, resourceName).getByText(`${productionPerHour}/h`, { exact: true })).toBeVisible();
+}
+
+// The top bar renders one planet-value card per type as "<name>: <production>/<consumption>". The name
+// has no space before the colon ("Energy:"), unlike resource cards ("Iron :"), so the two never collide.
+export function planetValueCard(page: Page, planetValueName: string): Locator
+{
+    return page.locator("div.border").filter({ hasText: `${planetValueName}:` });
+}
+
+// Assert a planet-value card's production/consumption pair. Consumption is always shown positive even
+// though it's stored negative.
+export async function expectPlanetValueCard(page: Page, planetValueName: string, production: number, consumption: number): Promise<void>
+{
+    await expect(planetValueCard(page, planetValueName)).toContainText(`${planetValueName}: ${production}/${consumption}`);
+}
+
+// Assert how the planet-value pair is coloured: "white" once the ratio reaches 1, "red" below it.
+export async function expectPlanetValueColor(page: Page, planetValueName: string, color: "white" | "red"): Promise<void>
+{
+    const expectedClass: string = color === "red" ? "text-red-500" : "text-white";
+    await expect(planetValueCard(page, planetValueName).locator("span")).toHaveClass(expectedClass);
 }
 
 export function buildUpgradeButton(page: Page, buildingName: string): Locator

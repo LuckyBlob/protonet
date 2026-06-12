@@ -1,90 +1,22 @@
-import { useRouter } from "next/navigation";
 import { ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as UseCurrentUser from "@/lib/use/useCurrentUser";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
-import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
+import * as PlanetValueData from "@/lib/gameplay/dynamicData/planet/planetValueData";
 
 type TopBarProps =
 {
 	clientDataStateResult: UseClientDataState.ClientDataStateResult;
-	cuController: UseCurrentUser.CUController;
 	planetSelector: ReactElement;
 };
-
-function renderAbandonPlanetButton(props: TopBarProps): ReactElement
-{
-	const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
-	const ownedPlanetCount: number = playerData.planetDatas.length;
-	const isDisabled: boolean = ownedPlanetCount <= 1;
-
-	const handleAbandonPlanet = async (): Promise<void> =>
-	{
-		const errorMessage: string | null = await ClientRequestFunctions.clientTryAbandonPlanet(props.clientDataStateResult.psController);
-		if (errorMessage !== null)
-		{
-			console.error("⚠️:", errorMessage);
-		}
-	};
-
-	const buttonElement: ReactElement =
-	(
-		<button
-			type="button"
-			onClick={handleAbandonPlanet}
-			disabled={isDisabled}
-			className="border border-gray-400 px-3 py-1 rounded bg-red-600 hover:bg-red-500 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm font-semibold"
-		>
-			Abandon planet
-		</button>
-	);
-
-	return buttonElement;
-}
-
-function renderDeleteAccountButton(props: TopBarProps, router: ReturnType<typeof useRouter>): ReactElement
-{
-	const handleDeleteAccount = async (): Promise<void> =>
-	{
-		const username: string | undefined = props.cuController[0].user?.username;
-		if (username === undefined)
-		{
-			console.error("⚠️:", "Cannot delete account: username unavailable.");
-			return;
-		}
-
-		try
-		{
-			await ClientRequestFunctions.clientTryDeleteUserRequest();
-			router.push("/login");
-		}
-		catch (error: unknown)
-		{
-			console.error("⚠️:", error);
-		}
-	};
-
-	const buttonElement: ReactElement =
-	(
-		<button
-			type="button"
-			onClick={handleDeleteAccount}
-			className="border border-gray-400 px-3 py-1 rounded bg-red-600 hover:bg-red-500 text-white text-sm font-semibold"
-		>
-			Delete account
-		</button>
-	);
-
-	return buttonElement;
-}
 
 function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, remainingMs: number | null): ReactElement
 {
@@ -106,32 +38,57 @@ function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, 
 	return cardElement;
 }
 
+function renderPlanetValueCard(planetValueDisplayValues: PlanetValueCardDisplayValues): ReactElement
+{
+	const planetValueName: string = ThingType.getSpecificThingName(ThingType.planetValue(planetValueDisplayValues.planetValueType));
+	const productionValue: number = Math.floor(planetValueDisplayValues.production);
+	const consumptionValue: number = Math.floor(planetValueDisplayValues.consumption);
+
+	// White once production covers consumption (ratio >= 1), red while consumption outpaces it.
+	const isProductionCoveringConsumption: boolean = planetValueDisplayValues.production >= planetValueDisplayValues.consumption;
+	const valueColorClass: string = isProductionCoveringConsumption ? "text-white" : "text-red-500";
+
+	const cardElement: ReactElement =
+	(
+		<div key={planetValueDisplayValues.planetValueType} className="flex flex-col items-center gap-1 border border-gray-400 rounded px-6 py-2">
+			<div className="font-bold">{planetValueName}{":"} <span className={valueColorClass}>{productionValue}/{consumptionValue}</span></div>
+		</div>
+	);
+
+	return cardElement;
+}
+
 export function TopBarElement(props: TopBarProps): ReactElement
 {
-	const router: ReturnType<typeof useRouter> = useRouter();
-	const resourceTypes: number[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
+	const resourceTypes: ThingType.SpecificThing[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
 
 	try
 	{
 		const displayValues: PlanetDisplayValues = getPlanetDisplayValues(props.clientDataStateResult, resourceTypes);
 
-		const cardElements: ReactElement[] = displayValues.resourceDisplayValues.map((resourceDisplayValues: PlanetResourceDisplayValues): ReactElement =>
+		const resourceCardElements: ReactElement[] = displayValues.resourceDisplayValues.map((resourceDisplayValues: PlanetResourceDisplayValues): ReactElement =>
 		{
 			return renderResourceCard(resourceDisplayValues, displayValues.remainingBuildingUpgradeMs);
 		});
 
+		// Newest planet value type sits closest to the centre, so the cluster grows leftward from the right edge.
+		const orderedPlanetValueDisplayValues: PlanetValueCardDisplayValues[] = [...displayValues.planetValueDisplayValues].reverse();
+		const planetValueCardElements: ReactElement[] = orderedPlanetValueDisplayValues.map((planetValueDisplayValues: PlanetValueCardDisplayValues): ReactElement =>
+		{
+			return renderPlanetValueCard(planetValueDisplayValues);
+		});
+
 		const topBarElement: ReactElement =
 		(
-			<div className="bg-black/50 text-white py-3 px-4 flex items-start">
-				<div className="flex items-center">
+			<div className="relative bg-black/50 text-white py-3 px-4">
+				<div className="absolute left-4 top-3">
 					{props.planetSelector}
 				</div>
-				<div className="flex-1 flex justify-center gap-4">
-					{cardElements}
+				<div className="flex justify-center gap-4">
+					{resourceCardElements}
 				</div>
-				<div className="flex flex-col items-end gap-2">
-					{renderAbandonPlanetButton(props)}
-					{renderDeleteAccountButton(props, router)}
+				<div className="absolute right-4 top-3 flex items-start gap-4">
+					{planetValueCardElements}
 				</div>
 			</div>
 		);
@@ -140,7 +97,7 @@ export function TopBarElement(props: TopBarProps): ReactElement
 	}
 	catch (error: unknown)
 	{
-		console.error("⚠️:", error); 
+		console.error("⚠️:", error);
 		return <HelperElements.EmptyElement></HelperElements.EmptyElement>;
 	}
 }
@@ -153,16 +110,22 @@ export type PlanetResourceDisplayValues =
 	affectedByCurrentBuild: boolean;
 };
 
+export type PlanetValueCardDisplayValues =
+{
+	planetValueType: number;
+	production: number;
+	consumption: number;
+};
+
 export type PlanetDisplayValues =
 {
 	resourceDisplayValues: PlanetResourceDisplayValues[];
+	planetValueDisplayValues: PlanetValueCardDisplayValues[];
 	remainingBuildingUpgradeMs: number | null;
 };
 
 export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState.ClientDataStateResult, resourceTypes: number[]): PlanetDisplayValues
 {
-	const now: number = Date.now();
-
 	const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(clientDataStateResult.psController[0]);
 	const buildingBeingUpgraded: number | null = BuildingUpgradeData.getBuildingTypeCurrentlyUpgrading(planetDataPredicted);
 
@@ -188,11 +151,43 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 		resourceDisplayValues.push(singleResourceDisplayValues);
 	}
 
+	const planetValueDisplayValues: PlanetValueCardDisplayValues[] = getPlanetValueCardDisplayValues(planetDataPredicted);
+
 	const displayValues: PlanetDisplayValues =
 	{
 		resourceDisplayValues: resourceDisplayValues,
+		planetValueDisplayValues: planetValueDisplayValues,
 		remainingBuildingUpgradeMs: BuildingUpgradeData.getBuildingUpgradeRemainingMs(planetDataPredicted),
 	};
 
 	return displayValues;
+}
+
+function getPlanetValueCardDisplayValues(planetDataPredicted: CoreType.PlanetData): PlanetValueCardDisplayValues[]
+{
+	const planetValueAmountsMap: Map<number, CoreType.PlanetValueData> = PlanetValueData.computePlanetValueDatas(planetDataPredicted.dynamicPlanetData);
+
+	const planetValueDisplayValues: PlanetValueCardDisplayValues[] = [];
+
+	// Only the planet values flagged for the top bar are shown; the rest are still tracked, just not here.
+	for (const [planetValueType, planetValueInfo] of GameType.PLANET_VALUE_INFOS)
+	{
+		if (planetValueInfo.showInTopBar === false)
+		{
+			continue;
+		}
+
+		const planetValueAmounts: CoreType.PlanetValueData | undefined = planetValueAmountsMap.get(planetValueType);
+
+		const singlePlanetValueDisplayValues: PlanetValueCardDisplayValues =
+		{
+			planetValueType: planetValueType,
+			production: planetValueAmounts?.production ?? 0,
+			consumption: planetValueAmounts?.consumption ?? 0,
+		};
+
+		planetValueDisplayValues.push(singlePlanetValueDisplayValues);
+	}
+
+	return planetValueDisplayValues;
 }

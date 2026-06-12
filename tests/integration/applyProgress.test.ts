@@ -37,7 +37,8 @@ describe('applyProgressToPlayerData — resource accumulation', () =>
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1]]),
+                // Solar Plant level 1 keeps the energy ratio >= 1 so the iron rate isn't throttled.
+                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
@@ -77,7 +78,8 @@ describe('applyProgressToPlayerData — resource accumulation', () =>
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1]]),
+                // Solar Plant level 1 keeps the energy ratio >= 1 so the iron rate isn't throttled.
+                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
@@ -186,7 +188,8 @@ describe('applyProgressToPlayerData — building upgrade resolution', () =>
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1]]),
+                // Solar Plant level 2 keeps the energy ratio >= 1 across the upgrade to mine level 2.
+                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 2]]),
                 buildingUpgrades: [upgrade],
             },
         });

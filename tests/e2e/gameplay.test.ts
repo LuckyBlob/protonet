@@ -848,7 +848,7 @@ test.describe("Fleets", () =>
         await E2EHelper.logout(page);
         await E2EHelper.login(page, victim, PASSWORD);
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(victimTarget));
-        await page.getByRole("button", { name: "Abandon planet" }).click();
+        await E2EHelper.abandonSelectedPlanet(page);
         // The abandon must actually commit (and null the in-flight fleet's target) before we move
         // on — once the victim is down to a single planet the Abandon button disables itself.
         await expect(page.getByRole("button", { name: "Abandon planet" })).toBeDisabled();
@@ -926,7 +926,7 @@ test.describe("Fleets", () =>
         await E2EHelper.logout(page);
         await E2EHelper.login(page, victim, PASSWORD);
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(victimTarget));
-        await page.getByRole("button", { name: "Abandon planet" }).click();
+        await E2EHelper.abandonSelectedPlanet(page);
         await expect(page.getByRole("button", { name: "Abandon planet" })).toBeDisabled();
 
         // Attacker brings the loot home.
@@ -981,8 +981,7 @@ test.describe("Fleets", () =>
         const fleet: E2EHelper.FleetRow = E2EHelper.getFleetByOrigin(origin.id, db);
         expect(E2EHelper.fleetExists(fleet.id, db)).toBe(true);
 
-        await page.getByRole("button", { name: "Delete account" }).click();
-        await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
+        await E2EHelper.deleteAccount(page);
 
         expect(E2EHelper.fleetExists(fleet.id, db)).toBe(false);
         expect(E2EHelper.getMessageCount(playerId, db)).toBe(0);

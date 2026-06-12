@@ -57,7 +57,10 @@
       "Bash(cp /tmp/srf_backup.ts lib/networkRequests/server/serverRequestFunctions.ts)",
       "Bash(rm /tmp/srf_backup.ts)",
       "Bash(MIGRATION_TEST_SOURCE_DB=\"data/game.db\" pnpm test:migration)",
-      "PowerShell($f=\"Z:\\\\www\\\\deploy.sh\"; \\(Get-Item $f\\).IsReadOnly; Test-Path $f; try { [System.IO.File]::OpenWrite\\($f\\).Close\\(\\); \"writable\" } catch { \"NOT writable: $\\($_.Exception.Message\\)\" })"
+      "PowerShell($f=\"Z:\\\\www\\\\deploy.sh\"; \\(Get-Item $f\\).IsReadOnly; Test-Path $f; try { [System.IO.File]::OpenWrite\\($f\\).Close\\(\\); \"writable\" } catch { \"NOT writable: $\\($_.Exception.Message\\)\" })",
+      "Bash(python -c \"import sys,json; print\\(json.dumps\\(json.load\\(sys.stdin\\).get\\('scripts',{}\\), indent=2\\)\\)\")",
+      "Bash(npx tsx *)",
+      "Bash(echo \"TSC EXIT: $?\")"
     ]
   }
 }

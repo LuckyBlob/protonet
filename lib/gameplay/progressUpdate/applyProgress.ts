@@ -122,7 +122,7 @@ function applyUpdateAtTimeForPlanet(planetData: CoreType.PlanetData, serverData:
 
 function getPredictedResourceQuantitiesAtTime(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number): Map<number, number>
 {
-    const resourceTypes: number[] = ThingTypes.getAllSpecificThings(ThingTypes.Thing.Resource);
+    const resourceTypes: ThingTypes.SpecificThing[] = ThingTypes.getAllSpecificThings(ThingTypes.Thing.Resource);
 
     const predictedResourceQuantities: Map<number, number> = new Map<number, number>();
     for (const resourceType of resourceTypes)

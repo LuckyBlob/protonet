@@ -34,6 +34,7 @@ export const BUILDING_RESOURCE_PRODUCTION_2: number = 2; // prod resource 1
 export const BUILDING_SHIPYARD: number = 3; // shipyard
 export const BUILDING_ROBOTIC_FACTORY: number = 4; // Robotic factory
 export const BUILDING_RESOURCE_PRODUCTION_3: number = 5; // prod resource 3
+export const BUILDING_PLANET_VALUE_PRODUCTION_1: number = 6; // solar plant
 
 export const BUILDING_DISPLAY_NAMES: ReadonlyMap<number, string> = new Map<number, string>
 ([
@@ -42,6 +43,7 @@ export const BUILDING_DISPLAY_NAMES: ReadonlyMap<number, string> = new Map<numbe
     [BUILDING_SHIPYARD, "Shipyard"],
     [BUILDING_ROBOTIC_FACTORY, "Robotics Factory"],
     [BUILDING_RESOURCE_PRODUCTION_3, "Deuterium Synthesizer"],
+    [BUILDING_PLANET_VALUE_PRODUCTION_1, "Solar Plant"],
 ]);
 
 export const RESOURCE_1: number = 1;
@@ -53,6 +55,27 @@ export const RESOURCE_DISPLAY_NAMES: ReadonlyMap<number, string> = new Map<numbe
     [RESOURCE_1, "Iron"],
     [RESOURCE_2, "Crystal"],
     [RESOURCE_3, "Deuterium"],
+]);
+
+export const PlanetValueType =
+{
+    Energy: 1,
+} as const;
+export type PlanetValueType = typeof PlanetValueType[keyof typeof PlanetValueType];
+export type PlanetValueInfo =
+{
+	displayName: string;
+	showInTopBar: boolean;
+	ratioImpactsResourceProduction?: boolean,
+	associatedResource?: number;
+	limitsResourceMax?: boolean;
+}
+export const PLANET_VALUE_INFOS: ReadonlyMap<PlanetValueType, PlanetValueInfo> = new Map<PlanetValueType, PlanetValueInfo>
+([
+    [PlanetValueType.Energy, {
+		displayName: "Energy",
+		showInTopBar: true,
+		ratioImpactsResourceProduction: true}],
 ]);
 
 export const SMALL_TRANSPORT: number = 1;
@@ -133,84 +156,132 @@ export function getPlayerName(publicPlayerRows: DBType.PublicPlayerRow[], player
     return matchingRow?.username ?? "Unknown";
 }
 
+export const BuildingCostFunctionType =
+{
+    SimpleExponential: 1,
+} as const;
+export type BuildingCostFunctionType = typeof BuildingCostFunctionType[keyof typeof BuildingCostFunctionType];
+export type CostStats = 
+{
+	baseCostExponent: number;
+	baseCost: Map<number, number>;
+}
+
+export const ProductionFunctionType =
+{
+    SimpleProductionBuilding: 1,
+} as const;
+export type ProductionFunctionType = typeof ProductionFunctionType[keyof typeof ProductionFunctionType];
 export type ProductionStats =
 {
     minProductionPerHour: number;
     productionFactor: number;
 	exponentBase: number,
 };
-export const BuildingCostFunctionType =
+
+export const BuildingPlanetValueProductionFormulasType =
 {
     SimpleExponential: 1,
 } as const;
-export type BuildingCostFunctionType = typeof BuildingCostFunctionType[keyof typeof BuildingCostFunctionType];
+export type BuildingPlanetValueProductionFormulasType = typeof BuildingPlanetValueProductionFormulasType[keyof typeof BuildingPlanetValueProductionFormulasType];
+export type PlanetValueStats =
+{
+	basePlanetValueExponent: number;
+	basePlanetValueFactor: Map<number, number>;
+};
+
 export type BuildingStats =
 {
-	costFunctionType: BuildingCostFunctionType;
-	productionStats: Map<number, ProductionStats> | null;
-	baseCostExponent: number;
-	baseCost: Map<number, number>;
+	costFunctionType?: BuildingCostFunctionType;
+	costStats?: CostStats;
+	productionFunctionType?: ProductionFunctionType;
+	productionStats?: Map<number, ProductionStats>;
+	planetValueProductionFormulasType?: BuildingPlanetValueProductionFormulasType;
+	planetValueStats?: PlanetValueStats;
 };
+
 export const BUILDING_STATS: ReadonlyMap<number, BuildingStats> = new Map<number, BuildingStats>
 ([
     [BUILDING_RESOURCE_PRODUCTION_1, {
 		costFunctionType: BuildingCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 1.5,
+			baseCost: new Map<number, number>([
+				[RESOURCE_1, 60],
+				[RESOURCE_2, 15],]),},
+		productionFunctionType: ProductionFunctionType.SimpleProductionBuilding,
 		productionStats: new Map<number, ProductionStats>([
-			[RESOURCE_1, 
-			{
+			[RESOURCE_1, {
 				minProductionPerHour: 30,
 				productionFactor: 30,
-				exponentBase: 1.1,
-			}]]),
-		baseCostExponent: 1.5,
-		baseCost: new Map<number, number>([
-			[RESOURCE_1, 60],
-			[RESOURCE_2, 15],
-		]),}],
-    [BUILDING_RESOURCE_PRODUCTION_2, {
+				exponentBase: 1.1,}]]),
+		planetValueProductionFormulasType: BuildingPlanetValueProductionFormulasType.SimpleExponential,
+		planetValueStats: {
+			basePlanetValueExponent: 1.1,
+			basePlanetValueFactor: new Map<number, number>([
+				[PlanetValueType.Energy, -10],]),},}],
+	[BUILDING_RESOURCE_PRODUCTION_2, {
 		costFunctionType: BuildingCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 1.6,
+			baseCost: new Map<number, number>([
+				[RESOURCE_1, 48],
+				[RESOURCE_2, 24],]),},
+		productionFunctionType: ProductionFunctionType.SimpleProductionBuilding,
 		productionStats: new Map<number, ProductionStats>([
-			[RESOURCE_2,
-			{
+			[RESOURCE_2, {
 				minProductionPerHour: 15,
 				productionFactor: 20,
-				exponentBase: 1.1,
-			}]]),
-		baseCostExponent: 1.6,
-		baseCost: new Map<number, number>([
-			[RESOURCE_1, 48],
-			[RESOURCE_2, 24],
-		]),}],
+				exponentBase: 1.1,}]]),
+		planetValueProductionFormulasType: BuildingPlanetValueProductionFormulasType.SimpleExponential,
+		planetValueStats: {
+			basePlanetValueExponent: 1.1,
+			basePlanetValueFactor: new Map<number, number>([
+				[PlanetValueType.Energy, -10],]),},}],
 	[BUILDING_SHIPYARD, {
 		costFunctionType: BuildingCostFunctionType.SimpleExponential,
-		productionStats: null,
-		baseCostExponent: 2,
-		baseCost: new Map<number, number>([
-			[RESOURCE_1, 400],
-			[RESOURCE_2, 200],
-		]),}],
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<number, number>([
+				[RESOURCE_1, 400],
+				[RESOURCE_2, 200],]),},},],
 	[BUILDING_ROBOTIC_FACTORY, {
 		costFunctionType: BuildingCostFunctionType.SimpleExponential,
-		productionStats: null,
-		baseCostExponent: 1.5,
-		baseCost: new Map<number, number>([
-			[RESOURCE_1, 400],
-			[RESOURCE_2, 120],
-		]),}],
+		costStats: {
+			baseCostExponent: 1.5,
+			baseCost: new Map<number, number>([
+				[RESOURCE_1, 400],
+				[RESOURCE_2, 120],]),},},],
 	[BUILDING_RESOURCE_PRODUCTION_3, {
 		costFunctionType: BuildingCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<number, number>([
+				[RESOURCE_1, 225],
+				[RESOURCE_2, 75],]),},
+		productionFunctionType: ProductionFunctionType.SimpleProductionBuilding,
 		productionStats: new Map<number, ProductionStats>([
-			[RESOURCE_3, 
-			{
+			[RESOURCE_3, {
 				minProductionPerHour: 0,
 				productionFactor: 10,
-				exponentBase: 1.1,
-			}]]),
-		baseCostExponent: 2,
-		baseCost: new Map<number, number>([
-			[RESOURCE_1, 225],
-			[RESOURCE_2, 75],
-		]),}],
+				exponentBase: 1.1,}]]),
+		planetValueProductionFormulasType: BuildingPlanetValueProductionFormulasType.SimpleExponential,
+		planetValueStats: {
+			basePlanetValueExponent: 1.1,
+			basePlanetValueFactor: new Map<number, number>([
+				[PlanetValueType.Energy, -20],]),},}],
+	[BUILDING_PLANET_VALUE_PRODUCTION_1, {
+		costFunctionType: BuildingCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 1.5,
+			baseCost: new Map<number, number>([
+				[RESOURCE_1, 75],
+				[RESOURCE_2, 30],]),},
+		planetValueProductionFormulasType: BuildingPlanetValueProductionFormulasType.SimpleExponential,
+		planetValueStats: {
+			basePlanetValueExponent: 1.1,
+			basePlanetValueFactor: new Map<number, number>([
+				[PlanetValueType.Energy, 20],]),},}],
 ]);
 
 export const STARTING_PLANET_DATA: CoreType.DynamicPlanetData =

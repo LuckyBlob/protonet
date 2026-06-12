@@ -122,7 +122,7 @@ function renderFleetMovementsSection(props: FleetViewProps): ReactElement
 
 function renderFleetShipRows(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const shipTypes: number[] = ThingType.getAllSpecificThings(ThingType.Thing.Ship);
+    const shipTypes: ThingType.SpecificThing[] = ThingType.getAllSpecificThings(ThingType.Thing.Ship);
     
     const rowElements: (ReactElement | null)[] = shipTypes.map((shipType: number) =>
     {
@@ -344,7 +344,7 @@ function renderFleetMaxResource(props: FleetViewProps, data: FleetViewData): Rea
 
 function renderFleetResourceRows(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const resourceTypes: number[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
+    const resourceTypes: ThingType.SpecificThing[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
     
     const rowElements: (ReactElement | null)[] = resourceTypes.map((resourceType: number) =>
     {

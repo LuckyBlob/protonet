@@ -58,6 +58,7 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	            <button onClick={() => props.cvController[1]("planets")} className={navButtonClass}>Planets</button>
 	            <button onClick={() => props.cvController[1]("messages")} className={navButtonClass}>Messages{unreadBadge}</button>
 	            <button onClick={() => props.cvController[1]("stats")} className={navButtonClass}>Stats</button>
+	            <button onClick={() => props.cvController[1]("account")} className={navButtonClass}>Account</button>
 	        </div>
 
 	        <div className="flex-1" />

@@ -10,6 +10,7 @@ export const Thing =
     BuildingUpgrade: 4,
     ShipConstruction: 5,
     FleetMovement: 6,
+    PlanetValue: 7,
 } as const;
 export type Thing = typeof Thing[keyof typeof Thing];
 
@@ -21,6 +22,7 @@ export const THING_DISPLAY_NAMES: ReadonlyMap<Thing, string> = new Map
     [Thing.BuildingUpgrade, "BuildingUpgrade"],
     [Thing.ShipConstruction, "ShipConstruction"],
     [Thing.FleetMovement, "FleetMovement"],
+    [Thing.PlanetValue, "PlanetValue"],
 ]);
  
 const THING_DEFINITIONS: ReadonlyMap<Thing, ThingDefinition> = new Map
@@ -55,6 +57,12 @@ const THING_DEFINITIONS: ReadonlyMap<Thing, ThingDefinition> = new Map
         specificThingDisplayNames: GameType.SHIP_DISPLAY_NAMES,
         contexts: [CoreType.DataContext.FutureFleetArrivals],
     }],
+    [Thing.PlanetValue,
+    {
+        specificThingDisplayNames: new Map<SpecificThing, string>([...GameType.PLANET_VALUE_INFOS].map(
+            ([planetValueType, planetValueInfo]) => [planetValueType, planetValueInfo.displayName])),
+        contexts: [],
+    }],
 ]);
 
 export type SpecificThingType =
@@ -85,6 +93,10 @@ export function getAllSpecificThings(thingType: Thing): SpecificThing[]
         {
             return [...GameType.RESOURCE_DISPLAY_NAMES.keys()];
         }
+        case Thing.PlanetValue:
+        {
+            return [...GameType.PLANET_VALUE_INFOS.keys()];
+        }
     }
 
     throw new Error(`getAllSpecificThings not supported for Thing ${thingType}`);
@@ -93,6 +105,7 @@ export function getAllSpecificThings(thingType: Thing): SpecificThing[]
 export function resource(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.Resource, specificThingType: specificThing }; }
 export function building(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.Building, specificThingType: specificThing }; }
 export function ship(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.Ship, specificThingType: specificThing }; }
+export function planetValue(specificThing: SpecificThing): SpecificThingType { return { thingType: Thing.PlanetValue, specificThingType: specificThing }; }
 
 function getSpecificThingNameMap(thingType: Thing): ReadonlyMap<SpecificThing, string>
 {

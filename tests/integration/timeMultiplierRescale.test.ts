@@ -16,7 +16,9 @@ function buildPlayerWithIronMine(level: number): CoreType.PlayerData
         planetRow: { last_updated: BASE_TIME },
         dynamicPlanetData:
         {
-            buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, level]]),
+            // A Solar Plant at the same level keeps the energy ratio >= 1 (a -10 mine vs a +20 plant
+            // gives ratio 2), so the iron rate isn't throttled and these tests isolate time-multiplier.
+            buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, level], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, level]]),
         },
     });
     return TestDataBuilders.buildPlayerData({ planetDatas: [planet] });

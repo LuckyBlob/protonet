@@ -10,7 +10,16 @@ export function computeProductionRatePerHour(buildingType: number, currentLevel:
         {
             throw new Error(`⚠️: Building type ${buildingType} has no building stats.`); 
         }
-        return computeProductionRate_SimpleProductionBuilding(currentLevel, buildingStats, serverData);
+
+        switch (buildingStats.costFunctionType)
+        {
+            case GameType.ProductionFunctionType.SimpleProductionBuilding:
+            {
+                return computeProductionRate_SimpleProductionBuilding(currentLevel, buildingStats, serverData);
+            }
+            default:
+                return null;
+        }
     }
     catch (error: unknown)
     {
@@ -21,15 +30,15 @@ export function computeProductionRatePerHour(buildingType: number, currentLevel:
 
 function computeProductionRate_SimpleProductionBuilding(currentLevel: number, buildingStats: GameType.BuildingStats, serverData: CoreType.ServerData | null): Map<number, number> | null
 {
-    const productionStats: Map<number, GameType.ProductionStats> | null = buildingStats.productionStats;
-    if (productionStats === null)
+    if (buildingStats.productionStats === undefined)
     {
         return null;
     }
-    const productionMap: Map<number, number> = new Map<number, number>();
+
     const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
 
-    for (const [resourceType, perResourceProductionStats] of productionStats)
+    const productionMap: Map<number, number> = new Map<number, number>();
+    for (const [resourceType, perResourceProductionStats] of buildingStats.productionStats)
     {
         const productionPerHour: number = Math.floor(Math.max(perResourceProductionStats.minProductionPerHour, perResourceProductionStats.productionFactor * currentLevel * Math.pow(perResourceProductionStats.exponentBase, currentLevel)));
         productionMap.set(resourceType, Math.floor(productionPerHour * timeMultiplier));

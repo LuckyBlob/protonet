@@ -7,13 +7,16 @@ import * as ShipyardView from "@/components/views/shipyardView";
 import * as FleetView from "@/components/views/fleetView";
 import * as PlanetView from "@/components/views/planetView";
 import * as MessagesView from "@/components/views/messagesView";
+import * as AccountView from "@/components/views/accountView";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
+import * as UseCurrentUser from "@/lib/use/useCurrentUser";
 
 type MainWindowProps =
 {
 	cvController: UseCurrentView.CVController;
 	clientDataStateResult: UseClientDataState.ClientDataStateResult;
+	cuController: UseCurrentUser.CUController;
 };
 
 export function MainWindowElement(props: MainWindowProps): ReactElement
@@ -51,6 +54,11 @@ export function MainWindowElement(props: MainWindowProps): ReactElement
 	if (props.cvController[0] === "messages")
 	{
 		return <MessagesView.MessagesView clientDataStateResult={props.clientDataStateResult} />;
+	}
+
+	if (props.cvController[0] === "account")
+	{
+		return <AccountView.AccountView clientDataStateResult={props.clientDataStateResult} cuController={props.cuController} />;
 	}
 
 	return <div>Unknown view</div>;

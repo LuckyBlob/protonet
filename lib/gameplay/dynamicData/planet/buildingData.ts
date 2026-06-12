@@ -1,5 +1,6 @@
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
 import * as BuildingProduction from "@/lib/gameplay/coreData/formula/buildingProductionFormulas";
+import * as PlanetValueData from "@/lib/gameplay/dynamicData/planet/planetValueData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
@@ -25,11 +26,11 @@ export function getBuildingLevelMap(planetData: CoreType.PlanetData): Map<ThingT
 export function getPlanetProductionRatePerSecond(planetData: CoreType.PlanetData, resourceType: number, serverData: CoreType.ServerData): number
 {
 	const buildingLevelMap: Map<number, number> = getBuildingLevelMap(planetData);
-	const productionRatePerHour: number = computeProductionRatePerHourForResource(resourceType, serverData, buildingLevelMap);
+	const productionRatePerHour: number = computeProductionRatePerHourForResource(planetData, resourceType, serverData, buildingLevelMap);
 	return productionRatePerHour / 3600;
 }
 
-function computeProductionRatePerHourForResource(resourceType: number, serverData: CoreType.ServerData, buildingLevelMap: Map<number, number>): number
+function computeProductionRatePerHourForResource(planetData: CoreType.PlanetData, resourceType: number, serverData: CoreType.ServerData, buildingLevelMap: Map<number, number>): number
 {
 	let totalResourceTypeProductionRatePerHour: number = 0;
 
@@ -51,7 +52,9 @@ function computeProductionRatePerHourForResource(resourceType: number, serverDat
 		totalResourceTypeProductionRatePerHour = totalResourceTypeProductionRatePerHour + resourceTypeProductionRatePerHour;
 	}
 
-	return totalResourceTypeProductionRatePerHour;
+	const resourceProductionRatio: number = PlanetValueData.computeResourceProductionPlanetValueRatio(planetData, resourceType);
+
+	return totalResourceTypeProductionRatePerHour * resourceProductionRatio;
 }
 
 export function canAffordUpgrade(planetData: CoreType.PlanetData, buildingType: number): boolean

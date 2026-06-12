@@ -15,15 +15,16 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
 {
     it('accumulates resources independently on each planet (relative comparison)', () =>
     {
-        // Each planet earns the level-0 minimum (30 Iron + 15 Crystal/hr) regardless of buildings,
-        // because the production formula clamps to minProductionPerHour. So we compare relatives:
+        // Each planet runs a level-5 mine plus a Solar Plant that keeps its energy ratio >= 1, so
+        // production isn't throttled and each planet also earns the level-0 minimum of the other
+        // resource (the production formula clamps to minProductionPerHour). So we compare relatives:
         // planet 1 should out-iron planet 2; planet 2 should out-crystal planet 1.
         const planet1: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
             planetRow: { id: 1, last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 5]]),
+                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 5], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 5]]),
             },
         });
         const planet2: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
@@ -31,7 +32,7 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
             planetRow: { id: 2, last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_2, 5]]),
+                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_2, 5], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 5]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet1, planet2] });

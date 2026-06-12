@@ -100,7 +100,9 @@ describe('applyProgressToPlayerData — idempotence at same now', () =>
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1]]),
+                // Solar Plant level 1 keeps the energy ratio >= 1 so production actually accrues and the
+                // idempotence check isn't satisfied trivially by a throttled-to-zero rate.
+                buildingLevels: new Map([[GameType.BUILDING_RESOURCE_PRODUCTION_1, 1], [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, 1]]),
             },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });

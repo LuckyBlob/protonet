@@ -159,7 +159,7 @@ export function UpgradeView(props: UpgradeViewProps): ReactElement
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 
-		const cardElements: ReactElement[] = ThingType.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: number): ReactElement =>
+		const cardElements: ReactElement[] = ThingType.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: ThingType.SpecificThing): ReactElement =>
 		{
 			return renderBuildingCard(props, selectedPlanetDataPredicted, buildingType);
 		});

@@ -41,7 +41,6 @@ export function MainPageContent(props: MainPageContentProps): ReactElement
             topBar={
                 <TopBarElement.TopBarElement
                     clientDataStateResult={props.clientDataStateResult}
-                    cuController={props.cuController}
                     planetSelector={
                         <PlanetSelector.PlanetSelector clientDataStateResult={props.clientDataStateResult}/>
                     }
@@ -51,6 +50,7 @@ export function MainPageContent(props: MainPageContentProps): ReactElement
                 <MainWindowElement.MainWindowElement
                     cvController={props.cvController}
                     clientDataStateResult={props.clientDataStateResult}
+                    cuController={props.cuController}
                 />
             }
         />

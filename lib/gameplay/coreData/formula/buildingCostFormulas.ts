@@ -21,11 +21,17 @@ export function computeBuildingUpgradeCost(currentUpgradeLevel: number, building
 }
 function computeBuildingUpgradeCost_SimpleExponential(currentUpgradeLevel: number, buildingStats: GameType.BuildingStats): Map<number, number>
 {
+	if (buildingStats.costStats === undefined)
+	{
+		// All buildings must cost SOMETHING
+		throw new Error(`⚠️: Building stats has no cost stats.`);
+	}
+
 	const costMap: Map<number, number> = new Map<number, number>();
 
-	for (const [resourceType, baseResourceCost] of buildingStats.baseCost)
+	for (const [resourceType, baseResourceCost] of buildingStats.costStats.baseCost)
 	{
-		costMap.set(resourceType, Math.floor(baseResourceCost * Math.pow(buildingStats.baseCostExponent, currentUpgradeLevel)));
+		costMap.set(resourceType, Math.floor(baseResourceCost * Math.pow(buildingStats.costStats.baseCostExponent, currentUpgradeLevel)));
 	}
 
 	return costMap;

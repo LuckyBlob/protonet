@@ -496,7 +496,7 @@ function createBuildShipsHandler(props: ShipyardViewProps, planetData: CoreType.
 function renderShipyardBody(props: ShipyardViewProps, planetDataPredicted: CoreType.PlanetData, quantitiesState: HelperElement.RequestedQuantitiesState): ReactElement
 {
     const serverData: CoreType.ServerData = props.clientDataStateResult.sdsController[0];
-    const shipTypes: number[] = ThingType.getAllSpecificThings(ThingType.Thing.Ship);
+    const shipTypes: ThingType.SpecificThing[] = ThingType.getAllSpecificThings(ThingType.Thing.Ship);
 
     const requestedMap: Map<number, number> = buildRequestedQuantitiesMap(shipTypes, quantitiesState.requestedQuantities);
     const hasRequestedData: boolean = requestedMap.size > 0;

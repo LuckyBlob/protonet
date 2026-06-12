@@ -24,7 +24,7 @@ export function getResourceQuantity(planetData: CoreType.PlanetData, resourceTyp
 export function getResourceQuantities(planetData: CoreType.PlanetData): Map<number, number>
 {
     const resourceQuantities: Map<number, number> = new Map<number, number>();
-    const resourceTypes: number[] = ThingTypes.getAllSpecificThings(ThingTypes.Thing.Resource);
+    const resourceTypes: ThingTypes.SpecificThing[] = ThingTypes.getAllSpecificThings(ThingTypes.Thing.Resource);
     for (const resourceType of resourceTypes)
     {
         resourceQuantities.set(resourceType, getResourceQuantity(planetData, resourceType));
