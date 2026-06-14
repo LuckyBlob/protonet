@@ -174,7 +174,7 @@ export async function clientTryRefreshServerRequest(clientDataStateResult: UseCl
     }
 }
 
-export async function clientTryUpgradeBuildingRequest(psController: CoreType.PSController, planetId: number, buildingType: number): Promise<void>
+export async function clientTryUpgradeBuildingRequest(psController: CoreType.PSController, planetId: number, buildingType: GameType.BuildingType): Promise<void>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding> =
     {
@@ -204,7 +204,7 @@ export async function clientTryUpgradeBuildingRequest(psController: CoreType.PSC
     }
 }
 
-export async function clientTryBuildShipsRequest(psController: CoreType.PSController, planetId: number, shipQuantities: Map<number, number>): Promise<void>
+export async function clientTryBuildShipsRequest(psController: CoreType.PSController, planetId: number, shipQuantities: Map<GameType.ShipType, number>): Promise<void>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips> =
     {
@@ -234,7 +234,7 @@ export async function clientTryBuildShipsRequest(psController: CoreType.PSContro
     }
 }
 
-export async function clientTrySendFleetRequest(psController: CoreType.PSController, originPlanetId: number, targetPlanetAddress: GameType.PlanetAddress, fleetAction: number, shipQuantities: Map<number, number>, resourceQuantities: Map<number, number>): Promise<string | null>
+export async function clientTrySendFleetRequest(psController: CoreType.PSController, originPlanetId: number, targetPlanetAddress: GameType.PlanetAddress, fleetAction: GameType.FleetActionType, shipQuantities: Map<GameType.ShipType, number>, resourceQuantities: Map<GameType.ResourceType, number>): Promise<string | null>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.SendFleet> =
     {

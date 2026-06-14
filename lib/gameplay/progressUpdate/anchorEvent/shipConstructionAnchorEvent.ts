@@ -1,5 +1,6 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
 import * as ShipConstructionData from "@/lib/gameplay/dynamicData/planet/shipConstructionData";
 import * as DBType from "@/lib/db/dbTypes";
@@ -80,7 +81,7 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
     const currentShipConstructionShipRow: DBType.ShipConstructionShipRow = finishedShipConstruction.shipConstructionShipRows[nextShipConstructionShipRowIndex];
     
     // Apply the change
-    ShipData.addPlanetShip(planetData, currentShipConstructionShipRow.ship_type, 1);
+    ShipData.addPlanetShip(planetData, currentShipConstructionShipRow.ship_type as GameType.ShipType, 1);
     currentShipConstructionShipRow.ship_quantity -= 1;
 
     let nextShipConstruction: CoreType.ShipConstruction | null = finishedShipConstruction;
@@ -131,7 +132,7 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
 
     nextShipConstruction.shipConstructionRow.current_ship_construction_ship_row_id = nextShipConstructionShipRow.id;
     nextShipConstruction.shipConstructionRow.started_at = anchorEvent.time;
-    const shipConstructionDurationSeconds: number | null = ShipConstructionData.getShipConstructionDurationSeconds(nextShipConstructionShipRow.ship_type, planetData, serverData);
+    const shipConstructionDurationSeconds: number | null = ShipConstructionData.getShipConstructionDurationSeconds(nextShipConstructionShipRow.ship_type as GameType.ShipType, planetData, serverData);
     if (shipConstructionDurationSeconds === null)
     {
         throw new Error(`Must have ship construction duration if ship construction ship row isnt null.`);

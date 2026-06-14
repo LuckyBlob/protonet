@@ -19,7 +19,7 @@ export default function Home()
 
 	if (MainPageContent.shouldShowLoading(cuController, clientDataStateResult))
 	{
-		return <LoadingElement.LoadingElement />;
+		return <LoadingElement.LoadingElement error={clientDataStateResult.lsController[0].error} />;
 	}
 
 	return (

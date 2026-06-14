@@ -41,14 +41,14 @@ export function buildDynamicPlanetData(overrides?: Partial<CoreType.DynamicPlane
 {
     const dynamicPlanetData: CoreType.DynamicPlanetData =
     {
-        resourceQuantity: new Map<number, number>
+        resourceQuantity: new Map<GameType.ResourceType, number>
         ([
             [GameType.ResourceType.Metal, 2000],
             [GameType.ResourceType.Crystal, 500],
             [GameType.ResourceType.Deuterium, 0],
         ]),
-        buildingLevels: new Map<number, number>(),
-        shipQuantity: new Map<number, number>
+        buildingLevels: new Map<GameType.BuildingType, number>(),
+        shipQuantity: new Map<GameType.ShipType, number>
         ([
             [GameType.ShipType.SmallTransport, 0],
             [GameType.ShipType.LargeTransport, 0],

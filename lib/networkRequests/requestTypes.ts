@@ -1,6 +1,7 @@
 import * as DBType from "@/lib/db/dbTypes";
 import * as Serialization from "@/lib/helper/serialization";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 
 export type BaseServerResponse = 
 {
@@ -57,7 +58,7 @@ export type RefreshServer_ServerResponse = BaseServerResponse &
 
 export type BuildingUpgrade_ClientRequest = BaseClientRequest &
 {
-	buildingType: number;
+	buildingType: GameType.BuildingType;
 	planetId: number;
 };
 export type BuildingUpgrade_ServerResponse = BaseServerResponse &
@@ -81,7 +82,7 @@ export type SendFleet_ClientRequest = BaseClientRequest &
 	targetPlanetGalaxy: number;
 	targetPlanetSystem: number;
 	targetPlanetPosition: number;
-	fleetAction: number;
+	fleetAction: GameType.FleetActionType;
 	serializedShipQuantities: Serialization.SerializedNumberNumberMap;
 	serializedResourceQuantities: Serialization.SerializedNumberNumberMap
 };

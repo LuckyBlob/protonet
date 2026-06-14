@@ -1,19 +1,20 @@
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as RequirementMap from "@/lib/gameplay/coreData/requirement/requirementMap";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 
-export function getFailedBuildingUpgradeRequirements(playerData: CoreType.PlayerData, buildingType: number, planetId: number): RequirementType.Requirement[]
+export function getFailedBuildingUpgradeRequirements(playerData: CoreType.PlayerData, buildingType: GameType.BuildingType, planetId: number): RequirementType.Requirement[]
 {
     return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.BuildingUpgrade, buildingType);
 }
 
-export function getFailedShipBuildRequirements(playerData: CoreType.PlayerData, shipType: number, planetId: number): RequirementType.Requirement[]
+export function getFailedShipBuildRequirements(playerData: CoreType.PlayerData, shipType: GameType.ShipType, planetId: number): RequirementType.Requirement[]
 {
     return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.ShipConstruction, shipType);
 }
 
-export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerData, shipType: number, planetId: number): RequirementType.Requirement[]
+export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerData, shipType: GameType.ShipType, planetId: number): RequirementType.Requirement[]
 {
     return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.FleetMovement, shipType);
 }

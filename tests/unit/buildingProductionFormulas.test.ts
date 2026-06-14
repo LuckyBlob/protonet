@@ -8,7 +8,7 @@ describe('computeProductionRatePerHour', () =>
 {
     it('returns null for an unknown building type', () =>
     {
-        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(9999, 1, null);
+        const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(9999 as GameType.BuildingType, 1, null);
         expect(result).toBeNull();
     });
 

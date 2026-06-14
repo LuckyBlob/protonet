@@ -1,6 +1,7 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as DBType from "@/lib/db/dbTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 
@@ -85,8 +86,9 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
     const currentBuildingUpgradeBuildingRow: DBType.BuildingUpgradeBuildingRow = finishedUpgrade.buildingUpgradeBuildingRows[currentBuildingRowIndex];
 
     // Apply the change
-    const oldBuildingLevel: number = BuildingData.getBuildingLevel(planetData, currentBuildingUpgradeBuildingRow.building_type);
-    BuildingData.setBuildingLevel(planetData, currentBuildingUpgradeBuildingRow.building_type, oldBuildingLevel + 1);
+    const upgradedBuildingType: GameType.BuildingType = currentBuildingUpgradeBuildingRow.building_type as GameType.BuildingType;
+    const oldBuildingLevel: number = BuildingData.getBuildingLevel(planetData, upgradedBuildingType);
+    BuildingData.setBuildingLevel(planetData, upgradedBuildingType, oldBuildingLevel + 1);
 
     // Row is done, remove it
     finishedUpgrade.buildingUpgradeBuildingRows.splice(currentBuildingRowIndex, 1);

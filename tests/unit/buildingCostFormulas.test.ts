@@ -6,7 +6,7 @@ describe('computeBuildingUpgradeCost', () =>
 {
     it('returns null for an unknown building type', () =>
     {
-        const result: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(0, 9999);
+        const result: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(0, 9999 as GameType.BuildingType);
         expect(result).toBeNull();
     });
 

@@ -3,6 +3,7 @@
 import { useState, ReactElement, ReactNode, ChangeEvent } from "react";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 
 export function EmptyElement(): ReactElement
 {
@@ -14,7 +15,7 @@ export function EmptyElement(): ReactElement
 	return emptyElement;
 }
 
-export function renderShipImage(shipType: number): ReactElement
+export function renderShipImage(shipType: GameType.ShipType): ReactElement
 {
 	const imagePath: string = getShipImagePath(shipType);
 	const element: ReactElement =
@@ -43,24 +44,24 @@ export function renderShipImage(shipType: number): ReactElement
 	return element;
 }
 
-function getShipImagePath(shipType: number): string
+function getShipImagePath(shipType: GameType.ShipType): string
 {
     return `/ships/${shipType}.png`;
 }
 
-export type RequestedQuantitiesState =
+export type RequestedQuantitiesState<K extends number> =
 {
-	requestedQuantities: Map<number, number>;
-	setRequestedQuantity: (type: number, value: number) => void;
+	requestedQuantities: Map<K, number>;
+	setRequestedQuantity: (type: K, value: number) => void;
 	resetRequestedQuantities: () => void;
 };
-export function useRequestedQuantities(): RequestedQuantitiesState
+export function useRequestedQuantities<K extends number>(): RequestedQuantitiesState<K>
 {
-	const [requestedQuantities, setRequestedQuantitiesMap] = useState<Map<number, number>>(new Map<number, number>());
+	const [requestedQuantities, setRequestedQuantitiesMap] = useState<Map<K, number>>(new Map<K, number>());
 
-	const setRequestedQuantity = (shipType: number, value: number): void =>
+	const setRequestedQuantity = (shipType: K, value: number): void =>
 	{
-		const updatedMap: Map<number, number> = new Map<number, number>(requestedQuantities);
+		const updatedMap: Map<K, number> = new Map<K, number>(requestedQuantities);
 
 		if (value <= 0)
 		{
@@ -76,7 +77,7 @@ export function useRequestedQuantities(): RequestedQuantitiesState
 
 	const resetRequestedQuantities = (): void =>
 	{
-		setRequestedQuantitiesMap(new Map<number, number>());
+		setRequestedQuantitiesMap(new Map<K, number>());
 	};
 
 	return {
@@ -86,7 +87,7 @@ export function useRequestedQuantities(): RequestedQuantitiesState
 	};
 }
 
-export function renderQuantityInput(type: number, min: number, max: number | null, requestedQuantity: number, planetData: CoreType.PlanetData, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement
+export function renderQuantityInput<K extends number>(type: K, min: number, max: number | null, requestedQuantity: number, planetData: CoreType.PlanetData, setRequestedQuantity: (type: K, value: number) => void): ReactElement
 {
 	const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>): void =>
 	{
@@ -124,7 +125,7 @@ export function renderQuantityInput(type: number, min: number, max: number | nul
 	return element;
 }
 
-export function buildCostParts(costMap: Map<number, number>): string[]
+export function buildCostParts(costMap: Map<GameType.ResourceType, number>): string[]
 {
 	const costParts: string[] = [];
 

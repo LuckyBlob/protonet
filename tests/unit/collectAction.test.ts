@@ -21,7 +21,7 @@ type SetupResult =
     targetPlayer: CoreType.PlayerData,
 };
 
-function setup(targetShipQuantities: Map<number, number> = new Map(), targetResources: Map<number, number> = new Map()): SetupResult
+function setup(targetShipQuantities: Map<GameType.ShipType, number> = new Map(), targetResources: Map<GameType.ResourceType, number> = new Map()): SetupResult
 {
     const fleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement(
     {

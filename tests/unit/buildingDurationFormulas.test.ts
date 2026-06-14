@@ -9,7 +9,7 @@ describe('computeUpgradeDurationSeconds', () =>
     it('returns null for an unknown building type', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const result: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, 9999, playerData, 1, null);
+        const result: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, 9999 as GameType.BuildingType, playerData, 1, null);
         expect(result).toBeNull();
     });
 

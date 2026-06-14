@@ -3,6 +3,7 @@ import Database from "better-sqlite3";
 import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 
 //#region Dynamic Player Data
 export function serverUpdatePlayerDataContext(playerId: number, dataContext: CoreType.DataContext, dynamicPlayerData: CoreType.DynamicPlayerData): void
@@ -168,41 +169,41 @@ export function getDynamicPlanetData(planetId: number): CoreType.DynamicPlanetDa
     };
 }
 
-export function getDynamicPlanetResourceData(planetId: number): Map<number, number>
+export function getDynamicPlanetResourceData(planetId: number): Map<GameType.ResourceType, number>
 {
     const resourceRows: DBType.PlanetResourceRow[] = DB.databaseConnection.prepare(
         "SELECT * FROM planet_resource WHERE planet_id = ?"
     ).all(planetId) as DBType.PlanetResourceRow[];
-    const resourceQuantity: Map<number, number> = new Map<number, number>();
+    const resourceQuantity: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
     for (const resourceRow of resourceRows)
     {
-        resourceQuantity.set(resourceRow.resource_type, resourceRow.resource_quantity);
+        resourceQuantity.set(resourceRow.resource_type as GameType.ResourceType, resourceRow.resource_quantity);
     }
     return resourceQuantity;
 }
 
-export function getDynamicPlanetBuildingData(planetId: number): Map<number, number>
+export function getDynamicPlanetBuildingData(planetId: number): Map<GameType.BuildingType, number>
 {
     const buildingRows: DBType.PlanetBuildingRow[] = DB.databaseConnection.prepare(
         "SELECT * FROM planet_building WHERE planet_id = ?"
     ).all(planetId) as DBType.PlanetBuildingRow[];
-    const buildingLevel: Map<number, number> = new Map<number, number>();
+    const buildingLevel: Map<GameType.BuildingType, number> = new Map<GameType.BuildingType, number>();
     for (const buildingRow of buildingRows)
     {
-        buildingLevel.set(buildingRow.building_type, buildingRow.building_level);
+        buildingLevel.set(buildingRow.building_type as GameType.BuildingType, buildingRow.building_level);
     }
     return buildingLevel;
 }
 
-export function getDynamicPlanetShipData(planetId: number): Map<number, number>
+export function getDynamicPlanetShipData(planetId: number): Map<GameType.ShipType, number>
 {
     const shipRows: DBType.PlanetShipRow[] = DB.databaseConnection.prepare(
         "SELECT * FROM planet_ship WHERE planet_id = ?"
     ).all(planetId) as DBType.PlanetShipRow[];
-    const shipQuantities: Map<number, number> = new Map<number, number>();
+    const shipQuantities: Map<GameType.ShipType, number> = new Map<GameType.ShipType, number>();
     for (const shipRow of shipRows)
     {
-        shipQuantities.set(shipRow.ship_type, shipRow.ship_quantity);
+        shipQuantities.set(shipRow.ship_type as GameType.ShipType, shipRow.ship_quantity);
     }
     return shipQuantities;
 }

@@ -35,7 +35,7 @@ export type BuildingStats =
 	costFunctionType?: BuildingCostFunctionType;
 	costStats?: CostStats;
 	productionFunctionType?: ProductionFunctionType;
-	productionStats?: Map<number, ProductionStats>;
+	productionStats?: Map<ResourceType, ProductionStats>;
 	planetValueProductionFormulasType?: BuildingPlanetValueProductionFormulasType;
 	planetValueStats?: PlanetValueStats;
 };
@@ -48,7 +48,7 @@ export type BuildingCostFunctionType = typeof BuildingCostFunctionType[keyof typ
 export type CostStats = 
 {
 	baseCostExponent: number;
-	baseCost: Map<number, number>;
+	baseCost: Map<ResourceType, number>;
 }
 
 export const ProductionFunctionType =
@@ -66,12 +66,15 @@ export type ProductionStats =
 export const BuildingPlanetValueProductionFormulasType =
 {
     SimpleExponential: 1,
+    FlooredNaturalExponential: 2,
 } as const;
 export type BuildingPlanetValueProductionFormulasType = typeof BuildingPlanetValueProductionFormulasType[keyof typeof BuildingPlanetValueProductionFormulasType];
 export type PlanetValueStats =
 {
-	basePlanetValueExponent: number;
-	basePlanetValueFactor: Map<number, number>;
+	basePlanetValueFactor: Map<PlanetValueType, number>;
+	basePlanetValueExponent?: number;
+	naturalExponentialFactor?: number;
+	naturalExponentialExponentFactor?: number;
 };
 //#endregion
 
@@ -79,6 +82,9 @@ export type PlanetValueStats =
 export const PlanetValueType =
 {
     Energy: 1,
+    MetalStorage: 2,
+    CrystalStorage: 3,
+    DeuteriumStorage: 4,
 } as const;
 export type PlanetValueType = typeof PlanetValueType[keyof typeof PlanetValueType];
 export type PlanetValueInfo =
@@ -86,7 +92,7 @@ export type PlanetValueInfo =
 	displayName: string;
 	showInTopBar: boolean;
 	ratioImpactsResourceProduction?: boolean,
-	associatedResource?: number;
+	associatedResource?: ResourceType;
 	limitsResourceMax?: boolean;
 }
 //#endregion 
@@ -105,8 +111,8 @@ export type ShipStats =
 	maxHealth: number;
 	speed: number;
 	space: number;
-	baseFuelConsumption: Map<number, number>;
-	costMap: Map<number, number>;
+	baseFuelConsumption: Map<ResourceType, number>;
+	costMap: Map<ResourceType, number>;
 };
 //#endregion
 

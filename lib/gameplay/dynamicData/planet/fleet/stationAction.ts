@@ -21,15 +21,11 @@ export function resolveStationAction(originPlayerData: CoreType.PlayerData | nul
         throw new Error(`⚠️: Failed to resolve station action because target planet data was null.`);
     }
 
-    for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)
-    {
-        ShipData.addPlanetShip(targetPlanetData, fleetMovementShipRow.ship_type, fleetMovementShipRow.ship_quantity);
-    }
+    const shipQuantities: Map<GameType.ShipType, number> = FleetData.buildShipQuantitiesFromRows(fleetMovement.fleetMovementShipRows);
+    ShipData.addPlanetShips(targetPlanetData, shipQuantities);
 
-    for (const fleetMovementResourceRow of fleetMovement.fleetMovementResourceRows)
-    {
-        ResourceData.addPlanetResource(targetPlanetData, fleetMovementResourceRow.resource_type, fleetMovementResourceRow.resource_quantity);
-    }
+    const resourceQuantities: Map<GameType.ResourceType, number> = FleetData.buildResourceQuantitiesFromRows(fleetMovement.fleetMovementResourceRows);
+    ResourceData.addPlanetResources(targetPlanetData, resourceQuantities);
 
     FleetData.removeFleetMovement(targetPlanetData, fleetMovement.fleetMovementRow.id);
     if (originPlanetData !== null)

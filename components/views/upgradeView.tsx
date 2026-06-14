@@ -7,6 +7,7 @@ import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
@@ -47,14 +48,14 @@ function getBuildingImagePath(buildingType: number, level: number): string
 	return `/buildings/buildingType_${buildingType}/${tier}.png`;
 }
 
-function renderCostLine(nextCostMap: Map<number, number>): ReactElement
+function renderCostLine(nextCostMap: Map<GameType.ResourceType, number>): ReactElement
 {
 	const parts: string[] = HelperElements.buildCostParts(nextCostMap);
 
 	return <span>{parts.join(" / ")}</span>;
 }
 
-function renderBuildingCard(props: UpgradeViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: number): ReactElement
+function renderBuildingCard(props: UpgradeViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType): ReactElement
 {
 	const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 	const planetId: number = selectedPlanetDataPredicted.planetRow.id;
@@ -62,7 +63,7 @@ function renderBuildingCard(props: UpgradeViewProps, selectedPlanetDataPredicted
 	const displayName: string = ThingType.getSpecificThingName(ThingType.building(buildingType));
 	const currentLevel: number = BuildingData.getBuildingLevel(selectedPlanetDataPredicted, buildingType);
 
-	const nextCostMap: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(currentLevel, buildingType);
+	const nextCostMap: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingUpgradeCost(currentLevel, buildingType);
 	const buildDurationSeconds: number | null = BuildingDuration.computeUpgradeDurationSeconds(currentLevel, buildingType, playerData, planetId, props.clientDataStateResult.sdsController[0]);
 
 	if (nextCostMap === null || buildDurationSeconds === null)
@@ -159,7 +160,7 @@ export function UpgradeView(props: UpgradeViewProps): ReactElement
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 
-		const cardElements: ReactElement[] = ThingType.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: ThingType.SpecificThing): ReactElement =>
+		const cardElements: ReactElement[] = ThingType.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: GameType.BuildingType): ReactElement =>
 		{
 			return renderBuildingCard(props, selectedPlanetDataPredicted, buildingType);
 		});

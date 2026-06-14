@@ -79,7 +79,7 @@ describe('getFailedBuildingUpgradeRequirements', () =>
     it('returns empty array for a building type with no requirements registered', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, 9999, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, 9999 as GameType.BuildingType, 1);
         expect(failed).toHaveLength(0);
     });
 });

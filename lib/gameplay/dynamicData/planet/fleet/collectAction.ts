@@ -29,16 +29,10 @@ export function resolveCollectAction(originPlayerData: CoreType.PlayerData | nul
         return;
     }
 
-	const fleetShipQuantities: Map<number, number> = new Map<number, number>();
-	for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)
-	{
-		fleetShipQuantities.set(fleetMovementShipRow.ship_type, fleetMovementShipRow.ship_quantity);
-	}
-	const fleetResourceQuantities: Map<number, number> = new Map<number, number>();
+	const fleetShipQuantities: Map<GameType.ShipType, number> = FleetData.buildShipQuantitiesFromRows(fleetMovement.fleetMovementShipRows);
 	let totalResourcesInFleet: number = 0;
 	for (const fleetMovementResourceRow of fleetMovement.fleetMovementResourceRows)
 	{
-		fleetResourceQuantities.set(fleetMovementResourceRow.resource_type, fleetMovementResourceRow.resource_quantity);
 		totalResourcesInFleet += fleetMovementResourceRow.resource_quantity;
 	}
 	const originAddress: GameType.PlanetAddress = 
@@ -60,8 +54,8 @@ export function resolveCollectAction(originPlayerData: CoreType.PlayerData | nul
 
 	if (availableSpace > 0)
 	{
-        const targetResourceQuantities: Map<number, number> = ResourceData.getResourceQuantities(targetPlanetData);
-        const collectedResourceQuantities: Map<number, number> = getCollectedResources(targetResourceQuantities, availableSpace);
+        const targetResourceQuantities: Map<GameType.ResourceType, number> = ResourceData.getResourceQuantities(targetPlanetData);
+        const collectedResourceQuantities: Map<GameType.ResourceType, number> = getCollectedResources(targetResourceQuantities, availableSpace);
         
         //Remove resources
         ResourceData.subtractPlanetResources(targetPlanetData, collectedResourceQuantities);
@@ -86,12 +80,12 @@ export function resolveCollectAction(originPlayerData: CoreType.PlayerData | nul
     addCollectActionSuccessMessage(targetPlayerData, fleetMovement);
 }
 
-function getCollectedResources(targetResourceQuantities: Map<number, number>, availableSpace: number): Map<number, number>
+function getCollectedResources(targetResourceQuantities: Map<GameType.ResourceType, number>, availableSpace: number): Map<GameType.ResourceType, number>
 {
-	const collectedResourceQuantities: Map<number, number> = new Map<number, number>();
+	const collectedResourceQuantities: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 
 	// Working copy of remaining resources on target
-	const remainingResourceQuantities: Map<number, number> = new Map<number, number>(targetResourceQuantities);
+	const remainingResourceQuantities: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>(targetResourceQuantities);
 	let remainingSpace: number = availableSpace;
 
 	while (remainingSpace > 0)

@@ -3,7 +3,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
-export function computeProductionRatePerHour(buildingType: number, currentLevel: number, serverData: CoreType.ServerData | null): Map<number, number> | null
+export function computeProductionRatePerHour(buildingType: GameType.BuildingType, currentLevel: number, serverData: CoreType.ServerData | null): Map<GameType.ResourceType, number> | null
 {
     try
     {
@@ -30,7 +30,7 @@ export function computeProductionRatePerHour(buildingType: number, currentLevel:
     }
 }
 
-function computeProductionRate_SimpleProductionBuilding(currentLevel: number, buildingStats: GameType.BuildingStats, serverData: CoreType.ServerData | null): Map<number, number> | null
+function computeProductionRate_SimpleProductionBuilding(currentLevel: number, buildingStats: GameType.BuildingStats, serverData: CoreType.ServerData | null): Map<GameType.ResourceType, number> | null
 {
     if (buildingStats.productionStats === undefined)
     {
@@ -39,7 +39,7 @@ function computeProductionRate_SimpleProductionBuilding(currentLevel: number, bu
 
     const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
 
-    const productionMap: Map<number, number> = new Map<number, number>();
+    const productionMap: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
     for (const [resourceType, perResourceProductionStats] of buildingStats.productionStats)
     {
         const productionPerHour: number = Math.floor(Math.max(perResourceProductionStats.minProductionPerHour, perResourceProductionStats.productionFactor * currentLevel * Math.pow(perResourceProductionStats.exponentBase, currentLevel)));

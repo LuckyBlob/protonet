@@ -7,21 +7,21 @@ const COEFFICIENT: number = 10;
 const SPEED_NUMERATOR: number = 3500;
 const DISTANCE_FACTOR: number = 10;
 
-export function computeFleetMovementDurationSecondsFromAddresses(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: CoreType.ServerData | null): number
+export function computeFleetMovementDurationSecondsFromAddresses(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData | null): number
 {
 	const distance: number = StaticDataHelper.getDistance(originAddress, targetAddress);
 	const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(shipQuantities);
 	return computeFleetMovementDurationSeconds_Base(distance, speed, serverData);
 }
 
-export function computeFleetMovementDurationSecondsWithAddress(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<number, number>, serverData: CoreType.ServerData | null): number
+export function computeFleetMovementDurationSecondsWithAddress(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData | null): number
 {
 	const distance: number = StaticDataHelper.getDistance(originAddress, targetAddress);
     const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(shipQuantities);
 	return computeFleetMovementDurationSeconds_Base(distance, speed, serverData);
 }
 
-export function computeFleetMovementDurationSeconds(originPlanetData: CoreType.PlanetData, targetPlanetData: CoreType.PlanetData, shipQuantities: Map<number, number>, serverData: CoreType.ServerData | null): number
+export function computeFleetMovementDurationSeconds(originPlanetData: CoreType.PlanetData, targetPlanetData: CoreType.PlanetData, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData | null): number
 {
 	const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
 	const targetAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(targetPlanetData);

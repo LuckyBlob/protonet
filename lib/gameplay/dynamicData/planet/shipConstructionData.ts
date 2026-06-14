@@ -26,12 +26,12 @@ export function sortShipConstructionShipRowByConstructionTime(planetData: CoreTy
     // sort shortest duration first
     shipConstruction.shipConstructionShipRows.sort((row1: DBType.ShipConstructionShipRow, row2: DBType.ShipConstructionShipRow): number =>
     {
-        const shipConstructionTime1: number | null = getShipConstructionDurationSeconds(row1.ship_type, planetData, serverData);
+        const shipConstructionTime1: number | null = getShipConstructionDurationSeconds(row1.ship_type as GameType.ShipType, planetData, serverData);
         if (shipConstructionTime1 === null)
         {
             throw new Error("No ship construction duration data!");
         }
-        const shipConstructionTime2: number | null = getShipConstructionDurationSeconds(row2.ship_type, planetData, serverData);
+        const shipConstructionTime2: number | null = getShipConstructionDurationSeconds(row2.ship_type as GameType.ShipType, planetData, serverData);
         if (shipConstructionTime2 === null)
         {
             throw new Error("No ship construction duration data!");
@@ -41,7 +41,7 @@ export function sortShipConstructionShipRowByConstructionTime(planetData: CoreTy
     });
 }
 
-export function getShipConstructionDurationSeconds(shipType: number, planetData: CoreType.PlanetData, serverData: CoreType.ServerData): number | null
+export function getShipConstructionDurationSeconds(shipType: GameType.ShipType, planetData: CoreType.PlanetData, serverData: CoreType.ServerData): number | null
 {
     const currentShipyardLevel: number = BuildingData.getBuildingLevel(planetData, GameType.BuildingType.Shipyard);
     return ShipConstruction.computeConstructionDurationSeconds(shipType, currentShipyardLevel, serverData);
@@ -61,24 +61,24 @@ export function getShipConstructionRemainingMs(planetData: CoreType.PlanetData):
 
 export function computeShipConstructionDurationSeconds(shipConstruction: CoreType.ShipConstruction, planetData: CoreType.PlanetData, serverData: CoreType.ServerData): number
 {
-    const shipQuantities: Map<number, number> = getShipQuantitiesForConstruction(shipConstruction);
+    const shipQuantities: Map<GameType.ShipType, number> = getShipQuantitiesForConstruction(shipConstruction);
     const shipConstructionDurationSeconds: number = computeShipQuantitiesConstructionDurationSeconds(shipQuantities, planetData, serverData);
 
     return shipConstructionDurationSeconds;
 }
 
-function getShipQuantitiesForConstruction(shipConstruction: CoreType.ShipConstruction): Map<number, number>
+function getShipQuantitiesForConstruction(shipConstruction: CoreType.ShipConstruction): Map<GameType.ShipType, number>
 {
-    const shipQuantities: Map<number, number> = new Map<number,number>();
+    const shipQuantities: Map<GameType.ShipType, number> = new Map<GameType.ShipType, number>();
     for (const shipContructionRow of shipConstruction.shipConstructionShipRows)
     {
-        shipQuantities.set(shipContructionRow.ship_type, shipContructionRow.ship_quantity);
+        shipQuantities.set(shipContructionRow.ship_type as GameType.ShipType, shipContructionRow.ship_quantity);
     }
 
     return shipQuantities;
 }
 
-export function computeShipQuantitiesConstructionDurationSeconds(shipQuantities: Map<number, number>, planetData: CoreType.PlanetData, serverData: CoreType.ServerData): number
+export function computeShipQuantitiesConstructionDurationSeconds(shipQuantities: Map<GameType.ShipType, number>, planetData: CoreType.PlanetData, serverData: CoreType.ServerData): number
 {
     let totalConstructionDurationSeconds: number = 0;
     for (const [shipType, shipQuantity] of shipQuantities)
@@ -95,12 +95,12 @@ export function computeShipQuantitiesConstructionDurationSeconds(shipQuantities:
     return totalConstructionDurationSeconds;
 }
 
-export function computeShipConstructionCost(shipQuantities: Map<number, number>): Map<number, number>
+export function computeShipConstructionCost(shipQuantities: Map<GameType.ShipType, number>): Map<GameType.ResourceType, number>
 {
-    const totalShipConstructionCost: Map<number, number> = new Map<number, number>();
+    const totalShipConstructionCost: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
     for (const [shipType, shipQuantity] of shipQuantities)
     {
-        const singleShipCost: Map<number, number> | null = computeSingleShipTypeConstructionCost(shipType, shipQuantity);
+        const singleShipCost: Map<GameType.ResourceType, number> | null = computeSingleShipTypeConstructionCost(shipType, shipQuantity);
         if (singleShipCost === null)
         {
             continue;
@@ -123,10 +123,10 @@ export function computeShipConstructionCost(shipQuantities: Map<number, number>)
     return totalShipConstructionCost;
 }
 
-function computeSingleShipTypeConstructionCost(shipType: number, shipQuantity: number): Map<number, number> | null
+function computeSingleShipTypeConstructionCost(shipType: GameType.ShipType, shipQuantity: number): Map<GameType.ResourceType, number> | null
 {
-    const totalShipConstructionCost: Map<number, number> = new Map<number, number>();
-    const singleShipCost: Map<number, number> | null = getSingleShipCost(shipType);
+    const totalShipConstructionCost: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
+    const singleShipCost: Map<GameType.ResourceType, number> | null = getSingleShipCost(shipType);
     if (singleShipCost === null)
     {
         return null;
@@ -142,9 +142,9 @@ function computeSingleShipTypeConstructionCost(shipType: number, shipQuantity: n
 }
 
 
-export function getSingleShipCost(shipType: number): Map<number, number> | null
+export function getSingleShipCost(shipType: GameType.ShipType): Map<GameType.ResourceType, number> | null
 {
-	const singleShipCost: Map<number, number> | undefined = StaticDataHelper.getShipStats(shipType)?.costMap;
+	const singleShipCost: Map<GameType.ResourceType, number> | undefined = StaticDataHelper.getShipStats(shipType)?.costMap;
 	if (singleShipCost === undefined)
 	{
 		return null;
@@ -153,14 +153,14 @@ export function getSingleShipCost(shipType: number): Map<number, number> | null
 	return singleShipCost;
 }
 
-export function computeMaxAffordableShipQuantities(planetData: CoreType.PlanetData, shipQuantities: Map<number, number>): Map<number, number>
+export function computeMaxAffordableShipQuantities(planetData: CoreType.PlanetData, shipQuantities: Map<GameType.ShipType, number>): Map<GameType.ShipType, number>
 {
-	const buildableShipQuantities: Map<number, number> = new Map<number, number>();
-	const availableResourceQuantities: Map<number, number> = new Map<number, number>(ResourceData.getResourceQuantities(planetData));
+	const buildableShipQuantities: Map<GameType.ShipType, number> = new Map<GameType.ShipType, number>();
+	const availableResourceQuantities: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>(ResourceData.getResourceQuantities(planetData));
 
 	for (const [desiredShipType, desiredShipQuantity] of shipQuantities)
 	{
-		const shipCost: Map<number, number> | null = getSingleShipCost(desiredShipType);
+		const shipCost: Map<GameType.ResourceType, number> | null = getSingleShipCost(desiredShipType);
 		if (shipCost === null)
 		{
 			continue;
@@ -184,7 +184,7 @@ export function computeMaxAffordableShipQuantities(planetData: CoreType.PlanetDa
 		}
 		
 		buildableShipQuantities.set(desiredShipType, smallestQuantityPossible);
-		const shipTypeRessourceCost: Map<number, number> | null = computeSingleShipTypeConstructionCost(desiredShipType, smallestQuantityPossible);
+		const shipTypeRessourceCost: Map<GameType.ResourceType, number> | null = computeSingleShipTypeConstructionCost(desiredShipType, smallestQuantityPossible);
 		if (shipTypeRessourceCost === null)
 		{
 			continue;

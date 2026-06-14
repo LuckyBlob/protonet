@@ -8,7 +8,7 @@ describe('computeConstructionDurationSeconds', () =>
 {
     it('returns null for an unknown ship type', () =>
     {
-        const result: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(9999, 0, null);
+        const result: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(9999 as GameType.ShipType, 0, null);
         expect(result).toBeNull();
     });
 

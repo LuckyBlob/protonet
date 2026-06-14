@@ -1,4 +1,5 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as DBType from "@/lib/db/dbTypes";
 
 // The wire format. Maps cannot survive JSON.stringify, so on the wire each
@@ -28,7 +29,7 @@ export function deserializeNumberNumberMap(serialized: SerializedNumberNumberMap
 
 	return map;
 }
-//#region 
+//#region
 
 //#region Player Data
 
@@ -150,14 +151,15 @@ export type SerializedPlayerData =
 
 function deserializePlanetData(serialized: SerializedPlanetData): CoreType.PlanetData
 {
+	// The wire carries plain numbers; cast each rebuilt map to its enum-keyed in-memory type.
 	const planetData: CoreType.PlanetData =
 	{
 		planetRow: serialized.planetRow,
 		dynamicPlanetData:
 		{
-			resourceQuantity: new Map<number, number>(serialized.dynamicPlanetData.resourceQuantity),
-			buildingLevels: new Map<number, number>(serialized.dynamicPlanetData.buildingLevels),
-			shipQuantity: new Map<number, number>(serialized.dynamicPlanetData.shipQuantity),
+			resourceQuantity: new Map<number, number>(serialized.dynamicPlanetData.resourceQuantity) as Map<GameType.ResourceType, number>,
+			buildingLevels: new Map<number, number>(serialized.dynamicPlanetData.buildingLevels) as Map<GameType.BuildingType, number>,
+			shipQuantity: new Map<number, number>(serialized.dynamicPlanetData.shipQuantity) as Map<GameType.ShipType, number>,
 			shipConstructions: serialized.dynamicPlanetData.shipConstructions,
 			futureFleetArrivals: serialized.dynamicPlanetData.futureFleetArrivals,
 			buildingUpgrades: serialized.dynamicPlanetData.buildingUpgrades ?? [],

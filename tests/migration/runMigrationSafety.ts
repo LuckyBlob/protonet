@@ -134,7 +134,14 @@ const SYNTHETIC_PLAYER_COHORTS: Cohort[] = ["before-end", "after-end", "before-e
 const SYNTHETIC_PLANETS_PER_PLAYER: number = 3;
 const SYNTHETIC_ACTIONS_PER_PLANET: number = 6;
 const SYNTHETIC_GALAXY: number = 999999;
-const BUILDING_TYPES: number[] = [GameType.BuildingType.MetalMine, GameType.BuildingType.CrystalGrower, GameType.BuildingType.Shipyard, GameType.BuildingType.RoboticFactory, GameType.BuildingType.DeuteriumSynthesizer];
+// db:transfer runs against this copy, so the synthetic rows go through any renumber data transfer (e.g. 003)
+// alongside the real ones. Inject only building types whose number is UNCHANGED by those transfers
+// (MetalMine, CrystalGrower) so a synthetic planet never collides on (planet_id, building_type) when a value
+// is remapped (e.g. DeuteriumSynthesizer 3 -> 8 onto Shipyard 8) and never silently mis-maps. The renumber
+// itself is exercised end-to-end by the real copied prod rows and pinned semantically in
+// tests/integration/renumberDataTransfer.test.ts. If a future transfer renumbers these stable types too,
+// pick the new stable set here. resource_type and ship_type were not renumbered.
+const BUILDING_TYPES: number[] = [GameType.BuildingType.MetalMine, GameType.BuildingType.CrystalGrower];
 const RESOURCE_TYPES: number[] = [GameType.ResourceType.Metal, GameType.ResourceType.Crystal, GameType.ResourceType.Deuterium];
 
 // The `started_at` of the first (active) action in each queue. For "after-end" it sits far enough in the

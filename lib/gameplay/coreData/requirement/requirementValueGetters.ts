@@ -1,4 +1,5 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
@@ -22,7 +23,7 @@ export function isAnyBuildingUpgradeInProgress(): RequirementType.ThingValueGett
     };
 }
 
-export function buildingLevel(buildingType: number): RequirementType.SpecificThingValueGetter
+export function buildingLevel(buildingType: GameType.BuildingType): RequirementType.SpecificThingValueGetter
 {
     return (playerData: CoreType.PlayerData, planetId: number): number =>
     {
@@ -31,7 +32,7 @@ export function buildingLevel(buildingType: number): RequirementType.SpecificThi
     };
 }
 
-export function isSpecificBuildingBeingUpgraded(buildingType: number): RequirementType.SpecificThingValueGetter
+export function isSpecificBuildingBeingUpgraded(buildingType: GameType.BuildingType): RequirementType.SpecificThingValueGetter
 {
     return (playerData: CoreType.PlayerData, planetId: number): number =>
     {

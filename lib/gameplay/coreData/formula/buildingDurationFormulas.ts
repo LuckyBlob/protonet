@@ -7,7 +7,7 @@ import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelp
 
 const BASE_DIVIDER: number = 2500;
 
-export function computeUpgradeDurationSeconds(currentUpgradeLevel: number, buildingType: number, playerData: CoreType.PlayerData, planetId: number, serverData: CoreType.ServerData | null): number | null
+export function computeUpgradeDurationSeconds(currentUpgradeLevel: number, buildingType: GameType.BuildingType, playerData: CoreType.PlayerData, planetId: number, serverData: CoreType.ServerData | null): number | null
 {
     try
     {
@@ -25,10 +25,10 @@ export function computeUpgradeDurationSeconds(currentUpgradeLevel: number, build
     }
 }
 
-function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: number, buildingStats: GameType.BuildingStats, buildingType: number, playerData: CoreType.PlayerData, planetId: number, serverData: CoreType.ServerData | null): number
+function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: number, buildingStats: GameType.BuildingStats, buildingType: GameType.BuildingType, playerData: CoreType.PlayerData, planetId: number, serverData: CoreType.ServerData | null): number
 {
 	const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
-    const nextUpgradeCostMap: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(currentUpgradeLevel, buildingType);
+    const nextUpgradeCostMap: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingUpgradeCost(currentUpgradeLevel, buildingType);
     if (nextUpgradeCostMap === null)
     {
         throw new Error(`Building type ${buildingType} has no cost and thus no construction duration.`);

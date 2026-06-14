@@ -2,7 +2,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
-export function computeBuildingUpgradeCost(currentUpgradeLevel: number, buildingType: number): Map<number, number> | null
+export function computeBuildingUpgradeCost(currentUpgradeLevel: number, buildingType: GameType.BuildingType): Map<GameType.ResourceType, number> | null
 {
 	const buildingStats: GameType.BuildingStats | undefined = StaticDataHelper.getBuildingStats(buildingType);
 	if (buildingStats === undefined)
@@ -21,7 +21,7 @@ export function computeBuildingUpgradeCost(currentUpgradeLevel: number, building
 			return null;
 	}
 }
-function computeBuildingUpgradeCost_SimpleExponential(currentUpgradeLevel: number, buildingStats: GameType.BuildingStats): Map<number, number>
+function computeBuildingUpgradeCost_SimpleExponential(currentUpgradeLevel: number, buildingStats: GameType.BuildingStats): Map<GameType.ResourceType, number>
 {
 	if (buildingStats.costStats === undefined)
 	{
@@ -29,7 +29,7 @@ function computeBuildingUpgradeCost_SimpleExponential(currentUpgradeLevel: numbe
 		throw new Error(`⚠️: Building stats has no cost stats.`);
 	}
 
-	const costMap: Map<number, number> = new Map<number, number>();
+	const costMap: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 
 	for (const [resourceType, baseResourceCost] of buildingStats.costStats.baseCost)
 	{

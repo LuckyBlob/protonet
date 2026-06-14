@@ -46,22 +46,23 @@ export type LSController  = [LoadingState, (value: LoadingState) => void];
 export type LoadingState =
 {
 	isLoading: boolean;
+	error: string | null;
 };
 
 export type DynamicPlanetData =
 {
-	resourceQuantity: Map<ThingType.SpecificThing, number>;
-	buildingLevels: Map<ThingType.SpecificThing, number>;
-	shipQuantity: Map<ThingType.SpecificThing, number>,
+	resourceQuantity: Map<GameType.ResourceType, number>;
+	buildingLevels: Map<GameType.BuildingType, number>;
+	shipQuantity: Map<GameType.ShipType, number>,
 	shipConstructions: ShipConstruction[];
 	futureFleetArrivals: FleetMovement[];
 	buildingUpgrades: BuildingUpgrade[];
 };
 export const EmptyPlanetData: DynamicPlanetData =
 {
-	resourceQuantity: new Map<ThingType.SpecificThing, number>(),
-	buildingLevels: new Map<ThingType.SpecificThing, number>(),
-	shipQuantity: new Map<ThingType.SpecificThing, number>(),
+	resourceQuantity: new Map<GameType.ResourceType, number>(),
+	buildingLevels: new Map<GameType.BuildingType, number>(),
+	shipQuantity: new Map<GameType.ShipType, number>(),
 	shipConstructions: [],
 	futureFleetArrivals: [],
 	buildingUpgrades: [],

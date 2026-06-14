@@ -67,7 +67,12 @@
       "Bash(sed -n '520,535p' tests/helpers/e2eHelpers.ts)",
       "Bash(sed -n '435,445p' components/views/fleetView.tsx)",
       "Bash(sed -i 's/StaticData\\\\.BUILDING_STATS\\\\.get\\(buildingType as GameType\\\\.BuildingType\\)/StaticDataHelper.getBuildingStats\\(buildingType\\)/' lib/gameplay/coreData/formula/buildingCostFormulas.ts lib/gameplay/coreData/formula/buildingDurationFormulas.ts lib/gameplay/coreData/formula/buildingPlanetValueProductionFormulas.ts lib/gameplay/coreData/formula/buildingProductionFormulas.ts)",
-      "Bash(sed -i 's/StaticData\\\\.SHIP_STATS\\\\.get\\(shipType as GameType\\\\.ShipType\\)/StaticDataHelper.getShipStats\\(shipType\\)/g' lib/gameplay/coreData/formula/shipConstructionFormulas.ts lib/gameplay/coreData/formula/shipFuelConsumptionFormulas.ts lib/gameplay/dynamicData/planet/fleet/fleetData.ts lib/gameplay/dynamicData/planet/shipConstructionData.ts)"
+      "Bash(sed -i 's/StaticData\\\\.SHIP_STATS\\\\.get\\(shipType as GameType\\\\.ShipType\\)/StaticDataHelper.getShipStats\\(shipType\\)/g' lib/gameplay/coreData/formula/shipConstructionFormulas.ts lib/gameplay/coreData/formula/shipFuelConsumptionFormulas.ts lib/gameplay/dynamicData/planet/fleet/fleetData.ts lib/gameplay/dynamicData/planet/shipConstructionData.ts)",
+      "Bash(perl -i -pe 's/new Map<number, number>/new Map<GameType.ResourceType, number>/g if $. >= 161 && $. <= 198' lib/gameplay/coreData/static/staticData.ts)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(npx vitest *)",
+      "Bash(cd /d/Claude/WebsiteProject/protonet)",
+      "Bash(timeout 180 pnpm test:migration)"
     ]
   }
 }

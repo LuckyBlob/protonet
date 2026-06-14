@@ -16,15 +16,15 @@ const BASE_FUEL_CONSUMPTION_DATA: BaseFuelConsumptionData =
 	exponent: 2,
 };
 
-export function computeFuelConsumption(shipQuantities: Map<number, number>, distance: number, speed: number, serverData: CoreType.ServerData | null): Map<number, number>
+export function computeFuelConsumption(shipQuantities: Map<GameType.ShipType, number>, distance: number, speed: number, serverData: CoreType.ServerData | null): Map<GameType.ResourceType, number>
 {
 	return computeFuelConsumption_Base(shipQuantities, distance, speed, serverData);
 }
 
 // Speed is 1-10, where 1 is 10% and 10 is 100% max speed.
-function computeFuelConsumption_Base(shipQuantities: Map<number, number>, distance: number, speed: number, serverData: CoreType.ServerData | null): Map<number, number>
+function computeFuelConsumption_Base(shipQuantities: Map<GameType.ShipType, number>, distance: number, speed: number, serverData: CoreType.ServerData | null): Map<GameType.ResourceType, number>
 {
-	const totalBaseCost: Map<number, number> = new Map<number, number>();
+	const totalBaseCost: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 	for (const [shipType, shipQuantity] of shipQuantities)
 	{
 		if (shipQuantity === 0)

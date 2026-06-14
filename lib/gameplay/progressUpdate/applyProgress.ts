@@ -7,6 +7,10 @@ import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buil
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent"
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
+import * as PlanetValueData from "@/lib/gameplay/dynamicData/planet/planetValueData";
+import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 
 export abstract class PlayerProgressApplier
 {
@@ -98,7 +102,10 @@ export function updateResourcesToTime(playerData: CoreType.PlayerData, serverDat
 {
     for (const planetData of playerData.planetDatas)
     {
-        applyUpdateAtTimeForPlanet(planetData, serverData, time);
+        const resourceQuantities: Map<GameType.ResourceType, number> = getPredictedResourceQuantitiesAtTime(planetData, serverData, time);
+        clampResourcesToPossibleMaximums(playerData, planetData, serverData, resourceQuantities);
+
+        ResourceData.setResourceQuantities(planetData, resourceQuantities);
     }
 }
 
@@ -113,19 +120,74 @@ function setUpdatedTimeStamp(playerData: CoreType.PlayerData, serverData: CoreTy
     }
 }
 
-function applyUpdateAtTimeForPlanet(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number): void
+function clampResourcesToPossibleMaximums(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, serverData: CoreType.ServerData, potentialResourceQuantities: Map<GameType.ResourceType, number>): void
 {
-    const resourceQuantities: Map<number, number> = getPredictedResourceQuantitiesAtTime(planetData, serverData, time);
+    const planetValuesMap: Map<GameType.PlanetValueType, CoreType.PlanetValueData> = PlanetValueData.computePlanetValueDatas(planetData.dynamicPlanetData);
+    const resourceMaximums: Map<GameType.ResourceType, number> = computeResourceMaximums(planetValuesMap);
 
-    ResourceData.setResourceQuantities(planetData, resourceQuantities);
+    for (const [resourceType, potentialResourceQuantity] of potentialResourceQuantities)
+    {
+        const resourceMaximum: number | undefined = resourceMaximums.get(resourceType);
+        if (resourceMaximum === undefined)
+        {
+            continue;
+        }
+
+        const currentResourceQuantity: number = ResourceData.getResourceQuantity(planetData, resourceType);
+        if (currentResourceQuantity >= resourceMaximum)
+        {
+            // If we're already over, we stay there. Maximums only apply to production, but we can receive more by fleets and stay above.
+            potentialResourceQuantities.set(resourceType, currentResourceQuantity);
+            continue;
+        }
+
+        if (potentialResourceQuantity >= resourceMaximum)
+        {
+            // If we'd go over, cap it.
+            potentialResourceQuantities.set(resourceType, resourceMaximum);
+            continue;
+        }
+    }
 }
 
-function getPredictedResourceQuantitiesAtTime(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number): Map<number, number>
+function computeResourceMaximums(planetValuesMap: Map<GameType.PlanetValueType, CoreType.PlanetValueData>): Map<GameType.ResourceType, number>
 {
-    const resourceTypes: ThingTypes.SpecificThing[] = ThingTypes.getAllSpecificThings(ThingTypes.Thing.Resource);
+    const resourceMaximums: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 
-    const predictedResourceQuantities: Map<number, number> = new Map<number, number>();
-    for (const resourceType of resourceTypes)
+    for (const [planetValueType, planetValueInfo] of StaticData.PLANET_VALUE_INFOS)
+    {
+        if (planetValueInfo.limitsResourceMax === undefined)
+        {
+            continue;
+        }
+
+        if (planetValueInfo.associatedResource === undefined)
+        {
+            throw new Error(`Planet value ${planetValueType} has limitsResourceMax but no associatedResource.`);
+        }
+
+        const planetValueData: CoreType.PlanetValueData | undefined = planetValuesMap.get(planetValueType);
+        if (planetValueData === undefined)
+        {
+            continue;
+        }
+
+        const resourceMaximum: number = planetValueData.production;
+        const existingMaximum: number | undefined = resourceMaximums.get(planetValueInfo.associatedResource);
+
+        if (existingMaximum === undefined || resourceMaximum < existingMaximum)
+        {
+            resourceMaximums.set(planetValueInfo.associatedResource, resourceMaximum);
+        }
+    }
+
+    return resourceMaximums;
+}
+
+function getPredictedResourceQuantitiesAtTime(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number): Map<GameType.ResourceType, number>
+{
+    const predictedResourceQuantities: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
+    for (const resourceType of StaticData.RESOURCE_INFOS.keys())
     {
         predictedResourceQuantities.set(resourceType, getPredictedResourceQuantityAtTime(planetData, serverData, time, resourceType))
     }
@@ -133,7 +195,7 @@ function getPredictedResourceQuantitiesAtTime(planetData: CoreType.PlanetData, s
     return predictedResourceQuantities;
 }
 
-function getPredictedResourceQuantityAtTime(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number, resourceType: number): number
+function getPredictedResourceQuantityAtTime(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number, resourceType: GameType.ResourceType): number
 {
     const currentResourceQuantity: number = ResourceData.getResourceQuantity(planetData, resourceType);
     const elapsedMilliseconds: number = time - planetData.planetRow.last_updated;

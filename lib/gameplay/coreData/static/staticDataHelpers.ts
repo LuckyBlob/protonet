@@ -2,14 +2,14 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as DBType from "@/lib/db/dbTypes";
 
-export function getBuildingStats(buildingType: number): GameType.BuildingStats | undefined
+export function getBuildingStats(buildingType: GameType.BuildingType): GameType.BuildingStats | undefined
 {
-    return StaticData.BUILDING_STATS.get(buildingType as GameType.BuildingType);
+    return StaticData.BUILDING_STATS.get(buildingType);
 }
 
-export function getShipStats(shipType: number): GameType.ShipStats | undefined
+export function getShipStats(shipType: GameType.ShipType): GameType.ShipStats | undefined
 {
-    return StaticData.SHIP_STATS.get(shipType as GameType.ShipType);
+    return StaticData.SHIP_STATS.get(shipType);
 }
 
 export function rollSizeForSlot(slot: number): number

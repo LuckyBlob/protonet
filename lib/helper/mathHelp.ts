@@ -17,7 +17,7 @@ export function getEarliestByRequestedAt<T>(items: T[], getRequestedAt: (item: T
     return earliest;
 }
 
-export function calculateTotalQuantityMap(map: Map<number, number>): number
+export function calculateTotalQuantityMap<K>(map: Map<K, number>): number
 {
     let total: number = 0;
     for (const [key, quantity] of map)
@@ -28,11 +28,11 @@ export function calculateTotalQuantityMap(map: Map<number, number>): number
     return total;
 }
 
-export function hasQuantities(testQuantities: Map<number, number>, values: (type: number) => number | undefined): boolean
+export function hasQuantities<K>(testQuantities: Map<K, number>, values: (type: K) => number | undefined): boolean
 {
     for (const [type, quantity] of testQuantities)
     {
-        const currentResourceQuantity: number | undefined = values(type); 
+        const currentResourceQuantity: number | undefined = values(type);
         if (currentResourceQuantity === undefined)
         {
             return false;
@@ -47,42 +47,42 @@ export function hasQuantities(testQuantities: Map<number, number>, values: (type
     return true;
 }
 
-export function subtractQuantities(quantities: Map<number, number> , get: (type: number) => number | undefined, set: (type: number, value: number) => void): Map<number, number>
+export function subtractQuantities<K>(quantities: Map<K, number> , get: (type: K) => number | undefined, set: (type: K, value: number) => void): Map<K, number>
 {
     return modifyQuantities("-", quantities, get, set);
 }
 
-export function subtractQuantity(type: number, quantity: number, get: (type: number) => number | undefined, set: (type: number, value: number) => void): number
+export function subtractQuantity<K>(type: K, quantity: number, get: (type: K) => number | undefined, set: (type: K, value: number) => void): number
 {
     return modifyQuantity("-", type, quantity, get, set);
 }
 
-export function addQuantities(quantities: Map<number, number> , get: (type: number) => number | undefined, set: (type: number, value: number) => void): Map<number, number>
+export function addQuantities<K>(quantities: Map<K, number> , get: (type: K) => number | undefined, set: (type: K, value: number) => void): Map<K, number>
 {
     return modifyQuantities("+", quantities, get, set);
 }
 
-export function addQuantitiesTogether(quantities1: Map<number, number>, quantities2: Map<number, number>): Map<number, number>
+export function addQuantitiesTogether<K>(quantities1: Map<K, number>, quantities2: Map<K, number>): Map<K, number>
 {
-    const addedQuantities = new Map<number, number>(quantities1);
+    const addedQuantities: Map<K, number> = new Map<K, number>(quantities1);
 
     for (const [type, qty] of quantities2)
     {
-        const currentQty = addedQuantities.get(type) ?? 0;
+        const currentQty: number = addedQuantities.get(type) ?? 0;
         addedQuantities.set(type, currentQty + qty);
     }
 
     return addedQuantities;
 }
 
-export function addQuantity(type: number, quantity: number, get: (type: number) => number | undefined, set: (type: number, value: number) => void): number
+export function addQuantity<K>(type: K, quantity: number, get: (type: K) => number | undefined, set: (type: K, value: number) => void): number
 {
     return modifyQuantity("+", type, quantity, get, set);
 }
 
-export function modifyQuantities(op: string, quantities: Map<number, number> , get: (type: number) => number | undefined, set: (type: number, value: number) => void): Map<number, number>
+export function modifyQuantities<K>(op: string, quantities: Map<K, number> , get: (type: K) => number | undefined, set: (type: K, value: number) => void): Map<K, number>
 {
-    const remainingQuantities: Map<number, number> = new Map<number, number>();
+    const remainingQuantities: Map<K, number> = new Map<K, number>();
 
     for (const [type, quantity] of quantities)
     {
@@ -92,12 +92,12 @@ export function modifyQuantities(op: string, quantities: Map<number, number> , g
     return remainingQuantities;
 }
 
-function modifyQuantity(op: string, type: number, quantity: number, get: (type: number) => number | undefined, set: (type: number, value: number) => void): number
+function modifyQuantity<K>(op: string, type: K, quantity: number, get: (type: K) => number | undefined, set: (type: K, value: number) => void): number
 {
-    const currentResourceQuantity: number | undefined = get(type); 
+    const currentResourceQuantity: number | undefined = get(type);
     if (currentResourceQuantity === undefined)
     {
-        throw new Error(`⚠️: Substracting non existing specific thing!`); 
+        throw new Error(`⚠️: Substracting non existing specific thing!`);
     }
 
     let newValue: number = currentResourceQuantity;
@@ -114,12 +114,12 @@ function modifyQuantity(op: string, type: number, quantity: number, get: (type: 
             break;
         }
         default:
-            throw new Error(`⚠️: quantity modification operator unknown: ${op}`); 
+            throw new Error(`⚠️: quantity modification operator unknown: ${op}`);
     }
-    
+
     if (newValue < 0)
     {
-        throw new Error(`⚠️: Substracting too much specific thing!`); 
+        throw new Error(`⚠️: Substracting too much specific thing!`);
     }
 
     set(type, newValue);

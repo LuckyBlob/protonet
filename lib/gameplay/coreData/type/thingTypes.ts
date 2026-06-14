@@ -84,6 +84,11 @@ type ThingDefinition =
 	contexts: CoreType.DataContext[];
 };
 
+export function getAllSpecificThings(thingType: typeof Thing.Resource): GameType.ResourceType[];
+export function getAllSpecificThings(thingType: typeof Thing.Building): GameType.BuildingType[];
+export function getAllSpecificThings(thingType: typeof Thing.Ship): GameType.ShipType[];
+export function getAllSpecificThings(thingType: typeof Thing.PlanetValue): GameType.PlanetValueType[];
+export function getAllSpecificThings(thingType: Thing): SpecificThing[];
 export function getAllSpecificThings(thingType: Thing): SpecificThing[]
 {
     switch (thingType)

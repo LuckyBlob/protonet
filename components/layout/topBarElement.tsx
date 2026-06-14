@@ -3,6 +3,7 @@ import { ReactElement } from "react";
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
@@ -60,7 +61,7 @@ function renderPlanetValueCard(planetValueDisplayValues: PlanetValueCardDisplayV
 
 export function TopBarElement(props: TopBarProps): ReactElement
 {
-	const resourceTypes: ThingType.SpecificThing[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
+	const resourceTypes: GameType.ResourceType[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
 
 	try
 	{
@@ -104,7 +105,7 @@ export function TopBarElement(props: TopBarProps): ReactElement
 
 export type PlanetResourceDisplayValues =
 {
-	resourceType: number;
+	resourceType: GameType.ResourceType;
 	resource: number;
 	productionRatePerHour: number;
 	affectedByCurrentBuild: boolean;
@@ -112,7 +113,7 @@ export type PlanetResourceDisplayValues =
 
 export type PlanetValueCardDisplayValues =
 {
-	planetValueType: number;
+	planetValueType: GameType.PlanetValueType;
 	production: number;
 	consumption: number;
 };
@@ -124,10 +125,10 @@ export type PlanetDisplayValues =
 	remainingBuildingUpgradeMs: number | null;
 };
 
-export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState.ClientDataStateResult, resourceTypes: number[]): PlanetDisplayValues
+export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState.ClientDataStateResult, resourceTypes: GameType.ResourceType[]): PlanetDisplayValues
 {
 	const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(clientDataStateResult.psController[0]);
-	const buildingBeingUpgraded: number | null = BuildingUpgradeData.getBuildingTypeCurrentlyUpgrading(planetDataPredicted);
+	const buildingBeingUpgraded: GameType.BuildingType | null = BuildingUpgradeData.getBuildingTypeCurrentlyUpgrading(planetDataPredicted);
 
 	const resourceDisplayValues: PlanetResourceDisplayValues[] = [];
 
@@ -165,7 +166,7 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 
 function getPlanetValueCardDisplayValues(planetDataPredicted: CoreType.PlanetData): PlanetValueCardDisplayValues[]
 {
-	const planetValueAmountsMap: Map<number, CoreType.PlanetValueData> = PlanetValueData.computePlanetValueDatas(planetDataPredicted.dynamicPlanetData);
+	const planetValueAmountsMap: Map<GameType.PlanetValueType, CoreType.PlanetValueData> = PlanetValueData.computePlanetValueDatas(planetDataPredicted.dynamicPlanetData);
 
 	const planetValueDisplayValues: PlanetValueCardDisplayValues[] = [];
 

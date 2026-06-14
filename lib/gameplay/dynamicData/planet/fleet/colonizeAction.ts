@@ -68,15 +68,11 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | nu
 
     removeSingleColonyShipFromFleetMovement(fleetMovement);
     
-    for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)
-    {
-        ShipData.addPlanetShip(targetPlanetData, fleetMovementShipRow.ship_type, fleetMovementShipRow.ship_quantity);
-    }
+    const shipQuantities: Map<GameType.ShipType, number> = FleetData.buildShipQuantitiesFromRows(fleetMovement.fleetMovementShipRows);
+    ShipData.addPlanetShips(targetPlanetData, shipQuantities);
 
-    for (const fleetMovementResourceRow of fleetMovement.fleetMovementResourceRows)
-    {
-        ResourceData.addPlanetResource(targetPlanetData, fleetMovementResourceRow.resource_type, fleetMovementResourceRow.resource_quantity);
-    }
+    const resourceQuantities: Map<GameType.ResourceType, number> = FleetData.buildResourceQuantitiesFromRows(fleetMovement.fleetMovementResourceRows);
+    ResourceData.addPlanetResources(targetPlanetData, resourceQuantities);
 
     FleetData.removeFleetMovement(originPlanetData, fleetMovement.fleetMovementRow.id);
     fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;

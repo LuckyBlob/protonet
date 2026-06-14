@@ -13,7 +13,7 @@ const SHIP_CONSTRUCTION_GENERIC_DATA: SimpleShipConstructionDurationData =
     divider: 2500,
 };
 
-export function computeConstructionDurationSeconds(shipType: number, currentShipyardLevel: number, serverData: CoreType.ServerData | null): number | null
+export function computeConstructionDurationSeconds(shipType: GameType.ShipType, currentShipyardLevel: number, serverData: CoreType.ServerData | null): number | null
 {
     const shipStats: GameType.ShipStats | undefined = StaticDataHelper.getShipStats(shipType);
     if (shipStats === undefined)

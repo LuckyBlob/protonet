@@ -16,7 +16,7 @@ export function useClientDataState(enabled: boolean): ClientDataStateResult
 {
 	const psController: CoreType.PSController = useState<CoreType.PlayerState>({} as CoreType.PlayerState);
 	const sdsController: CoreType.SDSController = useState<CoreType.ServerData>({} as CoreType.ServerData);
-	const lsController: CoreType.LSController = useState<CoreType.LoadingState>({ isLoading: true } as CoreType.LoadingState);
+	const lsController: CoreType.LSController = useState<CoreType.LoadingState>({ isLoading: true, error: null });
 
 	useEffect(() =>
 	{
@@ -31,12 +31,13 @@ export function useClientDataState(enabled: boolean): ClientDataStateResult
 			{
 				await ClientRequestFunctions.clientTryPlayerDataRequest(psController);
 				await ClientRequestFunctions.clientTryServerConfigRequest(sdsController);
-				lsController[1]({ isLoading: false });
+				lsController[1]({ isLoading: false, error: null });
 			}
 			catch (error: unknown)
 			{
 				console.error("⚠️:", error);
-				lsController[1]({ isLoading: true });
+				const errorMessage: string = error instanceof Error ? error.message : String(error);
+				lsController[1]({ isLoading: true, error: errorMessage });
 			}
 		};
 

@@ -32,9 +32,9 @@ type FleetViewData =
     galaxyIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void];
     systemIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void];
     slotIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void];
-    requestedShipQuantitiesState: HelperElement.RequestedQuantitiesState;
-    requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState;
-    fleetActionState: [number, (value: number) => void];
+    requestedShipQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ShipType>;
+    requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ResourceType>;
+    fleetActionState: [GameType.FleetActionType, (value: GameType.FleetActionType) => void];
     sendErrorState: [string | null, (value: string | null) => void];
 }
 
@@ -124,9 +124,9 @@ function renderFleetMovementsSection(props: FleetViewProps): ReactElement
 
 function renderFleetShipRows(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const shipTypes: ThingType.SpecificThing[] = ThingType.getAllSpecificThings(ThingType.Thing.Ship);
-    
-    const rowElements: (ReactElement | null)[] = shipTypes.map((shipType: number) =>
+    const shipTypes: GameType.ShipType[] = ThingType.getAllSpecificThings(ThingType.Thing.Ship);
+
+    const rowElements: (ReactElement | null)[] = shipTypes.map((shipType: GameType.ShipType) =>
     {
         const requestedQuantity: number = data.requestedShipQuantitiesState.requestedQuantities.get(shipType) ?? 0;
 
@@ -143,7 +143,7 @@ function renderFleetShipRows(props: FleetViewProps, data: FleetViewData): ReactE
     return element;
 }
 
-function renderFleetShipRow(props: FleetViewProps, shipType: number, requestedQuantity: number, setRequestedQuantity: (shipType: number, value: number) => void): ReactElement | null
+function renderFleetShipRow(props: FleetViewProps, shipType: GameType.ShipType, requestedQuantity: number, setRequestedQuantity: (shipType: GameType.ShipType, value: number) => void): ReactElement | null
 {
     const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 
@@ -346,9 +346,9 @@ function renderFleetMaxResource(props: FleetViewProps, data: FleetViewData): Rea
 
 function renderFleetResourceRows(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const resourceTypes: ThingType.SpecificThing[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
-    
-    const rowElements: (ReactElement | null)[] = resourceTypes.map((resourceType: number) =>
+    const resourceTypes: GameType.ResourceType[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
+
+    const rowElements: (ReactElement | null)[] = resourceTypes.map((resourceType: GameType.ResourceType) =>
     {
         return renderFleetResourceRow(props, resourceType, data);
     });
@@ -363,7 +363,7 @@ function renderFleetResourceRows(props: FleetViewProps, data: FleetViewData): Re
     return element;
 }
 
-function renderFleetResourceRow(props: FleetViewProps, resourceType: number, data: FleetViewData): ReactElement | null
+function renderFleetResourceRow(props: FleetViewProps, resourceType: GameType.ResourceType, data: FleetViewData): ReactElement | null
 {
     const requestedResourceQuantity: number = data.requestedResourceQuantitiesState.requestedQuantities.get(resourceType) ?? 0;
 
@@ -373,7 +373,7 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: number, dat
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
     const targetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
 
-    const fuelRequirements: Map<number, number> = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
+    const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
     const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
     const totalFleetSpace: number = FleetData.calculateTotalFleetSpace(data.requestedShipQuantitiesState.requestedQuantities);
     const specificFuelResource: number = fuelRequirements.get(resourceType) ?? 0;
@@ -418,8 +418,8 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: number, dat
 
 function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const selectedAction: number = data.fleetActionState[0];
-    const setSelectedAction: (value: number) => void = data.fleetActionState[1];
+    const selectedAction: GameType.FleetActionType = data.fleetActionState[0];
+    const setSelectedAction: (value: GameType.FleetActionType) => void = data.fleetActionState[1];
 
     const totalShipsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedShipQuantitiesState.requestedQuantities);
 
@@ -436,7 +436,7 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
 
     const targetOwnerPlayerId: number | null = targetPublicRow?.owner_player_id ?? null;
 
-    const validActionIds: number[] = Array.from(StaticData.FLEET_ACTION_INFOS.keys()).filter((actionId: GameType.FleetActionType): boolean =>
+    const validActionIds: GameType.FleetActionType[] = Array.from(StaticData.FLEET_ACTION_INFOS.keys()).filter((actionId: GameType.FleetActionType): boolean =>
     {
         return FleetData.canExecuteFleetActionOnTargetAddress(data.planetData, data.playerData, targetOwnerPlayerId, data.requestedShipQuantitiesState.requestedQuantities, actionId);
     });
@@ -449,7 +449,7 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
     const handleChange = (e: ChangeEvent<HTMLSelectElement>): void =>
     {
         const parsedValue: number = Number.parseInt(e.target.value, 10);
-        setSelectedAction(parsedValue);
+        setSelectedAction(parsedValue as GameType.FleetActionType);
     };
 
     const setSendError: (value: string | null) => void = data.sendErrorState[1];
@@ -471,7 +471,7 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
         ? <div className="text-sm font-normal text-red-400 whitespace-nowrap">{sendError}</div>
         : null;
 
-    const optionElements: ReactElement[] = validActionIds.map((actionId: number): ReactElement =>
+    const optionElements: ReactElement[] = validActionIds.map((actionId: GameType.FleetActionType): ReactElement =>
     {
         const actionName: string = ThingType.getSpecificThingName(ThingType.fleetAction(actionId));
 
@@ -555,9 +555,9 @@ export function FleetView(props: FleetViewProps): ReactElement
     const galaxyIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(StaticData.GALAXY_COUNT);
     const systemIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(StaticData.SYSTEM_COUNT);
     const slotIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(StaticData.SLOT_COUNT);
-    const requestedShipQuantitiesState: HelperElement.RequestedQuantitiesState = HelperElement.useRequestedQuantities();
-    const requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState = HelperElement.useRequestedQuantities();
-    const fleetActionState: [number, (value: number) => void] = useState<number>(GameType.FleetActionType.Station);
+    const requestedShipQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ShipType> = HelperElement.useRequestedQuantities<GameType.ShipType>();
+    const requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ResourceType> = HelperElement.useRequestedQuantities<GameType.ResourceType>();
+    const fleetActionState: [GameType.FleetActionType, (value: GameType.FleetActionType) => void] = useState<GameType.FleetActionType>(GameType.FleetActionType.Station);
     const sendErrorState: [string | null, (value: string | null) => void] = useState<string | null>(null);
 
     useEffect((): void =>

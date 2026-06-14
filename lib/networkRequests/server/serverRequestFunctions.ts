@@ -744,7 +744,7 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
         return { success: false, failureReason: "Wrong building type to upgrade.", playerStateResult: playerData };
     }
 
-    const upgradeCost: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(currentBuildingLevel, requestData.buildingType);
+    const upgradeCost: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingUpgradeCost(currentBuildingLevel, requestData.buildingType);
     if (upgradeCost === null)
     {
         return { success: false, failureReason: "Wrong building type to upgrade.", playerStateResult: playerData };
@@ -801,7 +801,7 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
     if (relevantPlanetData.dynamicPlanetData.buildingUpgrades.length === 0)
     {
         newBuildingUpgrade.buildingUpgradeRow.started_at = now;
-        const firstUpgradeTimeSeconds: number | null = BuildingUpgradeData.getBuildingUpgradeDurationSeconds(playerData, firstBuildingUpgradeBuildingRow.building_type, relevantPlanetData, serverData);
+        const firstUpgradeTimeSeconds: number | null = BuildingUpgradeData.getBuildingUpgradeDurationSeconds(playerData, firstBuildingUpgradeBuildingRow.building_type as GameType.BuildingType, relevantPlanetData, serverData);
         if (firstUpgradeTimeSeconds === null)
         {
             throw new Error("First firstBuildingUpgradeBuildingRow cant be null.");
@@ -833,7 +833,7 @@ export function tryBuildShipsLogic(playerId: number, serverData: CoreType.Server
 {
     const now: number = Date.now();
     const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
-    const requestedShipQuantities: Map<number, number> = Serialization.deserializeNumberNumberMap(requestData.serializedShipQuantities);
+    const requestedShipQuantities: Map<GameType.ShipType, number> = Serialization.deserializeNumberNumberMap(requestData.serializedShipQuantities) as Map<GameType.ShipType, number>;
 
     const relevantPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.planetId);
     if (relevantPlanetData === null)
@@ -859,7 +859,7 @@ export function tryBuildShipsLogic(playerId: number, serverData: CoreType.Server
         }
     }
 
-    const possibleRequestedShipQuantities: Map<number, number> = ShipConstructionData.computeMaxAffordableShipQuantities(relevantPlanetData, requestedShipQuantities);
+    const possibleRequestedShipQuantities: Map<GameType.ShipType, number> = ShipConstructionData.computeMaxAffordableShipQuantities(relevantPlanetData, requestedShipQuantities);
     if (possibleRequestedShipQuantities.size === 0)
     {
         return { success: false, failureReason: "Not enough resources.", playerStateResult: playerData };
@@ -871,7 +871,7 @@ export function tryBuildShipsLogic(playerId: number, serverData: CoreType.Server
         return { success: false, failureReason: "Invalid ship construction duration.", playerStateResult: playerData };
     }
 
-    const totalCost: Map<number, number> = ShipConstructionData.computeShipConstructionCost(possibleRequestedShipQuantities);
+    const totalCost: Map<GameType.ResourceType, number> = ShipConstructionData.computeShipConstructionCost(possibleRequestedShipQuantities);
 
     if (ResourceData.hasResourceQuantities(relevantPlanetData, totalCost) === false)
     {
@@ -917,7 +917,7 @@ export function tryBuildShipsLogic(playerId: number, serverData: CoreType.Server
     if (relevantPlanetData.dynamicPlanetData.shipConstructions.length === 0)
     {
         newShipConstruction.shipConstructionRow.started_at = now;
-        const firstConstructionTimeSeconds: number | null = ShipConstructionData.getShipConstructionDurationSeconds(firstConstructionShipRow.ship_type, relevantPlanetData, serverData);
+        const firstConstructionTimeSeconds: number | null = ShipConstructionData.getShipConstructionDurationSeconds(firstConstructionShipRow.ship_type as GameType.ShipType, relevantPlanetData, serverData);
         if (firstConstructionTimeSeconds === null)
         {
             throw new Error("First firstConstructionTime cant be null.");
@@ -1069,8 +1069,8 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
 {
     const now: number = Date.now();
     const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
-    const shipQuantities: Map<number, number> = Serialization.deserializeNumberNumberMap(requestData.serializedShipQuantities);
-    const transportedResourceQuantities: Map<number, number> = Serialization.deserializeNumberNumberMap(requestData.serializedResourceQuantities);
+    const shipQuantities: Map<GameType.ShipType, number> = Serialization.deserializeNumberNumberMap(requestData.serializedShipQuantities) as Map<GameType.ShipType, number>;
+    const transportedResourceQuantities: Map<GameType.ResourceType, number> = Serialization.deserializeNumberNumberMap(requestData.serializedResourceQuantities) as Map<GameType.ResourceType, number>;
 
     const originPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.originPlanetId);
     if (originPlanetData === null)
@@ -1117,7 +1117,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         return { success: false, failureReason: `Fleet action must have a different target than origin planet.`, playerStateResult: playerData };
     }
 
-    let fuelRequirements: Map<number, number>;
+    let fuelRequirements: Map<GameType.ResourceType, number>;
     try
     {
         fuelRequirements = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, shipQuantities, serverData);
@@ -1139,7 +1139,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         return { success: false, failureReason: `Duration calculation problems: ${errorMessage}`, playerStateResult: playerData };
     }
 
-    const totalRequiredResourceQuantities: Map<number, number> = MathHelp.addQuantitiesTogether(transportedResourceQuantities, fuelRequirements);
+    const totalRequiredResourceQuantities: Map<GameType.ResourceType, number> = MathHelp.addQuantitiesTogether(transportedResourceQuantities, fuelRequirements);
 
     const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
@@ -1161,7 +1161,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
             return { success: false, failureReason: `Not enough ships.`, playerStateResult: playerData };
         }
 
-        const actualTransportedResources: Map<number, number> = new Map<number, number>(FleetData.clampResoucesToAddToFleet(shipQuantities, fuelRequirements, transportedResourceQuantities));
+        const actualTransportedResources: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>(FleetData.clampResoucesToAddToFleet(shipQuantities, fuelRequirements, transportedResourceQuantities));
 
         const fleetMovementShipRows: DBType.FleetMovementShipRow[] = [];
         for (const [shipType, shipQuantity] of shipQuantities)
