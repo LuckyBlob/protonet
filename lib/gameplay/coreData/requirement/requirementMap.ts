@@ -71,6 +71,16 @@ export const REQUIREMENT_MAP: RequirementMap = new Map
                 valueGetter: RequirementValueGetters.isAnyBuildingUpgradeInProgress(),
             },
         }]],
+/*6*/   [GameType.BUILDING_PLANET_VALUE_PRODUCTION_1, [{
+            hideDataWhenRequirementFailed: false,
+            thingRequirement:
+            {
+                thingType: ThingType.Thing.BuildingUpgrade,
+                operator: RequirementType.RequirementOperator.Equal,
+                value: false,
+                valueGetter: RequirementValueGetters.isAnyBuildingUpgradeInProgress(),
+            },
+        }]],
     ])],
     [ThingType.Thing.ShipConstruction, new Map<ThingType.SpecificThing, RequirementType.Requirement[]>([
         [GameType.SMALL_TRANSPORT, [
