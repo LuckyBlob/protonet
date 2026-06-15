@@ -11,7 +11,9 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
+import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
@@ -60,7 +62,7 @@ function renderBuildingCard(props: UpgradeViewProps, selectedPlanetDataPredicted
 	const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 	const planetId: number = selectedPlanetDataPredicted.planetRow.id;
 
-	const displayName: string = ThingType.getSpecificThingName(ThingType.building(buildingType));
+	const displayName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.building(buildingType));
 	const currentLevel: number = BuildingData.getBuildingLevel(selectedPlanetDataPredicted, buildingType);
 
 	const nextCostMap: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingUpgradeCost(currentLevel, buildingType);
@@ -160,7 +162,7 @@ export function UpgradeView(props: UpgradeViewProps): ReactElement
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 
-		const cardElements: ReactElement[] = ThingType.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: GameType.BuildingType): ReactElement =>
+		const cardElements: ReactElement[] = ThingDataHelpers.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: GameType.BuildingType): ReactElement =>
 		{
 			return renderBuildingCard(props, selectedPlanetDataPredicted, buildingType);
 		});

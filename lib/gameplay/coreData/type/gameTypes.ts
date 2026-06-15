@@ -1,5 +1,4 @@
-import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as DBType from "@/lib/db/dbTypes";
+import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 
 //#region Resource
 export const ResourceType =
@@ -32,6 +31,7 @@ export type BuildingType = typeof BuildingType[keyof typeof BuildingType];
 export type BuildingStats =
 {
 	displayName: string,
+	requirements?: RequirementType.Requirement[];
 	costFunctionType?: BuildingCostFunctionType;
 	costStats?: CostStats;
 	productionFunctionType?: ProductionFunctionType;
@@ -108,11 +108,12 @@ export type ShipType = typeof ShipType[keyof typeof ShipType];
 export type ShipStats =
 {
 	displayName: string;
+	requirements?: RequirementType.Requirement[];
+	costMap: Map<ResourceType, number>;
 	maxHealth: number;
 	speed: number;
 	space: number;
-	baseFuelConsumption: Map<ResourceType, number>;
-	costMap: Map<ResourceType, number>;
+	baseFuelConsumption?: Map<ResourceType, number>;
 };
 //#endregion
 
@@ -127,6 +128,7 @@ export type FleetActionType = typeof FleetActionType[keyof typeof FleetActionTyp
 export type FleetActionInfo =
 {
 	displayName: string;
+	requirements?: RequirementType.Requirement[];
 };
 //#endregion
 

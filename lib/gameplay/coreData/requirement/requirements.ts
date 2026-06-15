@@ -1,31 +1,60 @@
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
+import * as ThingData from "@/lib/gameplay/coreData/thing/thingData";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
+import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as RequirementMap from "@/lib/gameplay/coreData/requirement/requirementMap";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
+import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 export function getFailedBuildingUpgradeRequirements(playerData: CoreType.PlayerData, buildingType: GameType.BuildingType, planetId: number): RequirementType.Requirement[]
 {
-    return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.BuildingUpgrade, buildingType);
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: planetId,
+    };
+    const requirements: RequirementType.Requirement[] = getBuildingRequirements(ThingType.Thing.BuildingUpgrade, buildingType);
+    return getFailedRequirements(requirementContext, requirements);
 }
 
 export function getFailedShipBuildRequirements(playerData: CoreType.PlayerData, shipType: GameType.ShipType, planetId: number): RequirementType.Requirement[]
 {
-    return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.ShipConstruction, shipType);
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: planetId,
+    };
+    const requirements: RequirementType.Requirement[] = getShipRequirements(ThingType.Thing.ShipConstruction, shipType);
+    return getFailedRequirements(requirementContext, requirements);
 }
 
-export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerData, shipType: GameType.ShipType, planetId: number): RequirementType.Requirement[]
+export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerData, fleetActionType: GameType.FleetActionType, planetId: number, shipQuantities: Map<GameType.ShipType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>, targetPlanetAddress: GameType.PlanetAddress): RequirementType.Requirement[]
 {
-    return getFailedRequirementsInternal(playerData, planetId, ThingType.Thing.FleetMovement, shipType);
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: planetId,
+        shipQuantities: shipQuantities,
+        transportedResourceQuantities: transportedResourceQuantities,
+        targetPlanetAddress: targetPlanetAddress,
+    };
+    const requirements: RequirementType.Requirement[] = getFleetActionRequirements(ThingType.Thing.FleetMovement, fleetActionType, shipQuantities, transportedResourceQuantities, targetPlanetAddress);
+    return getFailedRequirements(requirementContext, requirements);
 }
 
 export function getRequirementDescriptions(failedRequirements: RequirementType.Requirement[], playerData: CoreType.PlayerData, planetId: number): string[]
 {
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: planetId,
+    };
     const descriptions: string[] = [];
 
     for (const requirement of failedRequirements)
     {
-        const description: string | null = describeSingleRequirement(playerData, planetId, requirement);
+        const description: string | null = describeSingleRequirement(requirementContext, requirement);
         if (description !== null)
         {
             descriptions.push(description);
@@ -36,24 +65,28 @@ export function getRequirementDescriptions(failedRequirements: RequirementType.R
 }
 
 // --- internals ---
-
-function getRequirements(thingType: ThingType.Thing, specificThing: ThingType.SpecificThing): RequirementType.Requirement[]
+function getBuildingRequirements(thingType: ThingType.Thing, buildingType: GameType.BuildingType): RequirementType.Requirement[]
 {
-    const specificThingRequirements: ReadonlyMap<ThingType.SpecificThing, RequirementType.Requirement[]> | undefined = RequirementMap.REQUIREMENT_MAP.get(thingType);
+    const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(thingType) ?? [];
+    const specificRequirements: RequirementType.Requirement[] = StaticData.BUILDING_STATS.get(buildingType)?.requirements ?? [];
 
-    if (specificThingRequirements === undefined)
-    {
-        return [];
-    }
+    return [...globalRequirements, ...specificRequirements];
+}
 
-    const requirements: RequirementType.Requirement[] | undefined = specificThingRequirements.get(specificThing);
+function getShipRequirements(thingType: ThingType.Thing, shipType: GameType.ShipType): RequirementType.Requirement[]
+{
+    const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(thingType) ?? [];
+    const specificRequirements: RequirementType.Requirement[] = StaticData.SHIP_STATS.get(shipType)?.requirements ?? [];
 
-    if (requirements === undefined)
-    {
-        return [];
-    }
+    return [...globalRequirements, ...specificRequirements];
+}
 
-    return requirements;
+function getFleetActionRequirements(thingType: ThingType.Thing, fleetActionType: GameType.FleetActionType, shipQuantities: Map<GameType.ShipType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>, targetPlanetAddress: GameType.PlanetAddress): RequirementType.Requirement[]
+{
+    const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(thingType) ?? [];
+    const specificRequirements: RequirementType.Requirement[] = StaticData.FLEET_ACTION_INFOS.get(fleetActionType)?.requirements ?? [];
+
+    return [...globalRequirements, ...specificRequirements];
 }
 
 function resolveValueToNumber(value: number | boolean, operator: RequirementType.RequirementOperator): number
@@ -131,12 +164,12 @@ function operatorToString(operator: RequirementType.RequirementOperator): string
     throw new Error(`UNREACHABLE: Unknown RequirementOperator ${operator}`);
 }
 
-function meetsSingleRequirement(playerData: CoreType.PlayerData, planetId: number, requirement: RequirementType.Requirement): boolean
+function meetsSingleRequirement(requirementContext: RequirementType.RequirementContext, requirement: RequirementType.Requirement): boolean
 {
     if (requirement.thingRequirement !== undefined)
     {
         const thingRequirement: RequirementType.ThingRequirement = requirement.thingRequirement;
-        const thingValueGetter: number = thingRequirement.valueGetter(playerData, planetId);
+        const thingValueGetter: number = thingRequirement.valueGetter(requirementContext);
         const threshold: number = resolveValueToNumber(thingRequirement.value, thingRequirement.operator);
 
         const conditionRespected: boolean = compare(thingValueGetter, thingRequirement.operator, threshold);
@@ -149,7 +182,7 @@ function meetsSingleRequirement(playerData: CoreType.PlayerData, planetId: numbe
     if (requirement.specificThingRequirement !== undefined)
     {
         const specificThingRequirement: RequirementType.SpecificThingRequirement = requirement.specificThingRequirement;
-        const specificThingValueGetter: number = specificThingRequirement.valueGetter(playerData, planetId);
+        const specificThingValueGetter: number = specificThingRequirement.valueGetter(requirementContext);
         const threshold: number = resolveValueToNumber(specificThingRequirement.value, specificThingRequirement.operator);
 
         const conditionRespected: boolean = compare(specificThingValueGetter, specificThingRequirement.operator, threshold);
@@ -162,16 +195,15 @@ function meetsSingleRequirement(playerData: CoreType.PlayerData, planetId: numbe
     return true;
 }
 
-function getFailedRequirementsInternal(playerData: CoreType.PlayerData, planetId: number, thingType: ThingType.Thing, specificThing: ThingType.SpecificThing): RequirementType.Requirement[]
+function getFailedRequirements(requirementContext: RequirementType.RequirementContext, requirements: RequirementType.Requirement[]): RequirementType.Requirement[]
 {
-    const requirements: RequirementType.Requirement[] = getRequirements(thingType, specificThing);
     return requirements.filter((requirement: RequirementType.Requirement): boolean =>
     {
-        return meetsSingleRequirement(playerData, planetId, requirement) === false;
+        return meetsSingleRequirement(requirementContext, requirement) === false;
     });
 }
 
-function describeSingleRequirement(playerData: CoreType.PlayerData, planetId: number, requirement: RequirementType.Requirement): string | null
+function describeSingleRequirement(requirementContext: RequirementType.RequirementContext, requirement: RequirementType.Requirement): string | null
 {
     if (requirement.thingRequirement !== undefined)
     {
@@ -182,10 +214,10 @@ function describeSingleRequirement(playerData: CoreType.PlayerData, planetId: nu
             return null;
         }
 
-        const thingValueGetter: number = thingRequirement.valueGetter(playerData, planetId);
+        const thingValueGetter: number = thingRequirement.valueGetter(requirementContext);
         const threshold: number = resolveValueToNumber(thingRequirement.value, thingRequirement.operator);
         const operatorString: string = operatorToString(thingRequirement.operator);
-        const thingName: string | undefined = ThingType.THING_DISPLAY_NAMES.get(thingRequirement.thingType);
+        const thingName: string | undefined = ThingData.THING_DISPLAY_NAMES.get(thingRequirement.thingType);
 
         if (thingName === undefined)
         {
@@ -201,12 +233,12 @@ function describeSingleRequirement(playerData: CoreType.PlayerData, planetId: nu
 
         if (specificThingRequirement.thingType === ThingType.Thing.BuildingUpgrade)
         {
-            const buildingName: string = ThingType.getSpecificThingName(ThingType.building(specificThingRequirement.specificThingType));
+            const buildingName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.building(specificThingRequirement.specificThingType));
             return `${buildingName} upgrading`;
         }
 
-        const specificName: string = ThingType.getSpecificThingName({ thingType: specificThingRequirement.thingType, specificThingType: specificThingRequirement.specificThingType });
-        const specificThingValueGetter: number = specificThingRequirement.valueGetter(playerData, planetId);
+        const specificName: string = ThingDataHelpers.getSpecificThingName({ thingType: specificThingRequirement.thingType, specificThingType: specificThingRequirement.specificThingType });
+        const specificThingValueGetter: number = specificThingRequirement.valueGetter(requirementContext);
         const threshold: number = resolveValueToNumber(specificThingRequirement.value, specificThingRequirement.operator);
         const operatorString: string = operatorToString(specificThingRequirement.operator);
 

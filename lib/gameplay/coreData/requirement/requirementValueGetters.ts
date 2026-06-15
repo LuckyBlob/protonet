@@ -16,29 +16,42 @@ function getPlanetData(playerData: CoreType.PlayerData, planetId: number): CoreT
 
 export function isAnyBuildingUpgradeInProgress(): RequirementType.ThingValueGetter
 {
-    return (playerData: CoreType.PlayerData, planetId: number): number =>
+    return (context: RequirementType.RequirementContext): number =>
     {
-        const planetData: CoreType.PlanetData = getPlanetData(playerData, planetId);
+        const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
         return planetData.dynamicPlanetData.buildingUpgrades.length > 0 ? 1 : 0;
     };
 }
 
 export function buildingLevel(buildingType: GameType.BuildingType): RequirementType.SpecificThingValueGetter
 {
-    return (playerData: CoreType.PlayerData, planetId: number): number =>
+    return (context: RequirementType.RequirementContext): number =>
     {
-        const planetData: CoreType.PlanetData = getPlanetData(playerData, planetId);
+        const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
         return BuildingData.getBuildingLevel(planetData, buildingType);
     };
 }
 
 export function isSpecificBuildingBeingUpgraded(buildingType: GameType.BuildingType): RequirementType.SpecificThingValueGetter
 {
-    return (playerData: CoreType.PlayerData, planetId: number): number =>
+    return (context: RequirementType.RequirementContext): number =>
     {
-        const planetData: CoreType.PlanetData = getPlanetData(playerData, planetId);
+        const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
         ;
         const isUpgrading: boolean = BuildingUpgradeData.isBuildingTypeCurrentlyUpgrading(planetData, buildingType);
         return isUpgrading ? 1 : 0;
+    };
+}
+
+export function shipQuantities(shipType: GameType.ShipType): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.shipQuantities === undefined)
+        {
+            throw new Error(`shipQuantities requirement evaluated without a potential fleet action for shipType ${shipType}.`);
+        }
+        
+        return context.shipQuantities.get(shipType) ?? 0;
     };
 }

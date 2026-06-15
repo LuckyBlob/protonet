@@ -2,7 +2,8 @@
 
 import { useState, ReactElement, ReactNode, ChangeEvent } from "react";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
+import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 
 export function EmptyElement(): ReactElement
@@ -131,7 +132,7 @@ export function buildCostParts(costMap: Map<GameType.ResourceType, number>): str
 
 	for (const [resourceType, resourceCost] of costMap)
 	{
-		costParts.push(`${resourceCost} ${ThingType.getSpecificThingName(ThingType.resource(resourceType))}`);
+		costParts.push(`${resourceCost} ${ThingDataHelpers.getSpecificThingName(ThingHelpers.resource(resourceType))}`);
 	}
 
 	return costParts;

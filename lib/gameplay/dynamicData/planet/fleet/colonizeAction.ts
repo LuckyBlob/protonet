@@ -10,7 +10,6 @@ import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 import * as DB from "@/lib/db/db";
 import * as ServerPlanetManagement from "@/lib/gameplay/progressUpdate/server/serverPlanetManagement";
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): CoreType.PlayerData | null

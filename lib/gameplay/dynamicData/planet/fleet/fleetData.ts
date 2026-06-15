@@ -11,7 +11,8 @@ import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
+import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 
 export type FleetPlayerData =
 {
@@ -304,7 +305,7 @@ function addInvalidTargetFleetActionMessage(originPlayerData: CoreType.PlayerDat
 		return;
 	}
 	
-	const actionName: string = ThingType.getSpecificThingName(ThingType.fleetAction(fleetMovement.fleetMovementRow.fleet_action_type));
+	const actionName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.fleetAction(fleetMovement.fleetMovementRow.fleet_action_type));
 	
 	fleetMovement.originMessageRow =
 	{
@@ -453,7 +454,7 @@ export function buildResourcesListFromFleetMovement(fleetMovementResourceRows: D
 	const parts: string[] = [];
 	for (const fleetMovementResourceRow of fleetMovementResourceRows)
 	{
-		const resourceName: string = ThingType.getSpecificThingName(ThingType.resource(fleetMovementResourceRow.resource_type)) ?? "Unknown";
+		const resourceName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.resource(fleetMovementResourceRow.resource_type)) ?? "Unknown";
 		parts.push(`${fleetMovementResourceRow.resource_quantity} ${resourceName}`);
 	}
 	return parts.join(", ");
@@ -494,7 +495,7 @@ export function buildShipsListFromFleetMovement(fleetMovementShipRows: DBType.Fl
 	const parts: string[] = [];
 	for (const fleetMovementShipRow of fleetMovementShipRows)
 	{
-		const shipName: string = ThingType.getSpecificThingName(ThingType.ship(fleetMovementShipRow.ship_type)) ?? "Unknown";
+		const shipName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(fleetMovementShipRow.ship_type)) ?? "Unknown";
 		parts.push(`${fleetMovementShipRow.ship_quantity} ${shipName}`);
 	}
 	return parts.join(", ");

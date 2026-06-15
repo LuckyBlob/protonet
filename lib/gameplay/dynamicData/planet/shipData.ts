@@ -1,17 +1,17 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as MathHelp from "@/lib/helper/mathHelp";
 
 // #region Ship Management
 export function setShipQuantity(planetData: CoreType.PlanetData, shipType: GameType.ShipType, value: number): void
 {
-	ThingType.setSpecificThingValue(planetData, CoreType.DataContext.ShipQuantity, shipType, value);
+	ThingHelpers.setSpecificThingValue(planetData, CoreType.DataContext.ShipQuantity, shipType, value);
 }
 
 export function getShipQuantity(planetData: CoreType.PlanetData, shipType: GameType.ShipType): number
 {
-	const shipQuantities: Map<GameType.ShipType, number> = ThingType.getThingValues(planetData, CoreType.DataContext.ShipQuantity) as Map<GameType.ShipType, number>;
+	const shipQuantities: Map<GameType.ShipType, number> = ThingHelpers.getThingValues(planetData, CoreType.DataContext.ShipQuantity) as Map<GameType.ShipType, number>;
 	return shipQuantities.get(shipType) ?? 0;
 }
 
@@ -22,7 +22,7 @@ export function hasShipQuantities(planetData: CoreType.PlanetData, shipQuantitie
 
 export function hasShips(planetData: CoreType.PlanetData): boolean
 {
-	const shipQuantities: Map<GameType.ShipType, number> = ThingType.getThingValues(planetData, CoreType.DataContext.ShipQuantity) as Map<GameType.ShipType, number>;
+	const shipQuantities: Map<GameType.ShipType, number> = ThingHelpers.getThingValues(planetData, CoreType.DataContext.ShipQuantity) as Map<GameType.ShipType, number>;
 	for (const [shipType, shipQuantity] of shipQuantities)
 	{
 		if (shipQuantity > 0)

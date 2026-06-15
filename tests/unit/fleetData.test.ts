@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as FleetData from '@/lib/gameplay/dynamicData/planet/fleet/fleetData';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
-import * as ThingType from '@/lib/gameplay/coreData/type/thingTypes';
+import * as ThingHelpers from '@/lib/gameplay/coreData/thing/thingHelpers';
+import * as ThingDataHelpers from '@/lib/gameplay/coreData/thing/thingDataHelpers';
 import * as StaticData from '@/lib/gameplay/coreData/static/staticData';
 import * as DBType from '@/lib/db/dbTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
@@ -220,6 +221,34 @@ describe('canExecuteFleetActionOnTargetAddress', () =>
         expect(result).toBe(true);
     });
 
+    function buildPlayerWithPlanetCount(planetCount: number): CoreType.PlayerData
+    {
+        const planets: CoreType.PlanetData[] = [];
+        for (let i: number = 0; i < planetCount; i++)
+        {
+            planets.push(TestDataBuilders.buildPlanetData({ planetRow: { id: i + 1 } }));
+        }
+        return TestDataBuilders.buildPlayerData({ planetDatas: planets });
+    }
+
+    it('COLONIZE returns true at exactly one planet below the cap (8 owned with cap 9)', () =>
+    {
+        // The colonize that lands here would be the 9th planet, which is still allowed.
+        const playerOneBelowCap: CoreType.PlayerData = buildPlayerWithPlanetCount(StaticData.MAX_ALLOWED_PLANETS - 1);
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
+        const result: boolean = FleetData.canExecuteFleetActionOnTargetAddress(origin, playerOneBelowCap, null, shipQuantities, GameType.FleetActionType.Colonize);
+        expect(result).toBe(true);
+    });
+
+    it('COLONIZE returns false at exactly the cap (9 owned with cap 9)', () =>
+    {
+        // The colonize that lands here would be the 10th planet, which is blocked.
+        const playerAtCap: CoreType.PlayerData = buildPlayerWithPlanetCount(StaticData.MAX_ALLOWED_PLANETS);
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
+        const result: boolean = FleetData.canExecuteFleetActionOnTargetAddress(origin, playerAtCap, null, shipQuantities, GameType.FleetActionType.Colonize);
+        expect(result).toBe(false);
+    });
+
     it('throws on unknown fleet action types', () =>
     {
         const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
@@ -377,7 +406,7 @@ describe('buildResourcesListFromFleetMovement', () =>
 
     it('formats a single resource entry as "<quantity> <display name>"', () =>
     {
-        const metalName: string = ThingType.getSpecificThingName(ThingType.resource(GameType.ResourceType.Metal));
+        const metalName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.resource(GameType.ResourceType.Metal));
         const rows: DBType.FleetMovementResourceRow[] =
         [
             TestDataBuilders.buildFleetMovementResourceRow({ resource_type: GameType.ResourceType.Metal, resource_quantity: 500 }),
@@ -387,8 +416,8 @@ describe('buildResourcesListFromFleetMovement', () =>
 
     it('joins multiple entries with commas', () =>
     {
-        const metalName: string = ThingType.getSpecificThingName(ThingType.resource(GameType.ResourceType.Metal));
-        const crystalName: string = ThingType.getSpecificThingName(ThingType.resource(GameType.ResourceType.Crystal));
+        const metalName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.resource(GameType.ResourceType.Metal));
+        const crystalName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.resource(GameType.ResourceType.Crystal));
         const rows: DBType.FleetMovementResourceRow[] =
         [
             TestDataBuilders.buildFleetMovementResourceRow({ resource_type: GameType.ResourceType.Metal, resource_quantity: 500 }),
@@ -407,7 +436,7 @@ describe('buildShipsListFromFleetMovement', () =>
 
     it('formats a single ship entry as "<quantity> <display name>"', () =>
     {
-        const smallTransportName: string = ThingType.getSpecificThingName(ThingType.ship(GameType.ShipType.SmallTransport));
+        const smallTransportName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(GameType.ShipType.SmallTransport));
         const rows: DBType.FleetMovementShipRow[] =
         [
             TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.ShipType.SmallTransport, ship_quantity: 3 }),
@@ -417,8 +446,8 @@ describe('buildShipsListFromFleetMovement', () =>
 
     it('joins multiple ship entries with commas', () =>
     {
-        const smallTransportName: string = ThingType.getSpecificThingName(ThingType.ship(GameType.ShipType.SmallTransport));
-        const largeTransportName: string = ThingType.getSpecificThingName(ThingType.ship(GameType.ShipType.LargeTransport));
+        const smallTransportName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(GameType.ShipType.SmallTransport));
+        const largeTransportName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(GameType.ShipType.LargeTransport));
         const rows: DBType.FleetMovementShipRow[] =
         [
             TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.ShipType.SmallTransport, ship_quantity: 3 }),

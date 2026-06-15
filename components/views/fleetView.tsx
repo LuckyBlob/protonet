@@ -5,7 +5,9 @@ import { ReactElement, ChangeEvent, useState, useEffect } from "react";
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
+import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
@@ -44,7 +46,7 @@ function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement, publicPla
     const fleetMovementRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
     const originAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_origin_galaxy, fleetMovementRow.planet_origin_system, fleetMovementRow.planet_origin_slot);
     const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot);
-    const actionName: string = ThingType.getSpecificThingName(ThingType.fleetAction(fleetMovementRow.fleet_action_type));
+    const actionName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.fleetAction(fleetMovementRow.fleet_action_type));
     const isReturnTrip: boolean = fleetMovementRow.is_return_trip === 1;
     const remainingMs: number | null = FleetData.getFleetMovementRemainingMs(fleetMovement);
 
@@ -124,7 +126,7 @@ function renderFleetMovementsSection(props: FleetViewProps): ReactElement
 
 function renderFleetShipRows(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const shipTypes: GameType.ShipType[] = ThingType.getAllSpecificThings(ThingType.Thing.Ship);
+    const shipTypes: GameType.ShipType[] = ThingDataHelpers.getAllSpecificThings(ThingType.Thing.Ship);
 
     const rowElements: (ReactElement | null)[] = shipTypes.map((shipType: GameType.ShipType) =>
     {
@@ -147,7 +149,7 @@ function renderFleetShipRow(props: FleetViewProps, shipType: GameType.ShipType, 
 {
     const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 
-    const shipName: string = ThingType.getSpecificThingName(ThingType.ship(shipType));
+    const shipName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(shipType));
     const ownedQuantity: number = ShipData.getShipQuantity(selectedPlanetDataPredicted, shipType);
     if (ownedQuantity === 0)
     {
@@ -217,6 +219,28 @@ function getFleetViewTargetAddress(data: FleetViewData): GameType.PlanetAddress
     };
 
     return targetAddress;
+}
+
+// The requested ship quantities persist in state across sends (we deliberately don't reset the inputs),
+// so after a send — or any drop in owned ships — a stored request can exceed what's now on the planet.
+// Cap each request to the currently owned amount so the displayed value, fuel/space math, and the send
+// payload all stay valid. The underlying state is left untouched, so the old value comes back if ships do.
+function capRequestedShipQuantitiesToOwned(requestedShipQuantities: Map<GameType.ShipType, number>, planetData: CoreType.PlanetData): Map<GameType.ShipType, number>
+{
+    const cappedShipQuantities: Map<GameType.ShipType, number> = new Map<GameType.ShipType, number>();
+
+    for (const [shipType, requestedQuantity] of requestedShipQuantities)
+    {
+        const ownedQuantity: number = ShipData.getShipQuantity(planetData, shipType);
+        const cappedQuantity: number = Math.min(requestedQuantity, ownedQuantity);
+
+        if (cappedQuantity > 0)
+        {
+            cappedShipQuantities.set(shipType, cappedQuantity);
+        }
+    }
+
+    return cappedShipQuantities;
 }
 
 function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): ReactElement
@@ -346,7 +370,7 @@ function renderFleetMaxResource(props: FleetViewProps, data: FleetViewData): Rea
 
 function renderFleetResourceRows(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const resourceTypes: GameType.ResourceType[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
+    const resourceTypes: GameType.ResourceType[] = ThingDataHelpers.getAllSpecificThings(ThingType.Thing.Resource);
 
     const rowElements: (ReactElement | null)[] = resourceTypes.map((resourceType: GameType.ResourceType) =>
     {
@@ -367,7 +391,7 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: GameType.Re
 {
     const requestedResourceQuantity: number = data.requestedResourceQuantitiesState.requestedQuantities.get(resourceType) ?? 0;
 
-    const resourceName: string = ThingType.getSpecificThingName(ThingType.resource(resourceType));
+    const resourceName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.resource(resourceType));
     const ownedResourceQuantity: number = Math.floor(ResourceData.getResourceQuantity(data.planetData, resourceType));
 
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
@@ -473,7 +497,7 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
 
     const optionElements: ReactElement[] = validActionIds.map((actionId: GameType.FleetActionType): ReactElement =>
     {
-        const actionName: string = ThingType.getSpecificThingName(ThingType.fleetAction(actionId));
+        const actionName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.fleetAction(actionId));
 
         const optionElement: ReactElement =
         (
@@ -573,14 +597,22 @@ export function FleetView(props: FleetViewProps): ReactElement
 
     try
     {
+        const selectedPlanetData: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
+        const cappedRequestedShipQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ShipType> =
+        {
+            requestedQuantities: capRequestedShipQuantitiesToOwned(requestedShipQuantitiesState.requestedQuantities, selectedPlanetData),
+            setRequestedQuantity: requestedShipQuantitiesState.setRequestedQuantity,
+            resetRequestedQuantities: requestedShipQuantitiesState.resetRequestedQuantities,
+        };
+
         const fleetViewData: FleetViewData =
         {
-            planetData: SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]),
+            planetData: selectedPlanetData,
             playerData: props.clientDataStateResult.psController[0].predictedDBData,
             galaxyIdState: galaxyIdState,
             systemIdState: systemIdState,
             slotIdState: slotIdState,
-            requestedShipQuantitiesState: requestedShipQuantitiesState,
+            requestedShipQuantitiesState: cappedRequestedShipQuantitiesState,
             requestedResourceQuantitiesState: requestedResourceQuantitiesState,
             fleetActionState: fleetActionState,
             sendErrorState: sendErrorState,

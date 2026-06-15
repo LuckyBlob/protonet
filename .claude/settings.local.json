@@ -72,7 +72,15 @@
       "Bash(echo \"EXIT: $?\")",
       "Bash(npx vitest *)",
       "Bash(cd /d/Claude/WebsiteProject/protonet)",
-      "Bash(timeout 180 pnpm test:migration)"
+      "Bash(timeout 180 pnpm test:migration)",
+      "Bash(ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new lawson@192.168.0.243 \"echo CONNECTED; whoami; hostname; pwd; echo '---- find deploy.sh ----'; find ~ -maxdepth 4 -name 'deploy*.sh' 2>/dev/null\")",
+      "Bash(scp lawson@192.168.0.243:/var/www/deploy.sh \"D:/Claude/_deploy_tmp.sh\")",
+      "Bash(scp \"D:/Claude/_deploy_tmp.sh\" lawson@192.168.0.243:/var/www/deploy.sh)",
+      "Bash(ssh lawson@192.168.0.243 \"chmod +x /var/www/deploy.sh; echo '---- syntax check ----'; bash -n /var/www/deploy.sh && echo 'SYNTAX OK'; echo '---- new step in context ----'; grep -n -A1 -B1 'Wipe sessions\\\\|Swap DB atomically\\\\|Stop App\\\\|Start App' /var/www/deploy.sh\")",
+      "Bash(pnpm exec *)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "PowerShell(if \\($?\\) { \"deleted\" })"
     ]
   }
 }

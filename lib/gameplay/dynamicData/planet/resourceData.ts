@@ -1,12 +1,12 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ThingTypes from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as MathHelp from "@/lib/helper/mathHelp";
 
 export function setResourceQuantity(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, value: number): void
 {
-    ThingTypes.setSpecificThingValue(planetData, CoreType.DataContext.ResourceQuantity, resourceType, value);
+    ThingHelpers.setSpecificThingValue(planetData, CoreType.DataContext.ResourceQuantity, resourceType, value);
 }
 
 export function setResourceQuantities(planetData: CoreType.PlanetData, resourceQuantities: Map<GameType.ResourceType, number>): void
@@ -19,7 +19,7 @@ export function setResourceQuantities(planetData: CoreType.PlanetData, resourceQ
 
 export function getResourceQuantity(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType): number
 {
-    const resourceQuantities: Map<GameType.ResourceType, number> = ThingTypes.getThingValues(planetData, CoreType.DataContext.ResourceQuantity) as Map<GameType.ResourceType, number>;
+    const resourceQuantities: Map<GameType.ResourceType, number> = ThingHelpers.getThingValues(planetData, CoreType.DataContext.ResourceQuantity) as Map<GameType.ResourceType, number>;
     return Math.floor(resourceQuantities.get(resourceType) ?? 0);
 }
 

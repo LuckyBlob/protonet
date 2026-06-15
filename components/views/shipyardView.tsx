@@ -10,7 +10,9 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
 import * as HelperElements from "@/components/helperElements";
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
+import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as HelperElement from "@/components/helperElements";
@@ -130,7 +132,7 @@ function renderQuantityInput(props: ShipyardViewProps, shipType: GameType.ShipTy
 
 function renderShipBuildRow(props: ShipyardViewProps, planetData: CoreType.PlanetData, serverData: CoreType.ServerData, shipType: GameType.ShipType, requestedQuantity: number, setRequestedQuantity: (shipType: GameType.ShipType, value: number) => void): ReactElement
 {
-    const shipName: string = ThingType.getSpecificThingName(ThingType.ship(shipType));
+    const shipName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(shipType));
     const ownedQuantity: number = ShipData.getShipQuantity(planetData, shipType);
     const singleDurationSeconds: number = ShipConstructionData.getShipConstructionDurationSeconds(shipType, planetData, serverData) ?? 0;
     const costParts: string[] = buildSingleShipCostParts(shipType);
@@ -191,7 +193,7 @@ function renderActiveConstructionHeader(shipConstruction: CoreType.ShipConstruct
         return null;
     }
 
-    const currentShipName: string = ThingType.getSpecificThingName(ThingType.ship(currentShipRow.ship_type));
+    const currentShipName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(currentShipRow.ship_type));
 
     const element: ReactElement =
     (
@@ -308,7 +310,7 @@ function renderShipLines(planetData: CoreType.PlanetData, shipConstruction: Core
 
     for (const shipRow of shipConstruction.shipConstructionShipRows)
     {
-        const shipName: string = ThingType.getSpecificThingName(ThingType.ship(shipRow.ship_type));
+        const shipName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(shipRow.ship_type));
 
         lineElements.push(
             <div key={shipRow.ship_type} className="text-sm">
@@ -333,7 +335,7 @@ function renderBuildableShipLines(buildableQuantities: Map<GameType.ShipType, nu
 
         shipLineElements.push(
             <div key={shipType} className="text-sm">
-                {ThingType.getSpecificThingName(ThingType.ship(shipType))} x {shipQuantity}
+                {ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(shipType))} x {shipQuantity}
             </div>
         );
     }
@@ -357,7 +359,7 @@ function renderBuildableResourceLines(totalCost: Map<GameType.ResourceType, numb
         resourceLineElements.push
         (
             <div key={resourceType} className="text-sm text-blue-400">
-                {resourceCost} {ThingType.getSpecificThingName(ThingType.resource(resourceType))}
+                {resourceCost} {ThingDataHelpers.getSpecificThingName(ThingHelpers.resource(resourceType))}
             </div>
         );
     }
@@ -497,7 +499,7 @@ function createBuildShipsHandler(props: ShipyardViewProps, planetData: CoreType.
 function renderShipyardBody(props: ShipyardViewProps, planetDataPredicted: CoreType.PlanetData, quantitiesState: HelperElement.RequestedQuantitiesState<GameType.ShipType>): ReactElement
 {
     const serverData: CoreType.ServerData = props.clientDataStateResult.sdsController[0];
-    const shipTypes: GameType.ShipType[] = ThingType.getAllSpecificThings(ThingType.Thing.Ship);
+    const shipTypes: GameType.ShipType[] = ThingDataHelpers.getAllSpecificThings(ThingType.Thing.Ship);
 
     const requestedMap: Map<GameType.ShipType, number> = buildRequestedQuantitiesMap(shipTypes, quantitiesState.requestedQuantities);
     const hasRequestedData: boolean = requestedMap.size > 0;

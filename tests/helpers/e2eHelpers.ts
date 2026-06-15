@@ -2,7 +2,9 @@
 import { test, expect, Page, Locator } from "@playwright/test";
 import Database from "better-sqlite3";
 
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
+import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
@@ -207,7 +209,7 @@ export function setResource(planetId: number, playerId: number, resourceType: nu
 
 export function setAllResources(planetId: number, playerId: number, quantity: number, db: Database.Database): void
 {
-    const resourceTypes: ThingType.SpecificThing[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
+    const resourceTypes: ThingType.SpecificThing[] = ThingDataHelpers.getAllSpecificThings(ThingType.Thing.Resource);
     for (const resourceType of resourceTypes)
     {
         setResource(planetId, playerId, resourceType, quantity, db);
@@ -526,7 +528,7 @@ export function fleetActionSelect(page: Page): Locator
     // would render a dropdown that doesn't contain "Station", and a "Station"-only filter
     // would never match it.
     const actionNames: string[] = Array.from(StaticData.FLEET_ACTION_INFOS.keys()).map(
-        (fleetActionType: GameType.FleetActionType): string => ThingType.getSpecificThingName(ThingType.fleetAction(fleetActionType)));
+        (fleetActionType: GameType.FleetActionType): string => ThingDataHelpers.getSpecificThingName(ThingHelpers.fleetAction(fleetActionType)));
     const actionNamesAlternation: string = actionNames.join("|");
     const actionNamePattern: RegExp = new RegExp(`^(${actionNamesAlternation})$`);
     return page.locator("select").filter({ has: page.getByRole("option", { name: actionNamePattern }) });

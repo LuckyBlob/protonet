@@ -1084,6 +1084,14 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         return { success: false, failureReason: "Target planet is invalid.", playerStateResult: playerData };
     }
 
+    const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
+    const targetAddress: GameType.PlanetAddress = 
+    {
+        galaxy: requestData.targetPlanetGalaxy,
+        system: requestData.targetPlanetSystem,
+        slot: requestData.targetPlanetPosition,
+    }
+
     for (const [shipType, shipQuantity] of shipQuantities)
     {
         if (shipQuantity <= 0)
@@ -1091,7 +1099,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
             return { success: false, failureReason: "Non-positive ship quantity for fleet.", playerStateResult: playerData };
         }
 
-        if (Requirement.getFailedFleetMovementRequirements(playerData, shipType, originPlanetData.planetRow.id).length > 0)
+        if (Requirement.getFailedFleetMovementRequirements(playerData, shipType, originPlanetData.planetRow.id, shipQuantities, transportedResourceQuantities, targetAddress).length > 0)
         {
             return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
         }
@@ -1101,14 +1109,6 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     if (canExecuteFleetAction === false)
     {
         return { success: false, failureReason: `Cannot execute fleet action ${requestData.fleetAction}.`, playerStateResult: playerData };
-    }
-
-    const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
-    const targetAddress: GameType.PlanetAddress = 
-    {
-        galaxy: requestData.targetPlanetGalaxy,
-        system: requestData.targetPlanetSystem,
-        slot: requestData.targetPlanetPosition,
     }
 
     const isSamePlanet: boolean = StaticDataHelper.isSameAddress(originAddress, targetAddress);

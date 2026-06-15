@@ -1,6 +1,10 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
+import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
+import * as RequirementValueGetters from "@/lib/gameplay/coreData/requirement/requirementValueGetters";
 
+//#region Buildings
 export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.BuildingStats> = new Map<GameType.BuildingType, GameType.BuildingStats>
 ([
     [GameType.BuildingType.MetalMine, { displayName: "Metal Mine",
@@ -139,6 +143,14 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 
 	[GameType.BuildingType.Shipyard, { displayName: "Shipyard",
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.RoboticFactory,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 2,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.RoboticFactory),},},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -157,46 +169,74 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Crystal, 120],]),},
 	},],
 ]);
+//#endregion
 
+//#region Ships
 export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = new Map<GameType.ShipType, GameType.ShipStats>
 ([
     [GameType.ShipType.SmallTransport, { displayName: "Small Transport",
-		maxHealth: 4000,
-		space: 5000,
-		speed: 5000,
-		baseFuelConsumption: new Map<GameType.ResourceType, number>([
-			[GameType.ResourceType.Deuterium, 10]]),
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.ShipConstruction,
+				specificThingType: GameType.BuildingType.Shipyard,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 2,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 2000],
 			[GameType.ResourceType.Crystal, 2000],]),
+		maxHealth: 4000,
+		speed: 5000,
+		space: 5000,
+		baseFuelConsumption: new Map<GameType.ResourceType, number>([
+			[GameType.ResourceType.Deuterium, 10]]),
 	}],
 
 
     [GameType.ShipType.LargeTransport, { displayName: "Large Transport",
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.ShipConstruction,
+				specificThingType: GameType.BuildingType.Shipyard,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 6,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+		costMap: new Map<GameType.ResourceType, number>([
+			[GameType.ResourceType.Metal, 6000],
+			[GameType.ResourceType.Crystal, 6000],]),
 		maxHealth: 12000,
 		space: 25000,
 		speed: 7500,
 		baseFuelConsumption: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Deuterium, 50]]),
-		costMap: new Map<GameType.ResourceType, number>([
-			[GameType.ResourceType.Metal, 6000],
-			[GameType.ResourceType.Crystal, 6000],]),
 	}],
 
 
     [GameType.ShipType.ColonyShip, { displayName: "Colony Ship",
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.ShipConstruction,
+				specificThingType: GameType.BuildingType.Shipyard,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 4,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+		costMap: new Map<GameType.ResourceType, number>([
+			[GameType.ResourceType.Metal, 10000],
+			[GameType.ResourceType.Crystal, 20000],
+			[GameType.ResourceType.Deuterium, 10000],]),
 		maxHealth: 30000,
 		space: 2500,
 		speed: 7500,
 		baseFuelConsumption: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Deuterium, 1000]]),
-		costMap: new Map<GameType.ResourceType, number>([
-			[GameType.ResourceType.Metal, 10000],
-			[GameType.ResourceType.Crystal, 20000],
-			[GameType.ResourceType.Deuterium, 10000],]),
 	}],
 ]);
+//#endregion
 
+//#region Resource
 export const RESOURCE_INFOS: ReadonlyMap<GameType.ResourceType, GameType.ResourceInfo> = new Map<GameType.ResourceType, GameType.ResourceInfo>
 ([
     [GameType.ResourceType.Metal, {
@@ -206,7 +246,9 @@ export const RESOURCE_INFOS: ReadonlyMap<GameType.ResourceType, GameType.Resourc
 	[GameType.ResourceType.Deuterium, {
 		displayName: "Deuterium",}],
 ]);
+//#endregion
 
+//#region Fleet
 export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.FleetActionInfo> = new Map<GameType.FleetActionType, GameType.FleetActionInfo>
 ([
     [GameType.FleetActionType.Station, {
@@ -214,9 +256,19 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 	[GameType.FleetActionType.Collect, {
 		displayName: "Collect",}],
 	[GameType.FleetActionType.Colonize, {
-		displayName: "Colonize",}],
+		displayName: "Colonize",
+			requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				specificThingType: GameType.ShipType.ColonyShip,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 1,
+				valueGetter: RequirementValueGetters.shipQuantities(GameType.ShipType.ColonyShip),},},],}],
 ]);
+//#endregion
 
+//#region PlanetValue
 export const PLANET_VALUE_INFOS: ReadonlyMap<GameType.PlanetValueType, GameType.PlanetValueInfo> = new Map<GameType.PlanetValueType, GameType.PlanetValueInfo>
 ([
     [GameType.PlanetValueType.Energy, {
@@ -239,7 +291,9 @@ export const PLANET_VALUE_INFOS: ReadonlyMap<GameType.PlanetValueType, GameType.
 		associatedResource: GameType.ResourceType.Deuterium,
 		limitsResourceMax: true,}],
 ]);
+//#endregion
 
+//#region Planet
 export const STARTING_PLANET_DATA: CoreType.DynamicPlanetData =
 {
 	...structuredClone(CoreType.EmptyPlanetData),
@@ -273,3 +327,24 @@ export const SLOT_COUNT: number = 5;
 export const MIN_SLOT_STARTING_PLANET: number = 3;
 export const MAX_SLOT_STARTING_PLANET: number = 4;
 export const STARTING_PLANET_SIZE: number = 163;
+//#endregion
+
+//#region Requirements
+export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requirement[]> = new Map<ThingType.Thing, RequirementType.Requirement[]>
+([
+    [ThingType.Thing.BuildingUpgrade, [{
+		hideDataWhenRequirementFailed: false,
+		thingRequirement: {
+			thingType: ThingType.Thing.BuildingUpgrade,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,
+			valueGetter: RequirementValueGetters.isAnyBuildingUpgradeInProgress(),}}]],
+	[ThingType.Thing.ShipConstruction, [{
+		hideDataWhenRequirementFailed: false,
+		thingRequirement: {
+			thingType: ThingType.Thing.BuildingUpgrade,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,
+			valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.Shipyard),}}]],
+]);
+//#endregion

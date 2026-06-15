@@ -3,6 +3,7 @@ import * as Requirements from '@/lib/gameplay/coreData/requirement/requirements'
 import * as RequirementType from '@/lib/gameplay/coreData/requirement/requirementTypes';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
+import * as StaticData from '@/lib/gameplay/coreData/static/staticData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
 describe('getFailedBuildingUpgradeRequirements', () =>
@@ -81,6 +82,44 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, 9999 as GameType.BuildingType, 1);
         expect(failed).toHaveLength(0);
+    });
+});
+
+describe('no building can be queued while another upgrade is already in progress', () =>
+{
+    // A planet that already has one upgrade running. Only the head upgrade ever has started_at set,
+    // and queuing a second upgrade leads to the illegal two-upgrade state (see
+    // buildingUpgradeQueueInvariant.test.ts). So EVERY building must report a failed requirement here.
+    function buildPlanetWithUpgradeInProgress(): CoreType.PlanetData
+    {
+        const ongoingUpgrade: CoreType.BuildingUpgrade =
+        {
+            buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 1 }),
+            buildingUpgradeBuildingRows: [TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine })],
+        };
+
+        return TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData: { buildingUpgrades: [ongoingUpgrade] },
+        });
+    }
+
+    it('every building type reports a failed requirement (cannot be queued up)', () =>
+    {
+        const planet: CoreType.PlanetData = buildPlanetWithUpgradeInProgress();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const queueableBuildingNames: string[] = [];
+        for (const buildingType of StaticData.BUILDING_STATS.keys())
+        {
+            const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, buildingType, planet.planetRow.id);
+            if (failed.length === 0)
+            {
+                queueableBuildingNames.push(StaticData.BUILDING_STATS.get(buildingType)!.displayName);
+            }
+        }
+
+        expect(queueableBuildingNames).toEqual([]);
     });
 });
 
@@ -218,6 +257,49 @@ describe('getFailedShipBuildRequirements', () =>
 
         const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.ColonyShip, 1);
         expect(failed).toHaveLength(0);
+    });
+});
+
+describe('no ship can be started while the Shipyard is being built', () =>
+{
+    // A planet whose Shipyard is high enough to satisfy every ship's level requirement, but is
+    // currently being upgraded. While the Shipyard is under construction, no ship should be buildable.
+    function buildPlanetWithShipyardUpgrading(): CoreType.PlanetData
+    {
+        const shipyardUpgradeRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.Shipyard });
+        const ongoingUpgrade: CoreType.BuildingUpgrade =
+        {
+            buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 1 }),
+            buildingUpgradeBuildingRows: [shipyardUpgradeRow],
+        };
+
+        return TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                // Level 10 clears every ship's Shipyard-level requirement, isolating the "being upgraded" rule.
+                buildingLevels: new Map([[GameType.BuildingType.Shipyard, 10]]),
+                buildingUpgrades: [ongoingUpgrade],
+            },
+        });
+    }
+
+    it('every ship type reports a failed requirement (cannot be started)', () =>
+    {
+        const planet: CoreType.PlanetData = buildPlanetWithShipyardUpgrading();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const buildableShipNames: string[] = [];
+        for (const shipType of StaticData.SHIP_STATS.keys())
+        {
+            const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, shipType, planet.planetRow.id);
+            if (failed.length === 0)
+            {
+                buildableShipNames.push(StaticData.SHIP_STATS.get(shipType)!.displayName);
+            }
+        }
+
+        expect(buildableShipNames).toEqual([]);
     });
 });
 

@@ -2,7 +2,9 @@ import { ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
+import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
@@ -21,7 +23,7 @@ type TopBarProps =
 
 function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, remainingMs: number | null): ReactElement
 {
-	const resourceName: string = ThingType.getSpecificThingName(ThingType.resource(resourceDisplayValues.resourceType));
+	const resourceName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.resource(resourceDisplayValues.resourceType));
 
 	const buildLineElement: ReactElement | null = (resourceDisplayValues.affectedByCurrentBuild === true && remainingMs !== null)
 		? <div className="text-sm">({TimeFormat.formatRemainingTimeMs(remainingMs)})</div>
@@ -41,7 +43,7 @@ function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, 
 
 function renderPlanetValueCard(planetValueDisplayValues: PlanetValueCardDisplayValues): ReactElement
 {
-	const planetValueName: string = ThingType.getSpecificThingName(ThingType.planetValue(planetValueDisplayValues.planetValueType));
+	const planetValueName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.planetValue(planetValueDisplayValues.planetValueType));
 	const productionValue: number = Math.floor(planetValueDisplayValues.production);
 	const consumptionValue: number = Math.floor(planetValueDisplayValues.consumption);
 
@@ -61,7 +63,7 @@ function renderPlanetValueCard(planetValueDisplayValues: PlanetValueCardDisplayV
 
 export function TopBarElement(props: TopBarProps): ReactElement
 {
-	const resourceTypes: GameType.ResourceType[] = ThingType.getAllSpecificThings(ThingType.Thing.Resource);
+	const resourceTypes: GameType.ResourceType[] = ThingDataHelpers.getAllSpecificThings(ThingType.Thing.Resource);
 
 	try
 	{

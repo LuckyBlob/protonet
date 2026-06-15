@@ -1,4 +1,3 @@
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes"
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 import * as DBType from "@/lib/db/dbTypes";
 

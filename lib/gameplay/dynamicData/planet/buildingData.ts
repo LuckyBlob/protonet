@@ -3,25 +3,25 @@ import * as BuildingProduction from "@/lib/gameplay/coreData/formula/buildingPro
 import * as PlanetValueData from "@/lib/gameplay/dynamicData/planet/planetValueData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 export function setBuildingLevel(planetData: CoreType.PlanetData, buildingType: GameType.BuildingType, value: number): void
 {
-    ThingType.setSpecificThingValue(planetData, CoreType.DataContext.BuildingLevel, buildingType, value);
+    ThingHelpers.setSpecificThingValue(planetData, CoreType.DataContext.BuildingLevel, buildingType, value);
 }
 
 export function getBuildingLevel(planetData: CoreType.PlanetData, buildingType: GameType.BuildingType): number
 {
-    const buildingLevels: Map<GameType.BuildingType, number> = ThingType.getThingValues(planetData, CoreType.DataContext.BuildingLevel) as Map<GameType.BuildingType, number>;
+    const buildingLevels: Map<GameType.BuildingType, number> = ThingHelpers.getThingValues(planetData, CoreType.DataContext.BuildingLevel) as Map<GameType.BuildingType, number>;
     return buildingLevels.get(buildingType) ?? 0;
 }
 
 export function getBuildingLevelMap(planetData: CoreType.PlanetData): Map<GameType.BuildingType, number>
 {
-    return ThingType.getThingValues(planetData, CoreType.DataContext.BuildingLevel) as Map<GameType.BuildingType, number>;
+    return ThingHelpers.getThingValues(planetData, CoreType.DataContext.BuildingLevel) as Map<GameType.BuildingType, number>;
 }
 
 export function getPlanetProductionRatePerSecond(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, serverData: CoreType.ServerData): number

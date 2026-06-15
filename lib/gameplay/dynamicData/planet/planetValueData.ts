@@ -1,5 +1,4 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ThingType from "@/lib/gameplay/coreData/type/thingTypes"
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as BuildingPlanetValueProduction from "@/lib/gameplay/coreData/formula/buildingPlanetValueProductionFormulas";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
