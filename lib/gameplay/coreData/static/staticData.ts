@@ -178,7 +178,7 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
-				thingType: ThingType.Thing.ShipConstruction,
+				thingType: ThingType.Thing.Building,
 				specificThingType: GameType.BuildingType.Shipyard,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 2,
@@ -198,7 +198,7 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
-				thingType: ThingType.Thing.ShipConstruction,
+				thingType: ThingType.Thing.Building,
 				specificThingType: GameType.BuildingType.Shipyard,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 6,
@@ -218,7 +218,7 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
-				thingType: ThingType.Thing.ShipConstruction,
+				thingType: ThingType.Thing.Building,
 				specificThingType: GameType.BuildingType.Shipyard,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 4,
@@ -249,22 +249,55 @@ export const RESOURCE_INFOS: ReadonlyMap<GameType.ResourceType, GameType.Resourc
 //#endregion
 
 //#region Fleet
+// MAX_ALLOWED_PLANETS lives here (above its //#region Planet home) because FLEET_ACTION_INFOS is
+// constructed at module load and references it as the Colonize planet-cap threshold.
+export const MAX_ALLOWED_PLANETS: number = 9;
+
 export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.FleetActionInfo> = new Map<GameType.FleetActionType, GameType.FleetActionInfo>
 ([
     [GameType.FleetActionType.Station, {
-		displayName: "Station",}],
+		displayName: "Station",
+			requirements:[{
+			hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.isTargetPlanetOwned(),},},],}],
 	[GameType.FleetActionType.Collect, {
-		displayName: "Collect",}],
+		displayName: "Collect",
+			requirements:[{
+			hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.isTargetPlanetOwned(),},},],}],
 	[GameType.FleetActionType.Colonize, {
 		displayName: "Colonize",
-			requirements:[{
+			requirements:[
+			{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				specificThingType: GameType.ShipType.ColonyShip,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 1,
-				valueGetter: RequirementValueGetters.shipQuantities(GameType.ShipType.ColonyShip),},},],}],
+				valueGetter: RequirementValueGetters.shipQuantities(GameType.ShipType.ColonyShip),},},
+			{
+			hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: false,
+				valueGetter: RequirementValueGetters.isTargetPlanetOwned(),},},
+			{
+			hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.LesserThan,
+				value: MAX_ALLOWED_PLANETS,
+				valueGetter: RequirementValueGetters.playerPlanetCount(),},},],}],
 ]);
 //#endregion
 
@@ -318,7 +351,6 @@ export const SYSTEM_DISTANCE: number = 2700;
 export const SYSTEM_DISTANCE_FACTOR: number = 95;
 export const SLOT_DISTANCE: number = 1000;
 export const SLOT_DISTANCE_FACTOR: number = 55;
-export const MAX_ALLOWED_PLANETS: number = 9;
 
 export const GALAXY_COUNT: number = 2;
 

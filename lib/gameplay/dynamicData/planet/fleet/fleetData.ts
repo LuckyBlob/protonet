@@ -7,7 +7,6 @@ import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as CollectAction from "@/lib/gameplay/dynamicData/planet/fleet/collectAction";
 import * as StationAction from "@/lib/gameplay/dynamicData/planet/fleet/stationAction";
-import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
@@ -55,84 +54,6 @@ export class FleetActionResolver
 
 		return targetPlayerData;
     }
-}
-
-export function canExecuteFleetActionOnTargetAddress(originPlanetData: CoreType.PlanetData, originPlayerData: CoreType.PlayerData, targetPlanetOwnedPlayerId: number | null, shipQuantities: Map<GameType.ShipType, number>, fleetAction: GameType.FleetActionType): boolean
-{
-    switch (fleetAction)
-    {
-        case GameType.FleetActionType.Station:
-        {
-            if (targetPlanetOwnedPlayerId === null)
-            {
-                return false;
-            }
-
-            return true;
-        }
-        case GameType.FleetActionType.Colonize:
-        {
-            const colonyShipQuantityRequest: number | undefined = shipQuantities.get(GameType.ShipType.ColonyShip);
-            if ((colonyShipQuantityRequest === undefined) || (colonyShipQuantityRequest === 0))
-            {
-                return false;
-            }
-
-            // Target must be unclaimed: either unknown to us (no public row), or known but ownerless.
-            if (targetPlanetOwnedPlayerId !== null)
-            {
-                return false;
-            }
-
-			if (originPlayerData.planetDatas.length >= StaticData.MAX_ALLOWED_PLANETS)
-			{
-				return false;
-			}
-
-            return true;
-        }
-        case GameType.FleetActionType.Collect:
-        {
-			if (targetPlanetOwnedPlayerId === null)
-            {
-                return false;
-            }
-
-            return true;
-        }
-        default:
-        {
-            throw new Error(`UNREACHABLE: No name found for fleet action ${fleetAction}`);
-        }
-    }
-}
-
-export function canExecuteFleetActionOnTargetPlanet(originPlanetData: CoreType.PlanetData, originPlayerData: CoreType.PlayerData, targetPlanetData: CoreType.PlanetData | null, shipQuantities: Map<GameType.ShipType, number>, fleetAction: GameType.FleetActionType): boolean
-{
-	const canExecuteActionWithPublicInfo: boolean = canExecuteFleetActionOnTargetAddress(originPlanetData, originPlayerData, targetPlanetData ? targetPlanetData.planetRow.owner_player_id : null, shipQuantities, fleetAction) 
-	if (canExecuteActionWithPublicInfo === false)
-	{
-		return false;
-	}
-
-	// do extra server checks if needed
-	switch (fleetAction)
-	{
-		case GameType.FleetActionType.Station:
-		{
-			return true;
-		}
-		case GameType.FleetActionType.Colonize:
-		{
-			return true;
-		}
-		case GameType.FleetActionType.Collect:
-		{
-			return true;
-		}
-		default:
-        	throw new Error(`UNREACHABLE: No name found for fleet action ${fleetAction}`);
-	}
 }
 
 export function calculateShipQuantitiesLowestMovementSpeed(shipQuantities: Map<GameType.ShipType, number>): number

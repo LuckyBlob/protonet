@@ -21,6 +21,8 @@ import * as DBType from "@/lib/db/dbTypes";
 import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMovementDurationFormulas";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
+import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
+import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 
 type FleetViewProps =
 {
@@ -462,7 +464,8 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
 
     const validActionIds: GameType.FleetActionType[] = Array.from(StaticData.FLEET_ACTION_INFOS.keys()).filter((actionId: GameType.FleetActionType): boolean =>
     {
-        return FleetData.canExecuteFleetActionOnTargetAddress(data.planetData, data.playerData, targetOwnerPlayerId, data.requestedShipQuantitiesState.requestedQuantities, actionId);
+        const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(data.playerData, actionId, data.planetData.planetRow.id, data.requestedShipQuantitiesState.requestedQuantities, data.requestedResourceQuantitiesState.requestedQuantities, targetPlanetAddress, targetOwnerPlayerId);
+        return failedRequirements.length === 0;
     });
 
     const isSelectedActionValid: boolean = validActionIds.includes(selectedAction);

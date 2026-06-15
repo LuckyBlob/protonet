@@ -80,7 +80,8 @@
       "Bash(pnpm exec *)",
       "mcp__visualize__read_me",
       "mcp__visualize__show_widget",
-      "PowerShell(if \\($?\\) { \"deleted\" })"
+      "PowerShell(if \\($?\\) { \"deleted\" })",
+      "Bash(npx eslint *)"
     ]
   }
 }

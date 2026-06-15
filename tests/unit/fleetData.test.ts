@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as FleetData from '@/lib/gameplay/dynamicData/planet/fleet/fleetData';
+import * as Requirements from '@/lib/gameplay/coreData/requirement/requirements';
+import * as RequirementType from '@/lib/gameplay/coreData/requirement/requirementTypes';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as ThingHelpers from '@/lib/gameplay/coreData/thing/thingHelpers';
@@ -144,82 +146,19 @@ describe('clampResoucesToAddToFleet', () =>
     });
 });
 
-describe('canExecuteFleetActionOnTargetAddress', () =>
+describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
 {
-    const origin: CoreType.PlanetData = TestDataBuilders.buildPlanetData();
+    // These checks used to live in FleetData.canExecuteFleetActionOnTargetAddress; they are now
+    // expressed as requirements on FLEET_ACTION_INFOS and evaluated through the requirement system.
+    const PLANET_ID: number = 1;
     const originPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+    const dummyTargetAddress: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1 };
+    const noResources: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 
-    it('STATION returns false for an unowned target (null ownerId)', () =>
+    function getFailed(player: CoreType.PlayerData, action: GameType.FleetActionType, shipQuantities: Map<GameType.ShipType, number>, targetOwnerPlayerId: number | null): RequirementType.Requirement[]
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        const result: boolean = FleetData.canExecuteFleetActionOnTargetAddress(origin, originPlayer, null, shipQuantities, GameType.FleetActionType.Station);
-        expect(result).toBe(false);
-    });
-
-    it('STATION returns true for an owned target', () =>
-    {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        const result: boolean = FleetData.canExecuteFleetActionOnTargetAddress(origin, originPlayer, 42, shipQuantities, GameType.FleetActionType.Station);
-        expect(result).toBe(true);
-    });
-
-    it('throws for an unknown fleet action (only Station/Collect/Colonize are address-only actions)', () =>
-    {
-        // Pinned behaviour. If a new action becomes available, this test will flag the change.
-        const unknownFleetActionType: GameType.FleetActionType = 99 as GameType.FleetActionType;
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        expect(() => FleetData.canExecuteFleetActionOnTargetAddress(origin, originPlayer, 42, shipQuantities, unknownFleetActionType)).toThrow();
-        expect(() => FleetData.canExecuteFleetActionOnTargetAddress(origin, originPlayer, null, shipQuantities, unknownFleetActionType)).toThrow();
-    });
-
-    it('COLLECT returns false for an unowned target', () =>
-    {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        const result: boolean = FleetData.canExecuteFleetActionOnTargetAddress(origin, originPlayer, null, shipQuantities, GameType.FleetActionType.Collect);
-        expect(result).toBe(false);
-    });
-
-    it('COLLECT returns true for an owned target', () =>
-    {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        const result: boolean = FleetData.canExecuteFleetActionOnTargetAddress(origin, originPlayer, 42, shipQuantities, GameType.FleetActionType.Collect);
-        expect(result).toBe(true);
-    });
-
-    it('COLONIZE returns false when no colony ship is included', () =>
-    {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        const result: boolean = FleetData.canExecuteFleetActionOnTargetAddress(origin, originPlayer, null, shipQuantities, GameType.FleetActionType.Colonize);
-        expect(result).toBe(false);
-    });
-
-    it('COLONIZE returns false when the target is already owned', () =>
-    {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
-        const result: boolean = FleetData.canExecuteFleetActionOnTargetAddress(origin, originPlayer, 42, shipQuantities, GameType.FleetActionType.Colonize);
-        expect(result).toBe(false);
-    });
-
-    it('COLONIZE returns false when the player has reached MAX_ALLOWED_PLANETS', () =>
-    {
-        const manyPlanets: CoreType.PlanetData[] = [];
-        for (let i: number = 0; i < StaticData.MAX_ALLOWED_PLANETS; i++)
-        {
-            manyPlanets.push(TestDataBuilders.buildPlanetData({ planetRow: { id: i + 1 } }));
-        }
-        const playerAtCap: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: manyPlanets });
-
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
-        const result: boolean = FleetData.canExecuteFleetActionOnTargetAddress(origin, playerAtCap, null, shipQuantities, GameType.FleetActionType.Colonize);
-        expect(result).toBe(false);
-    });
-
-    it('COLONIZE returns true when colony ship present, target unclaimed, and under cap', () =>
-    {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
-        const result: boolean = FleetData.canExecuteFleetActionOnTargetAddress(origin, originPlayer, null, shipQuantities, GameType.FleetActionType.Colonize);
-        expect(result).toBe(true);
-    });
+        return Requirements.getFailedFleetMovementRequirements(player, action, PLANET_ID, shipQuantities, noResources, dummyTargetAddress, targetOwnerPlayerId);
+    }
 
     function buildPlayerWithPlanetCount(planetCount: number): CoreType.PlayerData
     {
@@ -231,28 +170,88 @@ describe('canExecuteFleetActionOnTargetAddress', () =>
         return TestDataBuilders.buildPlayerData({ planetDatas: planets });
     }
 
-    it('COLONIZE returns true at exactly one planet below the cap (8 owned with cap 9)', () =>
+    it('STATION fails for an unowned target (null ownerId)', () =>
+    {
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Station, shipQuantities, null);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('STATION passes for an owned target', () =>
+    {
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Station, shipQuantities, 42);
+        expect(failed).toHaveLength(0);
+    });
+
+    it('COLLECT fails for an unowned target', () =>
+    {
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Collect, shipQuantities, null);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('COLLECT passes for an owned target', () =>
+    {
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Collect, shipQuantities, 42);
+        expect(failed).toHaveLength(0);
+    });
+
+    it('COLONIZE fails when no colony ship is included', () =>
+    {
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Colonize, shipQuantities, null);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('COLONIZE fails when the target is already owned', () =>
+    {
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Colonize, shipQuantities, 42);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('COLONIZE fails when the player has reached MAX_ALLOWED_PLANETS', () =>
+    {
+        const playerAtCap: CoreType.PlayerData = buildPlayerWithPlanetCount(StaticData.MAX_ALLOWED_PLANETS);
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(playerAtCap, GameType.FleetActionType.Colonize, shipQuantities, null);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('COLONIZE passes when colony ship present, target unclaimed, and under cap', () =>
+    {
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Colonize, shipQuantities, null);
+        expect(failed).toHaveLength(0);
+    });
+
+    it('COLONIZE passes at exactly one planet below the cap (8 owned with cap 9)', () =>
     {
         // The colonize that lands here would be the 9th planet, which is still allowed.
         const playerOneBelowCap: CoreType.PlayerData = buildPlayerWithPlanetCount(StaticData.MAX_ALLOWED_PLANETS - 1);
         const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
-        const result: boolean = FleetData.canExecuteFleetActionOnTargetAddress(origin, playerOneBelowCap, null, shipQuantities, GameType.FleetActionType.Colonize);
-        expect(result).toBe(true);
+        const failed: RequirementType.Requirement[] = getFailed(playerOneBelowCap, GameType.FleetActionType.Colonize, shipQuantities, null);
+        expect(failed).toHaveLength(0);
     });
 
-    it('COLONIZE returns false at exactly the cap (9 owned with cap 9)', () =>
+    it('COLONIZE fails at exactly the cap (9 owned with cap 9)', () =>
     {
         // The colonize that lands here would be the 10th planet, which is blocked.
         const playerAtCap: CoreType.PlayerData = buildPlayerWithPlanetCount(StaticData.MAX_ALLOWED_PLANETS);
         const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
-        const result: boolean = FleetData.canExecuteFleetActionOnTargetAddress(origin, playerAtCap, null, shipQuantities, GameType.FleetActionType.Colonize);
-        expect(result).toBe(false);
+        const failed: RequirementType.Requirement[] = getFailed(playerAtCap, GameType.FleetActionType.Colonize, shipQuantities, null);
+        expect(failed.length).toBeGreaterThan(0);
     });
 
-    it('throws on unknown fleet action types', () =>
+    it('an unknown fleet action has no registered requirements (no gating failures)', () =>
     {
+        // The action type is constrained by the FleetActionType enum / FLEET_ACTION_INFOS keys upstream,
+        // and fleet resolution throws UNREACHABLE for an unknown action as a backstop.
         const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        expect(() => FleetData.canExecuteFleetActionOnTargetAddress(origin, originPlayer, 42, shipQuantities, 9999 as GameType.FleetActionType)).toThrow();
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, 9999 as GameType.FleetActionType, shipQuantities, 42);
+        expect(failed).toHaveLength(0);
     });
 });
 

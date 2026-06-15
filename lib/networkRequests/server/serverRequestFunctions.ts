@@ -1092,23 +1092,19 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         slot: requestData.targetPlanetPosition,
     }
 
-    for (const [shipType, shipQuantity] of shipQuantities)
+    for (const shipQuantity of shipQuantities.values())
     {
         if (shipQuantity <= 0)
         {
             return { success: false, failureReason: "Non-positive ship quantity for fleet.", playerStateResult: playerData };
         }
-
-        if (Requirement.getFailedFleetMovementRequirements(playerData, shipType, originPlanetData.planetRow.id, shipQuantities, transportedResourceQuantities, targetAddress).length > 0)
-        {
-            return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
-        }
     }
 
-    const canExecuteFleetAction: boolean = FleetData.canExecuteFleetActionOnTargetPlanet(originPlanetData, playerData, targetPlanetData, shipQuantities, requestData.fleetAction);
-    if (canExecuteFleetAction === false)
+    const targetPlanetOwnerPlayerId: number | null = targetPlanetData === null ? null : targetPlanetData.planetRow.owner_player_id;
+
+    if (Requirement.getFailedFleetMovementRequirements(playerData, requestData.fleetAction, originPlanetData.planetRow.id, shipQuantities, transportedResourceQuantities, targetAddress, targetPlanetOwnerPlayerId).length > 0)
     {
-        return { success: false, failureReason: `Cannot execute fleet action ${requestData.fleetAction}.`, playerStateResult: playerData };
+        return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
     }
 
     const isSamePlanet: boolean = StaticDataHelper.isSameAddress(originAddress, targetAddress);

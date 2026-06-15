@@ -51,7 +51,28 @@ export function shipQuantities(shipType: GameType.ShipType): RequirementType.Thi
         {
             throw new Error(`shipQuantities requirement evaluated without a potential fleet action for shipType ${shipType}.`);
         }
-        
+
         return context.shipQuantities.get(shipType) ?? 0;
+    };
+}
+
+export function playerPlanetCount(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        return context.playerData.planetDatas.length;
+    };
+}
+
+export function isTargetPlanetOwned(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.targetPlanetOwnerPlayerId === undefined)
+        {
+            throw new Error(`isTargetPlanetOwned requirement evaluated without target planet ownership info.`);
+        }
+
+        return context.targetPlanetOwnerPlayerId === null ? 0 : 1;
     };
 }

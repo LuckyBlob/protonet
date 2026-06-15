@@ -1216,7 +1216,7 @@ test.describe("Colonize", () =>
         await E2EHelper.goToView(page, "Fleets");
 
         // Stage a colony ship + point at an unowned address — these are the conditions that would
-        // normally make Colonize show up. With the cap reached, canExecuteFleetActionOnTargetAddress
+        // normally make Colonize show up. With the cap reached, the Colonize planet-count requirement
         // must filter Colonize out of the dropdown.
         const target: E2EHelper.PlanetRow = E2EHelper.findFreeColonizeTargetAddress(db);
         await E2EHelper.shipRowQuantityInput(page, "Colony Ship").fill("1");
@@ -1249,8 +1249,8 @@ test.describe("Colonize", () =>
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(colonizerOrigin));
         await E2EHelper.goToView(page, "Fleets");
 
-        // Stage a colony ship + point at the OTHER player's planet. The "target unclaimed" gate
-        // inside canExecuteFleetActionOnTargetAddress must exclude Colonize when ownership is set.
+        // Stage a colony ship + point at the OTHER player's planet. The "target unclaimed" Colonize
+        // requirement must exclude Colonize from the dropdown when ownership is set.
         await E2EHelper.shipRowQuantityInput(page, "Colony Ship").fill("1");
         await page.getByPlaceholder("P").fill(String(otherPlanet.slot));
         await page.getByPlaceholder("S").fill(String(otherPlanet.system));
