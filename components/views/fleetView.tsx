@@ -128,7 +128,7 @@ function renderFleetMovementsSection(props: FleetViewProps): ReactElement
 
 function renderFleetShipRows(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const shipTypes: GameType.ShipType[] = ThingDataHelpers.getAllSpecificThings(ThingType.Thing.Ship);
+    const shipTypes: GameType.ShipType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Ship);
 
     const rowElements: (ReactElement | null)[] = shipTypes.map((shipType: GameType.ShipType) =>
     {
@@ -372,7 +372,7 @@ function renderFleetMaxResource(props: FleetViewProps, data: FleetViewData): Rea
 
 function renderFleetResourceRows(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const resourceTypes: GameType.ResourceType[] = ThingDataHelpers.getAllSpecificThings(ThingType.Thing.Resource);
+    const resourceTypes: GameType.ResourceType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Resource);
 
     const rowElements: (ReactElement | null)[] = resourceTypes.map((resourceType: GameType.ResourceType) =>
     {

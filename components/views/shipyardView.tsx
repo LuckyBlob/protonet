@@ -13,6 +13,7 @@ import * as HelperElements from "@/components/helperElements";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as HelperElement from "@/components/helperElements";
@@ -499,7 +500,7 @@ function createBuildShipsHandler(props: ShipyardViewProps, planetData: CoreType.
 function renderShipyardBody(props: ShipyardViewProps, planetDataPredicted: CoreType.PlanetData, quantitiesState: HelperElement.RequestedQuantitiesState<GameType.ShipType>): ReactElement
 {
     const serverData: CoreType.ServerData = props.clientDataStateResult.sdsController[0];
-    const shipTypes: GameType.ShipType[] = ThingDataHelpers.getAllSpecificThings(ThingType.Thing.Ship);
+    const shipTypes: GameType.ShipType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Ship);
 
     const requestedMap: Map<GameType.ShipType, number> = buildRequestedQuantitiesMap(shipTypes, quantitiesState.requestedQuantities);
     const hasRequestedData: boolean = requestedMap.size > 0;

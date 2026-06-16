@@ -59,7 +59,7 @@ test.describe("Energy", () =>
         // zeroed a brand-new planet's production.
         await E2EHelper.expectPlanetValueCard(page, "Energy", 0, 0);
         await E2EHelper.expectPlanetValueColor(page, "Energy", "white");
-        await E2EHelper.expectResourceProductionPerHour(page, "Iron", 30);
+        await E2EHelper.expectResourceProductionPerHour(page, "Metal", 30);
         await E2EHelper.expectResourceProductionPerHour(page, "Crystal", 15);
     });
 
@@ -68,14 +68,14 @@ test.describe("Energy", () =>
         const username: string = E2EHelper.uniqueUsername("Nrg");
         await E2EHelper.register(page, username, PASSWORD);
 
-        // Iron Mine level 1 consumes 11 energy with no Solar Plant to offset it → ratio 0, so EVERY
-        // resource (iron and the base crystal alike) is multiplied by 0.
+        // Metal Mine level 1 consumes 11 energy with no Solar Plant to offset it → ratio 0, so EVERY
+        // resource (metal and the base crystal alike) is multiplied by 0.
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.MetalMine, 1, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 0, 11);
         await E2EHelper.expectPlanetValueColor(page, "Energy", "red");
-        await E2EHelper.expectResourceProductionPerHour(page, "Iron", 0);
+        await E2EHelper.expectResourceProductionPerHour(page, "Metal", 0);
         await E2EHelper.expectResourceProductionPerHour(page, "Crystal", 0);
     });
 
@@ -84,14 +84,14 @@ test.describe("Energy", () =>
         const username: string = E2EHelper.uniqueUsername("Nrg");
         await E2EHelper.register(page, username, PASSWORD);
 
-        // Solar Plant level 1 produces 22 energy, Iron Mine level 1 consumes 11 → ratio 2 → full output.
+        // Solar Plant level 1 produces 22 energy, Metal Mine level 1 consumes 11 → ratio 2 → full output.
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.MetalMine, 1, db);
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.SolarPlant, 1, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 22, 11);
         await E2EHelper.expectPlanetValueColor(page, "Energy", "white");
-        await E2EHelper.expectResourceProductionPerHour(page, "Iron", 33);
+        await E2EHelper.expectResourceProductionPerHour(page, "Metal", 33);
         await E2EHelper.expectResourceProductionPerHour(page, "Crystal", 15);
     });
 
@@ -100,15 +100,15 @@ test.describe("Energy", () =>
         const username: string = E2EHelper.uniqueUsername("Nrg");
         await E2EHelper.register(page, username, PASSWORD);
 
-        // Iron Mine level 2 consumes 24.2, Solar Plant level 1 produces 22 → ratio ~0.91. Production is
-        // scaled by 0.91, NOT floored to 0 (the regression this guards): iron 72 → 65, crystal 15 → 13.
+        // Metal Mine level 2 consumes 24.2, Solar Plant level 1 produces 22 → ratio ~0.91. Production is
+        // scaled by 0.91, NOT floored to 0 (the regression this guards): metal 72 → 65, crystal 15 → 13.
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.MetalMine, 2, db);
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.SolarPlant, 1, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 22, 24);
         await E2EHelper.expectPlanetValueColor(page, "Energy", "red");
-        await E2EHelper.expectResourceProductionPerHour(page, "Iron", 65);
+        await E2EHelper.expectResourceProductionPerHour(page, "Metal", 65);
         await E2EHelper.expectResourceProductionPerHour(page, "Crystal", 13);
     });
 
@@ -120,14 +120,14 @@ test.describe("Energy", () =>
         // The core "ratio X (< 1) -> production x X" law, pinned at a second ratio (test 4 covers ~0.91).
         // Solar Plant level 1 (+22) against a Deuterium Synthesizer level 2 (-48.4) gives X = 22/48.4 =
         // 0.4545 (the card floors consumption to 48). Every resource is produced at floor(base x 0.4545):
-        // iron 30 -> 13, crystal 15 -> 6, deuterium 24 -> 10.
+        // metal 30 -> 13, crystal 15 -> 6, deuterium 24 -> 10.
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.SolarPlant, 1, db);
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.DeuteriumSynthesizer, 2, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 22, 48);
         await E2EHelper.expectPlanetValueColor(page, "Energy", "red");
-        await E2EHelper.expectResourceProductionPerHour(page, "Iron", 13);
+        await E2EHelper.expectResourceProductionPerHour(page, "Metal", 13);
         await E2EHelper.expectResourceProductionPerHour(page, "Crystal", 6);
         await E2EHelper.expectResourceProductionPerHour(page, "Deuterium", 10);
     });
@@ -137,15 +137,15 @@ test.describe("Energy", () =>
         const username: string = E2EHelper.uniqueUsername("Nrg");
         await E2EHelper.register(page, username, PASSWORD);
 
-        // Solar Plant level 3 (~79 energy) dwarfs the Iron Mine level 1 demand (11) → ratio ~7, but
-        // min(ratio, 1) caps the multiplier at 1: iron holds its full level-1 rate of 33/h, no higher.
+        // Solar Plant level 3 (~79 energy) dwarfs the Metal Mine level 1 demand (11) → ratio ~7, but
+        // min(ratio, 1) caps the multiplier at 1: metal holds its full level-1 rate of 33/h, no higher.
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.MetalMine, 1, db);
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.SolarPlant, 3, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 79, 11);
         await E2EHelper.expectPlanetValueColor(page, "Energy", "white");
-        await E2EHelper.expectResourceProductionPerHour(page, "Iron", 33);
+        await E2EHelper.expectResourceProductionPerHour(page, "Metal", 33);
     });
 
     test("energy consumption sums across multiple consumers", async ({ page }) =>
@@ -153,7 +153,7 @@ test.describe("Energy", () =>
         const username: string = E2EHelper.uniqueUsername("Nrg");
         await E2EHelper.register(page, username, PASSWORD);
 
-        // Iron Mine L1 (-11) + Crystal Mine L1 (-11) = -22 against Solar Plant L1 (+22) → ratio exactly 1
+        // Metal Mine L1 (-11) + Crystal Grower L1 (-11) = -22 against Solar Plant L1 (+22) → ratio exactly 1
         // → white and full output. Guards consumption aggregation across multiple buildings.
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.MetalMine, 1, db);
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.CrystalGrower, 1, db);
@@ -162,7 +162,7 @@ test.describe("Energy", () =>
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 22, 22);
         await E2EHelper.expectPlanetValueColor(page, "Energy", "white");
-        await E2EHelper.expectResourceProductionPerHour(page, "Iron", 33);
+        await E2EHelper.expectResourceProductionPerHour(page, "Metal", 33);
         await E2EHelper.expectResourceProductionPerHour(page, "Crystal", 22);
     });
 });

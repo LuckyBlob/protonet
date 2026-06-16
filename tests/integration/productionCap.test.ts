@@ -179,6 +179,65 @@ describe('production cap — fleet deliveries can push above the cap', () =>
     });
 });
 
+describe('production cap — no storage building falls back to the level-0 baseline cap', () =>
+{
+    // Metal Storage level 0 = 5000 * floor(2.5 * e^0) = 5000 * 2 = 10000. A planet with no Metal Storage
+    // building still caps Metal at this baseline, as if the building existed at level 0.
+    const METAL_BASELINE_CAP: number = 10000;
+
+    function buildStoragelessPlanet(startingMetal: number): CoreType.PlanetData
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            planetRow: { id: 1, last_updated: BASE_TIME },
+            dynamicPlanetData:
+            {
+                resourceQuantity: new Map<GameType.ResourceType, number>
+                ([
+                    [GameType.ResourceType.Metal, startingMetal],
+                    [GameType.ResourceType.Crystal, 0],
+                    [GameType.ResourceType.Deuterium, 0],
+                ]),
+                buildingLevels: new Map<GameType.BuildingType, number>
+                ([
+                    [GameType.BuildingType.MetalMine, 1],
+                    [GameType.BuildingType.SolarPlant, 1],
+                ]),
+            },
+        });
+
+        return planet;
+    }
+
+    it('produces normally while under the level-0 baseline cap', () =>
+    {
+        const planet: CoreType.PlanetData = buildStoragelessPlanet(0);
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
+
+        // One hour at 33/hr lands at 33, well under the 10000 baseline.
+        const oneHourLater: number = BASE_TIME + HOUR_MS;
+        const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, oneHourLater, APPLIER);
+
+        const metal: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Metal);
+        expect(metal).toBe(METAL_RATE_PER_HOUR);
+    });
+
+    it('clamps Metal at the level-0 baseline cap when there is no Metal Storage', () =>
+    {
+        const planet: CoreType.PlanetData = buildStoragelessPlanet(METAL_BASELINE_CAP - 100);
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
+
+        // 1000 hours of production would blow well past the baseline, so it lands exactly on it.
+        const thousandHoursLater: number = BASE_TIME + 1000 * HOUR_MS;
+        const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, thousandHoursLater, APPLIER);
+
+        const metal: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Metal);
+        expect(metal).toBe(METAL_BASELINE_CAP);
+    });
+});
+
 describe('production cap — losing resources via a fleet event drops us back under the cap', () =>
 {
     it('ends under the cap after a collect removes resources, because production was capped at the event time', () =>

@@ -1,5 +1,6 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as DBType from "@/lib/db/dbTypes";
 
 export function getBuildingStats(buildingType: GameType.BuildingType): GameType.BuildingStats | undefined
@@ -10,6 +11,36 @@ export function getBuildingStats(buildingType: GameType.BuildingType): GameType.
 export function getShipStats(shipType: GameType.ShipType): GameType.ShipStats | undefined
 {
     return StaticData.SHIP_STATS.get(shipType);
+}
+
+export function getAllSpecificThings(thingType: typeof ThingType.Thing.Resource): GameType.ResourceType[];
+export function getAllSpecificThings(thingType: typeof ThingType.Thing.Building): GameType.BuildingType[];
+export function getAllSpecificThings(thingType: typeof ThingType.Thing.Ship): GameType.ShipType[];
+export function getAllSpecificThings(thingType: typeof ThingType.Thing.PlanetValue): GameType.PlanetValueType[];
+export function getAllSpecificThings(thingType: ThingType.Thing): ThingType.SpecificThing[];
+export function getAllSpecificThings(thingType: ThingType.Thing): ThingType.SpecificThing[]
+{
+    switch (thingType)
+    {
+        case ThingType.Thing.Building:
+        {
+            return [...StaticData.BUILDING_STATS.keys()];
+        }
+        case ThingType.Thing.Ship:
+        {
+            return [...StaticData.SHIP_STATS.keys()];
+        }
+        case ThingType.Thing.Resource:
+        {
+            return [...StaticData.RESOURCE_INFOS.keys()];
+        }
+        case ThingType.Thing.PlanetValue:
+        {
+            return [...StaticData.PLANET_VALUE_INFOS.keys()];
+        }
+    }
+
+    throw new Error(`getAllSpecificThings not supported for Thing ${thingType}`);
 }
 
 export function rollSizeForSlot(slot: number): number

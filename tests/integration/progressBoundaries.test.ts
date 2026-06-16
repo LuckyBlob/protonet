@@ -10,7 +10,7 @@ import * as TestProgressApplierHelper from '../helpers/testProgressApplier';
 const APPLIER: TestProgressApplierHelper.TestProgressApplier = new TestProgressApplierHelper.TestProgressApplier();
 const BASE_TIME: number = 1_000_000;
 
-function buildPlayerWithIronMineAndUpgrade(buildingLevel: number, durationMs: number): CoreType.PlayerData
+function buildPlayerWithMetalMineAndUpgrade(buildingLevel: number, durationMs: number): CoreType.PlayerData
 {
     const upgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine });
     const upgrade: CoreType.BuildingUpgrade =
@@ -45,7 +45,7 @@ describe('applyProgressToPlayerData — completion-time boundary', () =>
 
     it('does NOT resolve a building upgrade at the exact completion instant', () =>
     {
-        const playerData: CoreType.PlayerData = buildPlayerWithIronMineAndUpgrade(0, 30_000);
+        const playerData: CoreType.PlayerData = buildPlayerWithMetalMineAndUpgrade(0, 30_000);
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
         const exactCompletion: number = BASE_TIME + 30_000;
 
@@ -57,7 +57,7 @@ describe('applyProgressToPlayerData — completion-time boundary', () =>
 
     it('DOES resolve a building upgrade 1 ms after the completion instant', () =>
     {
-        const playerData: CoreType.PlayerData = buildPlayerWithIronMineAndUpgrade(0, 30_000);
+        const playerData: CoreType.PlayerData = buildPlayerWithMetalMineAndUpgrade(0, 30_000);
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
         const justAfter: number = BASE_TIME + 30_000 + 1;
 
@@ -119,7 +119,7 @@ describe('applyProgressToPlayerData — idempotence at same now', () =>
 
     it('does not double-resolve a single upgrade across two calls', () =>
     {
-        const playerData: CoreType.PlayerData = buildPlayerWithIronMineAndUpgrade(0, 30_000);
+        const playerData: CoreType.PlayerData = buildPlayerWithMetalMineAndUpgrade(0, 30_000);
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
         const afterCompletion: number = BASE_TIME + 30_001;
 

@@ -1,4 +1,3 @@
-import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
 import * as BuildingProduction from "@/lib/gameplay/coreData/formula/buildingProductionFormulas";
 import * as PlanetValueData from "@/lib/gameplay/dynamicData/planet/planetValueData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
@@ -6,7 +5,8 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
-import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
+import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 
 export function setBuildingLevel(planetData: CoreType.PlanetData, buildingType: GameType.BuildingType, value: number): void
 {
@@ -35,7 +35,8 @@ function computeProductionRatePerHourForResource(planetData: CoreType.PlanetData
 {
 	let totalResourceTypeProductionRatePerHour: number = 0;
 
-	for (const buildingType of StaticData.BUILDING_STATS.keys())
+	const buildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building)
+	for (const buildingType of buildingTypes)
 	{
 		const currentLevel: number = buildingLevelMap.get(buildingType) ?? 0;
 		const productionRatePerHourMap: Map<GameType.ResourceType, number> | null = BuildingProduction.computeProductionRatePerHour(buildingType, currentLevel, serverData);
@@ -84,7 +85,8 @@ function getProductionBuildingTypeArrayForResourceType(resourceType: GameType.Re
 {
 	const productionBuildingTypeArray: GameType.BuildingType[] = [];
 
-	for (const buildingType of StaticData.BUILDING_STATS.keys())
+	const buildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building)
+	for (const buildingType of buildingTypes)
 	{
 		const productionMap: Map<GameType.ResourceType, number> | null = BuildingProduction.computeProductionRatePerHour(buildingType, 1, null);
 		if (productionMap !== null && productionMap.has(resourceType) === true)

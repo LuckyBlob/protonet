@@ -8,14 +8,14 @@ import * as TestDataBuilders from '../helpers/testDataBuilders';
 
 describe('getFailedBuildingUpgradeRequirements', () =>
 {
-    it('returns no failures for Iron Mine when no upgrade is in progress', () =>
+    it('returns no failures for Metal Mine when no upgrade is in progress', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalMine, 1);
         expect(failed).toHaveLength(0);
     });
 
-    it('blocks Iron Mine when another building upgrade is in progress on the same planet', () =>
+    it('blocks Metal Mine when another building upgrade is in progress on the same planet', () =>
     {
         const ongoingUpgrade: CoreType.BuildingUpgrade =
         {
@@ -177,13 +177,13 @@ describe('getFailedShipBuildRequirements', () =>
         expect(failed.length).toBeGreaterThan(0);
     });
 
-    it('does not block Small Transport when Iron Mine (not Shipyard) is being upgraded', () =>
+    it('does not block Small Transport when Metal Mine (not Shipyard) is being upgraded', () =>
     {
-        const ironMineUpgradeRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine });
+        const metalMineUpgradeRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine });
         const ongoingUpgrade: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 1 }),
-            buildingUpgradeBuildingRows: [ironMineUpgradeRow],
+            buildingUpgradeBuildingRows: [metalMineUpgradeRow],
         };
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {

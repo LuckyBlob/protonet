@@ -32,9 +32,9 @@ test('full user journey', async ({ page }) =>
 	await E2EHelper.register(page, 'E2E1', '111111')
 
 	// Notice: a freshly created account lands on its home planet with the default starting
-	// stockpile (2000 iron, 500 crystal, 0 deuterium) and base level-0 mine production
-	// (30 iron/h, 15 crystal/h, 0 deuterium/h).
-	await E2EHelper.expectResourceCard(page, 'Iron', 2000, 30)
+	// stockpile (2000 metal, 500 crystal, 0 deuterium) and base level-0 mine production
+	// (30 metal/h, 15 crystal/h, 0 deuterium/h).
+	await E2EHelper.expectResourceCard(page, 'Metal', 2000, 30)
 	await E2EHelper.expectResourceCard(page, 'Crystal', 500, 15)
 	await E2EHelper.expectResourceCard(page, 'Deuterium', 0, 0)
 
@@ -47,7 +47,7 @@ test('full user journey', async ({ page }) =>
 	// is absent entirely and the card shows the unmet-requirement notice instead.
 	await E2EHelper.goToView(page, 'Upgrades')
 	await expect(E2EHelper.buildUpgradeButton(page, 'Shipyard')).toHaveCount(0)
-	await expect(E2EHelper.buildingCard(page, 'Shipyard')).toContainText('Robotics Factory >= 2 (current: 0)')
+	await expect(E2EHelper.buildingCard(page, 'Shipyard')).toContainText('Robotic Factory >= 2 (current: 0)')
 	await E2EHelper.goToView(page, 'Game')
 
 	const e2e1FirstAddress: string = await E2EHelper.selectedPlanetAddress(page)

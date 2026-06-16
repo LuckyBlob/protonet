@@ -86,7 +86,7 @@ test.describe("Buildings", () =>
 
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Upgrades");
-        await expect(E2EHelper.buildUpgradeButton(page, "Iron Mine")).toBeDisabled();
+        await expect(E2EHelper.buildUpgradeButton(page, "Metal Mine")).toBeDisabled();
 
         for (const planet of planets)
         {
@@ -96,7 +96,7 @@ test.describe("Buildings", () =>
 
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Upgrades");
-        await expect(E2EHelper.buildUpgradeButton(page, "Iron Mine")).toBeEnabled();
+        await expect(E2EHelper.buildUpgradeButton(page, "Metal Mine")).toBeEnabled();
     });
 
     test("a started upgrade completes locally via the animation tick (no refresh)", async ({ page }) =>
@@ -114,8 +114,8 @@ test.describe("Buildings", () =>
 
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Upgrades");
-        await E2EHelper.buildUpgradeButton(page, "Iron Mine").click();
-        await expect(E2EHelper.buildingCard(page, "Iron Mine")).toContainText("Building");
+        await E2EHelper.buildUpgradeButton(page, "Metal Mine").click();
+        await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Building");
 
         const selectedAddress: string = await E2EHelper.selectedPlanetAddress(page);
         const selectedPlanet: E2EHelper.PlanetRow = planets.find((planet: E2EHelper.PlanetRow): boolean => E2EHelper.planetAddress(planet) === selectedAddress)!;
@@ -124,9 +124,9 @@ test.describe("Buildings", () =>
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Upgrades");
         // Loads still in-progress, then the client tick resolves it locally without another fetch.
-        await expect(E2EHelper.buildingCard(page, "Iron Mine")).toContainText("Building");
-        await expect(E2EHelper.buildingCard(page, "Iron Mine")).toContainText("Level 1", { timeout: 10_000 });
-        await expect(E2EHelper.buildUpgradeButton(page, "Iron Mine")).toBeEnabled();
+        await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Building");
+        await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Level 1", { timeout: 10_000 });
+        await expect(E2EHelper.buildUpgradeButton(page, "Metal Mine")).toBeEnabled();
     });
 
     test("refresh shows the upgrade in progress, and the finished level after it completes", async ({ page }) =>
@@ -144,9 +144,9 @@ test.describe("Buildings", () =>
 
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Upgrades");
-        await E2EHelper.buildUpgradeButton(page, "Iron Mine").click();
+        await E2EHelper.buildUpgradeButton(page, "Metal Mine").click();
         // Wait for the server round-trip to land (UI shows "Building") before reading the DB row.
-        await expect(E2EHelper.buildingCard(page, "Iron Mine")).toContainText("Building");
+        await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Building");
 
         const selectedAddress: string = await E2EHelper.selectedPlanetAddress(page);
         const selectedPlanet: E2EHelper.PlanetRow = planets.find((planet: E2EHelper.PlanetRow): boolean => E2EHelper.planetAddress(planet) === selectedAddress)!;
@@ -155,14 +155,14 @@ test.describe("Buildings", () =>
         // Refresh WHILE in progress: still building.
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Upgrades");
-        await expect(E2EHelper.buildingCard(page, "Iron Mine")).toContainText("Building");
+        await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Building");
 
         // Refresh AFTER it finishes: server-resolved to level 1.
         E2EHelper.forceComplete("building_upgrade", upgradeId, db, 1);
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Upgrades");
-        await expect(E2EHelper.buildingCard(page, "Iron Mine")).toContainText("Level 1");
-        await expect(E2EHelper.buildUpgradeButton(page, "Iron Mine")).toBeEnabled();
+        await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Level 1");
+        await expect(E2EHelper.buildUpgradeButton(page, "Metal Mine")).toBeEnabled();
         expect(E2EHelper.getBuildingLevelDb(selectedPlanet.id, GameType.BuildingType.MetalMine, db)).toBe(1);
     });
 
@@ -181,10 +181,10 @@ test.describe("Buildings", () =>
 
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Upgrades");
-        await E2EHelper.buildUpgradeButton(page, "Iron Mine").click();
+        await E2EHelper.buildUpgradeButton(page, "Metal Mine").click();
 
-        await expect(E2EHelper.buildingCard(page, "Iron Mine")).toContainText("Building");
-        await expect(E2EHelper.buildUpgradeButton(page, "Crystal Mine")).toBeDisabled();
+        await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Building");
+        await expect(E2EHelper.buildUpgradeButton(page, "Crystal Grower")).toBeDisabled();
     });
 
     test("shipyard is hidden until robotics factory reaches level 2", async ({ page }) =>
@@ -635,13 +635,13 @@ test.describe("Fleets", () =>
         await E2EHelper.goToView(page, "Fleets");
         await expect(page.getByText("No fleet movements.")).toBeVisible();
 
-        // Victim drained, attacker richer by the stolen iron, ships returned. The attacker planet
-        // also produced a little iron during the (multi-hour, time-warped) round trip, so allow
+        // Victim drained, attacker richer by the stolen metal, ships returned. The attacker planet
+        // also produced a little metal during the (multi-hour, time-warped) round trip, so allow
         // for that on top of the looted 5000.
         expect(E2EHelper.getResourceQuantity(victimPlanet.id, GameType.ResourceType.Metal, db)).toBe(0);
-        const attackerIron: number = E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.ResourceType.Metal, db);
-        expect(attackerIron).toBeGreaterThanOrEqual(PLENTY + 5000);
-        expect(attackerIron).toBeLessThan(PLENTY + 5000 + 5000);
+        const attackerMetal: number = E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.ResourceType.Metal, db);
+        expect(attackerMetal).toBeGreaterThanOrEqual(PLENTY + 5000);
+        expect(attackerMetal).toBeLessThan(PLENTY + 5000 + 5000);
         expect(E2EHelper.getShipQuantityDb(attackerPlanet.id, GameType.ShipType.SmallTransport, db)).toBe(3);
 
         // Cross-player collect produces TWO messages — one for each side — with bodies that name
@@ -863,12 +863,12 @@ test.describe("Fleets", () =>
         await E2EHelper.goToView(page, "Fleets");
         await expect(page.getByText("No fleet movements.")).toBeVisible();
 
-        // Nothing was collected (target vanished before arrival): iron only grew by the planet's
+        // Nothing was collected (target vanished before arrival): metal only grew by the planet's
         // small own production, nowhere near the 5000 a successful collect would have added.
         expect(E2EHelper.getShipQuantityDb(attackerPlanet.id, GameType.ShipType.SmallTransport, db)).toBe(3);
-        const ironAfter: number = E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.ResourceType.Metal, db);
-        expect(ironAfter).toBeGreaterThanOrEqual(PLENTY);
-        expect(ironAfter).toBeLessThan(PLENTY + 5000);
+        const metalAfter: number = E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.ResourceType.Metal, db);
+        expect(metalAfter).toBeGreaterThanOrEqual(PLENTY);
+        expect(metalAfter).toBeLessThan(PLENTY + 5000);
 
         // Invalid-target resolution path (addInvalidTargetFleetActionMessage): the attacker gets a
         // single "Collect Fleet Action Report" with "Invalid Target." body, and the (now planetless)
@@ -941,9 +941,9 @@ test.describe("Fleets", () =>
         await expect(page.getByText("No fleet movements.")).toBeVisible();
 
         expect(E2EHelper.getShipQuantityDb(attackerPlanet.id, GameType.ShipType.SmallTransport, db)).toBe(3);
-        const finalIron: number = E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.ResourceType.Metal, db);
-        expect(finalIron).toBeGreaterThanOrEqual(PLENTY + 5000);
-        expect(finalIron).toBeLessThan(PLENTY + 5000 + 5000);
+        const finalMetal: number = E2EHelper.getResourceQuantity(attackerPlanet.id, GameType.ResourceType.Metal, db);
+        expect(finalMetal).toBeGreaterThanOrEqual(PLENTY + 5000);
+        expect(finalMetal).toBeLessThan(PLENTY + 5000 + 5000);
 
         // The return leg never adds a second message: each player still has exactly the one report
         // generated at the outbound collection. The (now defunct) victim row was also cleaned up
@@ -1122,8 +1122,8 @@ test.describe("Fleets", () =>
     {
         // Catches a "wrong info" regression: if buildResourcesListFromFleetMovement ever drops a
         // resource type from the iteration (or the collect ever forgets to push one of the
-        // fleet_movement_resource rows), the body would say e.g. "Collected 2500 Iron" while the
-        // attacker actually received 2500 Iron + 2500 Crystal. The player would dispute the math
+        // fleet_movement_resource rows), the body would say e.g. "Collected 2500 Metal" while the
+        // attacker actually received 2500 Metal + 2500 Crystal. The player would dispute the math
         // against their own planet view, and the report would be untrustworthy.
         const attacker: string = E2EHelper.uniqueUsername("Atk");
         const victim: string = E2EHelper.uniqueUsername("Vic");
@@ -1137,8 +1137,8 @@ test.describe("Fleets", () =>
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
-        // One transport (~5000 hold minus fuel) against a 100k iron + 100k crystal + 0 deuterium
-        // stash → the proportional split takes a non-zero slice of BOTH iron and crystal, while
+        // One transport (~5000 hold minus fuel) against a 100k metal + 100k crystal + 0 deuterium
+        // stash → the proportional split takes a non-zero slice of BOTH metal and crystal, while
         // deuterium stays untouched (must not appear in the body).
         E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 1, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
@@ -1164,10 +1164,10 @@ test.describe("Fleets", () =>
         await E2EHelper.goToView(page, "Fleets");
         await expect(page.getByText("Collect (return)")).toBeVisible();
 
-        const ironLostByVictim: number = 100000 - E2EHelper.getResourceQuantity(victimPlanet.id, GameType.ResourceType.Metal, db);
+        const metalLostByVictim: number = 100000 - E2EHelper.getResourceQuantity(victimPlanet.id, GameType.ResourceType.Metal, db);
         const crystalLostByVictim: number = 100000 - E2EHelper.getResourceQuantity(victimPlanet.id, GameType.ResourceType.Crystal, db);
         // Sanity: the proportional split took strictly positive amounts of BOTH (1:1 stash ratio).
-        expect(ironLostByVictim).toBeGreaterThan(0);
+        expect(metalLostByVictim).toBeGreaterThan(0);
         expect(crystalLostByVictim).toBeGreaterThan(0);
 
         const attackerMessages: DBType.MessageRow[] = E2EHelper.getMessageRowsForPlayer(attackerPlayerId, db);
@@ -1178,7 +1178,7 @@ test.describe("Fleets", () =>
         // taken from the victim. A regression where one type is silently dropped would make
         // `toContain` for the missing line fail; a regression where the numbers are stale would
         // make the quantity match fail.
-        expect(body).toContain(`${ironLostByVictim} Iron`);
+        expect(body).toContain(`${metalLostByVictim} Metal`);
         expect(body).toContain(`${crystalLostByVictim} Crystal`);
         // Deuterium was at 0 → no fleet_movement_resource row written for it → must not appear
         // (otherwise we'd be inventing "0 Deuterium" in the report).
@@ -1282,7 +1282,7 @@ test.describe("Colonize", () =>
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
         await E2EHelper.goToView(page, "Fleets");
 
-        // Stage 1 Colony Ship + 2 Small Transports + 1000 Iron + 1000 Crystal onto a fleet aimed
+        // Stage 1 Colony Ship + 2 Small Transports + 1000 Metal + 1000 Crystal onto a fleet aimed
         // at an unowned address. The colonize resolver claims this exact address at resolution time
         // (verified below), so the colony must land where we aimed.
         const target: E2EHelper.PlanetRow = E2EHelper.findFreeColonizeTargetAddress(db);
@@ -1290,7 +1290,7 @@ test.describe("Colonize", () =>
             page,
             target,
             [{ shipName: "Colony Ship", quantity: 1 }, { shipName: "Small Transport", quantity: 2 }],
-            [{ resourceName: "Iron", quantity: 1000 }, { resourceName: "Crystal", quantity: 1000 }],
+            [{ resourceName: "Metal", quantity: 1000 }, { resourceName: "Crystal", quantity: 1000 }],
         );
         // The fleet movement row appears with the chosen target address — proves the request landed.
         await expect(page.getByText(`${E2EHelper.planetAddress(origin)} → ${E2EHelper.planetAddress(target)}`)).toBeVisible();
@@ -1448,7 +1448,7 @@ test.describe("Bug probes", () =>
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
-        // One transport (space 5000) against a 200k-iron+crystal stash → must collect only a
+        // One transport (space 5000) against a 200k-metal+crystal stash → must collect only a
         // capacity-limited slice, split across both resource types.
         E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 1, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);

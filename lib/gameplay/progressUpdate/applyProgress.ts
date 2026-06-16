@@ -120,8 +120,7 @@ function setUpdatedTimeStamp(playerData: CoreType.PlayerData, serverData: CoreTy
 
 function clampResourcesToPossibleMaximums(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, serverData: CoreType.ServerData, potentialResourceQuantities: Map<GameType.ResourceType, number>): void
 {
-    const planetValuesMap: Map<GameType.PlanetValueType, CoreType.PlanetValueData> = PlanetValueData.computePlanetValueDatas(planetData.dynamicPlanetData);
-    const resourceMaximums: Map<GameType.ResourceType, number> = computeResourceMaximums(planetValuesMap);
+    const resourceMaximums: Map<GameType.ResourceType, number> = PlanetValueData.computeResourceMaximums(planetData);
 
     for (const [resourceType, potentialResourceQuantity] of potentialResourceQuantities)
     {
@@ -146,40 +145,6 @@ function clampResourcesToPossibleMaximums(playerData: CoreType.PlayerData, plane
             continue;
         }
     }
-}
-
-function computeResourceMaximums(planetValuesMap: Map<GameType.PlanetValueType, CoreType.PlanetValueData>): Map<GameType.ResourceType, number>
-{
-    const resourceMaximums: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
-
-    for (const [planetValueType, planetValueInfo] of StaticData.PLANET_VALUE_INFOS)
-    {
-        if (planetValueInfo.limitsResourceMax === undefined)
-        {
-            continue;
-        }
-
-        if (planetValueInfo.associatedResource === undefined)
-        {
-            throw new Error(`Planet value ${planetValueType} has limitsResourceMax but no associatedResource.`);
-        }
-
-        const planetValueData: CoreType.PlanetValueData | undefined = planetValuesMap.get(planetValueType);
-        if (planetValueData === undefined)
-        {
-            continue;
-        }
-
-        const resourceMaximum: number = planetValueData.production;
-        const existingMaximum: number | undefined = resourceMaximums.get(planetValueInfo.associatedResource);
-
-        if (existingMaximum === undefined || resourceMaximum < existingMaximum)
-        {
-            resourceMaximums.set(planetValueInfo.associatedResource, resourceMaximum);
-        }
-    }
-
-    return resourceMaximums;
 }
 
 function getPredictedResourceQuantitiesAtTime(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number): Map<GameType.ResourceType, number>

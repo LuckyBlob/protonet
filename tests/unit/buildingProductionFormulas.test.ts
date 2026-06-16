@@ -18,13 +18,13 @@ describe('computeProductionRatePerHour', () =>
         expect(result).toBeNull();
     });
 
-    it('returns null for Robotics Factory which has no production stats', () =>
+    it('returns null for Robotic Factory which has no production stats', () =>
     {
         const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.RoboticFactory, 5, null);
         expect(result).toBeNull();
     });
 
-    it('uses minProduction floor at level 0 for Iron Mine', () =>
+    it('uses minProduction floor at level 0 for Metal Mine', () =>
     {
         // formula: max(30, 30*0*1.1^0) = max(30, 0) = 30
         const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.MetalMine, 0, null);
@@ -32,7 +32,7 @@ describe('computeProductionRatePerHour', () =>
         expect(result!.get(GameType.ResourceType.Metal)).toBe(30);
     });
 
-    it('computes production above the floor at level 1 for Iron Mine', () =>
+    it('computes production above the floor at level 1 for Metal Mine', () =>
     {
         // formula: max(30, 30*1*1.1^1) = max(30, 33) = 33
         const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.MetalMine, 1, null);
@@ -51,7 +51,7 @@ describe('computeProductionRatePerHour', () =>
         expect(rate5).toBeGreaterThan(rate1);
     });
 
-    it('Crystal Mine produces only RESOURCE_2', () =>
+    it('Crystal Grower produces only RESOURCE_2', () =>
     {
         const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.CrystalGrower, 1, null);
         expect(result).not.toBeNull();
@@ -71,7 +71,7 @@ describe('computeProductionRatePerHour', () =>
         expect(acceleratedRate).toBe(baseRate * 2);
     });
 
-    it('uses Crystal Mine minProduction floor at level 0', () =>
+    it('uses Crystal Grower minProduction floor at level 0', () =>
     {
         // baseProduction = max(15, 20*0*1.1^0) = max(15, 0) = 15
         const result: Map<number, number> | null = BuildingProduction.computeProductionRatePerHour(GameType.BuildingType.CrystalGrower, 0, null);

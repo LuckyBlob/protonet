@@ -13,7 +13,7 @@ describe('computeUpgradeDurationSeconds', () =>
         expect(result).toBeNull();
     });
 
-    it('computes duration for Iron Mine at level 0 with no robotic factory', () =>
+    it('computes duration for Metal Mine at level 0 with no robotic factory', () =>
     {
         // cost: resource1=60+resource2=15=75 total; robotics=0 → 75/(2500*1)*3600=108s
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();

@@ -9,7 +9,7 @@ import * as TestProgressApplierHelper from '../helpers/testProgressApplier';
 const APPLIER: TestProgressApplierHelper.TestProgressApplier = new TestProgressApplierHelper.TestProgressApplier();
 const BASE_TIME: number = 1_000_000;
 
-function buildPlayerWithIronMine(level: number): CoreType.PlayerData
+function buildPlayerWithMetalMine(level: number): CoreType.PlayerData
 {
     const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
     {
@@ -17,7 +17,7 @@ function buildPlayerWithIronMine(level: number): CoreType.PlayerData
         dynamicPlanetData:
         {
             // A Solar Plant at the same level keeps the energy ratio >= 1 (a -10 mine vs a +20 plant
-            // gives ratio 2), so the iron rate isn't throttled and these tests isolate time-multiplier.
+            // gives ratio 2), so the metal rate isn't throttled and these tests isolate time-multiplier.
             buildingLevels: new Map([[GameType.BuildingType.MetalMine, level], [GameType.BuildingType.SolarPlant, level]]),
         },
     });
@@ -28,10 +28,10 @@ describe('applyProgressToPlayerData — time_multiplier transitions', () =>
 {
     it('first half-hour at 1×, second half-hour at 2× — total matches sum of segments', () =>
     {
-        // Iron Mine level 1 produces 33/hr at 1× → 16.5 in 30 min
+        // Metal Mine level 1 produces 33/hr at 1× → 16.5 in 30 min
         // At 2× it produces 66/hr → 33 in 30 min
         // After resource accumulation truncates by Math.floor, getResourceQuantity reflects that.
-        const playerData: CoreType.PlayerData = buildPlayerWithIronMine(1);
+        const playerData: CoreType.PlayerData = buildPlayerWithMetalMine(1);
 
         const slow: CoreType.ServerData = TestDataBuilders.buildServerData(1);
         const fast: CoreType.ServerData = TestDataBuilders.buildServerData(2);
@@ -50,8 +50,8 @@ describe('applyProgressToPlayerData — time_multiplier transitions', () =>
 
     it('switching from 1× to 2× then back to 1× produces strictly more resources than 1× throughout', () =>
     {
-        const playerSlow: CoreType.PlayerData = buildPlayerWithIronMine(1);
-        const playerMixed: CoreType.PlayerData = buildPlayerWithIronMine(1);
+        const playerSlow: CoreType.PlayerData = buildPlayerWithMetalMine(1);
+        const playerMixed: CoreType.PlayerData = buildPlayerWithMetalMine(1);
 
         const slow: CoreType.ServerData = TestDataBuilders.buildServerData(1);
         const fast: CoreType.ServerData = TestDataBuilders.buildServerData(2);
@@ -76,7 +76,7 @@ describe('applyProgressToPlayerData — time_multiplier transitions', () =>
     it('production rate scaling pins as exactly 2× across an hour', () =>
     {
         // Comparison with the existing applyProgress.test.ts; this one keeps mode constant across the hour.
-        const player: CoreType.PlayerData = buildPlayerWithIronMine(1);
+        const player: CoreType.PlayerData = buildPlayerWithMetalMine(1);
         const slow: CoreType.ServerData = TestDataBuilders.buildServerData(1);
         const fast: CoreType.ServerData = TestDataBuilders.buildServerData(2);
         const oneHourLater: number = BASE_TIME + 3_600_000;

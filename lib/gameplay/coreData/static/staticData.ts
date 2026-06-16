@@ -69,7 +69,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 	}],
 
 
-	[GameType.BuildingType.CrystalContainement, { displayName: "Metal Containement",
+	[GameType.BuildingType.CrystalContainement, { displayName: "Crystal Containement",
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,

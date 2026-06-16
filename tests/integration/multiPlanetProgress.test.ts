@@ -18,7 +18,7 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
         // Each planet runs a level-5 mine plus a Solar Plant that keeps its energy ratio >= 1, so
         // production isn't throttled and each planet also earns the level-0 minimum of the other
         // resource (the production formula clamps to minProductionPerHour). So we compare relatives:
-        // planet 1 should out-iron planet 2; planet 2 should out-crystal planet 1.
+        // planet 1 should out-metal planet 2; planet 2 should out-crystal planet 1.
         const planet1: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
             planetRow: { id: 1, last_updated: BASE_TIME },
@@ -41,12 +41,12 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
         const oneHourLater: number = BASE_TIME + 3_600_000;
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, oneHourLater, APPLIER);
 
-        const p1Iron: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Metal);
-        const p2Iron: number = ResourceData.getResourceQuantity(result.planetDatas[1]!, GameType.ResourceType.Metal);
+        const p1Metal: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Metal);
+        const p2Metal: number = ResourceData.getResourceQuantity(result.planetDatas[1]!, GameType.ResourceType.Metal);
         const p1Crystal: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Crystal);
         const p2Crystal: number = ResourceData.getResourceQuantity(result.planetDatas[1]!, GameType.ResourceType.Crystal);
 
-        expect(p1Iron).toBeGreaterThan(p2Iron);
+        expect(p1Metal).toBeGreaterThan(p2Metal);
         expect(p2Crystal).toBeGreaterThan(p1Crystal);
     });
 

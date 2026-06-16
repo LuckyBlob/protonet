@@ -86,11 +86,11 @@ describe('isSpecificBuildingBeingUpgraded', () =>
 
     it('returns 0 when a different building is upgrading', () =>
     {
-        const ironMineRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 7, building_type: GameType.BuildingType.MetalMine });
+        const metalMineRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 7, building_type: GameType.BuildingType.MetalMine });
         const upgrade: CoreType.BuildingUpgrade =
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 7 }),
-            buildingUpgradeBuildingRows: [ironMineRow],
+            buildingUpgradeBuildingRows: [metalMineRow],
         };
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {

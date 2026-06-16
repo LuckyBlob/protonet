@@ -14,6 +14,7 @@ import * as RequirementType from "@/lib/gameplay/coreData/requirement/requiremen
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
@@ -162,7 +163,7 @@ export function UpgradeView(props: UpgradeViewProps): ReactElement
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 
-		const cardElements: ReactElement[] = ThingDataHelpers.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: GameType.BuildingType): ReactElement =>
+		const cardElements: ReactElement[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: GameType.BuildingType): ReactElement =>
 		{
 			return renderBuildingCard(props, selectedPlanetDataPredicted, buildingType);
 		});

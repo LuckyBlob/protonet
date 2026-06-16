@@ -30,14 +30,14 @@ describe('applyProgressToPlayerData — resource accumulation', () =>
         expect(resource1).toBe(2000);
     });
 
-    it('accumulates resource1 over one hour with Iron Mine at level 1 (33/hr)', () =>
+    it('accumulates resource1 over one hour with Metal Mine at level 1 (33/hr)', () =>
     {
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                // Solar Plant level 1 keeps the energy ratio >= 1 so the iron rate isn't throttled.
+                // Solar Plant level 1 keeps the energy ratio >= 1 so the metal rate isn't throttled.
                 buildingLevels: new Map([[GameType.BuildingType.MetalMine, 1], [GameType.BuildingType.SolarPlant, 1]]),
             },
         });
@@ -47,7 +47,7 @@ describe('applyProgressToPlayerData — resource accumulation', () =>
         const oneHourLater: number = BASE_TIME + 3_600_000;
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, oneHourLater, APPLIER);
 
-        // Iron Mine level 1: 33 resource1/hr → 2000 + 33 = 2033
+        // Metal Mine level 1: 33 resource1/hr → 2000 + 33 = 2033
         const resource1: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Metal);
         expect(resource1).toBe(2033);
     });
@@ -78,7 +78,7 @@ describe('applyProgressToPlayerData — resource accumulation', () =>
             planetRow: { last_updated: BASE_TIME },
             dynamicPlanetData:
             {
-                // Solar Plant level 1 keeps the energy ratio >= 1 so the iron rate isn't throttled.
+                // Solar Plant level 1 keeps the energy ratio >= 1 so the metal rate isn't throttled.
                 buildingLevels: new Map([[GameType.BuildingType.MetalMine, 1], [GameType.BuildingType.SolarPlant, 1]]),
             },
         });
@@ -165,9 +165,9 @@ describe('applyProgressToPlayerData — building upgrade resolution', () =>
 
     it('accumulates at old rate before upgrade, then at new rate after resolution', () =>
     {
-        // Phase 1: Iron Mine level 1 → 33 resource1/hr for 1 hour
+        // Phase 1: Metal Mine level 1 → 33 resource1/hr for 1 hour
         // Upgrade completes at T0 + 1hr → level jumps to 2 (72/hr)
-        // Phase 2: Iron Mine level 2 → 72 resource1/hr for 1 hour
+        // Phase 2: Metal Mine level 2 → 72 resource1/hr for 1 hour
         // Total gain: 33 + 72 = 105; final resource1: 2105
 
         const buildingUpgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine });

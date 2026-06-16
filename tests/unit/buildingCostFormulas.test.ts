@@ -10,7 +10,7 @@ describe('computeBuildingUpgradeCost', () =>
         expect(result).toBeNull();
     });
 
-    it('computes base cost at level 0 for Iron Mine', () =>
+    it('computes base cost at level 0 for Metal Mine', () =>
     {
         // baseCost: resource1=60, resource2=15; exponent=1.5; 60*1.5^0=60, 15*1.5^0=15
         const result: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(0, GameType.BuildingType.MetalMine);
@@ -19,7 +19,7 @@ describe('computeBuildingUpgradeCost', () =>
         expect(result!.get(GameType.ResourceType.Crystal)).toBe(15);
     });
 
-    it('scales cost exponentially at level 1 for Iron Mine', () =>
+    it('scales cost exponentially at level 1 for Metal Mine', () =>
     {
         // 60*1.5^1=90, Math.floor(15*1.5^1)=Math.floor(22.5)=22
         const result: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(1, GameType.BuildingType.MetalMine);
@@ -28,7 +28,7 @@ describe('computeBuildingUpgradeCost', () =>
         expect(result!.get(GameType.ResourceType.Crystal)).toBe(22);
     });
 
-    it('scales cost exponentially at level 5 for Iron Mine', () =>
+    it('scales cost exponentially at level 5 for Metal Mine', () =>
     {
         // Math.floor(60*1.5^5)=Math.floor(455.625)=455, Math.floor(15*1.5^5)=Math.floor(113.9)=113
         const result: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(5, GameType.BuildingType.MetalMine);
@@ -48,13 +48,13 @@ describe('computeBuildingUpgradeCost', () =>
 
     it('cost grows faster for buildings with a higher exponent', () =>
     {
-        const ironMineLevel5: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(5, GameType.BuildingType.MetalMine);
+        const metalMineLevel5: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(5, GameType.BuildingType.MetalMine);
         const shipyardLevel5: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(5, GameType.BuildingType.Shipyard);
-        expect(ironMineLevel5).not.toBeNull();
+        expect(metalMineLevel5).not.toBeNull();
         expect(shipyardLevel5).not.toBeNull();
-        const ironMineR1: number = ironMineLevel5!.get(GameType.ResourceType.Metal) ?? 0;
+        const metalMineR1: number = metalMineLevel5!.get(GameType.ResourceType.Metal) ?? 0;
         const shipyardR1: number = shipyardLevel5!.get(GameType.ResourceType.Metal) ?? 0;
-        expect(shipyardR1).toBeGreaterThan(ironMineR1);
+        expect(shipyardR1).toBeGreaterThan(metalMineR1);
     });
 
     it('cost increases with each upgrade level', () =>

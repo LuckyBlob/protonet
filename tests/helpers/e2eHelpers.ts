@@ -209,7 +209,7 @@ export function setResource(planetId: number, playerId: number, resourceType: nu
 
 export function setAllResources(planetId: number, playerId: number, quantity: number, db: Database.Database): void
 {
-    const resourceTypes: ThingType.SpecificThing[] = ThingDataHelpers.getAllSpecificThings(ThingType.Thing.Resource);
+    const resourceTypes: ThingType.SpecificThing[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Resource);
     for (const resourceType of resourceTypes)
     {
         setResource(planetId, playerId, resourceType, quantity, db);
@@ -472,7 +472,7 @@ export async function expectResourceProductionPerHour(page: Page, resourceName: 
 }
 
 // The top bar renders one planet-value card per type as "<name>: <production>/<consumption>". The name
-// has no space before the colon ("Energy:"), unlike resource cards ("Iron :"), so the two never collide.
+// has no space before the colon ("Energy:"), unlike resource cards ("Metal :"), so the two never collide.
 export function planetValueCard(page: Page, planetValueName: string): Locator
 {
     return page.locator("div.border").filter({ hasText: `${planetValueName}:` });
@@ -546,7 +546,7 @@ export async function sendFleet(page: Page, shipName: string, shipQuantity: numb
 
 // Fleet view resource rows have a span with the exact resource name, an input, and a "(max: N)"
 // button. Scope by the unique row class signature so the locator never collides with the top-bar
-// resource cards (which show "Iron : <amount>", not the bare resource name).
+// resource cards (which show "Metal : <amount>", not the bare resource name).
 export function fleetResourceQuantityInput(page: Page, resourceName: string): Locator
 {
     return page.locator("div.flex.flex-row.items-center.justify-start.gap-2.h-10")

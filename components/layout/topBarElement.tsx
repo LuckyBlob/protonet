@@ -5,6 +5,7 @@ import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as HelperElements from "@/components/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
@@ -29,10 +30,14 @@ function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, 
 		? <div className="text-sm">({TimeFormat.formatRemainingTimeMs(remainingMs)})</div>
 		: null;
 
+	// Red once the resource sits at or above its storage maximum: production has stopped contributing.
+	const isAtOrOverMaximum: boolean = resourceDisplayValues.resource >= resourceDisplayValues.resourceMaximum;
+	const quantityColorClass: string = isAtOrOverMaximum ? "text-red-500" : "text-white";
+
 	const cardElement: ReactElement =
 	(
 		<div key={resourceDisplayValues.resourceType} className="flex flex-col items-center gap-1 border border-gray-400 rounded px-6 py-2">
-			<div className="font-bold">{resourceName} {":"} {Math.floor(resourceDisplayValues.resource)}</div>
+			<div className="font-bold">{resourceName} {":"} <span className={quantityColorClass}>{Math.floor(resourceDisplayValues.resource)} / {Math.floor(resourceDisplayValues.resourceMaximum)}</span></div>
 			<div>{Math.floor(resourceDisplayValues.productionRatePerHour)}/h</div>
 			{buildLineElement}
 		</div>
@@ -63,7 +68,7 @@ function renderPlanetValueCard(planetValueDisplayValues: PlanetValueCardDisplayV
 
 export function TopBarElement(props: TopBarProps): ReactElement
 {
-	const resourceTypes: GameType.ResourceType[] = ThingDataHelpers.getAllSpecificThings(ThingType.Thing.Resource);
+	const resourceTypes: GameType.ResourceType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Resource);
 
 	try
 	{
@@ -109,6 +114,7 @@ export type PlanetResourceDisplayValues =
 {
 	resourceType: GameType.ResourceType;
 	resource: number;
+	resourceMaximum: number;
 	productionRatePerHour: number;
 	affectedByCurrentBuild: boolean;
 };
@@ -132,14 +138,20 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 	const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(clientDataStateResult.psController[0]);
 	const buildingBeingUpgraded: GameType.BuildingType | null = BuildingUpgradeData.getBuildingTypeCurrentlyUpgrading(planetDataPredicted);
 
+	const resourceMaximums: Map<GameType.ResourceType, number> = PlanetValueData.computeResourceMaximums(planetDataPredicted);
+
 	const resourceDisplayValues: PlanetResourceDisplayValues[] = [];
 
 	for (const resourceType of resourceTypes)
 	{
 		const calculatedNewResourceQuantity: number = ResourceData.getResourceQuantity(planetDataPredicted, resourceType);
+		const resourceMaximum: number = resourceMaximums.get(resourceType) ?? 0;
 
 		const productionRatePerSecond: number = BuildingData.getPlanetProductionRatePerSecond(planetDataPredicted, resourceType, clientDataStateResult.sdsController[0]);
-		const productionRatePerHour: number = productionRatePerSecond * 3600;
+
+		// Once the resource is at or above its maximum, production no longer accumulates, so show 0/h.
+		const isAtOrOverMaximum: boolean = calculatedNewResourceQuantity >= resourceMaximum;
+		const productionRatePerHour: number = isAtOrOverMaximum ? 0 : productionRatePerSecond * 3600;
 
 		const affectedByCurrentBuild: boolean = (buildingBeingUpgraded !== null) && (BuildingData.doesBuildingProduceResource(buildingBeingUpgraded, resourceType) === true);
 
@@ -147,6 +159,7 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 		{
 			resourceType: resourceType,
 			resource: calculatedNewResourceQuantity,
+			resourceMaximum: resourceMaximum,
 			productionRatePerHour: productionRatePerHour,
 			affectedByCurrentBuild: affectedByCurrentBuild,
 		};
@@ -168,7 +181,7 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 
 function getPlanetValueCardDisplayValues(planetDataPredicted: CoreType.PlanetData): PlanetValueCardDisplayValues[]
 {
-	const planetValueAmountsMap: Map<GameType.PlanetValueType, CoreType.PlanetValueData> = PlanetValueData.computePlanetValueDatas(planetDataPredicted.dynamicPlanetData);
+	const planetValueAmountsMap: Map<GameType.PlanetValueType, CoreType.PlanetValueData> = PlanetValueData.computePlanetValueDatas(planetDataPredicted);
 
 	const planetValueDisplayValues: PlanetValueCardDisplayValues[] = [];
 
