@@ -216,6 +216,15 @@ CREATE TABLE IF NOT EXISTS fleet_movement_resource
 );
 CREATE INDEX IF NOT EXISTS idx_fleet_movement_resource_fleet ON fleet_movement_resource(fleet_id);
 
+CREATE TABLE IF NOT EXISTS fleet_movement_fuel
+(
+    fleet_id INTEGER NOT NULL,
+    resource_type INTEGER NOT NULL,
+    resource_quantity INTEGER NOT NULL,
+    FOREIGN KEY (fleet_id) REFERENCES fleet_movement(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_fleet_movement_fuel_fleet ON fleet_movement_fuel(fleet_id);
+
 CREATE TABLE IF NOT EXISTS message
 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

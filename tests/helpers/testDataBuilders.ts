@@ -277,6 +277,7 @@ export type FleetMovementOverrides =
     fleetMovementRow?: Partial<DBType.FleetMovementRow>;
     fleetMovementShipRows?: DBType.FleetMovementShipRow[];
     fleetMovementResourceRows?: DBType.FleetMovementResourceRow[];
+    fleetMovementFuelRows?: DBType.FleetMovementFuelRow[];
     resolutionState?: CoreType.FleetMovementResolution;
     originMessageRow?: DBType.MessageRow | null;
     targetMessageRow?: DBType.MessageRow | null;
@@ -289,6 +290,7 @@ export function buildFleetMovement(overrides?: FleetMovementOverrides): CoreType
         fleetMovementRow: buildFleetMovementRow(overrides?.fleetMovementRow),
         fleetMovementShipRows: overrides?.fleetMovementShipRows ?? [buildFleetMovementShipRow()],
         fleetMovementResourceRows: overrides?.fleetMovementResourceRows ?? [],
+        fleetMovementFuelRows: overrides?.fleetMovementFuelRows ?? [],
         resolutionState: overrides?.resolutionState ?? CoreType.FleetMovementResolution.Unresolved,
         originMessageRow: overrides?.originMessageRow ?? null,
         targetMessageRow: overrides?.targetMessageRow ?? null,

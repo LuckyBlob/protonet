@@ -1230,7 +1230,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     let fuelRequirements: Map<GameType.ResourceType, number>;
     try
     {
-        fuelRequirements = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, shipQuantities, serverData);
+        fuelRequirements = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, shipQuantities, serverData);
     }
     catch (error: unknown)
     {
@@ -1241,7 +1241,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     let fleetMovementDurationSeconds: number = 0;
     try
     {
-         fleetMovementDurationSeconds = FleetMovementDuration.computeFleetMovementDurationSecondsWithAddress(originAddress, targetAddress, shipQuantities, serverData);
+         fleetMovementDurationSeconds = FleetMovementDuration.computeFleetMovementDurationSecondsWithAddress(playerData, originAddress, targetAddress, shipQuantities, serverData);
     }
     catch (error: unknown)
     {
@@ -1292,6 +1292,18 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         }
         
         ResourceData.subtractPlanetResources(originPlanetData, fuelRequirements);
+        const fleetMovementFuelRows: DBType.FleetMovementFuelRow[] = [];
+        for (const [resourceType, resourceQuantity] of fuelRequirements)
+        {
+            const fleetMovementFuelRow: DBType.FleetMovementFuelRow =
+            {
+                fleet_id: -1, // will be set on the update
+                resource_type: resourceType,
+                resource_quantity: resourceQuantity,
+            };
+            fleetMovementFuelRows.push(fleetMovementFuelRow);
+        }
+
         const fleetMovementResourceRows: DBType.FleetMovementResourceRow[] = [];
         for (const [resourceType, resourceQuantity] of actualTransportedResources)
         {
@@ -1341,6 +1353,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
             fleetMovementRow: fleetMovementRow,
             fleetMovementShipRows: fleetMovementShipRows,
             fleetMovementResourceRows: fleetMovementResourceRows,
+            fleetMovementFuelRows: fleetMovementFuelRows,
             resolutionState: CoreType.FleetMovementResolution.Unresolved,
             originMessageRow: null,
             targetMessageRow: null,

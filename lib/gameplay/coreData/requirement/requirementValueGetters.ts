@@ -3,6 +3,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
+import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 
 function getPlanetData(playerData: CoreType.PlayerData, planetId: number): CoreType.PlanetData
 {
@@ -38,6 +39,14 @@ export function buildingLevel(buildingType: GameType.BuildingType): RequirementT
     {
         const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
         return BuildingData.getBuildingLevel(planetData, buildingType);
+    };
+}
+
+export function researchLevel(researchType: GameType.ResearchType): RequirementType.SpecificThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        return ResearchData.getResearchLevel(context.playerData, researchType);
     };
 }
 

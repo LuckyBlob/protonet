@@ -144,6 +144,7 @@ export type FleetMovement =
 	fleetMovementRow: DBType.FleetMovementRow;
 	fleetMovementShipRows: DBType.FleetMovementShipRow[];
 	fleetMovementResourceRows: DBType.FleetMovementResourceRow[];
+	fleetMovementFuelRows: DBType.FleetMovementFuelRow[];
 	resolutionState: FleetMovementResolution;
 	originMessageRow: DBType.MessageRow | null;
 	targetMessageRow: DBType.MessageRow | null;

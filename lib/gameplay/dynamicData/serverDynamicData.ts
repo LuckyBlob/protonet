@@ -426,11 +426,16 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): CoreTy
                 "SELECT * FROM fleet_movement_resource WHERE fleet_id = ?"
             ).all(fleetMovementRow.id) as DBType.FleetMovementResourceRow[];
 
-            const newFleetMovement: CoreType.FleetMovement = 
+            const fleetMovementFuelRows: DBType.FleetMovementFuelRow[] = DB.databaseConnection.prepare(
+                "SELECT * FROM fleet_movement_fuel WHERE fleet_id = ?"
+            ).all(fleetMovementRow.id) as DBType.FleetMovementFuelRow[];
+
+            const newFleetMovement: CoreType.FleetMovement =
             {
                 fleetMovementRow: fleetMovementRow,
                 fleetMovementShipRows: fleetMovementShipRows,
                 fleetMovementResourceRows: fleetMovementResourceRows,
+                fleetMovementFuelRows: fleetMovementFuelRows,
                 resolutionState: CoreType.FleetMovementResolution.Unresolved,
                 originMessageRow: null,
                 targetMessageRow: null,
@@ -658,6 +663,9 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: CoreType
         const fleetMovementResourceStatement: Database.Statement = DB.databaseConnection.prepare(
             "INSERT INTO fleet_movement_resource VALUES (?, ?, ?)"
         );
+        const fleetMovementFuelStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO fleet_movement_fuel VALUES (?, ?, ?)"
+        );
 
         for (const fleetMovement of dynamicPlanetData.futureFleetArrivals)
         {
@@ -699,6 +707,12 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: CoreType
             {
                 fleetMovementResourceRow.fleet_id = fleetIdResult.id;
                 fleetMovementResourceStatement.run(fleetMovementResourceRow.fleet_id, fleetMovementResourceRow.resource_type, fleetMovementResourceRow.resource_quantity);
+            }
+
+            for (const fleetMovementFuelRow of fleetMovement.fleetMovementFuelRows)
+            {
+                fleetMovementFuelRow.fleet_id = fleetIdResult.id;
+                fleetMovementFuelStatement.run(fleetMovementFuelRow.fleet_id, fleetMovementFuelRow.resource_type, fleetMovementFuelRow.resource_quantity);
             }
         }
     });

@@ -7,25 +7,25 @@ const COEFFICIENT: number = 10;
 const SPEED_NUMERATOR: number = 3500;
 const DISTANCE_FACTOR: number = 10;
 
-export function computeFleetMovementDurationSecondsFromAddresses(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData | null): number
+export function computeFleetMovementDurationSecondsFromAddresses(playerData: CoreType.PlayerData, originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData | null): number
 {
 	const distance: number = StaticDataHelper.getDistance(originAddress, targetAddress);
-	const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(shipQuantities);
+	const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, shipQuantities);
 	return computeFleetMovementDurationSeconds_Base(distance, speed, serverData);
 }
 
-export function computeFleetMovementDurationSecondsWithAddress(originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData | null): number
+export function computeFleetMovementDurationSecondsWithAddress(playerData: CoreType.PlayerData, originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData | null): number
 {
 	const distance: number = StaticDataHelper.getDistance(originAddress, targetAddress);
-    const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(shipQuantities);
+    const speed: number = FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, shipQuantities);
 	return computeFleetMovementDurationSeconds_Base(distance, speed, serverData);
 }
 
-export function computeFleetMovementDurationSeconds(originPlanetData: CoreType.PlanetData, targetPlanetData: CoreType.PlanetData, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData | null): number
+export function computeFleetMovementDurationSeconds(playerData: CoreType.PlayerData, originPlanetData: CoreType.PlanetData, targetPlanetData: CoreType.PlanetData, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData | null): number
 {
 	const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
 	const targetAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(targetPlanetData);
-	return computeFleetMovementDurationSecondsWithAddress(originAddress, targetAddress, shipQuantities, serverData);
+	return computeFleetMovementDurationSecondsWithAddress(playerData, originAddress, targetAddress, shipQuantities, serverData);
 }
 
 function computeFleetMovementDurationSeconds_Base(distance: number, speed: number, serverData: CoreType.ServerData | null): number

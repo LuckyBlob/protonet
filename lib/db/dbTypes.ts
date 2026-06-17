@@ -181,6 +181,13 @@ export type FleetMovementResourceRow =
     resource_quantity: number;
 };
 
+export type FleetMovementFuelRow =
+{
+    fleet_id: number;
+    resource_type: number;
+    resource_quantity: number;
+};
+
 export type MessageRow =
 {
 	id: number;

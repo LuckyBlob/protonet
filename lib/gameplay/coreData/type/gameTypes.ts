@@ -106,15 +106,25 @@ export const ShipType =
     ColonyShip: 3,
 } as const;
 export type ShipType = typeof ShipType[keyof typeof ShipType];
+export type EngineTech =
+	| typeof ResearchType.CombustionDrive
+	| typeof ResearchType.ImpulseDrive
+	| typeof ResearchType.HyperspaceDrive;
+export type EngineTechData<TValue> =
+{
+	engineTech: EngineTech,
+	researchLevel: number,
+	value: TValue,
+}
 export type ShipStats =
 {
 	displayName: string;
 	requirements?: RequirementType.Requirement[];
 	costMap: Map<ResourceType, number>;
 	maxHealth: number;
-	speed: number;
+	speed: EngineTechData<number>[];
 	space: number;
-	baseFuelConsumption?: Map<ResourceType, number>;
+	baseFuelConsumption?: EngineTechData<Map<ResourceType, number>>[];
 };
 //#endregion
 
@@ -150,7 +160,10 @@ export type PlanetAddress =
 //#region Researchs
 export const ResearchType =
 {
-    ImpulseDrive: 1,
+    EnergyTech: 1,
+    CombustionDrive: 2,
+    ImpulseDrive: 3,
+    HyperspaceDrive: 4,
 } as const;
 export type ResearchType = typeof ResearchType[keyof typeof ResearchType];
 export type ResearchInfo =

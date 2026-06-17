@@ -199,10 +199,13 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 			[GameType.ResourceType.Metal, 2000],
 			[GameType.ResourceType.Crystal, 2000],]),
 		maxHealth: 4000,
-		speed: 5000,
 		space: 5000,
-		baseFuelConsumption: new Map<GameType.ResourceType, number>([
-			[GameType.ResourceType.Deuterium, 10]]),
+		speed: [
+			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 5000},
+			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 5, value: 10000}],
+		baseFuelConsumption: [
+			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel:0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 10]])},
+			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel:5, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 20]])},],
 	}],
 
 
@@ -220,9 +223,10 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 			[GameType.ResourceType.Crystal, 6000],]),
 		maxHealth: 12000,
 		space: 25000,
-		speed: 7500,
-		baseFuelConsumption: new Map<GameType.ResourceType, number>([
-			[GameType.ResourceType.Deuterium, 50]]),
+		speed:  [
+			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 7500}],
+		baseFuelConsumption: [
+			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 50]])},],
 	}],
 
 
@@ -241,9 +245,10 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 			[GameType.ResourceType.Deuterium, 10000],]),
 		maxHealth: 30000,
 		space: 2500,
-		speed: 7500,
-		baseFuelConsumption: new Map<GameType.ResourceType, number>([
-			[GameType.ResourceType.Deuterium, 1000]]),
+		speed:  [
+			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: 7500}],
+		baseFuelConsumption: [
+			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 1000]])},],
 	}],
 ]);
 //#endregion
@@ -397,8 +402,7 @@ export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requireme
 			operator: RequirementType.RequirementOperator.Equal,
 			value: false,
 			valueGetter: RequirementValueGetters.isAnyResearchInProgress(),}},
-		{
-		hideDataWhenRequirementFailed: false,
+		{hideDataWhenRequirementFailed: false,
 		specificThingRequirement: {
 			thingType: ThingType.Thing.Building,
 			specificThingType: GameType.BuildingType.ResearchLab,
@@ -411,6 +415,33 @@ export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requireme
 //#region Research
 export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.ResearchInfo> = new Map<GameType.ResearchType, GameType.ResearchInfo>
 ([
+	[GameType.ResearchType.EnergyTech, { displayName: "Energy Technology",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Crystal, 800],
+				[GameType.ResourceType.Deuterium, 400],]),},}],
+
+
+	[GameType.ResearchType.CombustionDrive, { displayName: "Combustion Drive",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 400],
+				[GameType.ResourceType.Crystal, 600],]),},
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.EnergyTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 1,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},],}],
+
+
     [GameType.ResearchType.ImpulseDrive, { displayName: "Impulse Drive",
 		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
 		costStats: {
@@ -418,7 +449,49 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 			baseCost: new Map<GameType.ResourceType, number>([
 				[GameType.ResourceType.Metal, 2000],
 				[GameType.ResourceType.Crystal, 4000],
-				[GameType.ResourceType.Crystal, 6000],]),},}],
+				[GameType.ResourceType.Crystal, 600],]),},
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.EnergyTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 1,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 2,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+
+
+    [GameType.ResearchType.HyperspaceDrive, { displayName: "Hyperspace Drive",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 10000],
+				[GameType.ResourceType.Crystal, 20000],
+				[GameType.ResourceType.Crystal, 6000],]),},
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.EnergyTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 5,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 7,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
 ]);
 
 //#endregion

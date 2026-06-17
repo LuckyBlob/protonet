@@ -338,16 +338,17 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
 
 function renderFleetMaxResource(props: FleetViewProps, data: FleetViewData): ReactElement
 {
+    const originPlayerData: CoreType.PlayerData = data.playerData;
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
     const targetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
-    const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
+    const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originPlayerData, originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
     const totalShipsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedShipQuantitiesState.requestedQuantities);
 
     let travelTimeElement: ReactElement | null = null;
 
     if (totalShipsRequested > 0)
     {
-        const durationSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
+        const durationSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(originPlayerData, originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
         const formattedDuration: string = TimeFormat.formatRemainingTimeMs(durationSeconds * 1000);
         travelTimeElement =
         (
@@ -393,13 +394,14 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: GameType.Re
 {
     const requestedResourceQuantity: number = data.requestedResourceQuantitiesState.requestedQuantities.get(resourceType) ?? 0;
 
+    const playerData: CoreType.PlayerData = data.playerData;
     const resourceName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.resource(resourceType));
     const ownedResourceQuantity: number = Math.floor(ResourceData.getResourceQuantity(data.planetData, resourceType));
 
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
     const targetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
 
-    const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
+    const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
     const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
     const totalFleetSpace: number = FleetData.calculateTotalFleetSpace(data.requestedShipQuantitiesState.requestedQuantities);
     const specificFuelResource: number = fuelRequirements.get(resourceType) ?? 0;

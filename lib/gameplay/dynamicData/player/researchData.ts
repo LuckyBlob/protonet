@@ -27,6 +27,38 @@ export function getResearchLevelMap(playerData: CoreType.PlayerData): Map<GameTy
     return ThingHelpers.getThingValues(playerData, null, CoreType.DataContext.ResearchLevels) as Map<GameType.ResearchType, number>;
 }
 
+// A ship's engine stat (fuel cost, speed) is tiered by engine-tech research: each entry unlocks once
+// the player reaches its research level on that engine tech. The ship uses the most advanced tier it
+// has unlocked, so we walk the entries (authored from base tier upward) and keep the last one the
+// player qualifies for. The base tier is authored at research level 0, so a match is always found.
+export function resolveEngineTechData<TValue>(playerData: CoreType.PlayerData, engineTechDatas: GameType.EngineTechData<TValue>[]): GameType.EngineTechData<TValue> | undefined
+{
+    let resolvedEngineTechData: GameType.EngineTechData<TValue> | undefined = undefined;
+    for (const engineTechData of engineTechDatas)
+    {
+        const playerResearchLevel: number = getResearchLevel(playerData, engineTechData.engineTech);
+        if (playerResearchLevel < engineTechData.researchLevel)
+        {
+            continue;
+        }
+
+        resolvedEngineTechData = engineTechData;
+    }
+
+    return resolvedEngineTechData;
+}
+
+export function resolveEngineTechValue<TValue>(playerData: CoreType.PlayerData, engineTechDatas: GameType.EngineTechData<TValue>[]): TValue | undefined
+{
+    const resolvedEngineTechData: GameType.EngineTechData<TValue> | undefined = resolveEngineTechData(playerData, engineTechDatas);
+    if (resolvedEngineTechData === undefined)
+    {
+        return undefined;
+    }
+
+    return resolvedEngineTechData.value;
+}
+
 export function canAffordResearch(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, researchType: GameType.ResearchType): boolean
 {
 	const currentResearchLevel: number = getResearchLevel(playerData, researchType);

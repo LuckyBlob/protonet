@@ -35,20 +35,21 @@ export function resolveCollectAction(originPlayerData: CoreType.PlayerData | nul
 	{
 		totalResourcesInFleet += fleetMovementResourceRow.resource_quantity;
 	}
-	const originAddress: GameType.PlanetAddress = 
+	// Fuel was computed from the origin player's research at departure and stored on the fleet,
+	// so we read it back here instead of recomputing (the origin player's research is not available
+	// at the target and may have changed since the fleet left).
+	let totalFuelInFleet: number = 0;
+	for (const fleetMovementFuelRow of fleetMovement.fleetMovementFuelRows)
 	{
-		slot: fleetMovement.fleetMovementRow.planet_origin_slot,
-		system: fleetMovement.fleetMovementRow.planet_origin_system,
-		galaxy: fleetMovement.fleetMovementRow.planet_origin_galaxy,
-	}
-	const targetAddress: GameType.PlanetAddress = 
-	{
-		slot: fleetMovement.fleetMovementRow.planet_target_slot,
-		system: fleetMovement.fleetMovementRow.planet_target_system,
-		galaxy: fleetMovement.fleetMovementRow.planet_target_galaxy,
+		totalFuelInFleet += fleetMovementFuelRow.resource_quantity;
 	}
 
-	const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originAddress, targetAddress, fleetShipQuantities, serverData);
+	const totalFleetSpace: number = FleetData.calculateTotalFleetSpace(fleetShipQuantities);
+	const fuelSpaceData: { totalFuel: number, availableSpace: number } =
+	{
+		totalFuel: totalFuelInFleet,
+		availableSpace: Math.max(totalFleetSpace - totalFuelInFleet, 0),
+	}
 	totalResourcesInFleet += fuelSpaceData.totalFuel;
 	const availableSpace: number = fuelSpaceData.availableSpace - totalResourcesInFleet;
 

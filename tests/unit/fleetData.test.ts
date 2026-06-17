@@ -4,6 +4,7 @@ import * as Requirements from '@/lib/gameplay/coreData/requirement/requirements'
 import * as RequirementType from '@/lib/gameplay/coreData/requirement/requirementTypes';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
+import * as ResearchData from '@/lib/gameplay/dynamicData/player/researchData';
 import * as ThingHelpers from '@/lib/gameplay/coreData/thing/thingHelpers';
 import * as ThingDataHelpers from '@/lib/gameplay/coreData/thing/thingDataHelpers';
 import * as StaticData from '@/lib/gameplay/coreData/static/staticData';
@@ -14,35 +15,50 @@ describe('calculateShipQuantitiesLowestMovementSpeed', () =>
 {
     it('returns the speed of the only ship type when only one is present', () =>
     {
-        // SMALL_TRANSPORT speed = 5000
+        // SMALL_TRANSPORT base (Combustion Drive) speed = 5000
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const quantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 3]]);
-        expect(FleetData.calculateShipQuantitiesLowestMovementSpeed(quantities)).toBe(5000);
+        expect(FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, quantities)).toBe(5000);
     });
 
     it('returns the slowest speed in a mixed fleet', () =>
     {
         // SMALL_TRANSPORT speed = 5000, LARGE_TRANSPORT speed = 7500
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const quantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.LargeTransport, 5], [GameType.ShipType.SmallTransport, 1]]);
-        expect(FleetData.calculateShipQuantitiesLowestMovementSpeed(quantities)).toBe(5000);
+        expect(FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, quantities)).toBe(5000);
     });
 
     it('ignores ship types with quantity 0', () =>
     {
         // The 0-quantity SMALL_TRANSPORT must not pin the speed to 5000
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const quantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 0], [GameType.ShipType.LargeTransport, 1]]);
-        expect(FleetData.calculateShipQuantitiesLowestMovementSpeed(quantities)).toBe(7500);
+        expect(FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, quantities)).toBe(7500);
+    });
+
+    it('returns the faster engine-tech tier (with its research bonus) once the player has unlocked it', () =>
+    {
+        // SMALL_TRANSPORT upgrades from Combustion (5000) to its Impulse Drive tier (10000 base) at
+        // Impulse level 5, and that tier carries the +20%/level Impulse bonus: 10000 * (1 + 0.20*5) = 20000.
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        ResearchData.setResearchLevel(playerData, GameType.ResearchType.ImpulseDrive, 5);
+        const quantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 3]]);
+        expect(FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, quantities)).toBe(20000);
     });
 
     it('throws when all ship types have quantity 0', () =>
     {
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const quantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 0], [GameType.ShipType.LargeTransport, 0]]);
-        expect(() => FleetData.calculateShipQuantitiesLowestMovementSpeed(quantities)).toThrow();
+        expect(() => FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, quantities)).toThrow();
     });
 
     it('throws when an unknown ship type is provided', () =>
     {
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const quantities: Map<GameType.ShipType, number> = new Map([[9999 as GameType.ShipType, 1]]);
-        expect(() => FleetData.calculateShipQuantitiesLowestMovementSpeed(quantities)).toThrow();
+        expect(() => FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, quantities)).toThrow();
     });
 });
 
@@ -463,9 +479,10 @@ describe('computeFleetFuelAndSpace', () =>
 
     it('returns positive totalFuel and a non-negative availableSpace', () =>
     {
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
-        const result: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(origin, target, shipQuantities, serverData);
+        const result: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(playerData, origin, target, shipQuantities, serverData);
 
         expect(result.totalFuel).toBeGreaterThan(0);
         expect(result.availableSpace).toBeGreaterThanOrEqual(0);
@@ -474,10 +491,11 @@ describe('computeFleetFuelAndSpace', () =>
     it('clamps availableSpace to 0 when fuel exceeds total space', () =>
     {
         // Use a large fleet of colony ships across a galaxy boundary to drive fuel above its own space
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
         const farTarget: GameType.PlanetAddress = { galaxy: 2, system: 20, slot: 5 };
-        const result: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(origin, farTarget, shipQuantities, serverData);
+        const result: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(playerData, origin, farTarget, shipQuantities, serverData);
 
         expect(result.availableSpace).toBeGreaterThanOrEqual(0);
     });
