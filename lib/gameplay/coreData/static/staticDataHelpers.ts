@@ -13,10 +13,16 @@ export function getShipStats(shipType: GameType.ShipType): GameType.ShipStats | 
     return StaticData.SHIP_STATS.get(shipType);
 }
 
+export function getResearchInfo(researchType: GameType.ResearchType): GameType.ResearchInfo | undefined
+{
+    return StaticData.REASEARCH_INFO.get(researchType);
+}
+
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Resource): GameType.ResourceType[];
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Building): GameType.BuildingType[];
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Ship): GameType.ShipType[];
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.PlanetValue): GameType.PlanetValueType[];
+export function getAllSpecificThings(thingType: typeof ThingType.Thing.Research): GameType.ResearchType[];
 export function getAllSpecificThings(thingType: ThingType.Thing): ThingType.SpecificThing[];
 export function getAllSpecificThings(thingType: ThingType.Thing): ThingType.SpecificThing[]
 {
@@ -25,6 +31,10 @@ export function getAllSpecificThings(thingType: ThingType.Thing): ThingType.Spec
         case ThingType.Thing.Building:
         {
             return [...StaticData.BUILDING_STATS.keys()];
+        }
+        case ThingType.Thing.Research:
+        {
+            return [...StaticData.REASEARCH_INFO.keys()];
         }
         case ThingType.Thing.Ship:
         {

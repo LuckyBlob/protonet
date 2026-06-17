@@ -2,7 +2,8 @@ import { ReactElement } from "react";
 
 import * as GameView from "@/components/views/gameView";
 import * as StatsView from "@/components/views/statsView";
-import * as UpgradeView from "@/components/views/upgradeView";
+import * as BuildingView from "@/components/views/buildingView";
+import * as ResearchView from "@/components/views/researchView";
 import * as ShipyardView from "@/components/views/shipyardView";
 import * as FleetView from "@/components/views/fleetView";
 import * as PlanetView from "@/components/views/planetView";
@@ -26,9 +27,14 @@ export function MainWindowElement(props: MainWindowProps): ReactElement
 		return <GameView.GameView clientDataStateResult={props.clientDataStateResult} />;
 	}
 
-	if (props.cvController[0] === "upgrades")
+	if (props.cvController[0] === "buildings")
 	{
-		return <UpgradeView.UpgradeView clientDataStateResult={props.clientDataStateResult} />;
+		return <BuildingView.BuildingView clientDataStateResult={props.clientDataStateResult} />;
+	}
+
+	if (props.cvController[0] === "research")
+	{
+		return <ResearchView.ResearchView clientDataStateResult={props.clientDataStateResult} />;
 	}
 
 	if (props.cvController[0] === "shipyard")

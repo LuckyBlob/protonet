@@ -85,7 +85,7 @@ test.describe("Buildings", () =>
         }
 
         await E2EHelper.reloadGame(page);
-        await E2EHelper.goToView(page, "Upgrades");
+        await E2EHelper.goToView(page, "Buildings");
         await expect(E2EHelper.buildUpgradeButton(page, "Metal Mine")).toBeDisabled();
 
         for (const planet of planets)
@@ -95,7 +95,7 @@ test.describe("Buildings", () =>
         }
 
         await E2EHelper.reloadGame(page);
-        await E2EHelper.goToView(page, "Upgrades");
+        await E2EHelper.goToView(page, "Buildings");
         await expect(E2EHelper.buildUpgradeButton(page, "Metal Mine")).toBeEnabled();
     });
 
@@ -113,7 +113,7 @@ test.describe("Buildings", () =>
         }
 
         await E2EHelper.reloadGame(page);
-        await E2EHelper.goToView(page, "Upgrades");
+        await E2EHelper.goToView(page, "Buildings");
         await E2EHelper.buildUpgradeButton(page, "Metal Mine").click();
         await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Building");
 
@@ -122,7 +122,7 @@ test.describe("Buildings", () =>
         E2EHelper.scheduleCompletionInMs("building_upgrade", E2EHelper.getUpgradeId(selectedPlanet.id, db), 2500, db);
 
         await E2EHelper.reloadGame(page);
-        await E2EHelper.goToView(page, "Upgrades");
+        await E2EHelper.goToView(page, "Buildings");
         // Loads still in-progress, then the client tick resolves it locally without another fetch.
         await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Building");
         await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Level 1", { timeout: 10_000 });
@@ -143,7 +143,7 @@ test.describe("Buildings", () =>
         }
 
         await E2EHelper.reloadGame(page);
-        await E2EHelper.goToView(page, "Upgrades");
+        await E2EHelper.goToView(page, "Buildings");
         await E2EHelper.buildUpgradeButton(page, "Metal Mine").click();
         // Wait for the server round-trip to land (UI shows "Building") before reading the DB row.
         await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Building");
@@ -154,13 +154,13 @@ test.describe("Buildings", () =>
 
         // Refresh WHILE in progress: still building.
         await E2EHelper.reloadGame(page);
-        await E2EHelper.goToView(page, "Upgrades");
+        await E2EHelper.goToView(page, "Buildings");
         await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Building");
 
         // Refresh AFTER it finishes: server-resolved to level 1.
         E2EHelper.forceComplete("building_upgrade", upgradeId, db, 1);
         await E2EHelper.reloadGame(page);
-        await E2EHelper.goToView(page, "Upgrades");
+        await E2EHelper.goToView(page, "Buildings");
         await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Level 1");
         await expect(E2EHelper.buildUpgradeButton(page, "Metal Mine")).toBeEnabled();
         expect(E2EHelper.getBuildingLevelDb(selectedPlanet.id, GameType.BuildingType.MetalMine, db)).toBe(1);
@@ -180,7 +180,7 @@ test.describe("Buildings", () =>
         }
 
         await E2EHelper.reloadGame(page);
-        await E2EHelper.goToView(page, "Upgrades");
+        await E2EHelper.goToView(page, "Buildings");
         await E2EHelper.buildUpgradeButton(page, "Metal Mine").click();
 
         await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Building");
@@ -201,7 +201,7 @@ test.describe("Buildings", () =>
         }
 
         await E2EHelper.reloadGame(page);
-        await E2EHelper.goToView(page, "Upgrades");
+        await E2EHelper.goToView(page, "Buildings");
         // Requirement not met → the card shows a requirement notice instead of a build button.
         await expect(E2EHelper.buildUpgradeButton(page, "Shipyard")).toHaveCount(0);
 
@@ -212,8 +212,192 @@ test.describe("Buildings", () =>
         }
 
         await E2EHelper.reloadGame(page);
-        await E2EHelper.goToView(page, "Upgrades");
+        await E2EHelper.goToView(page, "Buildings");
         await expect(E2EHelper.buildUpgradeButton(page, "Shipyard")).toBeEnabled();
+    });
+});
+
+test.describe("Research", () =>
+{
+    test("research is gated by a Research Lab — the view shows 'No Research Lab' until one exists", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("Res");
+        await E2EHelper.register(page, username, PASSWORD);
+
+        const playerId: number = E2EHelper.getPlayerId(username, db);
+        const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
+
+        // Freshly registered: no Research Lab anywhere, so the whole Research view is the gate message.
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.goToView(page, "Research");
+        await expect(page.getByText("No Research Lab", { exact: true })).toBeVisible();
+        await expect(E2EHelper.researchRow(page, "Impulse Drive")).toHaveCount(0);
+
+        for (const planet of planets)
+        {
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 1, db);
+            E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
+            E2EHelper.touchPlanet(planet.id, Date.now(), db);
+        }
+
+        // With a Research Lab the gate clears and the research rows appear.
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.goToView(page, "Research");
+        await expect(page.getByText("No Research Lab", { exact: true })).toHaveCount(0);
+        await expect(E2EHelper.researchRow(page, "Impulse Drive")).toBeVisible();
+        await expect(E2EHelper.researchButton(page, "Impulse Drive")).toBeEnabled();
+    });
+
+    test("a started research completes after it finishes, bumping the research level", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("Res");
+        await E2EHelper.register(page, username, PASSWORD);
+
+        const playerId: number = E2EHelper.getPlayerId(username, db);
+        const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
+        for (const planet of planets)
+        {
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 1, db);
+            E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
+            E2EHelper.touchPlanet(planet.id, Date.now(), db);
+        }
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.goToView(page, "Research");
+        await E2EHelper.researchButton(page, "Impulse Drive").click();
+        await expect(E2EHelper.researchRow(page, "Impulse Drive")).toContainText("Researching");
+
+        // Rewind the (player-level) research so it has already finished, then reload: the server
+        // resolves the anchor event on the next playerData fetch.
+        E2EHelper.forceComplete("currently_researching", E2EHelper.getCurrentlyResearchingId(playerId, db), db, 1);
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.goToView(page, "Research");
+        await expect(E2EHelper.researchRow(page, "Impulse Drive")).toContainText("Level 1");
+        expect(E2EHelper.getResearchLevelDb(playerId, GameType.ResearchType.ImpulseDrive, db)).toBe(1);
+    });
+
+    test("research is gated by affordability — disabled with no resources, enabled once granted", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("Res");
+        await E2EHelper.register(page, username, PASSWORD);
+
+        const playerId: number = E2EHelper.getPlayerId(username, db);
+        const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
+        const now: number = Date.now();
+        for (const planet of planets)
+        {
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 1, db);
+            E2EHelper.setAllResources(planet.id, playerId, 0, db);
+            E2EHelper.touchPlanet(planet.id, now, db);
+        }
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.goToView(page, "Research");
+        await expect(E2EHelper.researchButton(page, "Impulse Drive")).toBeDisabled();
+
+        for (const planet of planets)
+        {
+            E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
+            E2EHelper.touchPlanet(planet.id, Date.now(), db);
+        }
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.goToView(page, "Research");
+        await expect(E2EHelper.researchButton(page, "Impulse Drive")).toBeEnabled();
+    });
+
+    test("research is player-wide: in progress and the finished level show on every planet", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("Res");
+        await E2EHelper.register(page, username, PASSWORD);
+
+        const playerId: number = E2EHelper.getPlayerId(username, db);
+        const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
+        for (const planet of planets)
+        {
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 1, db);
+            E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
+            E2EHelper.touchPlanet(planet.id, Date.now(), db);
+        }
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.goToView(page, "Research");
+        await E2EHelper.researchButton(page, "Impulse Drive").click();
+        await expect(E2EHelper.researchRow(page, "Impulse Drive")).toContainText("Researching");
+
+        // Research lives on the player, not the planet: switch to another owned planet (which also has
+        // a lab) and it must show the same research in progress — not a fresh, startable row.
+        const currentAddress: string = await E2EHelper.selectedPlanetAddress(page);
+        const otherPlanet: E2EHelper.PlanetRow = planets.find((planet: E2EHelper.PlanetRow): boolean => E2EHelper.planetAddress(planet) !== currentAddress)!;
+        await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(otherPlanet));
+        await E2EHelper.goToView(page, "Research");
+        await expect(E2EHelper.researchRow(page, "Impulse Drive")).toContainText("Researching");
+
+        // Finish it and confirm the level is visible from this other planet too.
+        E2EHelper.forceComplete("currently_researching", E2EHelper.getCurrentlyResearchingId(playerId, db), db, 1);
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.goToView(page, "Research");
+        await expect(E2EHelper.researchRow(page, "Impulse Drive")).toContainText("Level 1");
+    });
+
+    test("a started research completes locally via the animation tick (no refresh)", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("Res");
+        await E2EHelper.register(page, username, PASSWORD);
+
+        const playerId: number = E2EHelper.getPlayerId(username, db);
+        const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
+        for (const planet of planets)
+        {
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 1, db);
+            E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
+            E2EHelper.touchPlanet(planet.id, Date.now(), db);
+        }
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.goToView(page, "Research");
+        await E2EHelper.researchButton(page, "Impulse Drive").click();
+        await expect(E2EHelper.researchRow(page, "Impulse Drive")).toContainText("Researching");
+
+        E2EHelper.scheduleCompletionInMs("currently_researching", E2EHelper.getCurrentlyResearchingId(playerId, db), 2500, db);
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.goToView(page, "Research");
+        // Loads still in-progress, then the client tick resolves it locally without another fetch.
+        await expect(E2EHelper.researchRow(page, "Impulse Drive")).toContainText("Researching");
+        await expect(E2EHelper.researchRow(page, "Impulse Drive")).toContainText("Level 1", { timeout: 10_000 });
+    });
+
+    test("starting a research deducts its Metal cost from the planet it is started from", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("Res");
+        await E2EHelper.register(page, username, PASSWORD);
+
+        const playerId: number = E2EHelper.getPlayerId(username, db);
+        const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
+        for (const planet of planets)
+        {
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 1, db);
+            E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
+            E2EHelper.touchPlanet(planet.id, Date.now(), db);
+        }
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.goToView(page, "Research");
+
+        const selectedAddress: string = await E2EHelper.selectedPlanetAddress(page);
+        const selectedPlanet: E2EHelper.PlanetRow = planets.find((planet: E2EHelper.PlanetRow): boolean => E2EHelper.planetAddress(planet) === selectedAddress)!;
+        const metalBefore: number = E2EHelper.getResourceQuantity(selectedPlanet.id, GameType.ResourceType.Metal, db);
+
+        await E2EHelper.researchButton(page, "Impulse Drive").click();
+        await expect(E2EHelper.researchRow(page, "Impulse Drive")).toContainText("Researching");
+
+        // Impulse Drive costs 2000 Metal at level 0; the bill comes out of the originating planet.
+        // (A few seconds of negligible production may shave the diff slightly under 2000.)
+        const metalAfter: number = E2EHelper.getResourceQuantity(selectedPlanet.id, GameType.ResourceType.Metal, db);
+        expect(metalBefore - metalAfter).toBeGreaterThanOrEqual(1900);
+        expect(metalBefore - metalAfter).toBeLessThanOrEqual(2000);
     });
 });
 

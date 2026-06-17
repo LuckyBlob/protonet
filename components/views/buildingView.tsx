@@ -21,7 +21,7 @@ import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurat
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as DBType from "@/lib/db/dbTypes";
 
-type UpgradeViewProps =
+type BuildingViewProps =
 {
 	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
@@ -58,7 +58,12 @@ function renderCostLine(nextCostMap: Map<GameType.ResourceType, number>): ReactE
 	return <span>{parts.join(" / ")}</span>;
 }
 
-function renderBuildingCard(props: UpgradeViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType): ReactElement
+function renderRowDivider(): ReactElement
+{
+	return <div className="self-stretch border-l border-gray-400" />;
+}
+
+function renderBuildingRow(props: BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType): ReactElement
 {
 	const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 	const planetId: number = selectedPlanetDataPredicted.planetRow.id;
@@ -72,7 +77,7 @@ function renderBuildingCard(props: UpgradeViewProps, selectedPlanetDataPredicted
 	if (nextCostMap === null || buildDurationSeconds === null)
 	{
 		return (
-			<div key={buildingType} className="border border-gray-400 rounded p-4 w-64">
+			<div key={buildingType} className="border border-gray-400 rounded p-4">
 				{displayName} (level {currentLevel}): cannot compute upgrade.
 			</div>
 		);
@@ -125,14 +130,14 @@ function renderBuildingCard(props: UpgradeViewProps, selectedPlanetDataPredicted
 			</button>
 		);
 
-	const cardElement: ReactElement =
+	const rowElement: ReactElement =
 	(
-		<div key={buildingType} className="border border-gray-400 rounded p-4 w-64 flex flex-col items-center gap-2">
-			<div className="w-full h-32 flex flex-col items-center justify-center text-center">
+		<div key={buildingType} className="border border-gray-400 rounded p-2 flex flex-row items-center gap-4">
+			<div className="w-16 h-16 flex flex-col items-center justify-center text-center shrink-0">
 				<img
 					src={imagePath}
 					alt=""
-					className="w-32 h-32 object-contain"
+					className="w-16 h-16 object-contain"
 					onError={(e) =>
 					{
 						(e.currentTarget as HTMLImageElement).style.display = "none";
@@ -144,38 +149,48 @@ function renderBuildingCard(props: UpgradeViewProps, selectedPlanetDataPredicted
 						}
 					}}
 				/>
-				<div className="hidden flex-col items-center justify-center text-xs gap-1">
-					<span>[Image Unavailable - Imagine it]</span>
+				<div className="hidden flex-col items-center justify-center text-[10px] gap-1">
+					<span>[No Image]</span>
 				</div>
 			</div>
-			<div className="font-bold text-center">{displayName}</div>
-			{levelLine}
-			{actionElement}
+
+			{renderRowDivider()}
+
+			<div className="flex flex-col justify-center min-w-48">
+				<div className="font-bold">{displayName}</div>
+				{levelLine}
+			</div>
+
+			{renderRowDivider()}
+
+			<div className="w-64 shrink-0">
+				{actionElement}
+			</div>
 		</div>
 	);
 
-	return cardElement;
+	return rowElement;
 }
 
-export function UpgradeView(props: UpgradeViewProps): ReactElement
+export function BuildingView(props: BuildingViewProps): ReactElement
 {
 	try
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 
-		const cardElements: ReactElement[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: GameType.BuildingType): ReactElement =>
+		const rowElements: ReactElement[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: GameType.BuildingType): ReactElement =>
 		{
-			return renderBuildingCard(props, selectedPlanetDataPredicted, buildingType);
+			return renderBuildingRow(props, selectedPlanetDataPredicted, buildingType);
 		});
 
-		const upgradeViewElement: ReactElement =
+		const buildingViewElement: ReactElement =
 		(
-			<div className="flex flex-row flex-wrap justify-center gap-4 p-4">
-				{cardElements}
+			<div className="flex flex-col gap-2 p-4">
+				{rowElements}
 			</div>
 		);
 
-		return upgradeViewElement;
+		return buildingViewElement;
 	}
 	catch (error: unknown)
 	{

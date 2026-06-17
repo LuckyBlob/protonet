@@ -62,10 +62,12 @@ export function buildDynamicPlanetData(overrides?: Partial<CoreType.DynamicPlane
     return dynamicPlanetData;
 }
 
-export function buildDynamicPlayerData(overrides?: { planetRow?: Partial<DBType.PlanetRow>; dynamicPlanetData?: Partial<CoreType.DynamicPlanetData>; }): CoreType.DynamicPlayerData
+export function buildDynamicPlayerData(overrides?: Partial<CoreType.DynamicPlayerData>): CoreType.DynamicPlayerData
 {
     const dynamicPlayerData: CoreType.DynamicPlayerData =
     {
+        researchLevels: new Map<GameType.ResearchType, number>(),
+        currentlyResearchings: [],
         messageDatas: [],
         ...overrides,
     };
@@ -141,6 +143,47 @@ export function buildBuildingUpgradeBuildingRow(overrides?: Partial<DBType.Build
     };
 
     return row;
+}
+
+export function buildCurrentlyResearchingRow(overrides?: Partial<DBType.CurrentlyResearchingRow>): DBType.CurrentlyResearchingRow
+{
+    const row: DBType.CurrentlyResearchingRow =
+    {
+        id: 1,
+        player_id: 1,
+        requested_at: 1_000_000,
+        duration_at_request_time: 10_000,
+        duration_at_start_time: 10_000,
+        started_at: 1_000_000,
+        current_currently_researching_research_row_id: 1,
+        ...overrides,
+    };
+
+    return row;
+}
+
+export function buildCurrentlyResearchingResearchRow(overrides?: Partial<DBType.CurrentlyResearchingResearchRow>): DBType.CurrentlyResearchingResearchRow
+{
+    const row: DBType.CurrentlyResearchingResearchRow =
+    {
+        id: 1,
+        currently_researching_id: 1,
+        research_type: GameType.ResearchType.ImpulseDrive,
+        ...overrides,
+    };
+
+    return row;
+}
+
+export function buildCurrentlyResearching(overrides?: { currentlyResearchingRow?: Partial<DBType.CurrentlyResearchingRow>; currentlyResearchingResearchRows?: DBType.CurrentlyResearchingResearchRow[]; }): CoreType.CurrentlyResearching
+{
+    const currentlyResearching: CoreType.CurrentlyResearching =
+    {
+        currentlyResearchingRow: buildCurrentlyResearchingRow(overrides?.currentlyResearchingRow),
+        currentlyResearchingResearchRows: overrides?.currentlyResearchingResearchRows ?? [buildCurrentlyResearchingResearchRow()],
+    };
+
+    return currentlyResearching;
 }
 
 export function buildShipConstructionRow(overrides?: Partial<DBType.ShipConstructionRow>): DBType.ShipConstructionRow

@@ -6,7 +6,7 @@ import * as MathHelp from "@/lib/helper/mathHelp";
 
 export function setResourceQuantity(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, value: number): void
 {
-    ThingHelpers.setSpecificThingValue(planetData, CoreType.DataContext.ResourceQuantity, resourceType, value);
+    ThingHelpers.setSpecificThingValue(null, planetData, CoreType.DataContext.ResourceQuantity, resourceType, value);
 }
 
 export function setResourceQuantities(planetData: CoreType.PlanetData, resourceQuantities: Map<GameType.ResourceType, number>): void
@@ -19,7 +19,7 @@ export function setResourceQuantities(planetData: CoreType.PlanetData, resourceQ
 
 export function getResourceQuantity(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType): number
 {
-    const resourceQuantities: Map<GameType.ResourceType, number> = ThingHelpers.getThingValues(planetData, CoreType.DataContext.ResourceQuantity) as Map<GameType.ResourceType, number>;
+    const resourceQuantities: Map<GameType.ResourceType, number> = ThingHelpers.getThingValues(null, planetData, CoreType.DataContext.ResourceQuantity) as Map<GameType.ResourceType, number>;
     return Math.floor(resourceQuantities.get(resourceType) ?? 0);
 }
 

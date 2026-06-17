@@ -156,7 +156,8 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 			baseCostExponent: 2,
 			baseCost: new Map<GameType.ResourceType, number>([
 				[GameType.ResourceType.Metal, 400],
-				[GameType.ResourceType.Crystal, 200],]),},
+				[GameType.ResourceType.Crystal, 200],
+				[GameType.ResourceType.Deuterium, 100],]),},
 	},],
 
 
@@ -166,7 +167,18 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 			baseCostExponent: 1.5,
 			baseCost: new Map<GameType.ResourceType, number>([
 				[GameType.ResourceType.Metal, 400],
-				[GameType.ResourceType.Crystal, 120],]),},
+				[GameType.ResourceType.Crystal, 120],
+				[GameType.ResourceType.Deuterium, 200],]),},
+	},],
+
+	[GameType.BuildingType.ResearchLab, { displayName: "Research Lab",
+		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 200],
+				[GameType.ResourceType.Crystal, 400],
+				[GameType.ResourceType.Deuterium, 200],]),},
 	},],
 ]);
 //#endregion
@@ -378,5 +390,35 @@ export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requireme
 			operator: RequirementType.RequirementOperator.Equal,
 			value: false,
 			valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.Shipyard),}}]],
+	[ThingType.Thing.ResearchingResearch, [{
+		hideDataWhenRequirementFailed: false,
+		thingRequirement: {
+			thingType: ThingType.Thing.ResearchingResearch,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,
+			valueGetter: RequirementValueGetters.isAnyResearchInProgress(),}},
+		{
+		hideDataWhenRequirementFailed: false,
+		specificThingRequirement: {
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,
+			valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),}}]],
 ]);
+//#endregion
+
+//#region Research
+export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.ResearchInfo> = new Map<GameType.ResearchType, GameType.ResearchInfo>
+([
+    [GameType.ResearchType.ImpulseDrive, { displayName: "Impulse Drive",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 2000],
+				[GameType.ResourceType.Crystal, 4000],
+				[GameType.ResourceType.Crystal, 6000],]),},}],
+]);
+
 //#endregion

@@ -13,6 +13,8 @@ export const Thing =
     ShipConstruction: 5,
     FleetMovement: 6,
     PlanetValue: 7,
+    Research: 8,
+    ResearchingResearch: 9,
 } as const;
 export type Thing = typeof Thing[keyof typeof Thing];
 

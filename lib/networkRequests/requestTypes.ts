@@ -66,6 +66,16 @@ export type BuildingUpgrade_ServerResponse = BaseServerResponse &
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
 
+export type Research_ClientRequest = BaseClientRequest &
+{
+	researchType: GameType.ResearchType;
+	planetId: number;
+};
+export type Research_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
 export type BuildShips_ClientRequest = BaseClientRequest &
 {
 	planetId: number;

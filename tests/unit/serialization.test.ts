@@ -94,6 +94,52 @@ describe('serializePlayerData / deserializePlayerData', () =>
         expect(restored.planetDatas[0]!.dynamicPlanetData.buildingUpgrades).toEqual([]);
     });
 
+    it('round-trips research levels map (player-level) through JSON', () =>
+    {
+        const original: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
+        {
+            dynamicPlayerData: TestDataBuilders.buildDynamicPlayerData({ researchLevels: new Map([[1, 4]]) }),
+        });
+        const serialized: Serialization.SerializedPlayerData = Serialization.serializePlayerData(original);
+        const restored: CoreType.PlayerData = Serialization.deserializePlayerData(JSON.parse(JSON.stringify(serialized)) as Serialization.SerializedPlayerData);
+
+        expect(restored.dynamicPlayerData.researchLevels.get(1)).toBe(4);
+    });
+
+    it('round-trips currentlyResearchings through JSON', () =>
+    {
+        const research: CoreType.CurrentlyResearching = TestDataBuilders.buildCurrentlyResearching(
+        {
+            currentlyResearchingRow: { id: 8 },
+            currentlyResearchingResearchRows: [TestDataBuilders.buildCurrentlyResearchingResearchRow({ id: 8, currently_researching_id: 8 })],
+        });
+        const original: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
+        {
+            dynamicPlayerData: TestDataBuilders.buildDynamicPlayerData({ currentlyResearchings: [research] }),
+        });
+        const serialized: Serialization.SerializedPlayerData = Serialization.serializePlayerData(original);
+        const wire: string = JSON.stringify(serialized);
+        const restored: CoreType.PlayerData = Serialization.deserializePlayerData(JSON.parse(wire) as Serialization.SerializedPlayerData);
+
+        const restoredResearch: CoreType.CurrentlyResearching = restored.dynamicPlayerData.currentlyResearchings[0]!;
+        expect(restoredResearch.currentlyResearchingRow.id).toBe(8);
+        expect(restoredResearch.currentlyResearchingResearchRows[0]!.id).toBe(8);
+    });
+
+    it('defaults currentlyResearchings to empty array when field is absent in wire data', () =>
+    {
+        const original: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const serialized: Serialization.SerializedPlayerData = Serialization.serializePlayerData(original);
+
+        // Simulate a wire payload that omits currentlyResearchings (older server version)
+        const withoutResearch: Serialization.SerializedPlayerData = JSON.parse(JSON.stringify(serialized)) as Serialization.SerializedPlayerData;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (withoutResearch.dynamicPlayerData as any).currentlyResearchings;
+
+        const restored: CoreType.PlayerData = Serialization.deserializePlayerData(withoutResearch);
+        expect(restored.dynamicPlayerData.currentlyResearchings).toEqual([]);
+    });
+
     it('round-trips futureFleetArrivals through JSON', () =>
     {
         const fleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement(

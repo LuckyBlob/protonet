@@ -5,6 +5,7 @@ import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent"
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
+import * as CurrentlyResearching from "@/lib/gameplay/progressUpdate/anchorEvent/currentlyResearchingAnchorEvent"
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as PlanetValueData from "@/lib/gameplay/dynamicData/planet/planetValueData";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
@@ -20,6 +21,7 @@ export abstract class PlayerProgressApplier
         anchorEvents.push(BuildingUpgrade.findNextAnchorEvent(playerData, this));
         anchorEvents.push(ShipConstruction.findNextAnchorEvent(playerData, this));
         anchorEvents.push(FleetArrival.findNextAnchorEvent(playerData, this));
+        anchorEvents.push(CurrentlyResearching.findNextAnchorEvent(playerData, this));
         
         let nextAnchorEvent: AnchorEvent.AnchorEvent | null = null;
         for (const anchorEvent of anchorEvents)
@@ -56,6 +58,11 @@ export abstract class PlayerProgressApplier
             case AnchorEvent.AnchorEventType.FleetArrival:
             {
                 FleetArrival.resolveAnchorEvent(playerData, serverData, anchorEvent);
+                break;
+            }
+            case AnchorEvent.AnchorEventType.CurrentlyResearching:
+            {
+                CurrentlyResearching.resolveAnchorEvent(playerData, serverData, anchorEvent);
                 break;
             }
             default:

@@ -13,6 +13,8 @@ export const THING_DISPLAY_NAMES: ReadonlyMap<ThingType.Thing, string> = new Map
     [ThingType.Thing.ShipConstruction, "ShipConstruction"],
     [ThingType.Thing.FleetMovement, "FleetMovement"],
     [ThingType.Thing.PlanetValue, "PlanetValue"],
+    [ThingType.Thing.Research, "Research"],
+    [ThingType.Thing.ResearchingResearch, "ResearchingResearch"],
 ]);
 
 export const THING_DEFINITIONS: ReadonlyMap<ThingType.Thing, ThingType.ThingDefinition> = new Map
@@ -58,5 +60,17 @@ export const THING_DEFINITIONS: ReadonlyMap<ThingType.Thing, ThingType.ThingDefi
         specificThingDisplayNames: new Map<ThingType.SpecificThing, string>([...StaticData.PLANET_VALUE_INFOS].map(
             ([planetValueType, planetValueInfo]) => [planetValueType, planetValueInfo.displayName])),
         contexts: [],
+    }],
+    [ThingType.Thing.Research,
+    {
+        specificThingDisplayNames: new Map<ThingType.SpecificThing, string>([...StaticData.REASEARCH_INFO].map(
+            ([researchType, researchInfo]) => [researchType, researchInfo.displayName])),
+        contexts: [CoreType.DataContext.ResearchLevels],
+    }],
+    [ThingType.Thing.ResearchingResearch,
+    {
+        specificThingDisplayNames: new Map<ThingType.SpecificThing, string>([...StaticData.REASEARCH_INFO].map(
+            ([researchType, researchInfo]) => [researchType, researchInfo.displayName])),
+        contexts: [CoreType.DataContext.ResearchLevels],
     }],
 ]);

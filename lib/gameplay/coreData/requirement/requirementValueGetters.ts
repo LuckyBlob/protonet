@@ -23,6 +23,15 @@ export function isAnyBuildingUpgradeInProgress(): RequirementType.ThingValueGett
     };
 }
 
+export function isAnyResearchInProgress(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        // Research is player-level, so it reads playerData directly rather than a planet.
+        return context.playerData.dynamicPlayerData.currentlyResearchings.length > 0 ? 1 : 0;
+    };
+}
+
 export function buildingLevel(buildingType: GameType.BuildingType): RequirementType.SpecificThingValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>

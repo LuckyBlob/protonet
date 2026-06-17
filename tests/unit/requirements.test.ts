@@ -303,6 +303,51 @@ describe('no ship can be started while the Shipyard is being built', () =>
     });
 });
 
+describe('getFailedResearchRequirements', () =>
+{
+    it('blocks research when the selected planet has no Research Lab', () =>
+    {
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.ImpulseDrive, 1);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('allows research when the selected planet has a Research Lab (level 1)', () =>
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map([[GameType.BuildingType.ResearchLab, 1]]),
+            },
+        });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.ImpulseDrive, 1);
+        expect(failed).toHaveLength(0);
+    });
+
+    it('blocks research when another research is already in progress', () =>
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map([[GameType.BuildingType.ResearchLab, 1]]),
+            },
+        });
+        const inProgress: CoreType.CurrentlyResearching = TestDataBuilders.buildCurrentlyResearching();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
+        {
+            planetDatas: [planet],
+            dynamicPlayerData: TestDataBuilders.buildDynamicPlayerData({ currentlyResearchings: [inProgress] }),
+        });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.ImpulseDrive, 1);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+});
+
 describe('getRequirementDescriptions', () =>
 {
     it('returns no descriptions when no requirements failed', () =>

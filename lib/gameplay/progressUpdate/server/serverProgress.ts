@@ -58,6 +58,11 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
                 resolveFleetArrivalAnchorEventToDB(playerData, serverData, anchorEvent)
                 break;
             }
+            case AnchorEvent.AnchorEventType.CurrentlyResearching:
+            {
+                resolveCurrentlyResearchingAnchorEventToDB(playerData, serverData, anchorEvent);
+                break;
+            }
             default:
                 throw new Error(`UNREACHABLE: Missing clientProgess AnchorEventType case: ${anchorEvent.type}`);
         }
@@ -162,6 +167,18 @@ function resolveFleetArrivalAnchorEventToDB(playerData: CoreType.PlayerData, ser
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
         ServerFleetAction.resolveFleetMovementAtTargetToDB(playerData, serverData, anchorEvent);
+    });
+
+    transaction();
+}
+
+function resolveCurrentlyResearchingAnchorEventToDB(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
+{
+    // Research is player-level: the level-up and the queue removal both live on the player, no planet involved.
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        ServerDynamicData.serverUpdatePlayerDataContext(playerData.playerRow.id, CoreType.DataContext.ResearchLevels, playerData.dynamicPlayerData);
+        ServerDynamicData.serverUpdatePlayerDataContext(playerData.playerRow.id, CoreType.DataContext.CurrentlyResearching, playerData.dynamicPlayerData);
     });
 
     transaction();

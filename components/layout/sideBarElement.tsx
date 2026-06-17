@@ -52,7 +52,8 @@ export function SideBarElement(props: SideBarProps): ReactElement
 
 	        <div className="flex flex-col gap-0 w-full">
 	            <button onClick={() => props.cvController[1]("game")} className={navButtonClass}>Game</button>
-	            <button onClick={() => props.cvController[1]("upgrades")} className={navButtonClass}>Upgrades</button>
+	            <button onClick={() => props.cvController[1]("buildings")} className={navButtonClass}>Buildings</button>
+	            <button onClick={() => props.cvController[1]("research")} className={navButtonClass}>Research</button>
 	            <button onClick={() => props.cvController[1]("shipyard")} className={navButtonClass}>Shipyard</button>
 	            <button onClick={() => props.cvController[1]("fleets")} className={navButtonClass}>Fleets</button>
 	            <button onClick={() => props.cvController[1]("planets")} className={navButtonClass}>Planets</button>

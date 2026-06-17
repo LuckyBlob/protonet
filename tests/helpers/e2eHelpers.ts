@@ -287,6 +287,25 @@ export function getUpgradeId(planetId: number, db: Database.Database): number
     return row.id;
 }
 
+// Research is player-level, so the in-progress row is keyed by player, not planet.
+export function getCurrentlyResearchingId(playerId: number, db: Database.Database): number
+{
+    const row: { id: number } = db.prepare(
+        "SELECT id FROM currently_researching WHERE player_id = ? ORDER BY id LIMIT 1"
+    ).get(playerId) as { id: number };
+
+    return row.id;
+}
+
+export function getResearchLevelDb(playerId: number, researchType: number, db: Database.Database): number
+{
+    const row: { research_level: number } | undefined = db.prepare(
+        "SELECT research_level FROM player_research WHERE player_id = ? AND research_type = ?"
+    ).get(playerId, researchType) as { research_level: number } | undefined;
+
+    return row?.research_level ?? 0;
+}
+
 export function getConstructionId(planetId: number, db: Database.Database): number
 {
     const row: { id: number } = db.prepare(
@@ -382,7 +401,7 @@ export function getMessageCount(playerId: number, db: Database.Database): number
 // Rewind a started_at so `legs` completions (each one single-leg duration long) are already in
 // the past — the server resolves them all on the next reload. legs=1 finishes one ship/upgrade
 // or a one-way trip; legs=2 finishes a round trip or the 2nd ship of a batch.
-export function forceComplete(table: "ship_construction" | "building_upgrade" | "fleet_movement", id: number, db: Database.Database, legs: number = 1): void
+export function forceComplete(table: "ship_construction" | "building_upgrade" | "fleet_movement" | "currently_researching", id: number, db: Database.Database, legs: number = 1): void
 {
     const row: TimedRow | undefined = db.prepare(
         `SELECT id, duration_at_start_time FROM ${table} WHERE id = ?`
@@ -399,7 +418,7 @@ export function forceComplete(table: "ship_construction" | "building_upgrade" | 
 
 // Schedule single-leg completion `msFromNow` in the future so the server still reports it as
 // in-progress on reload, and the client animation tick resolves it locally afterwards.
-export function scheduleCompletionInMs(table: "ship_construction" | "building_upgrade" | "fleet_movement", id: number, msFromNow: number, db: Database.Database): void
+export function scheduleCompletionInMs(table: "ship_construction" | "building_upgrade" | "fleet_movement" | "currently_researching", id: number, msFromNow: number, db: Database.Database): void
 {
     const row: TimedRow | undefined = db.prepare(
         `SELECT id, duration_at_start_time FROM ${table} WHERE id = ?`
@@ -424,7 +443,7 @@ export async function reloadGame(page: Page): Promise<void>
     await expect(page.getByRole("button", { name: PLANET_BUTTON_PATTERN })).toBeVisible();
 }
 
-export async function goToView(page: Page, view: "Game" | "Upgrades" | "Shipyard" | "Fleets" | "Planets" | "Messages" | "Stats" | "Account"): Promise<void>
+export async function goToView(page: Page, view: "Game" | "Buildings" | "Research" | "Shipyard" | "Fleets" | "Planets" | "Messages" | "Stats" | "Account"): Promise<void>
 {
     // The sidebar's Messages button accessible name is "Messages" when there are no unread, and
     // "Messages(N)" once the unread badge appears, so we can't rely on an exact name match here.
@@ -443,9 +462,21 @@ export async function selectedPlanetAddress(page: Page): Promise<string>
     return match !== null ? match[0] : "";
 }
 
+// Buildings and Research both render as a row: image | info | action, the row carrying the unique
+// flex-row signature. Filtering by the building/research display name scopes to the single row.
 export function buildingCard(page: Page, buildingName: string): Locator
 {
-    return page.locator("div.w-64").filter({ hasText: buildingName });
+    return page.locator("div.flex.flex-row.items-center.gap-4").filter({ hasText: buildingName });
+}
+
+export function researchRow(page: Page, researchName: string): Locator
+{
+    return page.locator("div.flex.flex-row.items-center.gap-4").filter({ hasText: researchName });
+}
+
+export function researchButton(page: Page, researchName: string): Locator
+{
+    return researchRow(page, researchName).getByRole("button", { name: /Research/ });
 }
 
 // The top bar renders one card per resource: a "<name> : <amount>" line above a "<amount>/h"

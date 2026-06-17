@@ -29,6 +29,8 @@ export type PlayerData =
 
 export type DynamicPlayerData =
 {
+	researchLevels: Map<GameType.ResearchType, number>;
+	currentlyResearchings: CurrentlyResearching[];
 	messageDatas: MessageData[];
 };
 
@@ -81,6 +83,8 @@ export type PlanetDataContext = typeof PlanetDataContext[keyof typeof PlanetData
 export const PlayerDataContext =
 {
 	Messages: 7,
+	ResearchLevels: 8,
+	CurrentlyResearching: 9,
 } as const;
 export type PlayerDataContext = typeof PlayerDataContext[keyof typeof PlayerDataContext];
 
@@ -102,6 +106,8 @@ export const PlanetDataContextToVariableNameMap =
 export const PlayerDataContextToVariableNameMap =
 {
     [PlayerDataContext.Messages]: "messages",
+    [PlayerDataContext.ResearchLevels]: "researchLevels",
+    [PlayerDataContext.CurrentlyResearching]: "currentlyResearchings",
 } as const;
 export const DataContextToVariableNameMap =
 {
@@ -125,6 +131,12 @@ export type BuildingUpgrade =
 {
 	buildingUpgradeRow: DBType.BuildingUpgradeRow;
 	buildingUpgradeBuildingRows: DBType.BuildingUpgradeBuildingRow[];
+};
+
+export type CurrentlyResearching =
+{
+	currentlyResearchingRow: DBType.CurrentlyResearchingRow;
+	currentlyResearchingResearchRows: DBType.CurrentlyResearchingResearchRow[];
 };
 
 export type FleetMovement =
@@ -188,9 +200,27 @@ export function getVariableFromContext<T extends DataContext>(data: DynamicPlane
     return data[propertyKey] as DynamicPlanetData[TargetPropertyName<T>];
 }
 
+type PlayerTargetPropertyName<T extends DataContext> = Extract<VariableNameMapType[T], keyof DynamicPlayerData>;
+export function getPlayerVariableFromContext<T extends DataContext>(data: DynamicPlayerData, variable: T): DynamicPlayerData[PlayerTargetPropertyName<T>]
+{
+    const propertyKey: PlayerTargetPropertyName<T> = DataContextToVariableNameMap[variable] as PlayerTargetPropertyName<T>;
+
+    if (propertyKey === undefined)
+    {
+        throw new Error(`UNREACHABLE: Mismatch DynamicPlayerData: fill DataContext and DataContextToVariableNameMap.`);
+    }
+
+    return data[propertyKey] as DynamicPlayerData[PlayerTargetPropertyName<T>];
+}
+
 export function getPlayerDataContexts(): DataContext[]
 {
 	return Object.values(PlayerDataContext) as DataContext[];
+}
+
+export function isPlayerDataContext(dataContext: DataContext): dataContext is PlayerDataContext
+{
+	return getPlayerDataContexts().includes(dataContext);
 }
 
 export function getPlanetDataContexts(): DataContext[]

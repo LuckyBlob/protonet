@@ -25,6 +25,9 @@ import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMov
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as ShipConstructionData from "@/lib/gameplay/dynamicData/planet/shipConstructionData";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
+import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
+import * as ResearchCost from "@/lib/gameplay/coreData/formula/researchCostFormulas";
+import * as ResearchDuration from "@/lib/gameplay/coreData/formula/researchDurationFormulas";
 import * as MathHelp from "@/lib/helper/mathHelp";
 import * as ServerPlanetManagement from "@/lib/gameplay/progressUpdate/server/serverPlanetManagement";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
@@ -816,6 +819,117 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
         ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.BuildingLevel, relevantPlanetData.dynamicPlanetData);
         ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.ResourceQuantity, relevantPlanetData.dynamicPlanetData);
         ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.BuildingUpgrade, relevantPlanetData.dynamicPlanetData);
+
+        const playerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        }
+        return playerActionResult;
+    })();
+
+    return playerActionResult;
+}
+
+export function tryUpgradeResearchLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeResearch>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    const relevantPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.planetId);
+    if (relevantPlanetData === null)
+    {
+        return { success: false, failureReason: "Wrong planet to research from.", playerStateResult: playerData };
+    }
+
+    if (Requirement.getFailedResearchRequirements(playerData, requestData.researchType, relevantPlanetData.planetRow.id).length > 0)
+    {
+        return { success: false, failureReason: "Research doesnt meet requirements.", playerStateResult: playerData };
+    }
+
+    const canAffordResearch: boolean = ResearchData.canAffordResearch(playerData, relevantPlanetData, requestData.researchType);
+    if (canAffordResearch === false)
+    {
+        return { success: false, failureReason: "Not enough resources.", playerStateResult: playerData };
+    }
+
+    const currentResearchLevel: number = ResearchData.getResearchLevel(playerData, requestData.researchType);
+    const researchDurationSeconds: number | null = ResearchDuration.computeResearchDurationSeconds(currentResearchLevel, requestData.researchType, playerData, relevantPlanetData.planetRow.id, serverData);
+    if (researchDurationSeconds === null)
+    {
+        return { success: false, failureReason: "Wrong research type to research.", playerStateResult: playerData };
+    }
+
+    const researchCost: Map<GameType.ResourceType, number> | null = ResearchCost.computeResearchUpgradeCost(currentResearchLevel, requestData.researchType);
+    if (researchCost === null)
+    {
+        return { success: false, failureReason: "Wrong research type to research.", playerStateResult: playerData };
+    }
+
+    for (const [resourceType, resourceCost] of researchCost)
+    {
+        try
+        {
+            ResourceData.subtractPlanetResource(relevantPlanetData, resourceType, resourceCost);
+        }
+        catch (error: unknown)
+        {
+            return { success: false, failureReason: `Failed to substract planet resources for research.`, playerStateResult: playerData };
+        }
+    }
+
+    const newCurrentlyResearchingResearchRows: DBType.CurrentlyResearchingResearchRow[] = [];
+    const newCurrentlyResearchingResearchRow: DBType.CurrentlyResearchingResearchRow =
+    {
+        id: -1,
+        currently_researching_id: -1,
+        research_type: requestData.researchType,
+    }
+    newCurrentlyResearchingResearchRows.push(newCurrentlyResearchingResearchRow);
+    const newCurrentlyResearchingRow: DBType.CurrentlyResearchingRow =
+    {
+        id: -1,
+        player_id: playerId,
+        requested_at: now,
+        duration_at_request_time: researchDurationSeconds * 1000,
+        duration_at_start_time: null,
+        started_at: null,
+        current_currently_researching_research_row_id: -1,
+    };
+    const newCurrentlyResearching: CoreType.CurrentlyResearching =
+    {
+        currentlyResearchingRow: newCurrentlyResearchingRow,
+        currentlyResearchingResearchRows: newCurrentlyResearchingResearchRows,
+    };
+
+    const index: number | null = ResearchData.getNextCurrentlyResearchingResearchRowIndex(playerData, relevantPlanetData.planetRow.id, newCurrentlyResearching, serverData);
+    if (index === null)
+    {
+        throw new Error("Failed to get first currently researching research row.");
+    }
+    // swap the first research row to start researching to ensure it's in first place.
+    [newCurrentlyResearching.currentlyResearchingResearchRows[0], newCurrentlyResearching.currentlyResearchingResearchRows[index]] = [newCurrentlyResearching.currentlyResearchingResearchRows[index], newCurrentlyResearching.currentlyResearchingResearchRows[0]];
+    const firstCurrentlyResearchingResearchRow: DBType.CurrentlyResearchingResearchRow = newCurrentlyResearching.currentlyResearchingResearchRows[0];
+
+    // No research in progress? Means we can start this one right away.
+    if (playerData.dynamicPlayerData.currentlyResearchings.length === 0)
+    {
+        newCurrentlyResearching.currentlyResearchingRow.started_at = now;
+        const firstResearchTimeSeconds: number | null = ResearchData.getResearchDurationSeconds(playerData, firstCurrentlyResearchingResearchRow.research_type as GameType.ResearchType, relevantPlanetData.planetRow.id, serverData);
+        if (firstResearchTimeSeconds === null)
+        {
+            throw new Error("First firstCurrentlyResearchingResearchRow cant be null.");
+        }
+
+        newCurrentlyResearching.currentlyResearchingRow.duration_at_start_time = firstResearchTimeSeconds * 1000;
+    }
+    playerData.dynamicPlayerData.currentlyResearchings.push(newCurrentlyResearching);
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.ResourceQuantity, relevantPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlayerDataContext(playerId, CoreType.DataContext.CurrentlyResearching, playerData.dynamicPlayerData);
 
         const playerActionResult: PlayerActionResult =
         {

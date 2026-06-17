@@ -11,6 +11,7 @@ export const ActionRequest =
     Logout:   { endpoint: "authentication/logout",   name: "Logout" },
     RefreshServer:   { endpoint: "refreshServerData",   name: "RefreshServer" },
     UpgradeBuilding:   { endpoint: "buy/upgradeBuilding",   name: "UpgradeBuilding" },
+    UpgradeResearch:   { endpoint: "buy/upgradeResearch",   name: "UpgradeResearch" },
     BuildShips:   { endpoint: "buy/buildShips",   name: "BuildShips" },
     SendFleet:   { endpoint: "buy/sendFleet",   name: "SendFleet" },
     AbandonPlanet:   { endpoint: "planets/abandon",   name: "AbandonPlanet" },
@@ -25,6 +26,7 @@ export type ActionRequestMap =
     Logout: null;
     RefreshServer: null;
     UpgradeBuilding: RequestType.BuildingUpgrade_ClientRequest;
+    UpgradeResearch: RequestType.Research_ClientRequest;
     BuildShips: RequestType.BuildShips_ClientRequest;
     SendFleet: RequestType.SendFleet_ClientRequest;
     AbandonPlanet: RequestType.AbandonPlanet_ClientRequest;
@@ -39,6 +41,7 @@ export type ActionResponseMap =
     Logout: RequestType.BaseAuthenticationServerResponse;
     RefreshServer: RequestType.RefreshServer_ServerResponse;
     UpgradeBuilding: RequestType.BuildingUpgrade_ServerResponse;
+    UpgradeResearch: RequestType.Research_ServerResponse;
     BuildShips: RequestType.BuildShips_ServerResponse;
     SendFleet: RequestType.SendFleet_ServerResponse;
     AbandonPlanet: RequestType.AbandonPlanet_ServerResponse;

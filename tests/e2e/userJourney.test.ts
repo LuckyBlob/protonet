@@ -45,7 +45,7 @@ test('full user journey', async ({ page }) =>
 	// Notice (cont.): the Shipyard is blocked by an unmet *requirement*, not by affordability. A
 	// resource shortfall would leave the Build Upgrade button present but disabled; here the button
 	// is absent entirely and the card shows the unmet-requirement notice instead.
-	await E2EHelper.goToView(page, 'Upgrades')
+	await E2EHelper.goToView(page, 'Buildings')
 	await expect(E2EHelper.buildUpgradeButton(page, 'Shipyard')).toHaveCount(0)
 	await expect(E2EHelper.buildingCard(page, 'Shipyard')).toContainText('Robotic Factory >= 2 (current: 0)')
 	await E2EHelper.goToView(page, 'Game')

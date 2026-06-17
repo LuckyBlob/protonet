@@ -6,12 +6,12 @@ import * as MathHelp from "@/lib/helper/mathHelp";
 // #region Ship Management
 export function setShipQuantity(planetData: CoreType.PlanetData, shipType: GameType.ShipType, value: number): void
 {
-	ThingHelpers.setSpecificThingValue(planetData, CoreType.DataContext.ShipQuantity, shipType, value);
+	ThingHelpers.setSpecificThingValue(null, planetData, CoreType.DataContext.ShipQuantity, shipType, value);
 }
 
 export function getShipQuantity(planetData: CoreType.PlanetData, shipType: GameType.ShipType): number
 {
-	const shipQuantities: Map<GameType.ShipType, number> = ThingHelpers.getThingValues(planetData, CoreType.DataContext.ShipQuantity) as Map<GameType.ShipType, number>;
+	const shipQuantities: Map<GameType.ShipType, number> = ThingHelpers.getThingValues(null, planetData, CoreType.DataContext.ShipQuantity) as Map<GameType.ShipType, number>;
 	return shipQuantities.get(shipType) ?? 0;
 }
 
@@ -22,7 +22,7 @@ export function hasShipQuantities(planetData: CoreType.PlanetData, shipQuantitie
 
 export function hasShips(planetData: CoreType.PlanetData): boolean
 {
-	const shipQuantities: Map<GameType.ShipType, number> = ThingHelpers.getThingValues(planetData, CoreType.DataContext.ShipQuantity) as Map<GameType.ShipType, number>;
+	const shipQuantities: Map<GameType.ShipType, number> = ThingHelpers.getThingValues(null, planetData, CoreType.DataContext.ShipQuantity) as Map<GameType.ShipType, number>;
 	for (const [shipType, shipQuantity] of shipQuantities)
 	{
 		if (shipQuantity > 0)

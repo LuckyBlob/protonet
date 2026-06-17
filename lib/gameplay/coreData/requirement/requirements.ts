@@ -29,6 +29,17 @@ export function getFailedShipBuildRequirements(playerData: CoreType.PlayerData, 
     return getFailedRequirements(requirementContext, requirements);
 }
 
+export function getFailedResearchRequirements(playerData: CoreType.PlayerData, researchType: GameType.ResearchType, planetId: number): RequirementType.Requirement[]
+{
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: planetId,
+    };
+    const requirements: RequirementType.Requirement[] = getResearchRequirements(ThingType.Thing.ResearchingResearch, researchType);
+    return getFailedRequirements(requirementContext, requirements);
+}
+
 export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerData, fleetActionType: GameType.FleetActionType, planetId: number, shipQuantities: Map<GameType.ShipType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>, targetPlanetAddress: GameType.PlanetAddress, targetPlanetOwnerPlayerId: number | null): RequirementType.Requirement[]
 {
     const requirementContext: RequirementType.RequirementContext =
@@ -78,6 +89,14 @@ function getShipRequirements(thingType: ThingType.Thing, shipType: GameType.Ship
 {
     const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(thingType) ?? [];
     const specificRequirements: RequirementType.Requirement[] = StaticData.SHIP_STATS.get(shipType)?.requirements ?? [];
+
+    return [...globalRequirements, ...specificRequirements];
+}
+
+function getResearchRequirements(thingType: ThingType.Thing, researchType: GameType.ResearchType): RequirementType.Requirement[]
+{
+    const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(thingType) ?? [];
+    const specificRequirements: RequirementType.Requirement[] = StaticData.REASEARCH_INFO.get(researchType)?.requirements ?? [];
 
     return [...globalRequirements, ...specificRequirements];
 }
@@ -211,6 +230,11 @@ function describeSingleRequirement(requirementContext: RequirementType.Requireme
         const thingRequirement: RequirementType.ThingRequirement = requirement.thingRequirement;
 
         if (thingRequirement.thingType === ThingType.Thing.BuildingUpgrade)
+        {
+            return null;
+        }
+
+        if (thingRequirement.thingType === ThingType.Thing.ResearchingResearch)
         {
             return null;
         }

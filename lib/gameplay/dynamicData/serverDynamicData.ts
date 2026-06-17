@@ -17,6 +17,16 @@ export function serverUpdatePlayerDataContext(playerId: number, dataContext: Cor
                 updateMessages(playerId, dynamicPlayerData);
                 break;
             }
+            case CoreType.DataContext.ResearchLevels:
+            {
+                updateResearchLevels(playerId, dynamicPlayerData);
+                break;
+            }
+            case CoreType.DataContext.CurrentlyResearching:
+            {
+                updateCurrentlyResearchings(playerId, dynamicPlayerData);
+                break;
+            }
             default:
                 throw new Error(`UNREACHABLE: Dynamic data update function undefined for data context ${dataContext}.`);
         }
@@ -27,6 +37,8 @@ export function serverUpdatePlayerDataContext(playerId: number, dataContext: Cor
 export function getDynamicPlayerData(playerId: number): CoreType.DynamicPlayerData
 {
     return {
+        researchLevels: getDynamicPlayerResearchData(playerId),
+        currentlyResearchings: getDynamicPlayerCurrentlyResearchingData(playerId),
         messageDatas: getDynamicMessageData(playerId),
     };
 }
@@ -58,6 +70,48 @@ export function getDynamicMessageData(playerId: number): CoreType.MessageData[]
     }
 
     return messageDatas;
+}
+
+export function getDynamicPlayerResearchData(playerId: number): Map<GameType.ResearchType, number>
+{
+    const researchRows: DBType.PlayerResearchRow[] = DB.databaseConnection.prepare(
+        "SELECT * FROM player_research WHERE player_id = ?"
+    ).all(playerId) as DBType.PlayerResearchRow[];
+    const researchLevels: Map<GameType.ResearchType, number> = new Map<GameType.ResearchType, number>();
+    for (const researchRow of researchRows)
+    {
+        researchLevels.set(researchRow.research_type as GameType.ResearchType, researchRow.research_level);
+    }
+    return researchLevels;
+}
+
+export function getDynamicPlayerCurrentlyResearchingData(playerId: number): CoreType.CurrentlyResearching[]
+{
+    return DB.databaseConnection.transaction((): CoreType.CurrentlyResearching[] =>
+    {
+        const currentlyResearchings: CoreType.CurrentlyResearching[] = [];
+
+        const currentlyResearchingRows: DBType.CurrentlyResearchingRow[] = DB.databaseConnection.prepare(
+            "SELECT * FROM currently_researching WHERE player_id = ?"
+        ).all(playerId) as DBType.CurrentlyResearchingRow[];
+
+        for (const currentlyResearchingRow of currentlyResearchingRows)
+        {
+            const currentlyResearchingResearchRows: DBType.CurrentlyResearchingResearchRow[] = DB.databaseConnection.prepare(
+                "SELECT * FROM currently_researching_research WHERE currently_researching_id = ?"
+            ).all(currentlyResearchingRow.id) as DBType.CurrentlyResearchingResearchRow[];
+
+            const newCurrentlyResearching: CoreType.CurrentlyResearching =
+            {
+                currentlyResearchingRow: currentlyResearchingRow,
+                currentlyResearchingResearchRows: currentlyResearchingResearchRows,
+            };
+
+            currentlyResearchings.push(newCurrentlyResearching);
+        }
+
+        return currentlyResearchings;
+    })();
 }
 
 function updateMessages(playerId: number, dynamicPlayerData: CoreType.DynamicPlayerData): void
@@ -94,6 +148,93 @@ function updateMessages(playerId: number, dynamicPlayerData: CoreType.DynamicPla
 
             messageRow.id = insertResult.id;
             messageData.messagePreview.messageRowId = insertResult.id;
+        }
+    });
+    transaction();
+}
+
+function updateResearchLevels(playerId: number, dynamicPlayerData: CoreType.DynamicPlayerData): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        DB.databaseConnection.prepare("DELETE FROM player_research WHERE player_id = ?").run(playerId);
+        const insertStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO player_research (player_id, research_type, research_level) VALUES (?, ?, ?)"
+        );
+        for (const [researchType, researchLevel] of dynamicPlayerData.researchLevels)
+        {
+            insertStatement.run(playerId, researchType, researchLevel);
+        }
+    });
+    transaction();
+}
+
+function updateCurrentlyResearchings(playerId: number, dynamicPlayerData: CoreType.DynamicPlayerData): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        DB.databaseConnection.prepare("DELETE FROM currently_researching WHERE player_id = ?").run(playerId);
+        // On delete cascade will delete currently_researching_research rows
+        const insertResearchingStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO currently_researching (player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_currently_researching_research_row_id) VALUES (?, ?, ?, ?, ?, ?) RETURNING id"
+        );
+        const insertResearchStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO currently_researching_research (currently_researching_id, research_type) VALUES (?, ?) RETURNING id"
+        );
+
+        if (dynamicPlayerData.currentlyResearchings.length === 0)
+        {
+            return;
+        }
+
+        for (const currentlyResearching of dynamicPlayerData.currentlyResearchings)
+        {
+            const currentlyResearchingRow: DBType.CurrentlyResearchingRow = currentlyResearching.currentlyResearchingRow;
+            const researchingIdResult: { id: number } = insertResearchingStatement.get(
+                playerId,
+                currentlyResearchingRow.requested_at,
+                currentlyResearchingRow.duration_at_request_time,
+                currentlyResearchingRow.duration_at_start_time,
+                currentlyResearchingRow.started_at,
+                currentlyResearchingRow.current_currently_researching_research_row_id,
+            ) as { id: number };
+
+            currentlyResearchingRow.id = researchingIdResult.id;
+
+            let firstCurrentlyResearchingResearchRowId: number | null = null;
+            for (const currentlyResearchingResearchRow of currentlyResearching.currentlyResearchingResearchRows)
+            {
+                const researchRowIdResult: { id: number } = insertResearchStatement.get(
+                    currentlyResearchingRow.id,
+                    currentlyResearchingResearchRow.research_type,
+                ) as { id: number };
+
+                const oldResearchRowId: number = currentlyResearchingResearchRow.id;
+                currentlyResearchingResearchRow.id = researchRowIdResult.id;
+
+                if (oldResearchRowId !== -1)
+                {
+                    // if we were pointing to the old research row id, update to the new one
+                    if (currentlyResearchingRow.current_currently_researching_research_row_id === oldResearchRowId)
+                    {
+                        currentlyResearchingRow.current_currently_researching_research_row_id = currentlyResearchingResearchRow.id;
+                        DB.databaseConnection.prepare(
+                            "UPDATE currently_researching SET current_currently_researching_research_row_id = ? WHERE id = ?"
+                        ).run(currentlyResearchingResearchRow.id, currentlyResearchingRow.id);
+                    }
+                }
+                else
+                {
+                    if (firstCurrentlyResearchingResearchRowId === null)
+                    {
+                        firstCurrentlyResearchingResearchRowId = currentlyResearchingResearchRow.id;
+                        currentlyResearchingRow.current_currently_researching_research_row_id = firstCurrentlyResearchingResearchRowId;
+                        DB.databaseConnection.prepare(
+                            "UPDATE currently_researching SET current_currently_researching_research_row_id = ? WHERE id = ?"
+                        ).run(firstCurrentlyResearchingResearchRowId, currentlyResearchingRow.id);
+                    }
+                }
+            }
         }
     });
     transaction();

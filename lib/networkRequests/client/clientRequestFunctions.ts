@@ -204,6 +204,36 @@ export async function clientTryUpgradeBuildingRequest(psController: CoreType.PSC
     }
 }
 
+export async function clientTryUpgradeResearchRequest(psController: CoreType.PSController, planetId: number, researchType: GameType.ResearchType): Promise<void>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeResearch> =
+    {
+        researchType: researchType,
+        planetId: planetId,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.UpgradeResearch> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.UpgradeResearch, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+        throw new Error(`Research failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
+}
+
 export async function clientTryBuildShipsRequest(psController: CoreType.PSController, planetId: number, shipQuantities: Map<GameType.ShipType, number>): Promise<void>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips> =

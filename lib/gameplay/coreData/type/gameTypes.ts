@@ -26,6 +26,7 @@ export const BuildingType =
 	DeuteriumTank: 7,
     Shipyard: 8,
     RoboticFactory: 9,
+    ResearchLab: 10,
 } as const;
 export type BuildingType = typeof BuildingType[keyof typeof BuildingType];
 export type BuildingStats =
@@ -33,7 +34,7 @@ export type BuildingStats =
 	displayName: string,
 	requirements?: RequirementType.Requirement[];
 	costFunctionType?: BuildingCostFunctionType;
-	costStats?: CostStats;
+	costStats?: BuildingCostStats;
 	productionFunctionType?: ProductionFunctionType;
 	productionStats?: Map<ResourceType, ProductionStats>;
 	planetValueProductionFormulasType?: BuildingPlanetValueProductionFormulasType;
@@ -45,7 +46,7 @@ export const BuildingCostFunctionType =
     SimpleExponential: 1,
 } as const;
 export type BuildingCostFunctionType = typeof BuildingCostFunctionType[keyof typeof BuildingCostFunctionType];
-export type CostStats = 
+export type BuildingCostStats = 
 {
 	baseCostExponent: number;
 	baseCost: Map<ResourceType, number>;
@@ -143,5 +144,32 @@ export type PlanetAddress =
     galaxy: number,
     system: number,
     slot: number
+}
+//#endregion
+
+//#region Researchs
+export const ResearchType =
+{
+    ImpulseDrive: 1,
+} as const;
+export type ResearchType = typeof ResearchType[keyof typeof ResearchType];
+export type ResearchInfo =
+{
+	displayName: string,
+	requirements?: RequirementType.Requirement[];
+	costFunctionType?: ResearchCostFunctionType;
+	costStats?: ResearchCostStats;
+};
+
+export const ResearchCostFunctionType =
+{
+    SimpleExponential: 1,
+} as const;
+export type ResearchCostFunctionType = typeof ResearchCostFunctionType[keyof typeof ResearchCostFunctionType];
+export type ResearchCostStats = 
+{
+	baseCostExponent: number;
+	baseCost: Map<ResourceType, number>;
+	freePlanetValueRequirements?: Map<PlanetValueType, number>;
 }
 //#endregion

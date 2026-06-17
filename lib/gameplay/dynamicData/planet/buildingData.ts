@@ -10,18 +10,18 @@ import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 
 export function setBuildingLevel(planetData: CoreType.PlanetData, buildingType: GameType.BuildingType, value: number): void
 {
-    ThingHelpers.setSpecificThingValue(planetData, CoreType.DataContext.BuildingLevel, buildingType, value);
+    ThingHelpers.setSpecificThingValue(null, planetData, CoreType.DataContext.BuildingLevel, buildingType, value);
 }
 
 export function getBuildingLevel(planetData: CoreType.PlanetData, buildingType: GameType.BuildingType): number
 {
-    const buildingLevels: Map<GameType.BuildingType, number> = ThingHelpers.getThingValues(planetData, CoreType.DataContext.BuildingLevel) as Map<GameType.BuildingType, number>;
+    const buildingLevels: Map<GameType.BuildingType, number> = ThingHelpers.getThingValues(null, planetData, CoreType.DataContext.BuildingLevel) as Map<GameType.BuildingType, number>;
     return buildingLevels.get(buildingType) ?? 0;
 }
 
 export function getBuildingLevelMap(planetData: CoreType.PlanetData): Map<GameType.BuildingType, number>
 {
-    return ThingHelpers.getThingValues(planetData, CoreType.DataContext.BuildingLevel) as Map<GameType.BuildingType, number>;
+    return ThingHelpers.getThingValues(null, planetData, CoreType.DataContext.BuildingLevel) as Map<GameType.BuildingType, number>;
 }
 
 export function getPlanetProductionRatePerSecond(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, serverData: CoreType.ServerData): number

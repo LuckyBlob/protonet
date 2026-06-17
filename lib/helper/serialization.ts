@@ -78,6 +78,8 @@ export function deserializePlayerData(serialized: SerializedPlayerData): CoreTyp
 
 type SerializedDynamicPlayerData =
 {
+	researchLevels: [number, number][];
+	currentlyResearchings: CoreType.CurrentlyResearching[];
 	messageDatas: CoreType.MessageData[];
 };
 
@@ -85,6 +87,8 @@ function serializeDynamicPlayerData(dynamicPlayerData: CoreType.DynamicPlayerDat
 {
 	const serialized: SerializedDynamicPlayerData =
 	{
+		researchLevels: [...dynamicPlayerData.researchLevels],
+		currentlyResearchings: [...dynamicPlayerData.currentlyResearchings],
 		messageDatas: [...dynamicPlayerData.messageDatas],
 	};
 
@@ -93,8 +97,11 @@ function serializeDynamicPlayerData(dynamicPlayerData: CoreType.DynamicPlayerDat
 
 function deserializeDynamicPlayerData(serialized: SerializedDynamicPlayerData): CoreType.DynamicPlayerData
 {
+	// The wire carries plain numbers; cast the rebuilt map to its enum-keyed in-memory type.
 	const dynamicPlayerData: CoreType.DynamicPlayerData =
 	{
+		researchLevels: new Map<number, number>(serialized.researchLevels) as Map<GameType.ResearchType, number>,
+		currentlyResearchings: serialized.currentlyResearchings ?? [],
 		messageDatas: serialized.messageDatas ?? [],
 	};
 
