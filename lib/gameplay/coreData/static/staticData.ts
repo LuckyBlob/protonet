@@ -22,11 +22,11 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				productionFactor: 30,
 				exponentBase: 1.1,}]]),
 
-		planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
-		planetValueStats: {
+		planetValueStats: [{
+			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
 			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
 				[GameType.PlanetValueType.Energy, -10],]),
-			basePlanetValueExponent: 1.1,},
+			basePlanetValueExponent: 1.1,}],
 	}],
 
 
@@ -37,12 +37,12 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 			baseCost: new Map<GameType.ResourceType, number>([
 				[GameType.ResourceType.Metal, 1000],]),},
 
-		planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.FlooredNaturalExponential,
-		planetValueStats: {
+		planetValueStats: [{
+			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.FlooredNaturalExponential,
 			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
 				[GameType.PlanetValueType.MetalStorage, 5000],]),
 			naturalExponentialFactor: 2.5,
-			naturalExponentialExponentFactor: 20/33,},
+			naturalExponentialExponentFactor: 20/33,}],
 	}],
 
 
@@ -61,11 +61,11 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				productionFactor: 20,
 				exponentBase: 1.1,}]]),
 
-		planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
-		planetValueStats: {
+		planetValueStats: [{
+			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
 			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
 				[GameType.PlanetValueType.Energy, -10],]),
-			basePlanetValueExponent: 1.1,},
+			basePlanetValueExponent: 1.1,}],
 	}],
 
 
@@ -77,12 +77,12 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Metal, 500],
 				[GameType.ResourceType.Crystal, 500],]),},
 
-		planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.FlooredNaturalExponential,
-		planetValueStats: {
+		planetValueStats: [{
+			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.FlooredNaturalExponential,
 			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
 				[GameType.PlanetValueType.CrystalStorage, 5000],]),
 			naturalExponentialFactor: 2.5,
-			naturalExponentialExponentFactor: 20/33,},
+			naturalExponentialExponentFactor: 20/33,}],
 	}],
 
 
@@ -101,11 +101,11 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				productionFactor: 10,
 				exponentBase: 1.1,}]]),
 
-		planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
-		planetValueStats: {
+		planetValueStats: [{
+			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
 			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
 				[GameType.PlanetValueType.Energy, -20],]),
-			basePlanetValueExponent: 1.1,},
+			basePlanetValueExponent: 1.1,}],
 	}],
 
 
@@ -117,12 +117,12 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Metal, 1000],
 				[GameType.ResourceType.Crystal, 1000],]),},
 
-		planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.FlooredNaturalExponential,
-		planetValueStats: {
+		planetValueStats: [{
+			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.FlooredNaturalExponential,
 			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
 				[GameType.PlanetValueType.DeuteriumStorage, 5000],]),
 			naturalExponentialFactor: 2.5,
-			naturalExponentialExponentFactor: 20/33,},
+			naturalExponentialExponentFactor: 20/33,}],
 	}],
 
 
@@ -134,11 +134,11 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Metal, 75],
 				[GameType.ResourceType.Crystal, 30],]),},
 
-		planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
-		planetValueStats: {
+		planetValueStats: [{
+			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
 			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
 				[GameType.PlanetValueType.Energy, 20],]),
-			basePlanetValueExponent: 1.1,},
+			basePlanetValueExponent: 1.1,}],
 	}],
 
 
@@ -543,10 +543,10 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				[GameType.ResourceType.Crystal, 400],
 				[GameType.ResourceType.Deuterium, 600],]),},
 
-		playerValueProductionFormulasType: GameType.ResearchPlayerValueProductionFormulasType.ProportionalOneToOne,
-		playerValueStats: {
+		playerValueStats: [{
+			playerValueProductionFormulasType: GameType.ResearchPlayerValueProductionFormulasType.ProportionalOneToOne,
 			basePlayerValueFactor: new Map<GameType.PlayerValueType, number>([
-				[GameType.PlayerValueType.FleetSlots, 1],]),},}],
+				[GameType.PlayerValueType.FleetSlots, 1],]),}],}],
 ]);
 
 //#endregion

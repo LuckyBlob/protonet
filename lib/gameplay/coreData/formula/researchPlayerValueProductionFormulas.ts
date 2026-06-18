@@ -11,18 +11,43 @@ export function computeResearchPlayerValueProduction(currentResearchLevel: numbe
         return null;
     }
 
-    switch (researchInfo.playerValueProductionFormulasType)
+    if (researchInfo.playerValueStats === undefined)
+    {
+        return null;
+    }
+
+    const playerValueMap: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> = new Map<GameType.PlayerValueType, CoreType.CalculatedValueData>();
+    for (const playerValueStats of researchInfo.playerValueStats)
+    {
+        const partialPlayerValueMap: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null = computeSinglePlayerValueStats(currentResearchLevel, playerValueStats);
+        if (partialPlayerValueMap === null)
+        {
+            continue;
+        }
+
+        for (const [playerValueType, calculatedValueData] of partialPlayerValueMap)
+        {
+            playerValueMap.set(playerValueType, calculatedValueData);
+        }
+    }
+
+    return playerValueMap;
+}
+
+function computeSinglePlayerValueStats(currentResearchLevel: number, playerValueStats: GameType.PlayerValueStats): Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null
+{
+    switch (playerValueStats.playerValueProductionFormulasType)
     {
         case GameType.ResearchPlayerValueProductionFormulasType.ProportionalOneToOne:
         {
-            return computeResearchPlayerValueProductionInternal(currentResearchLevel, researchInfo, computeResearchPlayerValueProduction_ProportionalOneToOne);
+            return computeResearchPlayerValueProductionInternal(currentResearchLevel, playerValueStats, computeResearchPlayerValueProduction_ProportionalOneToOne);
         }
         default:
             return null;
     }
 }
 
-function computeResearchPlayerValueProduction_ProportionalOneToOne(currentResearchLevel: number, researchInfo: GameType.ResearchInfo, playerValueFactor: number): number
+function computeResearchPlayerValueProduction_ProportionalOneToOne(currentResearchLevel: number, playerValueStats: GameType.PlayerValueStats, playerValueFactor: number): number
 {
     // Level 0 already yields the base of one, and each subsequent level adds one more, one-to-one.
     return playerValueFactor * (currentResearchLevel + 1);
@@ -30,18 +55,13 @@ function computeResearchPlayerValueProduction_ProportionalOneToOne(currentResear
 
 function computeResearchPlayerValueProductionInternal(
     currentResearchLevel: number,
-    researchInfo: GameType.ResearchInfo,
-    applyFunction: (currentResearchLevel: number, researchInfo: GameType.ResearchInfo, playerValueFactor: number) => number): Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null
+    playerValueStats: GameType.PlayerValueStats,
+    applyFunction: (currentResearchLevel: number, playerValueStats: GameType.PlayerValueStats, playerValueFactor: number) => number): Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null
 {
-    if (researchInfo.playerValueStats === undefined)
-    {
-        return null;
-    }
-
     const playerValueMap: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> = new Map<GameType.PlayerValueType, CoreType.CalculatedValueData>();
-    for (const [playerValueType, playerValueFactor] of researchInfo.playerValueStats.basePlayerValueFactor)
+    for (const [playerValueType, playerValueFactor] of playerValueStats.basePlayerValueFactor)
     {
-        const newPlayerValue: number = applyFunction(currentResearchLevel, researchInfo, playerValueFactor);
+        const newPlayerValue: number = applyFunction(currentResearchLevel, playerValueStats, playerValueFactor);
         const newPlayerValueAmounts: CoreType.CalculatedValueData =
         {
             production: 0,

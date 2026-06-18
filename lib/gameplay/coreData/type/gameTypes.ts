@@ -38,8 +38,7 @@ export type BuildingStats =
 	costStats?: BuildingCostStats;
 	productionFunctionType?: ProductionFunctionType;
 	productionStats?: Map<ResourceType, ProductionStats>;
-	planetValueProductionFormulasType?: BuildingPlanetValueProductionFormulasType;
-	planetValueStats?: PlanetValueStats;
+	planetValueStats?: PlanetValueStats[];
 };
 
 export const BuildingCostFunctionType =
@@ -73,6 +72,7 @@ export const BuildingPlanetValueProductionFormulasType =
 export type BuildingPlanetValueProductionFormulasType = typeof BuildingPlanetValueProductionFormulasType[keyof typeof BuildingPlanetValueProductionFormulasType];
 export type PlanetValueStats =
 {
+	planetValueProductionFormulasType: BuildingPlanetValueProductionFormulasType;
 	basePlanetValueFactor: Map<PlanetValueType, number>;
 	basePlanetValueExponent?: number;
 	naturalExponentialFactor?: number;
@@ -112,6 +112,7 @@ export type PlayerValueInfo =
 }
 export type PlayerValueStats =
 {
+	playerValueProductionFormulasType: ResearchPlayerValueProductionFormulasType;
 	basePlayerValueFactor: Map<PlayerValueType, number>;
 }
 //#endregion
@@ -202,8 +203,7 @@ export type ResearchInfo =
 	requirements?: RequirementType.Requirement[];
 	costFunctionType?: ResearchCostFunctionType;
 	costStats?: ResearchCostStats;
-	playerValueProductionFormulasType?: ResearchPlayerValueProductionFormulasType;
-	playerValueStats?: PlayerValueStats;
+	playerValueStats?: PlayerValueStats[];
 };
 
 export const ResearchPlayerValueProductionFormulasType =
