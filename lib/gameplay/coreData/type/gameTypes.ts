@@ -97,7 +97,35 @@ export type PlanetValueInfo =
 	associatedResource?: ResourceType;
 	limitsResourceMax?: boolean;
 }
-//#endregion 
+//#endregion
+
+//#region PlayerValue
+export const PlayerValueType =
+{
+    FleetSlots: 5,
+} as const;
+export type PlayerValueType = typeof PlayerValueType[keyof typeof PlayerValueType];
+export type PlayerValueInfo =
+{
+	displayName: string;
+	limitFleets?: boolean;
+}
+export type PlayerValueStats =
+{
+	basePlayerValueFactor: Map<PlayerValueType, number>;
+}
+//#endregion
+
+//#region CalculatedValue
+// The combined value-type vocabulary, mirroring DataContext = PlanetDataContext + PlayerDataContext.
+// PlanetValueType and PlayerValueType are numbered in disjoint ranges so the union stays discriminable.
+export const CalculatedValueType =
+{
+    ...PlanetValueType,
+    ...PlayerValueType,
+} as const;
+export type CalculatedValueType = typeof CalculatedValueType[keyof typeof CalculatedValueType];
+//#endregion
 
 //#region Ships
 export const ShipType =
@@ -165,6 +193,7 @@ export const ResearchType =
     CombustionDrive: 2,
     ImpulseDrive: 3,
     HyperspaceDrive: 4,
+    ComputerTech: 5,
 } as const;
 export type ResearchType = typeof ResearchType[keyof typeof ResearchType];
 export type ResearchInfo =
@@ -173,7 +202,15 @@ export type ResearchInfo =
 	requirements?: RequirementType.Requirement[];
 	costFunctionType?: ResearchCostFunctionType;
 	costStats?: ResearchCostStats;
+	playerValueProductionFormulasType?: ResearchPlayerValueProductionFormulasType;
+	playerValueStats?: PlayerValueStats;
 };
+
+export const ResearchPlayerValueProductionFormulasType =
+{
+    ProportionalOneToOne: 1,
+} as const;
+export type ResearchPlayerValueProductionFormulasType = typeof ResearchPlayerValueProductionFormulasType[keyof typeof ResearchPlayerValueProductionFormulasType];
 
 export const ResearchCostFunctionType =
 {

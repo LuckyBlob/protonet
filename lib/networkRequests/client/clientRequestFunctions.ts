@@ -264,6 +264,37 @@ export async function clientTryBuildShipsRequest(psController: CoreType.PSContro
     }
 }
 
+export async function clientTrySetBuildingEnergySettingRequest(psController: CoreType.PSController, planetId: number, buildingType: GameType.BuildingType, energyPercentage: number): Promise<void>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.SetBuildingEnergySetting> =
+    {
+        planetId: planetId,
+        buildingType: buildingType,
+        energyPercentage: energyPercentage,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.SetBuildingEnergySetting> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.SetBuildingEnergySetting, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Set building energy setting failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
+}
+
 export async function clientTrySendFleetRequest(psController: CoreType.PSController, originPlanetId: number, targetPlanetAddress: GameType.PlanetAddress, fleetAction: GameType.FleetActionType, shipQuantities: Map<GameType.ShipType, number>, resourceQuantities: Map<GameType.ResourceType, number>): Promise<string | null>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.SendFleet> =

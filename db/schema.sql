@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS planet_building
 	player_id INTEGER NOT NULL,
 	building_type INTEGER NOT NULL,
 	building_level INTEGER NOT NULL DEFAULT 0,
+	energy_percentage INTEGER NOT NULL DEFAULT 100,
 	PRIMARY KEY (planet_id, building_type),
 	FOREIGN KEY (planet_id) REFERENCES planet(id) ON DELETE CASCADE,
 	FOREIGN KEY (player_id) REFERENCES player(id) ON DELETE CASCADE

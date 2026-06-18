@@ -4,6 +4,7 @@ import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
+import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 
 function getPlanetData(playerData: CoreType.PlayerData, planetId: number): CoreType.PlanetData
 {
@@ -79,6 +80,33 @@ export function playerPlanetCount(): RequirementType.ThingValueGetter
     return (context: RequirementType.RequirementContext): number =>
     {
         return context.playerData.planetDatas.length;
+    };
+}
+
+export function hasFreeFleetSlot(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        // The fleet slot cap is a derived player value (Computer Technology produces it, one per level on
+        // top of the base slot). Read the net (production minus consumption) so future consumers can spend slots.
+        const fleetSlotsValueData: CoreType.CalculatedValueData | null = CalculatedValueData.computePlayerValueData(context.playerData, GameType.PlayerValueType.FleetSlots);
+        const maximumFleetSlots: number = fleetSlotsValueData === null ? 0 : fleetSlotsValueData.production - fleetSlotsValueData.consumption;
+
+        // A fleet occupies a slot for its whole round trip. The player's own movements appear in the
+        // futureFleetArrivals of every planet they touch, so collapse them to distinct fleet ids.
+        const activeFleetIds: Set<number> = new Set<number>();
+        for (const planetData of context.playerData.planetDatas)
+        {
+            for (const fleetMovement of planetData.dynamicPlanetData.futureFleetArrivals)
+            {
+                if (fleetMovement.fleetMovementRow.player_origin_id === context.playerData.playerRow.id)
+                {
+                    activeFleetIds.add(fleetMovement.fleetMovementRow.id);
+                }
+            }
+        }
+
+        return activeFleetIds.size < maximumFleetSlots ? 1 : 0;
     };
 }
 

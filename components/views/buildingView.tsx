@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactElement } from "react";
+import { ChangeEvent, ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
@@ -19,6 +19,7 @@ import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
+import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
 import * as DBType from "@/lib/db/dbTypes";
 
 type BuildingViewProps =
@@ -61,6 +62,55 @@ function renderCostLine(nextCostMap: Map<GameType.ResourceType, number>): ReactE
 function renderRowDivider(): ReactElement
 {
 	return <div className="self-stretch border-l border-gray-400" />;
+}
+
+// Energy throttle dropdown. Only shown for built (level >= 1) buildings that produce or consume
+// energy. Setting it scales the building's energy prod/cons and its resource production.
+function renderEnergySettingDropdown(props: BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType, currentLevel: number): ReactElement | null
+{
+	if (currentLevel < 1)
+	{
+		return null;
+	}
+
+	if (BuildingEnergySetting.buildingHasEnergyPlanetValue(buildingType) === false)
+	{
+		return null;
+	}
+
+	const planetId: number = selectedPlanetDataPredicted.planetRow.id;
+	const currentEnergyPercentage: number = BuildingEnergySetting.getBuildingEnergyPercentage(selectedPlanetDataPredicted, buildingType);
+
+	const percentageOptions: number[] = [];
+	for (let percentage: number = 0; percentage <= BuildingEnergySetting.FULL_ENERGY_PERCENTAGE; percentage = percentage + BuildingEnergySetting.ENERGY_PERCENTAGE_STEP)
+	{
+		percentageOptions.push(percentage);
+	}
+
+	const handleEnergyPercentageChange = (event: ChangeEvent<HTMLSelectElement>): void =>
+	{
+		const newEnergyPercentage: number = Number(event.target.value);
+		ClientRequestFunctions.clientTrySetBuildingEnergySettingRequest(props.clientDataStateResult.psController, planetId, buildingType, newEnergyPercentage);
+	};
+
+	const dropdownElement: ReactElement =
+	(
+		<div className="flex flex-row items-center gap-1 text-sm mt-1">
+			<span>Energy:</span>
+			<select
+				value={currentEnergyPercentage}
+				onChange={handleEnergyPercentageChange}
+				className="border border-gray-400 rounded px-1 py-0.5 bg-white text-black"
+			>
+				{percentageOptions.map((percentage: number): ReactElement =>
+				{
+					return <option key={percentage} value={percentage}>{percentage}%</option>;
+				})}
+			</select>
+		</div>
+	);
+
+	return dropdownElement;
 }
 
 function renderBuildingRow(props: BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType): ReactElement
@@ -159,6 +209,7 @@ function renderBuildingRow(props: BuildingViewProps, selectedPlanetDataPredicted
 			<div className="flex flex-col justify-center min-w-48">
 				<div className="font-bold">{displayName}</div>
 				{levelLine}
+				{renderEnergySettingDropdown(props, selectedPlanetDataPredicted, buildingType, currentLevel)}
 			</div>
 
 			{renderRowDivider()}

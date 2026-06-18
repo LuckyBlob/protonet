@@ -21,10 +21,11 @@ import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormu
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
-import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMovementDurationFormulas";
+import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleetMovementDurationFormulas";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as ShipConstructionData from "@/lib/gameplay/dynamicData/planet/shipConstructionData";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
+import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 import * as ResearchCost from "@/lib/gameplay/coreData/formula/researchCostFormulas";
 import * as ResearchDuration from "@/lib/gameplay/coreData/formula/researchDurationFormulas";
@@ -716,6 +717,54 @@ export async function handlePlayerStateActionRequest(logic: (playerId: number, s
         error: null,
         serializedPlayerData: serializedPlayerData,
     }, { status: 200 });
+}
+
+export function trySetBuildingEnergySettingLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.SetBuildingEnergySetting>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    const relevantPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.planetId);
+    if (relevantPlanetData === null)
+    {
+        return { success: false, failureReason: "Wrong planet to set building energy setting.", playerStateResult: playerData };
+    }
+
+    if (BuildingEnergySetting.isValidEnergyPercentage(requestData.energyPercentage) === false)
+    {
+        return { success: false, failureReason: `Invalid energy percentage ${requestData.energyPercentage}.`, playerStateResult: playerData };
+    }
+
+    if (BuildingEnergySetting.buildingHasEnergyPlanetValue(requestData.buildingType) === false)
+    {
+        return { success: false, failureReason: `Building type ${requestData.buildingType} has no energy setting.`, playerStateResult: playerData };
+    }
+
+    const currentBuildingLevel: number = BuildingData.getBuildingLevel(relevantPlanetData, requestData.buildingType);
+    if (currentBuildingLevel < 1)
+    {
+        return { success: false, failureReason: `Building type ${requestData.buildingType} is not built.`, playerStateResult: playerData };
+    }
+
+    BuildingEnergySetting.setBuildingEnergyPercentage(relevantPlanetData, requestData.buildingType, requestData.energyPercentage);
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
+        // The energy throttle is persisted on the planet_building row, so writing the BuildingLevel
+        // context (which rebuilds that table from in-memory state) also persists the energy change.
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.BuildingLevel, relevantPlanetData.dynamicPlanetData);
+
+        const playerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        };
+
+        return playerActionResult;
+    })();
+
+    return playerActionResult;
 }
 
 export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeBuilding>): PlayerActionResult

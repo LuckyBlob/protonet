@@ -80,6 +80,38 @@ describe('serializePlayerData / deserializePlayerData', () =>
         expect(restoredLevels.get(2)).toBe(5);
     });
 
+    it('round-trips building energy settings map through JSON', () =>
+    {
+        const planetData: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingEnergySettings: new Map([[1, 50], [2, 0]]),
+            },
+        });
+        const original: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planetData] });
+        const serialized: Serialization.SerializedPlayerData = Serialization.serializePlayerData(original);
+        const restored: CoreType.PlayerData = Serialization.deserializePlayerData(JSON.parse(JSON.stringify(serialized)) as Serialization.SerializedPlayerData);
+
+        const restoredSettings: Map<number, number> = restored.planetDatas[0]!.dynamicPlanetData.buildingEnergySettings;
+        expect(restoredSettings.get(1)).toBe(50);
+        expect(restoredSettings.get(2)).toBe(0);
+    });
+
+    it('defaults buildingEnergySettings to empty map when field is absent in wire data', () =>
+    {
+        const original: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const serialized: Serialization.SerializedPlayerData = Serialization.serializePlayerData(original);
+
+        // Simulate a wire payload that omits buildingEnergySettings (older server version)
+        const withoutSettings: Serialization.SerializedPlayerData = JSON.parse(JSON.stringify(serialized)) as Serialization.SerializedPlayerData;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (withoutSettings.planetDatas[0]!.dynamicPlanetData as any).buildingEnergySettings;
+
+        const restored: CoreType.PlayerData = Serialization.deserializePlayerData(withoutSettings);
+        expect(restored.planetDatas[0]!.dynamicPlanetData.buildingEnergySettings.size).toBe(0);
+    });
+
     it('defaults buildingUpgrades to empty array when field is absent in wire data', () =>
     {
         const original: CoreType.PlayerData = TestDataBuilders.buildPlayerData();

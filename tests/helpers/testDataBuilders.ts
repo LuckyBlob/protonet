@@ -48,6 +48,7 @@ export function buildDynamicPlanetData(overrides?: Partial<CoreType.DynamicPlane
             [GameType.ResourceType.Deuterium, 0],
         ]),
         buildingLevels: new Map<GameType.BuildingType, number>(),
+        buildingEnergySettings: new Map<GameType.BuildingType, number>(),
         shipQuantity: new Map<GameType.ShipType, number>
         ([
             [GameType.ShipType.SmallTransport, 0],

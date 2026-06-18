@@ -22,6 +22,7 @@ export function getAllSpecificThings(thingType: typeof ThingType.Thing.Resource)
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Building): GameType.BuildingType[];
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Ship): GameType.ShipType[];
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.PlanetValue): GameType.PlanetValueType[];
+export function getAllSpecificThings(thingType: typeof ThingType.Thing.PlayerValue): GameType.PlayerValueType[];
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Research): GameType.ResearchType[];
 export function getAllSpecificThings(thingType: ThingType.Thing): ThingType.SpecificThing[];
 export function getAllSpecificThings(thingType: ThingType.Thing): ThingType.SpecificThing[]
@@ -47,6 +48,10 @@ export function getAllSpecificThings(thingType: ThingType.Thing): ThingType.Spec
         case ThingType.Thing.PlanetValue:
         {
             return [...StaticData.PLANET_VALUE_INFOS.keys()];
+        }
+        case ThingType.Thing.PlayerValue:
+        {
+            return [...StaticData.PLAYER_VALUE_INFOS.keys()];
         }
     }
 

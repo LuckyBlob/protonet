@@ -13,7 +13,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
-import * as PlanetValueData from "@/lib/gameplay/dynamicData/planet/planetValueData";
+import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 type TopBarProps =
@@ -138,7 +138,7 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 	const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(clientDataStateResult.psController[0]);
 	const buildingBeingUpgraded: GameType.BuildingType | null = BuildingUpgradeData.getBuildingTypeCurrentlyUpgrading(planetDataPredicted);
 
-	const resourceMaximums: Map<GameType.ResourceType, number> = PlanetValueData.computeResourceMaximums(planetDataPredicted);
+	const resourceMaximums: Map<GameType.ResourceType, number> = CalculatedValueData.computeResourceMaximums(planetDataPredicted);
 
 	const resourceDisplayValues: PlanetResourceDisplayValues[] = [];
 
@@ -181,7 +181,7 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 
 function getPlanetValueCardDisplayValues(planetDataPredicted: CoreType.PlanetData): PlanetValueCardDisplayValues[]
 {
-	const planetValueAmountsMap: Map<GameType.PlanetValueType, CoreType.PlanetValueData> = PlanetValueData.computePlanetValueDatas(planetDataPredicted);
+	const planetValueAmountsMap: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = CalculatedValueData.computePlanetValueDatas(planetDataPredicted);
 
 	const planetValueDisplayValues: PlanetValueCardDisplayValues[] = [];
 
@@ -193,7 +193,7 @@ function getPlanetValueCardDisplayValues(planetDataPredicted: CoreType.PlanetDat
 			continue;
 		}
 
-		const planetValueAmounts: CoreType.PlanetValueData | undefined = planetValueAmountsMap.get(planetValueType);
+		const planetValueAmounts: CoreType.CalculatedValueData | undefined = planetValueAmountsMap.get(planetValueType);
 
 		const singlePlanetValueDisplayValues: PlanetValueCardDisplayValues =
 		{

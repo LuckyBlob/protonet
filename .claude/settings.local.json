@@ -91,7 +91,9 @@
       "Bash(grep -n \"ResearchType.ImpulseDrive, {\" lib/gameplay/coreData/static/staticData.ts)",
       "PowerShell(npx vitest run tests/unit/requirements.test.ts)",
       "WebSearch",
-      "PowerShell(pnpm test:e2e)"
+      "PowerShell(pnpm test:e2e)",
+      "PowerShell(npx tsc --noEmit)",
+      "PowerShell(npx tsc --noEmit; \"exit code: $LASTEXITCODE\")"
     ]
   }
 }

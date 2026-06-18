@@ -18,7 +18,7 @@ import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as MathHelp from "@/lib/helper/mathHelp";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as DBType from "@/lib/db/dbTypes";
-import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleedMovementDurationFormulas";
+import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleetMovementDurationFormulas";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";

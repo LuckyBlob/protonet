@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import * as FleetMovementDuration from '@/lib/gameplay/coreData/formula/fleedMovementDurationFormulas';
+import * as FleetMovementDuration from '@/lib/gameplay/coreData/formula/fleetMovementDurationFormulas';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';

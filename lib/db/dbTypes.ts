@@ -44,6 +44,7 @@ export type PlanetBuildingRow =
 	player_id: number;
 	building_type: number;
 	building_level: number;
+	energy_percentage: number;
 };
 
 export type PlanetRow =

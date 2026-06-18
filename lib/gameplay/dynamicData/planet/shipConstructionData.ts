@@ -44,7 +44,8 @@ export function sortShipConstructionShipRowByConstructionTime(planetData: CoreTy
 export function getShipConstructionDurationSeconds(shipType: GameType.ShipType, planetData: CoreType.PlanetData, serverData: CoreType.ServerData): number | null
 {
     const currentShipyardLevel: number = BuildingData.getBuildingLevel(planetData, GameType.BuildingType.Shipyard);
-    return ShipConstruction.computeConstructionDurationSeconds(shipType, currentShipyardLevel, serverData);
+    const naniteFactoryLevel: number = BuildingData.getBuildingLevel(planetData, GameType.BuildingType.NaniteFactory);
+    return ShipConstruction.computeConstructionDurationSeconds(shipType, currentShipyardLevel, naniteFactoryLevel, serverData);
 }
 
 export function getShipConstructionRemainingMs(planetData: CoreType.PlanetData): number | null

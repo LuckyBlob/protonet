@@ -86,6 +86,17 @@ export type BuildShips_ServerResponse = BaseServerResponse &
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
 
+export type SetBuildingEnergySetting_ClientRequest = BaseClientRequest &
+{
+	planetId: number;
+	buildingType: GameType.BuildingType;
+	energyPercentage: number;
+};
+export type SetBuildingEnergySetting_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
 export type SendFleet_ClientRequest = BaseClientRequest &
 {
 	originPlanetId: number;

@@ -3,7 +3,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
-export function computeBuildingPlanetValueProduction(currentUpgradeLevel: number, buildingType: GameType.BuildingType): Map<GameType.PlanetValueType, CoreType.PlanetValueData> | null
+export function computeBuildingPlanetValueProduction(currentUpgradeLevel: number, buildingType: GameType.BuildingType): Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null
 {
     const buildingStats: GameType.BuildingStats | undefined = StaticDataHelper.getBuildingStats(buildingType);
     if (buildingStats === undefined)
@@ -50,20 +50,20 @@ function computeBuildingPlanetValueProduction_FlooredNaturalExponential(currentU
 function computeBuildingPlanetValueProductionInternal(
     currentUpgradeLevel: number, 
     buildingStats: GameType.BuildingStats, 
-    applyFunction: (currentUpgradeLevel: number, buildingStats: GameType.BuildingStats, planetValueFactor: number) => number): Map<GameType.PlanetValueType, CoreType.PlanetValueData> | null
+    applyFunction: (currentUpgradeLevel: number, buildingStats: GameType.BuildingStats, planetValueFactor: number) => number): Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null
 {
     if (buildingStats.planetValueStats === undefined)
 	{
 		return null;
 	}
 
-    const planetValueMap: Map<GameType.PlanetValueType, CoreType.PlanetValueData> = new Map<GameType.PlanetValueType, CoreType.PlanetValueData>();
+    const planetValueMap: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
     for (const [planetValueType, planetValueFactor] of buildingStats.planetValueStats.basePlanetValueFactor)
     {
         // Each applyFunction validates its own required stats (SimpleExponential needs basePlanetValueExponent,
         // FlooredNaturalExponential needs naturalExponential*), so this shared loop must not assume either.
         const newPlanetValue: number = applyFunction(currentUpgradeLevel, buildingStats, planetValueFactor);
-        const newPlanetValueAmounts: CoreType.PlanetValueData =
+        const newPlanetValueAmounts: CoreType.CalculatedValueData =
         {
             production: 0,
             consumption: 0,

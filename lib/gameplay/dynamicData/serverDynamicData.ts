@@ -303,11 +303,26 @@ export function getDynamicPlanetData(planetId: number): CoreType.DynamicPlanetDa
     return {
         resourceQuantity: getDynamicPlanetResourceData(planetId),
         buildingLevels: getDynamicPlanetBuildingData(planetId),
+        buildingEnergySettings: getDynamicPlanetBuildingEnergySettingData(planetId),
         shipQuantity: getDynamicPlanetShipData(planetId),
         shipConstructions: getDynamicPlanetShipConstructionData(planetId),
         futureFleetArrivals: getDynamicPlanetFutureFleetArrivalData(planetId),
         buildingUpgrades: getDynamicPlanetBuildingUpgradeData(planetId),
     };
+}
+
+export function getDynamicPlanetBuildingEnergySettingData(planetId: number): Map<GameType.BuildingType, number>
+{
+    // The energy throttle lives on the planet_building row alongside building_level.
+    const buildingRows: DBType.PlanetBuildingRow[] = DB.databaseConnection.prepare(
+        "SELECT * FROM planet_building WHERE planet_id = ?"
+    ).all(planetId) as DBType.PlanetBuildingRow[];
+    const buildingEnergySettings: Map<GameType.BuildingType, number> = new Map<GameType.BuildingType, number>();
+    for (const buildingRow of buildingRows)
+    {
+        buildingEnergySettings.set(buildingRow.building_type as GameType.BuildingType, buildingRow.energy_percentage);
+    }
+    return buildingEnergySettings;
 }
 
 export function getDynamicPlanetResourceData(planetId: number): Map<GameType.ResourceType, number>
@@ -472,11 +487,15 @@ function updateBuildingLevels(planetId: number, playerId: number, dynamicPlanetD
     {
         DB.databaseConnection.prepare("DELETE FROM planet_building WHERE planet_id = ?").run(planetId);
         const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO planet_building (planet_id, player_id, building_type, building_level) VALUES (?, ?, ?, ?)"
+            "INSERT INTO planet_building (planet_id, player_id, building_type, building_level, energy_percentage) VALUES (?, ?, ?, ?, ?)"
         );
+        // The energy throttle shares the planet_building row with building_level. Both maps are
+        // rebuilt from the in-memory state, so a building absent from buildingEnergySettings is
+        // written at full power (100%).
         for (const [buildingType, buildingLevel] of dynamicPlanetData.buildingLevels)
         {
-            insertStatement.run(planetId, playerId, buildingType, buildingLevel);
+            const energyPercentage: number = dynamicPlanetData.buildingEnergySettings.get(buildingType) ?? 100;
+            insertStatement.run(planetId, playerId, buildingType, buildingLevel, energyPercentage);
         }
     });
     transaction();

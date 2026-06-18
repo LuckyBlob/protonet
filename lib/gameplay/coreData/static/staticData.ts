@@ -189,7 +189,14 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				specificThingType: GameType.BuildingType.RoboticFactory,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 10,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.RoboticFactory),},},],
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.RoboticFactory),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.ComputerTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 10,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ComputerTech),},},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -361,6 +368,15 @@ export const PLANET_VALUE_INFOS: ReadonlyMap<GameType.PlanetValueType, GameType.
 ]);
 //#endregion
 
+//#region PlayerValue
+export const PLAYER_VALUE_INFOS: ReadonlyMap<GameType.PlayerValueType, GameType.PlayerValueInfo> = new Map<GameType.PlayerValueType, GameType.PlayerValueInfo>
+([
+    [GameType.PlayerValueType.FleetSlots, {
+		displayName: "Fleet Slots",
+		limitFleets: true,}],
+]);
+//#endregion
+
 //#region Planet
 export const STARTING_PLANET_DATA: CoreType.DynamicPlanetData =
 {
@@ -427,6 +443,13 @@ export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requireme
 			operator: RequirementType.RequirementOperator.GreaterOrEqual,
 			value: 1,
 			valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),}}]],
+	[ThingType.Thing.FleetMovement, [{
+		hideDataWhenRequirementFailed: false,
+		thingRequirement: {
+			thingType: ThingType.Thing.FleetMovement,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: true,
+			valueGetter: RequirementValueGetters.hasFreeFleetSlot(),}}]],
 ]);
 //#endregion
 
@@ -510,6 +533,20 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 7,
 				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+
+
+    [GameType.ResearchType.ComputerTech, { displayName: "Computer Technology",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Crystal, 400],
+				[GameType.ResourceType.Deuterium, 600],]),},
+
+		playerValueProductionFormulasType: GameType.ResearchPlayerValueProductionFormulasType.ProportionalOneToOne,
+		playerValueStats: {
+			basePlayerValueFactor: new Map<GameType.PlayerValueType, number>([
+				[GameType.PlayerValueType.FleetSlots, 1],]),},}],
 ]);
 
 //#endregion

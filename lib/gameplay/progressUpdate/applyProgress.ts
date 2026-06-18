@@ -7,7 +7,7 @@ import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shi
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
 import * as CurrentlyResearching from "@/lib/gameplay/progressUpdate/anchorEvent/currentlyResearchingAnchorEvent"
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
-import * as PlanetValueData from "@/lib/gameplay/dynamicData/planet/planetValueData";
+import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 
@@ -127,7 +127,7 @@ function setUpdatedTimeStamp(playerData: CoreType.PlayerData, serverData: CoreTy
 
 function clampResourcesToPossibleMaximums(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, serverData: CoreType.ServerData, potentialResourceQuantities: Map<GameType.ResourceType, number>): void
 {
-    const resourceMaximums: Map<GameType.ResourceType, number> = PlanetValueData.computeResourceMaximums(planetData);
+    const resourceMaximums: Map<GameType.ResourceType, number> = CalculatedValueData.computeResourceMaximums(planetData);
 
     for (const [resourceType, potentialResourceQuantity] of potentialResourceQuantities)
     {

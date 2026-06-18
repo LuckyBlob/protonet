@@ -114,6 +114,7 @@ type SerializedDynamicPlanetData =
 {
 	resourceQuantity: [number, number][];
 	buildingLevels: [number, number][];
+	buildingEnergySettings: [number, number][];
 	shipQuantity: [number, number][];
 	shipConstructions: CoreType.ShipConstruction[];
 	futureFleetArrivals: CoreType.FleetMovement[];
@@ -135,6 +136,7 @@ function serializePlanetData(planetData: CoreType.PlanetData): SerializedPlanetD
 		{
 			resourceQuantity: [...planetData.dynamicPlanetData.resourceQuantity],
 			buildingLevels: [...planetData.dynamicPlanetData.buildingLevels],
+			buildingEnergySettings: [...planetData.dynamicPlanetData.buildingEnergySettings],
 			shipQuantity: [...planetData.dynamicPlanetData.shipQuantity],
 			shipConstructions: [...planetData.dynamicPlanetData.shipConstructions],
 			futureFleetArrivals: [...planetData.dynamicPlanetData.futureFleetArrivals],
@@ -166,6 +168,7 @@ function deserializePlanetData(serialized: SerializedPlanetData): CoreType.Plane
 		{
 			resourceQuantity: new Map<number, number>(serialized.dynamicPlanetData.resourceQuantity) as Map<GameType.ResourceType, number>,
 			buildingLevels: new Map<number, number>(serialized.dynamicPlanetData.buildingLevels) as Map<GameType.BuildingType, number>,
+			buildingEnergySettings: new Map<number, number>(serialized.dynamicPlanetData.buildingEnergySettings ?? []) as Map<GameType.BuildingType, number>,
 			shipQuantity: new Map<number, number>(serialized.dynamicPlanetData.shipQuantity) as Map<GameType.ShipType, number>,
 			shipConstructions: serialized.dynamicPlanetData.shipConstructions,
 			futureFleetArrivals: serialized.dynamicPlanetData.futureFleetArrivals,
