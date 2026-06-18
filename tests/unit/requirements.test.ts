@@ -323,7 +323,8 @@ describe('getFailedResearchRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.ImpulseDrive, 1);
+        // EnergyTech has no research-specific requirements, isolating the global "needs a Research Lab" rule.
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.EnergyTech, 1);
         expect(failed).toHaveLength(0);
     });
 

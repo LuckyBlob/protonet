@@ -88,7 +88,8 @@
       "Bash(node -e \"const fs=require\\('fs'\\);for\\(const f of ['tests/e2e/gameplay.test.ts','tests/e2e/userJourney.test.ts']\\){let s=fs.readFileSync\\(f,'utf8'\\);const before=\\(s.match\\(/goToView\\\\\\(page, \\(\\\\\"|'\\)Upgrades\\(\\\\\"|'\\)\\\\\\)/g\\)||[]\\).length;s=s.replace\\(/goToView\\\\\\(page, \\\\\"Upgrades\\\\\"\\\\\\)/g,'goToView\\(page, \\\\\"Buildings\\\\\"\\)'\\).replace\\(/goToView\\\\\\(page, 'Upgrades'\\\\\\)/g,\\\\\"goToView\\(page, 'Buildings'\\)\\\\\"\\);fs.writeFileSync\\(f,s\\);console.log\\(f,'replaced',before\\);}\")",
       "PowerShell(Get-Process | Where-Object { $_.MainWindowTitle -ne \"\" } | Select-Object Id, ProcessName, MainWindowTitle | Format-Table -AutoSize | Out-String -Width 4096)",
       "Bash(tee /tmp/tsc.txt)",
-      "Bash(grep -n \"ResearchType.ImpulseDrive, {\" lib/gameplay/coreData/static/staticData.ts)"
+      "Bash(grep -n \"ResearchType.ImpulseDrive, {\" lib/gameplay/coreData/static/staticData.ts)",
+      "PowerShell(npx vitest run tests/unit/requirements.test.ts)"
     ]
   }
 }
