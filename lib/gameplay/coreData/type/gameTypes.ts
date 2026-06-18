@@ -27,6 +27,7 @@ export const BuildingType =
     Shipyard: 8,
     RoboticFactory: 9,
     ResearchLab: 10,
+    NaniteFactory: 11,
 } as const;
 export type BuildingType = typeof BuildingType[keyof typeof BuildingType];
 export type BuildingStats =

@@ -180,6 +180,24 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Crystal, 400],
 				[GameType.ResourceType.Deuterium, 200],]),},
 	},],
+
+	[GameType.BuildingType.NaniteFactory, { displayName: "Nanite Factory",
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.RoboticFactory,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 10,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.RoboticFactory),},},],
+		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 1000000],
+				[GameType.ResourceType.Crystal, 500000],
+				[GameType.ResourceType.Deuterium, 100000],]),},
+	},],
 ]);
 //#endregion
 

@@ -131,3 +131,67 @@ describe('computeFuelConsumption', () =>
         expect((throttledResult.get(GameType.ResourceType.Deuterium) ?? 0)).toBeLessThan((fastAloneResult.get(GameType.ResourceType.Deuterium) ?? 0));
     });
 });
+
+// The cases above pin the formula's *direction* (more ships → more fuel, etc.). These pin the exact
+// integer it charges, so a change to any constant (costDistanceDivider 35000, speedDivider 100,
+// exponent 2, the +1 floor) or to a ship's static fuel/speed tier breaks the test. Every distance below
+// uses speed 10 — the fixed speed FleetData.calculateTotalFleetFuel feeds in — so these numbers are
+// exactly what a real fleet send deducts.
+//
+// Worked example (1 Small Transport, Combustion tier, distance 35000, speed 10):
+//   maxSpeed 5000 → fleetLowestMaxSpeed 5000 → effectiveSpeed = 10 * 5000/5000 = 10
+//   speedFactor   = (10/100 + 1)^2 = 1.21
+//   baseCost      = 10 (base fuel) * 1 (ships) * (35000/35000) * 1.21 = 12.1
+//   finalCost     = 1 + round(12.1) = 13
+describe('computeFuelConsumption — exact pinned amounts', () =>
+{
+    it('charges 13 deuterium for one Combustion-tier Small Transport over distance 35000', () =>
+    {
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const result: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(playerData, shipQuantities, 35_000, 10, null);
+        expect(result.get(GameType.ResourceType.Deuterium)).toBe(13);
+    });
+
+    it('charges 37 deuterium for three Combustion-tier Small Transports over distance 35000', () =>
+    {
+        // baseCost = 10 * 3 * 1 * 1.21 = 36.3 → 1 + round(36.3) = 37. Not exactly 3× the single-ship 13
+        // because the +1 floor is applied once, after aggregation — this guards that ordering.
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 3]]);
+        const result: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(playerData, shipQuantities, 35_000, 10, null);
+        expect(result.get(GameType.ResourceType.Deuterium)).toBe(37);
+    });
+
+    it('charges 122 deuterium for one Combustion-tier Large Transport over distance 70000', () =>
+    {
+        // baseCost = 50 * 1 * (70000/35000) * 1.21 = 121 → 1 + round(121) = 122.
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.LargeTransport, 1]]);
+        const result: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(playerData, shipQuantities, 70_000, 10, null);
+        expect(result.get(GameType.ResourceType.Deuterium)).toBe(122);
+    });
+
+    it('charges 25 deuterium for one Impulse-tier Small Transport over distance 35000', () =>
+    {
+        // Impulse level 5 swaps the Small Transport onto its 20-deuterium fuel tier (and its 20000 speed
+        // tier). Alone, effectiveSpeed is still 10 → speedFactor 1.21 → 20 * 1.21 = 24.2 → 1 + 24 = 25.
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        ResearchData.setResearchLevel(playerData, GameType.ResearchType.ImpulseDrive, 5);
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const result: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(playerData, shipQuantities, 35_000, 10, null);
+        expect(result.get(GameType.ResourceType.Deuterium)).toBe(25);
+    });
+
+    it('charges 70 deuterium for a mixed Small+Large fleet, throttled to the slower ship', () =>
+    {
+        // fleetLowestMaxSpeed = 5000 (the Small Transport).
+        //   Small: effectiveSpeed 10  → speedFactor 1.21       → 10 * 1.21      = 12.1
+        //   Large: effectiveSpeed 10 * 5000/7500 = 6.6667 → speedFactor 1.13778 → 50 * 1.13778 = 56.889
+        //   total = 68.989 → 1 + round(68.989) = 70.
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1], [GameType.ShipType.LargeTransport, 1]]);
+        const result: Map<number, number> = ShipFuelConsumption.computeFuelConsumption(playerData, shipQuantities, 35_000, 10, null);
+        expect(result.get(GameType.ResourceType.Deuterium)).toBe(70);
+    });
+});

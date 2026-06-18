@@ -6,6 +6,8 @@ import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 const BASE_DIVIDER: number = 2500;
+// Each Nanite Factory level cumulatively divides construction time by this factor (halving by default).
+const NANITE_FACTORY_DURATION_DIVIDER_PER_LEVEL: number = 2;
 
 export function computeUpgradeDurationSeconds(currentUpgradeLevel: number, buildingType: GameType.BuildingType, playerData: CoreType.PlayerData, planetId: number, serverData: CoreType.ServerData | null): number | null
 {
@@ -43,8 +45,10 @@ function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: numbe
     
     const planetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, planetId);
     const roboticFactoryLevel: number = planetData === null ? 0 : BuildingData.getBuildingLevel(planetData, GameType.BuildingType.RoboticFactory);
+    const naniteFactoryLevel: number = planetData === null ? 0 : BuildingData.getBuildingLevel(planetData, GameType.BuildingType.NaniteFactory);
 
-    const durationHours: number = totalCost / (BASE_DIVIDER * (1 + roboticFactoryLevel));
+    const naniteFactoryDurationDivider: number = Math.pow(NANITE_FACTORY_DURATION_DIVIDER_PER_LEVEL, naniteFactoryLevel);
+    const durationHours: number = totalCost / (BASE_DIVIDER * (1 + roboticFactoryLevel) * naniteFactoryDurationDivider);
 	const durationSeconds: number = durationHours * 3600;
 
 	return Math.floor(durationSeconds / timeMultiplier);

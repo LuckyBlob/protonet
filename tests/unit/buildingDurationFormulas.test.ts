@@ -48,6 +48,133 @@ describe('computeUpgradeDurationSeconds', () =>
         expect(durationWith!).toBeLessThan(durationWithout!);
     });
 
+    it('halves duration for each nanite factory level', () =>
+    {
+        const playerDataNoNanite: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const playerDataNaniteLevel1: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
+        {
+            planetDatas:
+            [
+                TestDataBuilders.buildPlanetData(
+                {
+                    dynamicPlanetData:
+                    {
+                        buildingLevels: new Map([[GameType.BuildingType.NaniteFactory, 1]]),
+                    },
+                }),
+            ],
+        });
+        const playerDataNaniteLevel2: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
+        {
+            planetDatas:
+            [
+                TestDataBuilders.buildPlanetData(
+                {
+                    dynamicPlanetData:
+                    {
+                        buildingLevels: new Map([[GameType.BuildingType.NaniteFactory, 2]]),
+                    },
+                }),
+            ],
+        });
+
+        const durationNoNanite: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerDataNoNanite, 1, null);
+        const durationNaniteLevel1: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerDataNaniteLevel1, 1, null);
+        const durationNaniteLevel2: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerDataNaniteLevel2, 1, null);
+
+        // No nanite: 75/(2500*1)*3600=108s; level 1 halves to 54s; level 2 halves again to 27s.
+        expect(durationNoNanite).toBe(108);
+        expect(durationNaniteLevel1).toBe(54);
+        expect(durationNaniteLevel2).toBe(27);
+    });
+
+    it('stacks the nanite factory reduction with the robotic factory reduction', () =>
+    {
+        const playerDataBothFactories: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
+        {
+            planetDatas:
+            [
+                TestDataBuilders.buildPlanetData(
+                {
+                    dynamicPlanetData:
+                    {
+                        buildingLevels: new Map(
+                        [
+                            [GameType.BuildingType.RoboticFactory, 1],
+                            [GameType.BuildingType.NaniteFactory, 1],
+                        ]),
+                    },
+                }),
+            ],
+        });
+
+        const durationBothFactories: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerDataBothFactories, 1, null);
+
+        // 75/(2500*(1+1)*2^1)*3600=27s — the robotic-factory and nanite-factory dividers compound.
+        expect(durationBothFactories).toBe(27);
+    });
+
+    it('never lets a higher nanite factory level increase duration', () =>
+    {
+        let previousDuration: number = Number.POSITIVE_INFINITY;
+
+        for (let naniteFactoryLevel: number = 0; naniteFactoryLevel <= 5; naniteFactoryLevel = naniteFactoryLevel + 1)
+        {
+            const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
+            {
+                planetDatas:
+                [
+                    TestDataBuilders.buildPlanetData(
+                    {
+                        dynamicPlanetData:
+                        {
+                            buildingLevels: new Map([[GameType.BuildingType.NaniteFactory, naniteFactoryLevel]]),
+                        },
+                    }),
+                ],
+            });
+
+            const duration: number | null = BuildingDuration.computeUpgradeDurationSeconds(0, GameType.BuildingType.MetalMine, playerData, 1, null);
+            expect(duration).not.toBeNull();
+            expect(duration!).toBeLessThanOrEqual(previousDuration);
+            previousDuration = duration!;
+        }
+    });
+
+    it('keeps the Nanite Factory own upgrade time constant across its levels (cost doubling cancels the speed doubling)', () =>
+    {
+        function durationForNaniteFactoryAtLevel(naniteFactoryLevel: number): number | null
+        {
+            const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
+            {
+                planetDatas:
+                [
+                    TestDataBuilders.buildPlanetData(
+                    {
+                        dynamicPlanetData:
+                        {
+                            buildingLevels: new Map(
+                            [
+                                [GameType.BuildingType.RoboticFactory, 10],
+                                [GameType.BuildingType.NaniteFactory, naniteFactoryLevel],
+                            ]),
+                        },
+                    }),
+                ],
+            });
+
+            return BuildingDuration.computeUpgradeDurationSeconds(naniteFactoryLevel, GameType.BuildingType.NaniteFactory, playerData, 1, null);
+        }
+
+        const durationAtLevel0: number | null = durationForNaniteFactoryAtLevel(0);
+        const durationAtLevel3: number | null = durationForNaniteFactoryAtLevel(3);
+
+        // cost=1_600_000*2^level and the nanite divider=2^level cancel out:
+        // 1_600_000/(2500*(1+10))*3600=209454s at every nanite factory level.
+        expect(durationAtLevel0).toBe(209454);
+        expect(durationAtLevel3).toBe(209454);
+    });
+
     it('applies time_multiplier from serverData', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();

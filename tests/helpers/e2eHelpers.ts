@@ -244,6 +244,16 @@ export function setShipQuantity(planetId: number, playerId: number, shipType: nu
     ).run(planetId, playerId, shipType, quantity);
 }
 
+// Research is player-level (keyed on player_id, not planet_id), so seeding a prerequisite research
+// grants it across every planet the player owns.
+export function setResearchLevel(playerId: number, researchType: number, level: number, db: Database.Database): void
+{
+    db.prepare(
+        `INSERT INTO player_research (player_id, research_type, research_level) VALUES (?, ?, ?)
+         ON CONFLICT (player_id, research_type) DO UPDATE SET research_level = excluded.research_level`
+    ).run(playerId, researchType, level);
+}
+
 // Pin last_updated to "now" so seeded resources don't balloon from production accrued since
 // registration the next time the server applies progress.
 export function touchPlanet(planetId: number, time: number, db: Database.Database): void

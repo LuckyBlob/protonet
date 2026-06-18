@@ -89,7 +89,9 @@
       "PowerShell(Get-Process | Where-Object { $_.MainWindowTitle -ne \"\" } | Select-Object Id, ProcessName, MainWindowTitle | Format-Table -AutoSize | Out-String -Width 4096)",
       "Bash(tee /tmp/tsc.txt)",
       "Bash(grep -n \"ResearchType.ImpulseDrive, {\" lib/gameplay/coreData/static/staticData.ts)",
-      "PowerShell(npx vitest run tests/unit/requirements.test.ts)"
+      "PowerShell(npx vitest run tests/unit/requirements.test.ts)",
+      "WebSearch",
+      "PowerShell(pnpm test:e2e)"
     ]
   }
 }

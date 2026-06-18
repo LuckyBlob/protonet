@@ -77,6 +77,36 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         expect(failed).toHaveLength(0);
     });
 
+    it('blocks Nanite Factory when Robotic Factory level is below 10', () =>
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 9]]),
+            },
+        });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.NaniteFactory, 1);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('allows Nanite Factory when Robotic Factory level is exactly 10 (boundary)', () =>
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 10]]),
+            },
+        });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.NaniteFactory, 1);
+        expect(failed).toHaveLength(0);
+    });
+
     it('returns empty array for a building type with no requirements registered', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();

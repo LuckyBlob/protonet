@@ -235,10 +235,13 @@ test.describe("Research", () =>
 
         for (const planet of planets)
         {
-            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 1, db);
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 2, db);
             E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
             E2EHelper.touchPlanet(planet.id, Date.now(), db);
         }
+
+        // Impulse Drive is gated behind Energy Technology 1 + Research Lab 2; seed the research prerequisite.
+        E2EHelper.setResearchLevel(playerId, GameType.ResearchType.EnergyTech, 1, db);
 
         // With a Research Lab the gate clears and the research rows appear.
         await E2EHelper.reloadGame(page);
@@ -257,10 +260,13 @@ test.describe("Research", () =>
         const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
         for (const planet of planets)
         {
-            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 1, db);
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 2, db);
             E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
             E2EHelper.touchPlanet(planet.id, Date.now(), db);
         }
+
+        // Impulse Drive is gated behind Energy Technology 1 + Research Lab 2; seed the research prerequisite.
+        E2EHelper.setResearchLevel(playerId, GameType.ResearchType.EnergyTech, 1, db);
 
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Research");
@@ -287,10 +293,14 @@ test.describe("Research", () =>
         const now: number = Date.now();
         for (const planet of planets)
         {
-            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 1, db);
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 2, db);
             E2EHelper.setAllResources(planet.id, playerId, 0, db);
             E2EHelper.touchPlanet(planet.id, now, db);
         }
+
+        // Impulse Drive is gated behind Energy Technology 1 + Research Lab 2; seed the research prerequisite
+        // so the row renders its Research button (gated by affordability) rather than the requirement notice.
+        E2EHelper.setResearchLevel(playerId, GameType.ResearchType.EnergyTech, 1, db);
 
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Research");
@@ -316,10 +326,13 @@ test.describe("Research", () =>
         const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
         for (const planet of planets)
         {
-            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 1, db);
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 2, db);
             E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
             E2EHelper.touchPlanet(planet.id, Date.now(), db);
         }
+
+        // Impulse Drive is gated behind Energy Technology 1 + Research Lab 2; seed the research prerequisite.
+        E2EHelper.setResearchLevel(playerId, GameType.ResearchType.EnergyTech, 1, db);
 
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Research");
@@ -350,10 +363,13 @@ test.describe("Research", () =>
         const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
         for (const planet of planets)
         {
-            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 1, db);
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 2, db);
             E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
             E2EHelper.touchPlanet(planet.id, Date.now(), db);
         }
+
+        // Impulse Drive is gated behind Energy Technology 1 + Research Lab 2; seed the research prerequisite.
+        E2EHelper.setResearchLevel(playerId, GameType.ResearchType.EnergyTech, 1, db);
 
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Research");
@@ -378,10 +394,13 @@ test.describe("Research", () =>
         const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
         for (const planet of planets)
         {
-            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 1, db);
+            E2EHelper.setBuildingLevel(planet.id, playerId, GameType.BuildingType.ResearchLab, 2, db);
             E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
             E2EHelper.touchPlanet(planet.id, Date.now(), db);
         }
+
+        // Impulse Drive is gated behind Energy Technology 1 + Research Lab 2; seed the research prerequisite.
+        E2EHelper.setResearchLevel(playerId, GameType.ResearchType.EnergyTech, 1, db);
 
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Research");
