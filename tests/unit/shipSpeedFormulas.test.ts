@@ -106,7 +106,7 @@ describe('computeShipSpeed', () =>
 describe('engine tech speed bonuses on the real ships', () =>
 {
     // Base speeds from staticData: Small Transport 5000 (Combustion, Impulse tier at 5),
-    // Large Transport 7500 (Combustion only), Colony Ship 7500 (Impulse only). No ship has a
+    // Large Transport 7500 (Combustion only), Colony Ship 2500 (Impulse only). No ship has a
     // Hyperspace engine, so Hyperspace Drive must never change any current ship's speed.
 
     describe('Combustion Drive (+10% per level) applies only to Combustion-engine ships', () =>
@@ -128,7 +128,8 @@ describe('engine tech speed bonuses on the real ships', () =>
         it('does NOT boost the Colony Ship (a pure Impulse ship)', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.CombustionDrive, 10]]);
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.ColonyShip))).toBe(7500);
+            // Colony Ship base 2500 (Impulse); Combustion is the wrong engine, so it stays at base
+            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.ColonyShip))).toBe(2500);
         });
     });
 
@@ -137,8 +138,8 @@ describe('engine tech speed bonuses on the real ships', () =>
         it('boosts the Colony Ship (a pure Impulse ship)', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.ImpulseDrive, 3]]);
-            // 7500 * (1 + 0.20 * 3) = 12000
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.ColonyShip))).toBe(12000);
+            // 2500 * (1 + 0.20 * 3) = 4000
+            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.ColonyShip))).toBe(4000);
         });
 
         it('boosts the Small Transport after it switches to its Impulse tier at level 5', () =>
@@ -169,7 +170,7 @@ describe('engine tech speed bonuses on the real ships', () =>
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.HyperspaceDrive, 10]]);
             expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.SmallTransport))).toBe(5000);
             expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.LargeTransport))).toBe(7500);
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.ColonyShip))).toBe(7500);
+            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.ColonyShip))).toBe(2500);
         });
     });
 
@@ -192,8 +193,8 @@ describe('engine tech speed bonuses on the real ships', () =>
         it('ignores the Combustion level on the Colony Ship and counts only Impulse', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.CombustionDrive, 5], [GameType.ResearchType.ImpulseDrive, 2]]);
-            // Colony Ship is Impulse-only: Combustion 5 ignored, 7500 * (1 + 0.20 * 2) = 10500
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.ColonyShip))).toBe(10500);
+            // Colony Ship is Impulse-only: Combustion 5 ignored, 2500 * (1 + 0.20 * 2) = 3500
+            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.ColonyShip))).toBe(3500);
         });
     });
 });
