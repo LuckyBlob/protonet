@@ -93,7 +93,12 @@
       "WebSearch",
       "PowerShell(pnpm test:e2e)",
       "PowerShell(npx tsc --noEmit)",
-      "PowerShell(npx tsc --noEmit; \"exit code: $LASTEXITCODE\")"
+      "PowerShell(npx tsc --noEmit; \"exit code: $LASTEXITCODE\")",
+      "PowerShell(Stop-Process -Name explorer -Force)",
+      "PowerShell(Start-Process explorer.exe)",
+      "PowerShell(npm run test:unit)",
+      "PowerShell(npm run test:integration)",
+      "Bash(break)"
     ]
   }
 }

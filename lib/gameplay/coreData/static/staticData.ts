@@ -205,6 +205,46 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Crystal, 500000],
 				[GameType.ResourceType.Deuterium, 100000],]),},
 	},],
+
+	[GameType.BuildingType.FusionReactor, { displayName: "Fusion Reactor",
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.DeuteriumSynthesizer,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 5,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.DeuteriumSynthesizer),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.EnergyTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 3,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},],
+		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 1.8,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 900],
+				[GameType.ResourceType.Crystal, 360],
+				[GameType.ResourceType.Deuterium, 180],]),},
+
+		productionFunctionType: GameType.ProductionFunctionType.SimpleProductionBuilding,
+		productionStats: new Map<GameType.ResourceType, GameType.ProductionStats>([
+			[GameType.ResourceType.Deuterium, {
+				minProductionPerHour: 0,
+				productionFactor: -10,
+				exponentBase: 1.1,}]]),
+
+		planetValueStats: [{
+			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.ResearchScaledExponential,
+			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
+				[GameType.PlanetValueType.Energy, 30],]),
+			researchScalingResearchType: GameType.ResearchType.EnergyTech,
+			researchScalingBaseFactor: 1.05,
+			researchScalingPerLevelFactor: 0.01,}],
+	},],
 ]);
 //#endregion
 
@@ -269,9 +309,9 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 			[GameType.ResourceType.Crystal, 20000],
 			[GameType.ResourceType.Deuterium, 10000],]),
 		maxHealth: 30000,
-		space: 2500,
+		space: 7500,
 		speed:  [
-			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: 7500}],
+			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: 2500}],
 		baseFuelConsumption: [
 			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 1000]])},],
 	}],
@@ -471,7 +511,7 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 			baseCostExponent: 2,
 			baseCost: new Map<GameType.ResourceType, number>([
 				[GameType.ResourceType.Metal, 400],
-				[GameType.ResourceType.Crystal, 600],]),},
+				[GameType.ResourceType.Deuterium, 600],]),},
 
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
@@ -490,7 +530,7 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 			baseCost: new Map<GameType.ResourceType, number>([
 				[GameType.ResourceType.Metal, 2000],
 				[GameType.ResourceType.Crystal, 4000],
-				[GameType.ResourceType.Crystal, 600],]),},
+				[GameType.ResourceType.Deuterium, 600],]),},
 
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
@@ -516,7 +556,7 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 			baseCost: new Map<GameType.ResourceType, number>([
 				[GameType.ResourceType.Metal, 10000],
 				[GameType.ResourceType.Crystal, 20000],
-				[GameType.ResourceType.Crystal, 6000],]),},
+				[GameType.ResourceType.Deuterium, 6000],]),},
 
 		requirements:[{
 			hideDataWhenRequirementFailed: true,

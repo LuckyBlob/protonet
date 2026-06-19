@@ -9,39 +9,40 @@ export type FleetArrivalAnchorEvent = AnchorEvent.AnchorEvent &
     fleetMovement: CoreType.FleetMovement,
 }
 
-export function findNextAnchorEvent(playerData: CoreType.PlayerData, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent | null
+// Keep server data param here even if unused for future ease when we will use it
+export function findNextAnchorEvent(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent | null
 {
     const getItems = (planet: CoreType.PlanetData): CoreType.FleetMovement[] =>
     {
         return planet.dynamicPlanetData.futureFleetArrivals;
     };
-    const getTime = (event: CoreType.FleetMovement): number | null =>
+    const getTime = (item: CoreType.FleetMovement, startTime: number): number | null =>
     {
-        if (event.resolutionState === CoreType.FleetMovementResolution.ResolveResultUnknown)
+        if (item.resolutionState === CoreType.FleetMovementResolution.ResolveResultUnknown)
         {
             // pending until resolved
             return null;
         }
 
-        if (event.fleetMovementRow.started_at === null)
+        if (item.fleetMovementRow.started_at === null)
         {
             return null;
         }
 
-        if (event.fleetMovementRow.duration_at_start_time === null)
+        if (item.fleetMovementRow.duration_at_start_time === null)
         {
             throw new Error(`UNREACHABLE: find next fleet arrival anchor event start time.`);
         }
-        
-        return event.fleetMovementRow.started_at + event.fleetMovementRow.duration_at_start_time;
+
+        return item.fleetMovementRow.started_at + item.fleetMovementRow.duration_at_start_time;
     };
-    const buildEvent = (event: CoreType.FleetMovement, time: number, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
+    const buildEvent = (item: CoreType.FleetMovement, time: number, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
     {
         const newEvent: FleetArrivalAnchorEvent =
         {
             type: AnchorEvent.AnchorEventType.FleetArrival,
             time: time,
-            fleetMovement: event,
+            fleetMovement: item,
             resolver: playerProgressApplier,
         };
 

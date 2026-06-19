@@ -58,10 +58,10 @@ describe("buildingEnergySettingData — throttle effect on planet values and pro
             },
         });
 
-        const fullConsumption: number = CalculatedValueData.computePlanetValueData(planetData, GameType.PlanetValueType.Energy)!.consumption;
+        const fullConsumption: number = CalculatedValueData.computePlanetValueData(planetData, GameType.PlanetValueType.Energy, TestDataBuilders.buildPlayerData())!.consumption;
 
         BuildingEnergySetting.setBuildingEnergyPercentage(planetData, GameType.BuildingType.MetalMine, 50);
-        const halfConsumption: number = CalculatedValueData.computePlanetValueData(planetData, GameType.PlanetValueType.Energy)!.consumption;
+        const halfConsumption: number = CalculatedValueData.computePlanetValueData(planetData, GameType.PlanetValueType.Energy, TestDataBuilders.buildPlayerData())!.consumption;
 
         expect(halfConsumption).toBeCloseTo(fullConsumption * 0.5);
     });
@@ -78,11 +78,11 @@ describe("buildingEnergySettingData — throttle effect on planet values and pro
         });
 
         // Metal Mine L5: full = floor(30 * 5 * 1.1^5) = floor(241.58) = 241/h.
-        const fullMetalRatePerHour: number = BuildingData.getPlanetProductionRatePerSecond(planetData, GameType.ResourceType.Metal, CoreType.DefaultServerData) * 3600;
+        const fullMetalRatePerHour: number = BuildingData.getPlanetProductionRatePerSecond(planetData, GameType.ResourceType.Metal, CoreType.DefaultServerData, TestDataBuilders.buildPlayerData()) * 3600;
         expect(fullMetalRatePerHour).toBeCloseTo(241);
 
         BuildingEnergySetting.setBuildingEnergyPercentage(planetData, GameType.BuildingType.MetalMine, 50);
-        const halfMetalRatePerHour: number = BuildingData.getPlanetProductionRatePerSecond(planetData, GameType.ResourceType.Metal, CoreType.DefaultServerData) * 3600;
+        const halfMetalRatePerHour: number = BuildingData.getPlanetProductionRatePerSecond(planetData, GameType.ResourceType.Metal, CoreType.DefaultServerData, TestDataBuilders.buildPlayerData()) * 3600;
 
         // The energy factor scales the level term before the floor: floor(max(30, 241.58 * 0.5)) = 120/h.
         expect(halfMetalRatePerHour).toBeCloseTo(120);
@@ -99,7 +99,7 @@ describe("buildingEnergySettingData — throttle effect on planet values and pro
         });
 
         BuildingEnergySetting.setBuildingEnergyPercentage(planetData, GameType.BuildingType.MetalMine, 0);
-        const metalRatePerHour: number = BuildingData.getPlanetProductionRatePerSecond(planetData, GameType.ResourceType.Metal, CoreType.DefaultServerData) * 3600;
+        const metalRatePerHour: number = BuildingData.getPlanetProductionRatePerSecond(planetData, GameType.ResourceType.Metal, CoreType.DefaultServerData, TestDataBuilders.buildPlayerData()) * 3600;
 
         // At 0% the level term zeroes out and production floors at the base: max(30, 0) = 30/h.
         expect(metalRatePerHour).toBeCloseTo(30);

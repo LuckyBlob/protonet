@@ -101,7 +101,11 @@ describe('getFailedBuildingUpgradeRequirements', () =>
                 buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 10]]),
             },
         });
-        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+        const dynamicPlayerData: CoreType.DynamicPlayerData = TestDataBuilders.buildDynamicPlayerData(
+        {
+            researchLevels: new Map([[GameType.ResearchType.ComputerTech, 10]]),
+        });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ dynamicPlayerData: dynamicPlayerData, planetDatas: [planet] });
 
         const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.NaniteFactory, 1);
         expect(failed).toHaveLength(0);

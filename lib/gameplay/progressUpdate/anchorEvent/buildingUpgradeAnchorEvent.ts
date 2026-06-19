@@ -10,33 +10,34 @@ export type BuildingUpgradeAnchorEvent = AnchorEvent.AnchorEvent &
     event: CoreType.BuildingUpgrade,
 }
 
-export function findNextAnchorEvent(playerData: CoreType.PlayerData, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent | null
+// Keep server data param here even if unused for future ease when we will use it
+export function findNextAnchorEvent(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent | null
 {
     const getItems = (planet: CoreType.PlanetData): CoreType.BuildingUpgrade[] =>
     {
         return planet.dynamicPlanetData.buildingUpgrades;
     };
-    const getTime = (event: CoreType.BuildingUpgrade): number | null =>
+    const getTime = (item: CoreType.BuildingUpgrade, startTime: number): number | null =>
     {
-        if (event.buildingUpgradeRow.started_at === null)
+        if (item.buildingUpgradeRow.started_at === null)
         {
             return null;
         }
 
-        if (event.buildingUpgradeRow.duration_at_start_time === null)
+        if (item.buildingUpgradeRow.duration_at_start_time === null)
         {
             throw new Error(`UNREACHABLE: find next building upgrade anchor event start time.`);
         }
-        
-        return event.buildingUpgradeRow.started_at + event.buildingUpgradeRow.duration_at_start_time;
+
+        return item.buildingUpgradeRow.started_at + item.buildingUpgradeRow.duration_at_start_time;
     };
-    const buildEvent = (event: CoreType.BuildingUpgrade, time: number, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
+    const buildEvent = (item: CoreType.BuildingUpgrade, time: number, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
     {
         const newEvent: BuildingUpgradeAnchorEvent =
         {
             type: AnchorEvent.AnchorEventType.BuildingUpgrade,
             time: time,
-            event: event,
+            event: item,
             resolver: playerProgressApplier,
         };
 

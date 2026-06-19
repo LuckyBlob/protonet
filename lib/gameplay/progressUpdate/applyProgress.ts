@@ -6,6 +6,7 @@ import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buil
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent"
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
 import * as CurrentlyResearching from "@/lib/gameplay/progressUpdate/anchorEvent/currentlyResearchingAnchorEvent"
+import * as ResourceProduction from "@/lib/gameplay/progressUpdate/anchorEvent/resourceProductionAnchorEvent"
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
@@ -15,13 +16,14 @@ export abstract class PlayerProgressApplier
 {
     abstract applyPlayerProgressAtTime(sourcePlayerData: CoreType.PlayerData, serverData: CoreType.ServerData, targetPlayerId: number, time: number): CoreType.PlayerData | null;
 
-    getNextAnchorEvent(playerData: CoreType.PlayerData): AnchorEvent.AnchorEvent | null
+    getNextAnchorEvent(playerData: CoreType.PlayerData, serverData: CoreType.ServerData): AnchorEvent.AnchorEvent | null
     {
         const anchorEvents: (AnchorEvent.AnchorEvent | null)[] = [];
-        anchorEvents.push(BuildingUpgrade.findNextAnchorEvent(playerData, this));
-        anchorEvents.push(ShipConstruction.findNextAnchorEvent(playerData, this));
-        anchorEvents.push(FleetArrival.findNextAnchorEvent(playerData, this));
-        anchorEvents.push(CurrentlyResearching.findNextAnchorEvent(playerData, this));
+        anchorEvents.push(BuildingUpgrade.findNextAnchorEvent(playerData, serverData, this));
+        anchorEvents.push(ShipConstruction.findNextAnchorEvent(playerData, serverData, this));
+        anchorEvents.push(FleetArrival.findNextAnchorEvent(playerData, serverData, this));
+        anchorEvents.push(CurrentlyResearching.findNextAnchorEvent(playerData, serverData, this));
+        anchorEvents.push(ResourceProduction.findNextAnchorEvent(playerData, serverData, this));
         
         let nextAnchorEvent: AnchorEvent.AnchorEvent | null = null;
         for (const anchorEvent of anchorEvents)
@@ -65,6 +67,11 @@ export abstract class PlayerProgressApplier
                 CurrentlyResearching.resolveAnchorEvent(playerData, serverData, anchorEvent);
                 break;
             }
+            case AnchorEvent.AnchorEventType.ResourceProduction:
+            {
+                ResourceProduction.resolveAnchorEvent(playerData, serverData, anchorEvent);
+                break;
+            }
             default:
                 throw new Error(`UNREACHABLE: Missing clientProgess AnchorEventType case: ${anchorEvent.type}`);
         }
@@ -87,14 +94,14 @@ export function applyProgressToPlayerData(playerData: CoreType.PlayerData, serve
 {
     const modifiedPlayerData: CoreType.PlayerData = structuredClone(playerData);
 
-    let nextAnchorEvent: AnchorEvent.AnchorEvent | null = playerProgressResolver.getNextAnchorEvent(modifiedPlayerData);
+    let nextAnchorEvent: AnchorEvent.AnchorEvent | null = playerProgressResolver.getNextAnchorEvent(modifiedPlayerData, serverData);
     while (nextAnchorEvent !== null && nextAnchorEvent.time < now)
     {
         playerProgressResolver.updateResourcesToTime(modifiedPlayerData, serverData, nextAnchorEvent.time);
         playerProgressResolver.resolveAnchorEvent(modifiedPlayerData, serverData, nextAnchorEvent);
         setUpdatedTimeStamp(modifiedPlayerData, serverData, nextAnchorEvent.time);
         
-        nextAnchorEvent = playerProgressResolver.getNextAnchorEvent(modifiedPlayerData);
+        nextAnchorEvent = playerProgressResolver.getNextAnchorEvent(modifiedPlayerData, serverData);
     }
 
     playerProgressResolver.updateResourcesToTime(modifiedPlayerData, serverData, now);
@@ -105,9 +112,11 @@ export function applyProgressToPlayerData(playerData: CoreType.PlayerData, serve
 
 export function updateResourcesToTime(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, time: number): void
 {
+    // playerData is threaded into the per-planet production and maximum computations so energy-tech-scaled
+    // planet values (the Fusion Reactor) can read the owning player's research levels.
     for (const planetData of playerData.planetDatas)
     {
-        const resourceQuantities: Map<GameType.ResourceType, number> = getPredictedResourceQuantitiesAtTime(planetData, serverData, time);
+        const resourceQuantities: Map<GameType.ResourceType, number> = getPredictedResourceQuantitiesAtTime(planetData, serverData, time, playerData);
         clampResourcesToPossibleMaximums(playerData, planetData, serverData, resourceQuantities);
 
         ResourceData.setResourceQuantities(planetData, resourceQuantities);
@@ -127,7 +136,7 @@ function setUpdatedTimeStamp(playerData: CoreType.PlayerData, serverData: CoreTy
 
 function clampResourcesToPossibleMaximums(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, serverData: CoreType.ServerData, potentialResourceQuantities: Map<GameType.ResourceType, number>): void
 {
-    const resourceMaximums: Map<GameType.ResourceType, number> = CalculatedValueData.computeResourceMaximums(planetData);
+    const resourceMaximums: Map<GameType.ResourceType, number> = CalculatedValueData.computeResourceMaximums(planetData, playerData);
 
     for (const [resourceType, potentialResourceQuantity] of potentialResourceQuantities)
     {
@@ -154,18 +163,18 @@ function clampResourcesToPossibleMaximums(playerData: CoreType.PlayerData, plane
     }
 }
 
-function getPredictedResourceQuantitiesAtTime(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number): Map<GameType.ResourceType, number>
+function getPredictedResourceQuantitiesAtTime(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number, playerData: CoreType.PlayerData): Map<GameType.ResourceType, number>
 {
     const predictedResourceQuantities: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
     for (const resourceType of StaticData.RESOURCE_INFOS.keys())
     {
-        predictedResourceQuantities.set(resourceType, getPredictedResourceQuantityAtTime(planetData, serverData, time, resourceType))
+        predictedResourceQuantities.set(resourceType, getPredictedResourceQuantityAtTime(planetData, serverData, time, resourceType, playerData))
     }
 
     return predictedResourceQuantities;
 }
 
-function getPredictedResourceQuantityAtTime(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number, resourceType: GameType.ResourceType): number
+function getPredictedResourceQuantityAtTime(planetData: CoreType.PlanetData, serverData: CoreType.ServerData, time: number, resourceType: GameType.ResourceType, playerData: CoreType.PlayerData): number
 {
     const currentResourceQuantity: number = ResourceData.getResourceQuantity(planetData, resourceType);
     const elapsedMilliseconds: number = time - planetData.planetRow.last_updated;
@@ -175,10 +184,12 @@ function getPredictedResourceQuantityAtTime(planetData: CoreType.PlanetData, ser
         return currentResourceQuantity;
     }
 
-    const productionRate: number = BuildingData.getPlanetProductionRatePerSecond(planetData, resourceType, serverData);
+    const productionRate: number = BuildingData.getPlanetProductionRatePerSecond(planetData, resourceType, serverData, playerData);
     const resourceGained: number = productionRate * elapsedSeconds;
 
-    const updatedResourceQuantity: number = currentResourceQuantity + resourceGained;
+    // resourceGained can be negative when a building drains the resource (e.g. the Fusion Reactor
+    // burning deuterium), so floor at 0 — a planet can never hold a negative quantity.
+    const updatedResourceQuantity: number = Math.max(0, currentResourceQuantity + resourceGained);
 
     return updatedResourceQuantity;
 }

@@ -38,13 +38,8 @@ function computeProductionRate_SimpleProductionBuilding(buildingType: GameType.B
         return null;
     }
 
-    // Read the building level straight off planetData rather than via BuildingData.getBuildingLevel:
-    // BuildingData imports this module, so importing it back would create a cycle.
-    const currentLevel: number = planetData.dynamicPlanetData.buildingLevels.get(buildingType) ?? 0;
+   const currentLevel: number = planetData.dynamicPlanetData.buildingLevels.get(buildingType) ?? 0;
 
-    // The per-building energy throttle scales ONLY the level-driven (above-base) production: it is
-    // applied to the second argument of the Math.max, so minProductionPerHour is always produced
-    // (a 0% building still yields its base output).
     const energyFactor: number = BuildingEnergySetting.getBuildingEnergyFactor(planetData, buildingType);
 
     const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
@@ -52,7 +47,17 @@ function computeProductionRate_SimpleProductionBuilding(buildingType: GameType.B
     const productionMap: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
     for (const [resourceType, perResourceProductionStats] of buildingStats.productionStats)
     {
-        const productionPerHour: number = Math.floor(Math.max(perResourceProductionStats.minProductionPerHour, perResourceProductionStats.productionFactor * currentLevel * Math.pow(perResourceProductionStats.exponentBase, currentLevel) * energyFactor));
+        const levelDrivenProductionPerHour: number = perResourceProductionStats.productionFactor * currentLevel * Math.pow(perResourceProductionStats.exponentBase, currentLevel) * energyFactor;
+
+        if (levelDrivenProductionPerHour < 0 && perResourceProductionStats.minProductionPerHour === undefined)
+        {
+            throw new Error(`⚠️: Building type ${buildingType} has min production AND negative production, cannot have negative and minimum.`);
+        }
+        
+        const productionPerHour: number = perResourceProductionStats.productionFactor < 0
+            ? Math.floor(levelDrivenProductionPerHour)
+            : Math.floor(Math.max(perResourceProductionStats.minProductionPerHour!, levelDrivenProductionPerHour));
+
         productionMap.set(resourceType, Math.floor(productionPerHour * timeMultiplier));
     }
 

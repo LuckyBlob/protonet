@@ -11,33 +11,34 @@ export type ShipConstructionAnchorEvent = AnchorEvent.AnchorEvent &
     event: CoreType.ShipConstruction,
 }
 
-export function findNextAnchorEvent(playerData: CoreType.PlayerData, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent | null
+// Keep server data param here even if unused for future ease when we will use it
+export function findNextAnchorEvent(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent | null
 {
     const getItems = (planet: CoreType.PlanetData): CoreType.ShipConstruction[] =>
     {
         return planet.dynamicPlanetData.shipConstructions;
     };
-    const getTime = (event: CoreType.ShipConstruction): number | null =>
+    const getTime = (item: CoreType.ShipConstruction, startTime: number): number | null =>
     {
-        if (event.shipConstructionRow.started_at === null)
+        if (item.shipConstructionRow.started_at === null)
         {
             return null;
         }
 
-        if (event.shipConstructionRow.duration_at_start_time === null)
+        if (item.shipConstructionRow.duration_at_start_time === null)
         {
             throw new Error(`UNREACHABLE: ...`);
         }
-        
-        return event.shipConstructionRow.started_at + event.shipConstructionRow.duration_at_start_time;
+
+        return item.shipConstructionRow.started_at + item.shipConstructionRow.duration_at_start_time;
     };
-    const buildEvent = (event: CoreType.ShipConstruction, time: number, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
+    const buildEvent = (item: CoreType.ShipConstruction, time: number, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
     {
         const newEvent: ShipConstructionAnchorEvent =
         {
             type: AnchorEvent.AnchorEventType.ShipConstruction,
             time: time,
-            event: event,
+            event: item,
             resolver: playerProgressApplier,
         };
 

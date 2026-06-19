@@ -4,6 +4,7 @@ import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormu
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
+import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
@@ -19,18 +20,16 @@ export function getBuildingLevel(planetData: CoreType.PlanetData, buildingType: 
     return buildingLevels.get(buildingType) ?? 0;
 }
 
-export function getPlanetProductionRatePerSecond(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, serverData: CoreType.ServerData): number
+export function getPlanetProductionRatePerSecond(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, serverData: CoreType.ServerData, playerData: CoreType.PlayerData): number
 {
-	const productionRatePerHour: number = computeProductionRatePerHourForResource(planetData, resourceType, serverData);
+	const productionRatePerHour: number = computeProductionRatePerHourForResource(planetData, resourceType, serverData, playerData);
 	return productionRatePerHour / 3600;
 }
 
-function computeProductionRatePerHourForResource(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, serverData: CoreType.ServerData): number
+function computeProductionRatePerHourForResource(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, serverData: CoreType.ServerData, playerData: CoreType.PlayerData): number
 {
 	let totalResourceTypeProductionRatePerHour: number = 0;
 
-	// The production formula reads each building's level and energy throttle off planetData, so this
-	// loop just sums whatever it returns — the per-building energy setting is already applied inside.
 	const buildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building)
 	for (const buildingType of buildingTypes)
 	{
@@ -49,7 +48,7 @@ function computeProductionRatePerHourForResource(planetData: CoreType.PlanetData
 		totalResourceTypeProductionRatePerHour = totalResourceTypeProductionRatePerHour + resourceTypeProductionRatePerHour;
 	}
 
-	const resourceProductionRatio: number = CalculatedValueData.computeResourceProductionPlanetValueRatio(planetData, resourceType);
+	const resourceProductionRatio: number = CalculatedValueData.computeResourceProductionPlanetValueRatio(planetData, resourceType, playerData);
 
 	return totalResourceTypeProductionRatePerHour * resourceProductionRatio;
 }
@@ -76,28 +75,64 @@ export function canAffordUpgrade(planetData: CoreType.PlanetData, buildingType: 
 }
 
 // Could have more than a single type of building producing a resource. Whether a building produces a
-// resource is a static fact (its productionStats), so read it from the building stats directly rather
-// than evaluating the production formula.
-function getProductionBuildingTypeArrayForResourceType(resourceType: GameType.ResourceType): GameType.BuildingType[]
+// resource, and the sign of that production, is a static fact (its productionStats.productionFactor),
+// so read it from the building stats directly rather than evaluating the production formula. The map
+// value is the production factor: positive produces the resource, negative drains it (e.g. the Fusion
+// Reactor burning deuterium).
+function getProductionBuildingTypeMapForResourceType(resourceType: GameType.ResourceType): Map<GameType.BuildingType, number>
 {
-	const productionBuildingTypeArray: GameType.BuildingType[] = [];
+	const productionBuildingTypeMap: Map<GameType.BuildingType, number> = new Map<GameType.BuildingType, number>();
 
 	const buildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building)
 	for (const buildingType of buildingTypes)
 	{
 		const buildingStats: GameType.BuildingStats | undefined = StaticDataHelper.getBuildingStats(buildingType);
-		if (buildingStats !== undefined && buildingStats.productionStats !== undefined && buildingStats.productionStats.has(resourceType) === true)
+		if (buildingStats === undefined || buildingStats.productionStats === undefined)
 		{
-			productionBuildingTypeArray.push(buildingType);
+			continue;
 		}
+
+		const productionStats: GameType.ProductionStats | undefined = buildingStats.productionStats.get(resourceType);
+		if (productionStats === undefined)
+		{
+			continue;
+		}
+
+		productionBuildingTypeMap.set(buildingType, productionStats.productionFactor);
 	}
 
-	return productionBuildingTypeArray;
+	return productionBuildingTypeMap;
 }
 
 export function doesBuildingProduceResource(buildingType: GameType.BuildingType, resourceType: GameType.ResourceType): boolean
 {
-	const productionBuildingTypeArray: GameType.BuildingType[] = getProductionBuildingTypeArrayForResourceType(resourceType);
+	const productionBuildingTypeMap: Map<GameType.BuildingType, number> = getProductionBuildingTypeMapForResourceType(resourceType);
+	const productionFactor: number | undefined = productionBuildingTypeMap.get(buildingType);
 
-	return productionBuildingTypeArray.includes(buildingType);
+	return productionFactor !== undefined && productionFactor > 0;
+}
+
+export function getConsumingBuildingTypeArrayForResourceType(resourceType: GameType.ResourceType): GameType.BuildingType[]
+{
+	const consumingBuildingTypeArray: GameType.BuildingType[] = [];
+
+	const productionBuildingTypeMap: Map<GameType.BuildingType, number> = getProductionBuildingTypeMapForResourceType(resourceType);
+	for (const [buildingType, productionFactor] of productionBuildingTypeMap)
+	{
+		if (productionFactor < 0)
+		{
+			consumingBuildingTypeArray.push(buildingType);
+		}
+	}
+
+	return consumingBuildingTypeArray;
+}
+
+export function setConsumingBuildingsEnergyToZero(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType): void
+{
+	const consumingBuildingTypeArray: GameType.BuildingType[] = getConsumingBuildingTypeArrayForResourceType(resourceType);
+	for (const buildingType of consumingBuildingTypeArray)
+	{
+		BuildingEnergySetting.setBuildingEnergyPercentage(planetData, buildingType, 0);
+	}
 }

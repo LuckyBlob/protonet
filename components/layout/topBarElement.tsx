@@ -138,7 +138,9 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 	const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(clientDataStateResult.psController[0]);
 	const buildingBeingUpgraded: GameType.BuildingType | null = BuildingUpgradeData.getBuildingTypeCurrentlyUpgrading(planetDataPredicted);
 
-	const resourceMaximums: Map<GameType.ResourceType, number> = CalculatedValueData.computeResourceMaximums(planetDataPredicted);
+	const playerData: CoreType.PlayerData = clientDataStateResult.psController[0].predictedDBData;
+
+	const resourceMaximums: Map<GameType.ResourceType, number> = CalculatedValueData.computeResourceMaximums(planetDataPredicted, playerData);
 
 	const resourceDisplayValues: PlanetResourceDisplayValues[] = [];
 
@@ -147,7 +149,7 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 		const calculatedNewResourceQuantity: number = ResourceData.getResourceQuantity(planetDataPredicted, resourceType);
 		const resourceMaximum: number = resourceMaximums.get(resourceType) ?? 0;
 
-		const productionRatePerSecond: number = BuildingData.getPlanetProductionRatePerSecond(planetDataPredicted, resourceType, clientDataStateResult.sdsController[0]);
+		const productionRatePerSecond: number = BuildingData.getPlanetProductionRatePerSecond(planetDataPredicted, resourceType, clientDataStateResult.sdsController[0], playerData);
 
 		// Once the resource is at or above its maximum, production no longer accumulates, so show 0/h.
 		const isAtOrOverMaximum: boolean = calculatedNewResourceQuantity >= resourceMaximum;
@@ -167,7 +169,7 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 		resourceDisplayValues.push(singleResourceDisplayValues);
 	}
 
-	const planetValueDisplayValues: PlanetValueCardDisplayValues[] = getPlanetValueCardDisplayValues(planetDataPredicted);
+	const planetValueDisplayValues: PlanetValueCardDisplayValues[] = getPlanetValueCardDisplayValues(planetDataPredicted, playerData);
 
 	const displayValues: PlanetDisplayValues =
 	{
@@ -179,9 +181,9 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 	return displayValues;
 }
 
-function getPlanetValueCardDisplayValues(planetDataPredicted: CoreType.PlanetData): PlanetValueCardDisplayValues[]
+function getPlanetValueCardDisplayValues(planetDataPredicted: CoreType.PlanetData, playerData: CoreType.PlayerData): PlanetValueCardDisplayValues[]
 {
-	const planetValueAmountsMap: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = CalculatedValueData.computePlanetValueDatas(planetDataPredicted);
+	const planetValueAmountsMap: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = CalculatedValueData.computePlanetValueDatas(planetDataPredicted, playerData);
 
 	const planetValueDisplayValues: PlanetValueCardDisplayValues[] = [];
 

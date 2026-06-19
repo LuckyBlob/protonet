@@ -906,6 +906,10 @@ test.describe("Fleets", () =>
         E2EHelper.setShipQuantity(origin.id, playerId, GameType.ShipType.SmallTransport, 9, db);
         E2EHelper.setAllResources(origin.id, playerId, PLENTY, db);
         E2EHelper.setShipQuantity(target.id, playerId, GameType.ShipType.SmallTransport, 1, db);
+        // Fleet slots come from Computer Technology (level + 1 = slots), and a fleet holds its slot for
+        // the whole round trip. Three concurrent collects need three free slots, so grant the levels —
+        // otherwise the second send has no free slot and the fleet-action dropdown renders empty.
+        E2EHelper.setResearchLevel(playerId, GameType.ResearchType.ComputerTech, 3, db);
         E2EHelper.touchPlanet(origin.id, Date.now(), db);
         E2EHelper.touchPlanet(target.id, Date.now(), db);
 
@@ -1275,6 +1279,9 @@ test.describe("Fleets", () =>
 
         E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.SmallTransport, 6, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
+        // Two concurrent collects need two free fleet slots; slots come from Computer Technology
+        // (level + 1). Without this the second send finds no free slot and the action dropdown is empty.
+        E2EHelper.setResearchLevel(attackerPlayerId, GameType.ResearchType.ComputerTech, 2, db);
         E2EHelper.touchPlanet(attackerPlanet.id, Date.now(), db);
         E2EHelper.setResource(victimPlanet1.id, victimPlayerId, GameType.ResourceType.Metal, 5000, db);
         E2EHelper.touchPlanet(victimPlanet1.id, Date.now(), db);

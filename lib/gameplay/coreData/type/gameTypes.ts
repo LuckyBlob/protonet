@@ -28,6 +28,7 @@ export const BuildingType =
     RoboticFactory: 9,
     ResearchLab: 10,
     NaniteFactory: 11,
+    FusionReactor: 12,
 } as const;
 export type BuildingType = typeof BuildingType[keyof typeof BuildingType];
 export type BuildingStats =
@@ -59,7 +60,7 @@ export const ProductionFunctionType =
 export type ProductionFunctionType = typeof ProductionFunctionType[keyof typeof ProductionFunctionType];
 export type ProductionStats =
 {
-    minProductionPerHour: number;
+    minProductionPerHour?: number;
     productionFactor: number;
 	exponentBase: number,
 };
@@ -68,6 +69,9 @@ export const BuildingPlanetValueProductionFormulasType =
 {
     SimpleExponential: 1,
     FlooredNaturalExponential: 2,
+    // factor * level * (researchScalingBaseFactor + researchScalingPerLevelFactor * researchLevel)^level.
+    // The Fusion Reactor's energy output, scaled by the player's researchScalingResearchType level.
+    ResearchScaledExponential: 3,
 } as const;
 export type BuildingPlanetValueProductionFormulasType = typeof BuildingPlanetValueProductionFormulasType[keyof typeof BuildingPlanetValueProductionFormulasType];
 export type PlanetValueStats =
@@ -77,6 +81,9 @@ export type PlanetValueStats =
 	basePlanetValueExponent?: number;
 	naturalExponentialFactor?: number;
 	naturalExponentialExponentFactor?: number;
+	researchScalingResearchType?: ResearchType;
+	researchScalingBaseFactor?: number;
+	researchScalingPerLevelFactor?: number;
 };
 //#endregion
 

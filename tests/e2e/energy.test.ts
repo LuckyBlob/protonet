@@ -100,15 +100,16 @@ test.describe("Energy", () =>
         const username: string = E2EHelper.uniqueUsername("Nrg");
         await E2EHelper.register(page, username, PASSWORD);
 
-        // Metal Mine level 2 consumes 24.2, Solar Plant level 1 produces 22 → ratio ~0.91. Production is
-        // scaled by 0.91, NOT floored to 0 (the regression this guards): metal 72 → 65, crystal 15 → 13.
+        // Metal Mine level 2's energy consumption floors to 24, Solar Plant level 1 produces 22 →
+        // ratio = 22/24 ≈ 0.917. Production is scaled by that ratio, NOT floored to 0 (the regression
+        // this guards): metal 72 → 66, crystal 15 → 13.
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.MetalMine, 2, db);
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.SolarPlant, 1, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 22, 24);
         await E2EHelper.expectPlanetValueColor(page, "Energy", "red");
-        await E2EHelper.expectResourceProductionPerHour(page, "Metal", 65);
+        await E2EHelper.expectResourceProductionPerHour(page, "Metal", 66);
         await E2EHelper.expectResourceProductionPerHour(page, "Crystal", 13);
     });
 
@@ -117,10 +118,10 @@ test.describe("Energy", () =>
         const username: string = E2EHelper.uniqueUsername("Nrg");
         await E2EHelper.register(page, username, PASSWORD);
 
-        // The core "ratio X (< 1) -> production x X" law, pinned at a second ratio (test 4 covers ~0.91).
-        // Solar Plant level 1 (+22) against a Deuterium Synthesizer level 2 (-48.4) gives X = 22/48.4 =
-        // 0.4545 (the card floors consumption to 48). Every resource is produced at floor(base x 0.4545):
-        // metal 30 -> 13, crystal 15 -> 6, deuterium 24 -> 10.
+        // The core "ratio X (< 1) -> production x X" law, pinned at a second ratio (test 4 covers ~0.92).
+        // Solar Plant level 1 (+22) against a Deuterium Synthesizer level 2 whose consumption floors to
+        // 48 gives X = 22/48 = 0.4583. Every resource is produced at floor(base x 0.4583):
+        // metal 30 -> 13, crystal 15 -> 6, deuterium 24 -> 11.
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.SolarPlant, 1, db);
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.DeuteriumSynthesizer, 2, db);
         await E2EHelper.reloadGame(page);
@@ -129,7 +130,7 @@ test.describe("Energy", () =>
         await E2EHelper.expectPlanetValueColor(page, "Energy", "red");
         await E2EHelper.expectResourceProductionPerHour(page, "Metal", 13);
         await E2EHelper.expectResourceProductionPerHour(page, "Crystal", 6);
-        await E2EHelper.expectResourceProductionPerHour(page, "Deuterium", 10);
+        await E2EHelper.expectResourceProductionPerHour(page, "Deuterium", 11);
     });
 
     test("surplus energy does not push production above 100%", async ({ page }) =>

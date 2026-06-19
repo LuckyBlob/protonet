@@ -63,6 +63,11 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
                 resolveCurrentlyResearchingAnchorEventToDB(playerData, serverData, anchorEvent);
                 break;
             }
+            case AnchorEvent.AnchorEventType.ResourceProduction:
+            {
+                resolveResourceProductionAnchorEventToDB(playerData, serverData, anchorEvent);
+                break;
+            }
             default:
                 throw new Error(`UNREACHABLE: Missing clientProgess AnchorEventType case: ${anchorEvent.type}`);
         }
@@ -179,6 +184,17 @@ function resolveCurrentlyResearchingAnchorEventToDB(playerData: CoreType.PlayerD
     {
         ServerDynamicData.serverUpdatePlayerDataContext(playerData.playerRow.id, CoreType.DataContext.ResearchLevels, playerData.dynamicPlayerData);
         ServerDynamicData.serverUpdatePlayerDataContext(playerData.playerRow.id, CoreType.DataContext.CurrentlyResearching, playerData.dynamicPlayerData);
+    });
+
+    transaction();
+}
+
+function resolveResourceProductionAnchorEventToDB(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        ServerDynamicData.serverUpdatePlayerDataContext(playerData.playerRow.id, CoreType.DataContext.ResourceQuantity, playerData.dynamicPlayerData);
+        ServerDynamicData.serverUpdatePlayerDataContext(playerData.playerRow.id, CoreType.DataContext.BuildingLevel, playerData.dynamicPlayerData);
     });
 
     transaction();

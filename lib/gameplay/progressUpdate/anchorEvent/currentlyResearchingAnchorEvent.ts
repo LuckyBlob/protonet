@@ -12,29 +12,30 @@ export type CurrentlyResearchingAnchorEvent = AnchorEvent.AnchorEvent &
 
 // Research lives on the player, not a planet, so we scan playerData.dynamicPlayerData.currentlyResearchings
 // directly instead of the per-planet AnchorEvent.findNextAnchorEvent helper.
-export function findNextAnchorEvent(playerData: CoreType.PlayerData, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent | null
+// Keep server data param here even if unused for future ease when we will use it
+export function findNextAnchorEvent(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent | null
 {
-    const getTime = (event: CoreType.CurrentlyResearching): number | null =>
+    const getTime = (item: CoreType.CurrentlyResearching, startTime: number): number | null =>
     {
-        if (event.currentlyResearchingRow.started_at === null)
+        if (item.currentlyResearchingRow.started_at === null)
         {
             return null;
         }
 
-        if (event.currentlyResearchingRow.duration_at_start_time === null)
+        if (item.currentlyResearchingRow.duration_at_start_time === null)
         {
             throw new Error(`UNREACHABLE: find next currently researching anchor event start time.`);
         }
 
-        return event.currentlyResearchingRow.started_at + event.currentlyResearchingRow.duration_at_start_time;
+        return item.currentlyResearchingRow.started_at + item.currentlyResearchingRow.duration_at_start_time;
     };
-    const buildEvent = (event: CoreType.CurrentlyResearching, time: number, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
+    const buildEvent = (item: CoreType.CurrentlyResearching, time: number, playerProgressApplier: ApplyProgress.PlayerProgressApplier): AnchorEvent.AnchorEvent =>
     {
         const newEvent: CurrentlyResearchingAnchorEvent =
         {
             type: AnchorEvent.AnchorEventType.CurrentlyResearching,
             time: time,
-            event: event,
+            event: item,
             resolver: playerProgressApplier,
         };
 
@@ -44,9 +45,12 @@ export function findNextAnchorEvent(playerData: CoreType.PlayerData, playerProgr
     let nextTime: number | null = null;
     let bestItem: CoreType.CurrentlyResearching | null = null;
 
+    // Research is player-level (not per-planet), so the starting time is the player's last-accounted moment.
+    const startTime: number = playerData.playerRow.last_updated;
+
     for (const currentlyResearching of playerData.dynamicPlayerData.currentlyResearchings)
     {
-        const time: number | null = getTime(currentlyResearching);
+        const time: number | null = getTime(currentlyResearching, startTime);
 
         if (time === null)
         {

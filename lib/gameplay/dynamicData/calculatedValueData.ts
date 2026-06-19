@@ -70,7 +70,7 @@ function addCalculatedValueData<ValueType>(valueDatas: Map<ValueType, CoreType.C
 //#endregion
 
 //#region planet values
-export function computeResourceProductionPlanetValueRatio(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType): number
+export function computeResourceProductionPlanetValueRatio(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, playerData: CoreType.PlayerData): number
 {
     let totalRatio: number = 1;
 
@@ -86,7 +86,7 @@ export function computeResourceProductionPlanetValueRatio(planetData: CoreType.P
             continue;
         }
 
-        const planetValueData: CoreType.CalculatedValueData | null = computePlanetValueData(planetData, planetValueType);
+        const planetValueData: CoreType.CalculatedValueData | null = computePlanetValueData(planetData, planetValueType, playerData);
         const resourceProductionRatio: number = computeProductionRatioFromPlanetValueData(planetValueData);
 
         totalRatio *= resourceProductionRatio;
@@ -111,9 +111,9 @@ function computeProductionRatioFromPlanetValueData(planetValueData: CoreType.Cal
     return Math.min(1, planetValueData.production / planetValueData.consumption);
 }
 
-export function computeResourceMaximums(planetData: CoreType.PlanetData): Map<GameType.ResourceType, number>
+export function computeResourceMaximums(planetData: CoreType.PlanetData, playerData: CoreType.PlayerData): Map<GameType.ResourceType, number>
 {
-    const planetValuesMap: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = computePlanetValueDatas(planetData);
+    const planetValuesMap: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = computePlanetValueDatas(planetData, playerData);
     const resourceMaximums: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 
     for (const [planetValueType, planetValueInfo] of StaticData.PLANET_VALUE_INFOS)
@@ -145,17 +145,17 @@ export function computeResourceMaximums(planetData: CoreType.PlanetData): Map<Ga
     return resourceMaximums;
 }
 
-export function computePlanetValueData(planetData: CoreType.PlanetData, planetValueType: GameType.PlanetValueType): CoreType.CalculatedValueData | null
+export function computePlanetValueData(planetData: CoreType.PlanetData, planetValueType: GameType.PlanetValueType, playerData: CoreType.PlayerData): CoreType.CalculatedValueData | null
 {
-    const planetValueDatas: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = computePlanetValueDatas(planetData);
+    const planetValueDatas: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = computePlanetValueDatas(planetData, playerData);
     return getCalculatedValueData(planetValueDatas, planetValueType);
 }
 
-export function computePlanetValueDatas(planetData: CoreType.PlanetData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
+export function computePlanetValueDatas(planetData: CoreType.PlanetData, playerData: CoreType.PlayerData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
 {
     const planetValueDataBySource: Map<GameType.PlanetValueType, CoreType.CalculatedValueData>[] =
     [
-        computeBuildingPlanetValueDatas(planetData),
+        computeBuildingPlanetValueDatas(planetData, playerData),
         computeShipPlanetValueDatas(planetData),
         computeResearchPlanetValueDatas(planetData),
     ];
@@ -177,7 +177,7 @@ function computeResearchPlanetValueDatas(planetData: CoreType.PlanetData): Map<G
     return newResearchPlanetValues;
 }
 
-function computeBuildingPlanetValueDatas(planetData: CoreType.PlanetData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
+function computeBuildingPlanetValueDatas(planetData: CoreType.PlanetData, playerData: CoreType.PlayerData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
 {
     const newBuildingPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
 
@@ -185,7 +185,7 @@ function computeBuildingPlanetValueDatas(planetData: CoreType.PlanetData): Map<G
     for (const buildingType of buildingTypes)
     {
         const buildingLevel: number = BuildingData.getBuildingLevel(planetData, buildingType);
-        const buildingPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(buildingLevel, buildingType);
+        const buildingPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(buildingLevel, buildingType, playerData);
 
         if (buildingPlanetValues === null)
         {
