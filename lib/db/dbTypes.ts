@@ -50,6 +50,7 @@ export type PlanetBuildingRow =
 export type PlanetRow =
 {
 	id: number;
+	zone: number;
 	slot: number;
 	system: number;
 	galaxy: number;
@@ -152,11 +153,13 @@ export type FleetMovementRow =
     seed: number;
     player_origin_id: number;
     planet_origin_id: number;
+	planet_origin_zone: number;
 	planet_origin_slot: number;
 	planet_origin_system: number;
 	planet_origin_galaxy: number;
     player_target_id: number | null; // == 0 for colonizing
     planet_target_id: number | null; // == 0 for colonizing
+	planet_target_zone: number;
 	planet_target_slot: number;
 	planet_target_system: number;
 	planet_target_galaxy: number;

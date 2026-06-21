@@ -57,7 +57,7 @@ describe('PlayerProgressApplier.getNextAnchorEvent — across-type priority', ()
     it('returns null when nothing is queued anywhere', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData);
+        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData, TestDataBuilders.buildServerData());
         expect(result).toBeNull();
     });
 
@@ -72,7 +72,7 @@ describe('PlayerProgressApplier.getNextAnchorEvent — across-type priority', ()
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData);
+        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData, TestDataBuilders.buildServerData());
         expect(result).not.toBeNull();
         expect(result!.type).toBe(AnchorEvent.AnchorEventType.BuildingUpgrade);
         expect(result!.time).toBe(BASE_TIME + 10_000);
@@ -89,7 +89,7 @@ describe('PlayerProgressApplier.getNextAnchorEvent — across-type priority', ()
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData);
+        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData, TestDataBuilders.buildServerData());
         expect(result).not.toBeNull();
         expect(result!.type).toBe(AnchorEvent.AnchorEventType.ShipConstruction);
         expect(result!.time).toBe(BASE_TIME + 10_000);
@@ -106,7 +106,7 @@ describe('PlayerProgressApplier.getNextAnchorEvent — across-type priority', ()
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData);
+        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData, TestDataBuilders.buildServerData());
         expect(result).not.toBeNull();
         expect(result!.type).toBe(AnchorEvent.AnchorEventType.FleetArrival);
     });
@@ -124,7 +124,7 @@ describe('PlayerProgressApplier.getNextAnchorEvent — across-type priority', ()
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData);
+        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData, TestDataBuilders.buildServerData());
         expect(result).not.toBeNull();
         expect(result!.type).toBe(AnchorEvent.AnchorEventType.BuildingUpgrade);
     });
@@ -142,7 +142,7 @@ describe('PlayerProgressApplier.getNextAnchorEvent — across-type priority', ()
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData);
+        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData, TestDataBuilders.buildServerData());
         expect(result).toBeNull();
     });
 
@@ -163,7 +163,7 @@ describe('PlayerProgressApplier.getNextAnchorEvent — across-type priority', ()
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet1, planet2] });
 
-        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData);
+        const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData, TestDataBuilders.buildServerData());
         expect(result).not.toBeNull();
         expect(result!.type).toBe(AnchorEvent.AnchorEventType.ShipConstruction);
         expect(result!.time).toBe(BASE_TIME + 5_000);

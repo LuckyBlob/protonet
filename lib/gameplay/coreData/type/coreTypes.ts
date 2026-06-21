@@ -54,10 +54,6 @@ export type DynamicPlanetData =
 {
 	resourceQuantity: Map<GameType.ResourceType, number>;
 	buildingLevels: Map<GameType.BuildingType, number>;
-	// Per-building energy throttle, as a percentage in [0, 100] (10% steps). A building absent
-	// from the map runs at full power (100%). Scales both the building's energy planet value
-	// production/consumption and its resource production. Persisted alongside building levels on
-	// the planet_building row (energy_percentage column); see buildingEnergySettingData.ts.
 	buildingEnergySettings: Map<GameType.BuildingType, number>;
 	shipQuantity: Map<GameType.ShipType, number>,
 	shipConstructions: ShipConstruction[];

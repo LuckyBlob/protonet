@@ -98,7 +98,10 @@
       "PowerShell(Start-Process explorer.exe)",
       "PowerShell(npm run test:unit)",
       "PowerShell(npm run test:integration)",
-      "Bash(break)"
+      "Bash(break)",
+      "Bash(ls -la .github/workflows/)",
+      "Bash(ls *.sh deploy*)",
+      "Bash(ssh -o BatchMode=yes -o ConnectTimeout=10 lawson@192.168.0.243 'ls -la ~/www/ | grep -iE \"deploy|\\\\.sh$\"; echo \"---\"; ls ~/www/*.sh 2>/dev/null')"
     ]
   }
 }

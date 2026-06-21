@@ -40,6 +40,7 @@ INSERT OR IGNORE INTO server_config (id, time_multiplier) VALUES (1, 1);
 CREATE TABLE planet
 (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	zone INTEGER NOT NULL DEFAULT 1,
 	slot INTEGER NOT NULL,
 	system INTEGER NOT NULL,
 	galaxy INTEGER NOT NULL,
@@ -47,7 +48,7 @@ CREATE TABLE planet
 	owner_player_id INTEGER,
  	claimed_at INTEGER NOT NULL DEFAULT 0,
 	last_updated INTEGER NOT NULL DEFAULT 0,
-	UNIQUE (slot, system, galaxy),
+	UNIQUE (slot, system, galaxy, zone),
 	FOREIGN KEY (owner_player_id) REFERENCES player(id) ON DELETE SET NULL
 );
 
@@ -180,11 +181,13 @@ CREATE TABLE IF NOT EXISTS fleet_movement
     seed INTEGER NOT NULL,
     player_origin_id INTEGER NOT NULL,
     planet_origin_id INTEGER NOT NULL,
+    planet_origin_zone INTEGER NOT NULL DEFAULT 1,
     planet_origin_slot INTEGER NOT NULL,
     planet_origin_system INTEGER NOT NULL,
     planet_origin_galaxy INTEGER NOT NULL,
     player_target_id INTEGER,
     planet_target_id INTEGER,
+    planet_target_zone INTEGER NOT NULL DEFAULT 1,
   	planet_target_slot INTEGER NOT NULL,
     planet_target_system INTEGER NOT NULL,
     planet_target_galaxy INTEGER NOT NULL,

@@ -29,7 +29,7 @@ describe('findNextAnchorEvent (currently researching)', () =>
     it('returns null when no research is in progress', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const result: AnchorEvent.AnchorEvent | null = CurrentlyResearchingAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
+        const result: AnchorEvent.AnchorEvent | null = CurrentlyResearchingAnchorEvent.findNextAnchorEvent(playerData, TestDataBuilders.buildServerData(), APPLIER);
         expect(result).toBeNull();
     });
 
@@ -37,7 +37,7 @@ describe('findNextAnchorEvent (currently researching)', () =>
     {
         const notStarted: CoreType.CurrentlyResearching = buildResearch(null, null, GameType.ResearchType.ImpulseDrive);
         const playerData: CoreType.PlayerData = buildPlayerWithResearch(notStarted);
-        const result: AnchorEvent.AnchorEvent | null = CurrentlyResearchingAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
+        const result: AnchorEvent.AnchorEvent | null = CurrentlyResearchingAnchorEvent.findNextAnchorEvent(playerData, TestDataBuilders.buildServerData(), APPLIER);
         expect(result).toBeNull();
     });
 
@@ -48,7 +48,7 @@ describe('findNextAnchorEvent (currently researching)', () =>
         const research: CoreType.CurrentlyResearching = buildResearch(startedAt, durationMs, GameType.ResearchType.ImpulseDrive);
         const playerData: CoreType.PlayerData = buildPlayerWithResearch(research);
 
-        const result: AnchorEvent.AnchorEvent | null = CurrentlyResearchingAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
+        const result: AnchorEvent.AnchorEvent | null = CurrentlyResearchingAnchorEvent.findNextAnchorEvent(playerData, TestDataBuilders.buildServerData(), APPLIER);
 
         expect(result).not.toBeNull();
         expect(result!.type).toBe(AnchorEvent.AnchorEventType.CurrentlyResearching);
@@ -66,7 +66,7 @@ describe('resolveAnchorEvent (currently researching)', () =>
 
         const levelBefore: number = ResearchData.getResearchLevel(playerData, GameType.ResearchType.ImpulseDrive);
 
-        const anchorEventResult: AnchorEvent.AnchorEvent | null = CurrentlyResearchingAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
+        const anchorEventResult: AnchorEvent.AnchorEvent | null = CurrentlyResearchingAnchorEvent.findNextAnchorEvent(playerData, TestDataBuilders.buildServerData(), APPLIER);
         expect(anchorEventResult).not.toBeNull();
         CurrentlyResearchingAnchorEvent.resolveAnchorEvent(playerData, serverData, anchorEventResult!);
 
@@ -80,7 +80,7 @@ describe('resolveAnchorEvent (currently researching)', () =>
         const playerData: CoreType.PlayerData = buildPlayerWithResearch(research);
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
 
-        const anchorEventResult: AnchorEvent.AnchorEvent | null = CurrentlyResearchingAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
+        const anchorEventResult: AnchorEvent.AnchorEvent | null = CurrentlyResearchingAnchorEvent.findNextAnchorEvent(playerData, TestDataBuilders.buildServerData(), APPLIER);
         expect(anchorEventResult).not.toBeNull();
         CurrentlyResearchingAnchorEvent.resolveAnchorEvent(playerData, serverData, anchorEventResult!);
 

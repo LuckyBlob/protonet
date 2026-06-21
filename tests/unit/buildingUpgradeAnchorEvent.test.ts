@@ -37,7 +37,7 @@ describe('findNextAnchorEvent (building upgrade)', () =>
     it('returns null when no upgrades exist', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const result: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
+        const result: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, TestDataBuilders.buildServerData(), APPLIER);
         expect(result).toBeNull();
     });
 
@@ -53,7 +53,7 @@ describe('findNextAnchorEvent (building upgrade)', () =>
             dynamicPlanetData: { buildingUpgrades: [notStarted] },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
-        const result: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
+        const result: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, TestDataBuilders.buildServerData(), APPLIER);
         expect(result).toBeNull();
     });
 
@@ -67,7 +67,7 @@ describe('findNextAnchorEvent (building upgrade)', () =>
             dynamicPlanetData: { buildingUpgrades: [upgrade] },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
-        const result: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
+        const result: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, TestDataBuilders.buildServerData(), APPLIER);
 
         expect(result).not.toBeNull();
         expect(result!.type).toBe(AnchorEvent.AnchorEventType.BuildingUpgrade);
@@ -92,7 +92,7 @@ describe('findNextAnchorEvent (building upgrade)', () =>
             planetDatas: [planet1, planet2],
         });
 
-        const result: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
+        const result: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, TestDataBuilders.buildServerData(), APPLIER);
         expect(result).not.toBeNull();
         expect(result!.time).toBe(1_005_000);
     });
@@ -112,7 +112,7 @@ describe('resolveAnchorEvent (building upgrade)', () =>
 
         const levelBefore: number = BuildingData.getBuildingLevel(planet, GameType.BuildingType.MetalMine);
 
-        const anchorEventResult: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
+        const anchorEventResult: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, TestDataBuilders.buildServerData(), APPLIER);
         expect(anchorEventResult).not.toBeNull();
         BuildingUpgradeAnchorEvent.resolveAnchorEvent(playerData, serverData, anchorEventResult!);
 
@@ -134,7 +134,7 @@ describe('resolveAnchorEvent (building upgrade)', () =>
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
         const serverData = TestDataBuilders.buildServerData();
 
-        const anchorEventResult: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, APPLIER);
+        const anchorEventResult: AnchorEvent.AnchorEvent | null = BuildingUpgradeAnchorEvent.findNextAnchorEvent(playerData, TestDataBuilders.buildServerData(), APPLIER);
         expect(anchorEventResult).not.toBeNull();
         BuildingUpgradeAnchorEvent.resolveAnchorEvent(playerData, serverData, anchorEventResult!);
 

@@ -208,12 +208,20 @@ function injectSyntheticPlanet(databaseConnection: Database.Database, playerId: 
     ).get(slot, system, SYNTHETIC_GALAXY, playerId, now - ONE_DAY_MS, now - ONE_DAY_MS) as { id: number };
     const planetId: number = planetInsert.id;
 
+    // Distinctive, mutually-different building_level vs energy_percentage per building so the planet
+    // rebuild's value-preservation check would catch a positional column shift — most importantly a
+    // building_level <-> energy_percentage swap, since energy_percentage was ALTER-appended LAST
+    // (migration 017) and is the column most at risk (see project_migration_column_order).
     const buildingInsert: Database.Statement = databaseConnection.prepare(
-        "INSERT INTO planet_building (planet_id, player_id, building_type, building_level) VALUES (?, ?, ?, 1)"
+        "INSERT INTO planet_building (planet_id, player_id, building_type, building_level, energy_percentage) VALUES (?, ?, ?, ?, ?)"
     );
+    let buildingIndex: number = 0;
     for (const buildingType of BUILDING_TYPES)
     {
-        buildingInsert.run(planetId, playerId, buildingType);
+        const buildingLevel: number = 3 + buildingIndex;
+        const energyPercentage: number = 40 + 10 * buildingIndex;
+        buildingInsert.run(planetId, playerId, buildingType, buildingLevel, energyPercentage);
+        buildingIndex = buildingIndex + 1;
     }
 
     const resourceInsert: Database.Statement = databaseConnection.prepare(
@@ -289,12 +297,210 @@ function injectFleetMovements(databaseConnection: Database.Database, planetId: n
     const insertFleetShip: Database.Statement = databaseConnection.prepare(
         "INSERT INTO fleet_movement_ship (fleet_id, ship_type, ship_quantity) VALUES (?, ?, 2)"
     );
+    // Cargo + fuel children: these ride along with the fleet. They are not rebuilt by 018, but seeding
+    // them keeps the fixture shaped like a real in-flight fleet and lets the value-preservation check
+    // cover them too.
+    const insertFleetResource: Database.Statement = databaseConnection.prepare(
+        "INSERT INTO fleet_movement_resource (fleet_id, resource_type, resource_quantity) VALUES (?, ?, 1000)"
+    );
+    const insertFleetFuel: Database.Statement = databaseConnection.prepare(
+        "INSERT INTO fleet_movement_fuel (fleet_id, resource_type, resource_quantity) VALUES (?, ?, 50)"
+    );
 
     for (let actionIndex: number = 0; actionIndex < SYNTHETIC_ACTIONS_PER_PLANET; actionIndex = actionIndex + 1)
     {
         const fleetInsert: { id: number } = insertFleet.get(12345 + actionIndex, playerId, planetId, slot, system, SYNTHETIC_GALAXY, slot + 1, system, SYNTHETIC_GALAXY, now, FAR_FUTURE_MS, FAR_FUTURE_MS, now) as { id: number };
         insertFleetShip.run(fleetInsert.id, GameType.ShipType.SmallTransport);
+        insertFleetResource.run(fleetInsert.id, GameType.ResourceType.Metal);
+        insertFleetFuel.run(fleetInsert.id, GameType.ResourceType.Deuterium);
     }
+}
+
+//#endregion
+
+//#region value preservation (the planet rebuild must not shift or drop columns)
+
+// The whole risk of migration 018 is the planet rebuild silently SHIFTING a column (a positional
+// SELECT *), which preserves row COUNTS while corrupting VALUES — exactly the class of bug that hit
+// fleet_movement before (see project_migration_column_order). Row-count checks cannot catch it, so we
+// snapshot the synthetic rows of every rebuilt table BEFORE the migration and assert they come back
+// byte-for-byte AFTER migrate + transfer. Scoped to synthetic players because their building / ship /
+// resource / fleet-action types are renumber-STABLE, so db:transfer's 003 renumber can't confound the
+// diff; the real copied rows are covered by the load checks.
+
+type TableSnapshot =
+{
+    label: string;
+    rows: Record<string, unknown>[];
+};
+
+function captureSyntheticSnapshot(connection: Database.Database, syntheticPlayerIds: Set<number>, postMigration: boolean): TableSnapshot[]
+{
+    const idList: string = Array.from(syntheticPlayerIds).join(", ");
+    // Post-migration the planet table also holds the backfilled moons (zone=2) and has gained a zone
+    // column; restrict the equality snapshot to the original zone=1 planets. Pre-migration there is no
+    // zone column, so the filter is only added afterwards.
+    const planetZoneFilter: string = postMigration === true ? "AND zone = 1" : "";
+
+    const snapshots: TableSnapshot[] =
+    [
+        {
+            label: "planet",
+            rows: connection.prepare(
+                `SELECT id, slot, system, galaxy, size, owner_player_id, claimed_at, last_updated FROM planet WHERE owner_player_id IN (${idList}) ${planetZoneFilter} ORDER BY id`
+            ).all() as Record<string, unknown>[],
+        },
+        {
+            label: "planet_resource",
+            rows: connection.prepare(
+                `SELECT planet_id, player_id, resource_type, resource_quantity FROM planet_resource WHERE player_id IN (${idList}) ORDER BY planet_id, resource_type`
+            ).all() as Record<string, unknown>[],
+        },
+        {
+            label: "planet_building",
+            rows: connection.prepare(
+                `SELECT planet_id, player_id, building_type, building_level, energy_percentage FROM planet_building WHERE player_id IN (${idList}) ORDER BY planet_id, building_type`
+            ).all() as Record<string, unknown>[],
+        },
+        {
+            label: "planet_ship",
+            rows: connection.prepare(
+                `SELECT planet_id, player_id, ship_type, ship_quantity FROM planet_ship WHERE player_id IN (${idList}) ORDER BY planet_id, ship_type`
+            ).all() as Record<string, unknown>[],
+        },
+        {
+            label: "ship_construction",
+            rows: connection.prepare(
+                `SELECT id, planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_ship_construction_ship_row_id FROM ship_construction WHERE player_id IN (${idList}) ORDER BY id`
+            ).all() as Record<string, unknown>[],
+        },
+        {
+            label: "ship_construction_ship",
+            rows: connection.prepare(
+                `SELECT id, ship_construction_id, ship_type, ship_quantity FROM ship_construction_ship WHERE ship_construction_id IN (SELECT id FROM ship_construction WHERE player_id IN (${idList})) ORDER BY id`
+            ).all() as Record<string, unknown>[],
+        },
+        {
+            label: "building_upgrade",
+            rows: connection.prepare(
+                `SELECT id, planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_building_upgrade_building_row_id FROM building_upgrade WHERE player_id IN (${idList}) ORDER BY id`
+            ).all() as Record<string, unknown>[],
+        },
+        {
+            label: "building_upgrade_building",
+            rows: connection.prepare(
+                `SELECT id, building_upgrade_id, building_type FROM building_upgrade_building WHERE building_upgrade_id IN (SELECT id FROM building_upgrade WHERE player_id IN (${idList})) ORDER BY id`
+            ).all() as Record<string, unknown>[],
+        },
+        {
+            label: "fleet_movement",
+            rows: connection.prepare(
+                `SELECT id, seed, player_origin_id, planet_origin_id, planet_origin_slot, planet_origin_system, planet_origin_galaxy, player_target_id, planet_target_id, planet_target_slot, planet_target_system, planet_target_galaxy, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at FROM fleet_movement WHERE player_origin_id IN (${idList}) ORDER BY id`
+            ).all() as Record<string, unknown>[],
+        },
+        {
+            label: "fleet_movement_ship",
+            rows: connection.prepare(
+                `SELECT fleet_id, ship_type, ship_quantity FROM fleet_movement_ship WHERE fleet_id IN (SELECT id FROM fleet_movement WHERE player_origin_id IN (${idList})) ORDER BY fleet_id, ship_type`
+            ).all() as Record<string, unknown>[],
+        },
+        {
+            label: "fleet_movement_resource",
+            rows: connection.prepare(
+                `SELECT fleet_id, resource_type, resource_quantity FROM fleet_movement_resource WHERE fleet_id IN (SELECT id FROM fleet_movement WHERE player_origin_id IN (${idList})) ORDER BY fleet_id, resource_type`
+            ).all() as Record<string, unknown>[],
+        },
+        {
+            label: "fleet_movement_fuel",
+            rows: connection.prepare(
+                `SELECT fleet_id, resource_type, resource_quantity FROM fleet_movement_fuel WHERE fleet_id IN (SELECT id FROM fleet_movement WHERE player_origin_id IN (${idList})) ORDER BY fleet_id, resource_type`
+            ).all() as Record<string, unknown>[],
+        },
+    ];
+
+    return snapshots;
+}
+
+// Diffs the before/after snapshots value-by-value. A label present in one and not the other, a changed
+// row count, or any changed cell is a failure (the row objects keep their SELECT column order, so a
+// stringify compare is exact).
+function collectSnapshotValueFailures(beforeSnapshots: TableSnapshot[], afterSnapshots: TableSnapshot[]): string[]
+{
+    const valueFailures: string[] = [];
+
+    for (const beforeSnapshot of beforeSnapshots)
+    {
+        const afterSnapshot: TableSnapshot | undefined = afterSnapshots.find(
+            (snapshot: TableSnapshot): boolean => snapshot.label === beforeSnapshot.label
+        );
+        if (afterSnapshot === undefined)
+        {
+            valueFailures.push(`${beforeSnapshot.label}: table missing after migration`);
+            continue;
+        }
+
+        const beforeJson: string = JSON.stringify(beforeSnapshot.rows);
+        const afterJson: string = JSON.stringify(afterSnapshot.rows);
+        if (beforeJson !== afterJson)
+        {
+            valueFailures.push(`${beforeSnapshot.label}: ${beforeSnapshot.rows.length} row(s) before vs ${afterSnapshot.rows.length} after — values changed across the migration.\n  before: ${beforeJson}\n  after:  ${afterJson}`);
+        }
+    }
+
+    return valueFailures;
+}
+
+// Asserts 018's backfill: exactly one moon (zone=2) per synthetic player, sitting at their first
+// planet's coordinates and copying its owner / size / timestamps.
+function collectMoonBackfillValueFailures(connection: Database.Database, syntheticPlayerIds: Set<number>): string[]
+{
+    const valueFailures: string[] = [];
+
+    for (const playerId of syntheticPlayerIds)
+    {
+        const firstPlanet: Record<string, unknown> | undefined = connection.prepare(
+            "SELECT slot, system, galaxy, size, owner_player_id, claimed_at, last_updated FROM planet WHERE owner_player_id = ? AND zone = 1 ORDER BY id LIMIT 1"
+        ).get(playerId) as Record<string, unknown> | undefined;
+
+        if (firstPlanet === undefined)
+        {
+            valueFailures.push(`moon backfill: synthetic player ${playerId} has no zone=1 planet`);
+            continue;
+        }
+
+        const moonRows: Record<string, unknown>[] = connection.prepare(
+            "SELECT slot, system, galaxy, size, owner_player_id, claimed_at, last_updated FROM planet WHERE owner_player_id = ? AND zone = 2 ORDER BY id"
+        ).all(playerId) as Record<string, unknown>[];
+
+        if (moonRows.length !== 1)
+        {
+            valueFailures.push(`moon backfill: synthetic player ${playerId} has ${moonRows.length} moon(s), expected exactly 1`);
+            continue;
+        }
+
+        if (JSON.stringify(moonRows[0]) !== JSON.stringify(firstPlanet))
+        {
+            valueFailures.push(`moon backfill: synthetic player ${playerId} moon ${JSON.stringify(moonRows[0])} does not match its first planet ${JSON.stringify(firstPlanet)}`);
+        }
+    }
+
+    return valueFailures;
+}
+
+// Asserts the new fleet zone columns defaulted to 1 (Planet) on the pre-existing in-flight fleets.
+function collectFleetZoneValueFailures(connection: Database.Database, syntheticPlayerIds: Set<number>): string[]
+{
+    const idList: string = Array.from(syntheticPlayerIds).join(", ");
+    const badFleets: Record<string, unknown>[] = connection.prepare(
+        `SELECT id, planet_origin_zone, planet_target_zone FROM fleet_movement WHERE player_origin_id IN (${idList}) AND (planet_origin_zone <> 1 OR planet_target_zone <> 1)`
+    ).all() as Record<string, unknown>[];
+
+    if (badFleets.length === 0)
+    {
+        return [];
+    }
+
+    return [`fleet zone backfill: ${badFleets.length} synthetic fleet(s) did not default origin/target zone to 1: ${JSON.stringify(badFleets)}`];
 }
 
 //#endregion
@@ -344,12 +550,33 @@ async function main(): Promise<void>
     {
         syntheticPlayerIds.add(injectedPlayerId);
     }
+
+    // Snapshot the synthetic rows in their OLD-schema form, before the migration touches anything.
+    const beforeSnapshots: TableSnapshot[] = captureSyntheticSnapshot(injectionConnection, syntheticPlayerIds, false);
     injectionConnection.close();
 
     console.log("--- Running migration against the copy ---");
     runDatabaseScript("db:migrate");
     console.log("--- Running data transfers against the copy ---");
     runDatabaseScript("db:transfer");
+
+    console.log("--- Verifying synthetic values survived the planet rebuild + moon backfill ---");
+    const valueFailures: string[] = [];
+    const verifyConnection: Database.Database = new Database(TEMP_DATABASE_PATH, { readonly: true });
+    const afterSnapshots: TableSnapshot[] = captureSyntheticSnapshot(verifyConnection, syntheticPlayerIds, true);
+    for (const snapshotFailure of collectSnapshotValueFailures(beforeSnapshots, afterSnapshots))
+    {
+        valueFailures.push(snapshotFailure);
+    }
+    for (const moonFailure of collectMoonBackfillValueFailures(verifyConnection, syntheticPlayerIds))
+    {
+        valueFailures.push(moonFailure);
+    }
+    for (const fleetZoneFailure of collectFleetZoneValueFailures(verifyConnection, syntheticPlayerIds))
+    {
+        valueFailures.push(fleetZoneFailure);
+    }
+    verifyConnection.close();
 
     // Only now is it safe to import the app code: its DB connection is a module-load singleton bound to
     // DATABASE_PATH, which must point at our migrated copy.
@@ -386,7 +613,7 @@ async function main(): Promise<void>
     DB.databaseConnection.close();
     cleanupTempArtifacts();
 
-    reportAndExit(loadFailures, playerRows.length);
+    reportAndExit(loadFailures, valueFailures, playerRows.length);
 }
 
 function runDatabaseScript(scriptName: string): void
@@ -414,21 +641,33 @@ function tryLoadPlayer(serverProgress: typeof import("@/lib/gameplay/progressUpd
     }
 }
 
-function reportAndExit(loadFailures: LoadFailure[], playerCount: number): void
+function reportAndExit(loadFailures: LoadFailure[], valueFailures: string[], playerCount: number): void
 {
-    if (loadFailures.length === 0)
+    if (loadFailures.length === 0 && valueFailures.length === 0)
     {
-        console.log(`✅ Migration safety test passed: all ${playerCount} player(s) loaded before and after completion.`);
+        console.log(`✅ Migration safety test passed: all ${playerCount} player(s) loaded before and after completion, and all synthetic values survived the migration.`);
         process.exit(0);
     }
 
-    console.error("⚠️:", `Migration safety test FAILED — ${loadFailures.length} load failure(s):`);
-    for (const loadFailure of loadFailures)
+    if (valueFailures.length > 0)
     {
-        const origin: string = loadFailure.isSynthetic === true
-            ? "SYNTHETIC fixture (likely a stale/invalid seed — fix the injection in this test)"
-            : "REAL data (a real pending action broke across the migration — this is the bug)";
-        console.error("⚠️:", `player ${loadFailure.playerId} [${origin}] phase=${loadFailure.phase}: ${loadFailure.message}`);
+        console.error("⚠️:", `Migration safety test FAILED — ${valueFailures.length} value-preservation failure(s) (the planet rebuild or backfill shifted/lost/changed data):`);
+        for (const valueFailure of valueFailures)
+        {
+            console.error("⚠️:", valueFailure);
+        }
+    }
+
+    if (loadFailures.length > 0)
+    {
+        console.error("⚠️:", `Migration safety test FAILED — ${loadFailures.length} load failure(s):`);
+        for (const loadFailure of loadFailures)
+        {
+            const origin: string = loadFailure.isSynthetic === true
+                ? "SYNTHETIC fixture (likely a stale/invalid seed — fix the injection in this test)"
+                : "REAL data (a real pending action broke across the migration — this is the bug)";
+            console.error("⚠️:", `player ${loadFailure.playerId} [${origin}] phase=${loadFailure.phase}: ${loadFailure.message}`);
+        }
     }
 
     process.exit(1);
