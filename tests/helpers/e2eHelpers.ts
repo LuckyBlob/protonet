@@ -18,6 +18,7 @@ export const PLANET_BUTTON_PATTERN: RegExp = /^Planet \[/;
 export type PlanetRow =
 {
     id: number;
+    zone: number;
     slot: number;
     system: number;
     galaxy: number;
@@ -190,13 +191,13 @@ export function getPlanets(username: string, db: Database.Database): PlanetRow[]
 {
     const playerId: number = getPlayerId(username, db);
     return db.prepare(
-        "SELECT id, slot, system, galaxy FROM planet WHERE owner_player_id = ? ORDER BY claimed_at ASC, id ASC"
+        "SELECT id, zone, slot, system, galaxy FROM planet WHERE owner_player_id = ? ORDER BY claimed_at ASC, id ASC"
     ).all(playerId) as PlanetRow[];
 }
 
 export function planetAddress(planet: PlanetRow): string
 {
-    return StaticDataHelper.formatPlanetAddress(planet.galaxy, planet.system, planet.slot);
+    return StaticDataHelper.formatPlanetAddress(planet.galaxy, planet.system, planet.slot, planet.zone as GameType.PlanetZone);
 }
 
 export function setResource(planetId: number, playerId: number, resourceType: number, quantity: number, db: Database.Database): void
@@ -643,7 +644,7 @@ export function findFreeColonizeTargetAddress(db: Database.Database): PlanetRow
             ).get(galaxy, system, slot) as { id: number } | undefined;
             if (existing === undefined)
             {
-                return { id: -1, slot: slot, system: system, galaxy: galaxy };
+                return { id: -1, zone: GameType.PlanetZone.Planet, slot: slot, system: system, galaxy: galaxy };
             }
         }
     }
@@ -671,7 +672,7 @@ export function insertSeededPlanetForPlayer(playerId: number, db: Database.Datab
                 const result: { id: number } = db.prepare(
                     "INSERT INTO planet (slot, system, galaxy, size, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
                 ).get(slot, system, galaxy, StaticData.STARTING_PLANET_SIZE, playerId, claimedAt, claimedAt) as { id: number };
-                return { id: result.id, slot: slot, system: system, galaxy: galaxy };
+                return { id: result.id, zone: GameType.PlanetZone.Planet, slot: slot, system: system, galaxy: galaxy };
             }
         }
     }

@@ -20,7 +20,7 @@ export function PlanetSelector(props: PlanetSelectorProps): ReactElement
 
 	const planetsWithDisplayName: { planetData: CoreType.PlanetData; displayName: string }[] = props.clientDataStateResult.psController[0].dbData.planetDatas.map((planetData: CoreType.PlanetData) =>
 	{
-		const displayName: string = StaticDataHelper.formatPlanetAddress(planetData.planetRow.galaxy, planetData.planetRow.system, planetData.planetRow.slot);
+		const displayName: string = StaticDataHelper.formatPlanetAddress(planetData.planetRow.galaxy, planetData.planetRow.system, planetData.planetRow.slot, planetData.planetRow.zone as GameType.PlanetZone);
 
 		return { planetData, displayName };
 	});
@@ -36,7 +36,7 @@ export function PlanetSelector(props: PlanetSelectorProps): ReactElement
 		return planetData.planetRow.id === props.clientDataStateResult.psController[0].selectedPlanetId;
 	});
 	const selectedPlanetDisplayName: string = selectedPlanetData !== undefined
-		? StaticDataHelper.formatPlanetAddress(selectedPlanetData.planetRow.galaxy, selectedPlanetData.planetRow.system, selectedPlanetData.planetRow.slot)
+		? StaticDataHelper.formatPlanetAddress(selectedPlanetData.planetRow.galaxy, selectedPlanetData.planetRow.system, selectedPlanetData.planetRow.slot, selectedPlanetData.planetRow.zone as GameType.PlanetZone)
 		: "...";
 
 	const selectorElement: ReactElement =

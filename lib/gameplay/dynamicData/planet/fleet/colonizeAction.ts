@@ -25,8 +25,8 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | nu
         throw new Error(`⚠️: Failed to resolve colonize action because origin planet was null.`);
     }
 
-    // Too many planets
-    if (originPlayerData.planetDatas.length >= StaticData.MAX_ALLOWED_PLANETS)
+    // Too many planets (moons don't count toward the colony cap)
+    if (CoreType.getOwnedPlanets(originPlayerData.planetDatas).length >= StaticData.MAX_ALLOWED_PLANETS)
     {
         FleetData.setFleetReturnTrip(null, fleetMovement);
         fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
@@ -39,6 +39,7 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | nu
         galaxy: fleetMovement.fleetMovementRow.planet_target_galaxy,
         system: fleetMovement.fleetMovementRow.planet_target_system,
         slot: fleetMovement.fleetMovementRow.planet_target_slot,
+        zone: fleetMovement.fleetMovementRow.planet_target_zone as GameType.PlanetZone,
     };
 
     // if that address is now owned → return trip + failure message, like the too-many-planets branch
@@ -84,7 +85,7 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | nu
 function addColonizeActionMessages(fleetMovement: CoreType.FleetMovement): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
     const shipsList: string = FleetData.buildShipsListFromFleetMovement(fleetMovement.fleetMovementShipRows);
     const resourcesList: string = FleetData.buildResourcesListFromFleetMovement(fleetMovement.fleetMovementResourceRows);
@@ -119,7 +120,7 @@ function removeSingleColonyShipFromFleetMovement(fleetMovement: CoreType.FleetMo
 function addTooManyPlanetsFailureMessage(fleetMovement: CoreType.FleetMovement): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
 
     fleetMovement.originMessageRow =
@@ -146,7 +147,7 @@ function addressIsTaken(address: GameType.PlanetAddress): boolean
 function addColonizeFailedTargetTakenMessage(fleetMovement: CoreType.FleetMovement): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
 
     fleetMovement.originMessageRow =

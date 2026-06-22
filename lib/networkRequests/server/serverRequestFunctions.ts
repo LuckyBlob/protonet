@@ -543,7 +543,7 @@ export function serverGetPlanetDatas(playerId: number): CoreType.PlanetData[]
 export function serverFindAllPlanetsPublic(): DBType.PublicPlanetRow[]
 {
     const planetRows: DBType.PublicPlanetRow[] = DB.databaseConnection.prepare(
-        "SELECT id, slot, system, galaxy, owner_player_id FROM planet WHERE owner_player_id IS NOT NULL ORDER BY galaxy ASC, system ASC, slot ASC"
+        "SELECT id, zone, slot, system, galaxy, owner_player_id FROM planet WHERE owner_player_id IS NOT NULL ORDER BY galaxy ASC, system ASC, slot ASC"
     ).all() as DBType.PublicPlanetRow[];
     return planetRows;
 }
@@ -598,6 +598,10 @@ function createPlayer(userId: number): void
         ServerDynamicData.serverUpdateAllPlanetData(firstPlanetId, playerRow.id, StaticData.STARTING_PLANET_DATA);
         ServerDynamicData.serverUpdateAllPlanetData(secondPlanetId, playerRow.id, StaticData.STARTING_PLANET_DATA);
 
+        // Planet ids are -1 until updated when added for the first time.
+        const firstMoonId: number = ServerPlanetManagement.createMoonForPlanet(firstPlanetId, playerRow.id, now);
+        ServerDynamicData.serverUpdateAllPlanetData(firstMoonId, playerRow.id, StaticData.STARTING_PLANET_DATA);
+
         const serverData: CoreType.ServerData = ServerType.getServerData();
         ServerProgress.applyPlayerUpdate(playerRow.id, serverData, now + 1);
     });
@@ -617,11 +621,11 @@ function getPlanetsByOwner(playerId: number): DBType.PlanetRow[]
     ).all(playerId) as DBType.PlanetRow[];
 }
 
-export function getPlanetDataByCoords(galaxy: number, system: number, slot: number): CoreType.PlanetData | null
+export function getPlanetDataByCoords(galaxy: number, system: number, slot: number, zone: GameType.PlanetZone): CoreType.PlanetData | null
 {
     const planetRow: DBType.PlanetRow | undefined = DB.databaseConnection.prepare(
-        "SELECT * FROM planet WHERE galaxy = ? AND system = ? AND slot = ?"
-    ).get(galaxy, system, slot) as DBType.PlanetRow | undefined;
+        "SELECT * FROM planet WHERE galaxy = ? AND system = ? AND slot = ? AND zone = ?"
+    ).get(galaxy, system, slot, zone) as DBType.PlanetRow | undefined;
 
     if (planetRow === undefined)
     {
@@ -1204,7 +1208,11 @@ export function tryAbandonPlanetLogic(playerId: number, serverData: CoreType.Ser
         return { success: false, failureReason: "Wrong planet to abandon.", playerStateResult: playerData };
     }
 
-    if (playerData.planetDatas.length === 1)
+    // Only abandoning a planet (which also takes its moon/debris) is gated by the one-planet floor.
+    // Abandoning a moon/debris leaves the planet count untouched, so it is always allowed.
+    const isPlanetZone: boolean = relevantPlanetData.planetRow.zone === GameType.PlanetZone.Planet;
+    const ownedPlanetCount: number = CoreType.getOwnedPlanets(playerData.planetDatas).length;
+    if (isPlanetZone === true && ownedPlanetCount === 1)
     {
         return { success: false, failureReason: "Players must keep 1 planet minimum.", playerStateResult: playerData };
     }
@@ -1241,19 +1249,21 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         return { success: false, failureReason: "Wrong planet to send fleet from.", playerStateResult: playerData };
     }
 
-    const targetPlanetData: CoreType.PlanetData | null = getPlanetDataByCoords(requestData.targetPlanetGalaxy, requestData.targetPlanetSystem, requestData.targetPlanetPosition);
+    const targetAddress: GameType.PlanetAddress =
+    {
+        galaxy: requestData.targetPlanetGalaxy,
+        system: requestData.targetPlanetSystem,
+        slot: requestData.targetPlanetPosition,
+        zone: requestData.targetPlanetZone,
+    }
+
+    const targetPlanetData: CoreType.PlanetData | null = getPlanetDataByCoords(targetAddress.galaxy, targetAddress.system, targetAddress.slot, targetAddress.zone);
     if (targetPlanetData === null && requestData.fleetAction !== GameType.FleetActionType.Colonize)
     {
         return { success: false, failureReason: "Target planet is invalid.", playerStateResult: playerData };
     }
 
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
-    const targetAddress: GameType.PlanetAddress = 
-    {
-        galaxy: requestData.targetPlanetGalaxy,
-        system: requestData.targetPlanetSystem,
-        slot: requestData.targetPlanetPosition,
-    }
 
     for (const shipQuantity of shipQuantities.values())
     {

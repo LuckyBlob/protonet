@@ -103,6 +103,7 @@ export type SendFleet_ClientRequest = BaseClientRequest &
 	targetPlanetGalaxy: number;
 	targetPlanetSystem: number;
 	targetPlanetPosition: number;
+	targetPlanetZone: GameType.PlanetZone;
 	fleetAction: GameType.FleetActionType;
 	serializedShipQuantities: Serialization.SerializedNumberNumberMap;
 	serializedResourceQuantities: Serialization.SerializedNumberNumberMap

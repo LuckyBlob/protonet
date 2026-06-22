@@ -320,6 +320,7 @@ export function buildPublicPlanetRow(overrides?: Partial<DBType.PublicPlanetRow>
     const row: DBType.PublicPlanetRow =
     {
         id: 1,
+        zone: 1,
         slot: 3,
         system: 1,
         galaxy: 1,

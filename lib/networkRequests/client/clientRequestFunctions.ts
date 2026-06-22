@@ -303,6 +303,7 @@ export async function clientTrySendFleetRequest(psController: CoreType.PSControl
         targetPlanetGalaxy: targetPlanetAddress.galaxy,
         targetPlanetSystem: targetPlanetAddress.system,
         targetPlanetPosition: targetPlanetAddress.slot,
+        targetPlanetZone: targetPlanetAddress.zone,
         fleetAction: fleetAction,
         serializedShipQuantities: Serialization.serializeNumberNumberMap(shipQuantities),
         serializedResourceQuantities: Serialization.serializeNumberNumberMap(resourceQuantities),

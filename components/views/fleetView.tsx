@@ -36,6 +36,7 @@ type FleetViewData =
     galaxyIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void];
     systemIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void];
     slotIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void];
+    zoneIdState: [GameType.PlanetZone, (value: GameType.PlanetZone) => void];
     requestedShipQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ShipType>;
     requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ResourceType>;
     fleetActionState: [GameType.FleetActionType, (value: GameType.FleetActionType) => void];
@@ -46,8 +47,8 @@ type FleetViewData =
 function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement, publicPlanetRows: DBType.PublicPlanetRow[]): ReactElement
 {
     const fleetMovementRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const originAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_origin_galaxy, fleetMovementRow.planet_origin_system, fleetMovementRow.planet_origin_slot);
-    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot);
+    const originAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_origin_galaxy, fleetMovementRow.planet_origin_system, fleetMovementRow.planet_origin_slot, fleetMovementRow.planet_origin_zone as GameType.PlanetZone);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot, fleetMovementRow.planet_target_zone as GameType.PlanetZone);
     const actionName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.fleetAction(fleetMovementRow.fleet_action_type));
     const isReturnTrip: boolean = fleetMovementRow.is_return_trip === 1;
     const remainingMs: number | null = FleetData.getFleetMovementRemainingMs(fleetMovement);
@@ -218,6 +219,7 @@ function getFleetViewTargetAddress(data: FleetViewData): GameType.PlanetAddress
         galaxy: data.galaxyIdState[0],
         system: data.systemIdState[0],
         slot: data.slotIdState[0],
+        zone: data.zoneIdState[0],
     };
 
     return targetAddress;
@@ -273,7 +275,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
     const ownedPlanetOptionElements: ReactElement[] = ownedPlanetDatas.map((planetData: CoreType.PlanetData): ReactElement =>
     {
         const planetRow: DBType.PlanetRow = planetData.planetRow;
-        const addressLabel: string = StaticDataHelper.formatPlanetAddress(planetRow.galaxy, planetRow.system, planetRow.slot);
+        const addressLabel: string = StaticDataHelper.formatPlanetAddress(planetRow.galaxy, planetRow.system, planetRow.slot, planetRow.zone as GameType.PlanetZone);
 
         const optionElement: ReactElement =
         (
@@ -584,6 +586,7 @@ export function FleetView(props: FleetViewProps): ReactElement
     const galaxyIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(StaticData.GALAXY_COUNT);
     const systemIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(StaticData.SYSTEM_COUNT);
     const slotIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(StaticData.SLOT_COUNT);
+    const zoneIdState: [GameType.PlanetZone, (value: GameType.PlanetZone) => void] = useState<GameType.PlanetZone>(GameType.PlanetZone.Planet);
     const requestedShipQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ShipType> = HelperElement.useRequestedQuantities<GameType.ShipType>();
     const requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ResourceType> = HelperElement.useRequestedQuantities<GameType.ResourceType>();
     const fleetActionState: [GameType.FleetActionType, (value: GameType.FleetActionType) => void] = useState<GameType.FleetActionType>(GameType.FleetActionType.Station);
@@ -596,6 +599,7 @@ export function FleetView(props: FleetViewProps): ReactElement
         galaxyIdState[1](1);
         systemIdState[1](1);
         slotIdState[1](1);
+        zoneIdState[1](GameType.PlanetZone.Planet);
         fleetActionState[1](GameType.FleetActionType.Station);
         sendErrorState[1](null);
     }, [selectedPlanetId]);
@@ -617,6 +621,7 @@ export function FleetView(props: FleetViewProps): ReactElement
             galaxyIdState: galaxyIdState,
             systemIdState: systemIdState,
             slotIdState: slotIdState,
+            zoneIdState: zoneIdState,
             requestedShipQuantitiesState: cappedRequestedShipQuantitiesState,
             requestedResourceQuantitiesState: requestedResourceQuantitiesState,
             fleetActionState: fleetActionState,

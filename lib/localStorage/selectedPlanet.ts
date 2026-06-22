@@ -74,12 +74,16 @@ function getRelevantSelectedPlanetId(planetDatas: CoreType.PlanetData[], candida
 		throw new Error(`Player has no planets!`);
 	}
 
+    // Default to a real planet rather than a moon/debris row when there's no valid stored choice.
+    const ownedPlanets: CoreType.PlanetData[] = CoreType.getOwnedPlanets(planetDatas);
+    const defaultPlanetData: CoreType.PlanetData = ownedPlanets.length > 0 ? ownedPlanets[0] : planetDatas[0];
+
     if (candidateId === null)
     {
-        return planetDatas[0].planetRow.id;
+        return defaultPlanetData.planetRow.id;
     }
 
-    return CoreType.getPlanetDataForId(planetDatas, candidateId)?.planetRow.id ?? planetDatas[0].planetRow.id;
+    return CoreType.getPlanetDataForId(planetDatas, candidateId)?.planetRow.id ?? defaultPlanetData.planetRow.id;
 }
 
 export function getSelectedPlanetDataPredicted(playerState: CoreType.PlayerState): CoreType.PlanetData

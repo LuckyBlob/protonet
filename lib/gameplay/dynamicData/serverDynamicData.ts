@@ -674,7 +674,7 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: CoreType
         
         // On delete cascade will delete the ship rows and resource rows
         const fleetMovementStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO fleet_movement (seed, player_origin_id, planet_origin_id, planet_origin_slot, planet_origin_system, planet_origin_galaxy, player_target_id, planet_target_id, planet_target_slot, planet_target_system, planet_target_galaxy, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
+            "INSERT INTO fleet_movement (seed, player_origin_id, planet_origin_id, planet_origin_zone, planet_origin_slot, planet_origin_system, planet_origin_galaxy, player_target_id, planet_target_id, planet_target_zone, planet_target_slot, planet_target_system, planet_target_galaxy, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
         );
         const fleetMovementShipStatement: Database.Statement = DB.databaseConnection.prepare(
             "INSERT INTO fleet_movement_ship VALUES (?, ?, ?)"
@@ -698,11 +698,13 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: CoreType
                 fleetMovement.fleetMovementRow.seed,
                 fleetMovement.fleetMovementRow.player_origin_id,
                 fleetMovement.fleetMovementRow.planet_origin_id,
+                fleetMovement.fleetMovementRow.planet_origin_zone,
                 fleetMovement.fleetMovementRow.planet_origin_slot,
                 fleetMovement.fleetMovementRow.planet_origin_system,
                 fleetMovement.fleetMovementRow.planet_origin_galaxy,
                 fleetMovement.fleetMovementRow.player_target_id,
                 fleetMovement.fleetMovementRow.planet_target_id,
+                fleetMovement.fleetMovementRow.planet_target_zone,
                 fleetMovement.fleetMovementRow.planet_target_slot,
                 fleetMovement.fleetMovementRow.planet_target_system,
                 fleetMovement.fleetMovementRow.planet_target_galaxy,

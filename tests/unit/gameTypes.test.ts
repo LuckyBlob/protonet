@@ -6,45 +6,45 @@ describe('getDistance', () =>
 {
     it('returns 0 for the same address', () =>
     {
-        const address: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1 };
+        const address: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
         expect(StaticDataHelper.getDistance(address, address)).toBe(0);
     });
 
     it('computes slot-only difference (same galaxy, same system)', () =>
     {
-        const origin: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1 };
-        const target: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 3 };
+        const origin: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
+        const target: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 3, zone: GameType.PlanetZone.Planet };
         // 1000 + 2*55 = 1110
         expect(StaticDataHelper.getDistance(origin, target)).toBe(1110);
     });
 
     it('computes system difference (same galaxy, ignores slot)', () =>
     {
-        const origin: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1 };
-        const target: GameType.PlanetAddress = { galaxy: 1, system: 5, slot: 4 };
+        const origin: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
+        const target: GameType.PlanetAddress = { galaxy: 1, system: 5, slot: 4, zone: GameType.PlanetZone.Planet };
         // 2700 + 4*95 = 3080 (slot difference ignored when system differs)
         expect(StaticDataHelper.getDistance(origin, target)).toBe(3080);
     });
 
     it('computes galaxy difference (ignores system and slot)', () =>
     {
-        const origin: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1 };
-        const target: GameType.PlanetAddress = { galaxy: 2, system: 10, slot: 5 };
+        const origin: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
+        const target: GameType.PlanetAddress = { galaxy: 2, system: 10, slot: 5, zone: GameType.PlanetZone.Planet };
         // 1 * 20000 = 20000 (system and slot ignored when galaxy differs)
         expect(StaticDataHelper.getDistance(origin, target)).toBe(20000);
     });
 
     it('is symmetric', () =>
     {
-        const a: GameType.PlanetAddress = { galaxy: 1, system: 3, slot: 2 };
-        const b: GameType.PlanetAddress = { galaxy: 1, system: 10, slot: 4 };
+        const a: GameType.PlanetAddress = { galaxy: 1, system: 3, slot: 2, zone: GameType.PlanetZone.Planet };
+        const b: GameType.PlanetAddress = { galaxy: 1, system: 10, slot: 4, zone: GameType.PlanetZone.Planet };
         expect(StaticDataHelper.getDistance(a, b)).toBe(StaticDataHelper.getDistance(b, a));
     });
 
     it('uses absolute galaxy difference', () =>
     {
-        const a: GameType.PlanetAddress = { galaxy: 2, system: 1, slot: 1 };
-        const b: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1 };
+        const a: GameType.PlanetAddress = { galaxy: 2, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
+        const b: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
         expect(StaticDataHelper.getDistance(a, b)).toBe(20000);
     });
 });
@@ -53,26 +53,26 @@ describe('isSameAddress', () =>
 {
     it('returns true for identical addresses', () =>
     {
-        const address: GameType.PlanetAddress = { galaxy: 2, system: 5, slot: 3 };
+        const address: GameType.PlanetAddress = { galaxy: 2, system: 5, slot: 3, zone: GameType.PlanetZone.Planet };
         expect(StaticDataHelper.isSameAddress(address, address)).toBe(true);
     });
 
     it('returns false when galaxy differs', () =>
     {
-        const base: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1 };
-        expect(StaticDataHelper.isSameAddress(base, { galaxy: 2, system: 1, slot: 1 })).toBe(false);
+        const base: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
+        expect(StaticDataHelper.isSameAddress(base, { galaxy: 2, system: 1, slot: 1, zone: GameType.PlanetZone.Planet })).toBe(false);
     });
 
     it('returns false when system differs', () =>
     {
-        const base: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1 };
-        expect(StaticDataHelper.isSameAddress(base, { galaxy: 1, system: 2, slot: 1 })).toBe(false);
+        const base: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
+        expect(StaticDataHelper.isSameAddress(base, { galaxy: 1, system: 2, slot: 1, zone: GameType.PlanetZone.Planet })).toBe(false);
     });
 
     it('returns false when slot differs', () =>
     {
-        const base: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1 };
-        expect(StaticDataHelper.isSameAddress(base, { galaxy: 1, system: 1, slot: 2 })).toBe(false);
+        const base: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
+        expect(StaticDataHelper.isSameAddress(base, { galaxy: 1, system: 1, slot: 2, zone: GameType.PlanetZone.Planet })).toBe(false);
     });
 });
 
@@ -80,12 +80,12 @@ describe('formatPlanetAddress', () =>
 {
     it('produces "[g:s:p]" formatted output', () =>
     {
-        expect(StaticDataHelper.formatPlanetAddress(1, 5, 3)).toBe("[1:5:3]");
+        expect(StaticDataHelper.formatPlanetAddress(1, 5, 3, GameType.PlanetZone.Planet)).toBe("[1:5:3]");
     });
 
     it('uses the values as-is without padding', () =>
     {
-        expect(StaticDataHelper.formatPlanetAddress(2, 20, 5)).toBe("[2:20:5]");
+        expect(StaticDataHelper.formatPlanetAddress(2, 20, 5, GameType.PlanetZone.Planet)).toBe("[2:20:5]");
     });
 });
 

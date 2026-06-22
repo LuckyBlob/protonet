@@ -168,7 +168,7 @@ describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
     // expressed as requirements on FLEET_ACTION_INFOS and evaluated through the requirement system.
     const PLANET_ID: number = 1;
     const originPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-    const dummyTargetAddress: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1 };
+    const dummyTargetAddress: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
     const noResources: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 
     function getFailed(player: CoreType.PlayerData, action: GameType.FleetActionType, shipQuantities: Map<GameType.ShipType, number>, targetOwnerPlayerId: number | null): RequirementType.Requirement[]
@@ -474,8 +474,8 @@ describe('buildShipsListFromFleetMovement', () =>
 
 describe('computeFleetFuelAndSpace', () =>
 {
-    const origin: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 3 };
-    const target: GameType.PlanetAddress = { galaxy: 1, system: 5, slot: 3 };
+    const origin: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 3, zone: GameType.PlanetZone.Planet };
+    const target: GameType.PlanetAddress = { galaxy: 1, system: 5, slot: 3, zone: GameType.PlanetZone.Planet };
 
     it('returns positive totalFuel and a non-negative availableSpace', () =>
     {
@@ -494,7 +494,7 @@ describe('computeFleetFuelAndSpace', () =>
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
-        const farTarget: GameType.PlanetAddress = { galaxy: 2, system: 20, slot: 5 };
+        const farTarget: GameType.PlanetAddress = { galaxy: 2, system: 20, slot: 5, zone: GameType.PlanetZone.Planet };
         const result: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(playerData, origin, farTarget, shipQuantities, serverData);
 
         expect(result.availableSpace).toBeGreaterThanOrEqual(0);

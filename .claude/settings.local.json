@@ -101,7 +101,10 @@
       "Bash(break)",
       "Bash(ls -la .github/workflows/)",
       "Bash(ls *.sh deploy*)",
-      "Bash(ssh -o BatchMode=yes -o ConnectTimeout=10 lawson@192.168.0.243 'ls -la ~/www/ | grep -iE \"deploy|\\\\.sh$\"; echo \"---\"; ls ~/www/*.sh 2>/dev/null')"
+      "Bash(ssh -o BatchMode=yes -o ConnectTimeout=10 lawson@192.168.0.243 'ls -la ~/www/ | grep -iE \"deploy|\\\\.sh$\"; echo \"---\"; ls ~/www/*.sh 2>/dev/null')",
+      "PowerShell(pnpm exec tsc --noEmit)",
+      "PowerShell(pnpm exec tsc --noEmit; \"exit code: $LASTEXITCODE\")",
+      "Bash(node -e \"console.log\\(JSON.stringify\\(require\\('./package.json'\\).scripts,null,2\\)\\)\")"
     ]
   }
 }

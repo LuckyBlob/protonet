@@ -418,6 +418,16 @@ export const PLAYER_VALUE_INFOS: ReadonlyMap<GameType.PlayerValueType, GameType.
 //#endregion
 
 //#region Planet
+export const PLANET_ZONE_INFOS: ReadonlyMap<GameType.PlanetZone, GameType.PlanetZoneInfo> = new Map<GameType.PlanetZone, GameType.PlanetZoneInfo>
+([
+    [GameType.PlanetZone.Planet, {
+		displayName: "Planet",}],
+	[GameType.PlanetZone.Moon, {
+		displayName: "Moon",}],
+	[GameType.PlanetZone.DebrisField, {
+		displayName: "Debris Field",}],
+]);
+
 export const STARTING_PLANET_DATA: CoreType.DynamicPlanetData =
 {
 	...structuredClone(CoreType.EmptyPlanetData),

@@ -18,6 +18,11 @@ export function getResearchInfo(researchType: GameType.ResearchType): GameType.R
     return StaticData.REASEARCH_INFO.get(researchType);
 }
 
+export function getPlanetZoneInfo(zone: GameType.PlanetZone): GameType.PlanetZoneInfo | undefined
+{
+    return StaticData.PLANET_ZONE_INFOS.get(zone);
+}
+
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Resource): GameType.ResourceType[];
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Building): GameType.BuildingType[];
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Ship): GameType.ShipType[];
@@ -94,9 +99,22 @@ export function isSameAddress(origin: GameType.PlanetAddress, target: GameType.P
     return (origin.galaxy === target.galaxy) && (origin.system === target.system) && (origin.slot === target.slot)
 }
 
-export function formatPlanetAddress(galaxy: number, system: number, slot: number): string
+export function formatPlanetAddress(galaxy: number, system: number, slot: number, zone: GameType.PlanetZone): string
 {
-    return `[${galaxy}:${system}:${slot}]`;
+    const planetZoneInfo: GameType.PlanetZoneInfo | undefined = getPlanetZoneInfo(zone);
+    if (planetZoneInfo === undefined)
+    {
+        throw new Error(`formatPlanetAddress received an unknown zone ${zone} for [${galaxy}:${system}:${slot}].`);
+    }
+
+    const baseLabel: string = `[${galaxy}:${system}:${slot}]`;
+
+    if (zone === GameType.PlanetZone.Planet)
+    {
+        return baseLabel;
+    }
+
+    return `${baseLabel} (${planetZoneInfo.displayName})`;
 }
 
 export function getPlayerName(publicPlayerRows: DBType.PublicPlayerRow[], playerId: number | null): string

@@ -151,7 +151,7 @@ function addCollectActionSuccessMessage(targetPlayerData: CoreType.PlayerData, f
     const publicPlayerRows: DBType.PublicPlayerRow[] = targetPlayerData.publicPlayerRows;
     const originPlayerName: string = StaticDataHelper.getPlayerName(publicPlayerRows, fleetRow.player_origin_id);
     const targetPlayerName: string = StaticDataHelper.getPlayerName(publicPlayerRows, fleetRow.player_target_id);
-    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
     const collectedResourcesList: string = FleetData.buildResourcesListFromFleetMovement(fleetMovement.fleetMovementResourceRows);
 
@@ -187,7 +187,7 @@ function addCollectActionFailureMessage(targetPlayerData: CoreType.PlayerData, f
     const publicPlayerRows: DBType.PublicPlayerRow[] = targetPlayerData.publicPlayerRows;
     const originPlayerName: string = StaticDataHelper.getPlayerName(publicPlayerRows, fleetRow.player_origin_id);
     const targetPlayerName: string = StaticDataHelper.getPlayerName(publicPlayerRows, fleetRow.player_target_id);
-    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
 
     fleetMovement.originMessageRow =

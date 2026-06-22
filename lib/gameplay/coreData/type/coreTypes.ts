@@ -271,12 +271,26 @@ export function getPlanetDataIndexForId(planetDatas: PlanetData[], planetId: num
 
 export function getPlanetAddress(planetData: PlanetData): GameType.PlanetAddress
 {
-    const planetAddress: GameType.PlanetAddress = 
+    const planetAddress: GameType.PlanetAddress =
     {
         galaxy: planetData.planetRow.galaxy,
         system: planetData.planetRow.system,
         slot: planetData.planetRow.slot,
+        zone: planetData.planetRow.zone as GameType.PlanetZone,
     }
 
     return planetAddress;
+}
+
+// Canonical "how many real planets does this player have" filter. A moon (and later a debris field)
+// is a planet row tagged with a non-Planet zone, so planetDatas.length over-counts. Colony caps,
+// the last-planet abandon guard and default planet selection must route through this.
+export function getOwnedPlanets(planetDatas: PlanetData[]): PlanetData[]
+{
+    const ownedPlanets: PlanetData[] = planetDatas.filter((planetData: PlanetData): boolean =>
+    {
+        return planetData.planetRow.zone === GameType.PlanetZone.Planet;
+    });
+
+    return ownedPlanets;
 }

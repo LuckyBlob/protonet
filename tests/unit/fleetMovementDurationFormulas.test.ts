@@ -4,10 +4,10 @@ import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
-const ORIGIN_SAME: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 3 };
-const TARGET_SLOT_DIFF: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 4 };
-const TARGET_SYSTEM_DIFF: GameType.PlanetAddress = { galaxy: 1, system: 5, slot: 3 };
-const TARGET_GALAXY_DIFF: GameType.PlanetAddress = { galaxy: 2, system: 1, slot: 3 };
+const ORIGIN_SAME: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 3, zone: GameType.PlanetZone.Planet };
+const TARGET_SLOT_DIFF: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 4, zone: GameType.PlanetZone.Planet };
+const TARGET_SYSTEM_DIFF: GameType.PlanetAddress = { galaxy: 1, system: 5, slot: 3, zone: GameType.PlanetZone.Planet };
+const TARGET_GALAXY_DIFF: GameType.PlanetAddress = { galaxy: 2, system: 1, slot: 3, zone: GameType.PlanetZone.Planet };
 // A default player has no engine-tech research, so every ship resolves to its base speed tier.
 const PLAYER_DATA: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
 

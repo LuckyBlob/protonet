@@ -63,6 +63,7 @@ export type PlanetRow =
 export type PublicPlanetRow =
 {
 	id: number;
+	zone: number;
 	slot: number;
 	system: number;
 	galaxy: number;

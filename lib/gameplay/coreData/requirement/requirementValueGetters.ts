@@ -79,7 +79,7 @@ export function playerPlanetCount(): RequirementType.ThingValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
-        return context.playerData.planetDatas.length;
+        return CoreType.getOwnedPlanets(context.playerData.planetDatas).length;
     };
 }
 

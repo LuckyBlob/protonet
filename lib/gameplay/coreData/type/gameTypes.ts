@@ -181,6 +181,18 @@ export type FleetActionInfo =
 //#endregion
 
 //#region Planet
+export const PlanetZone =
+{
+    Planet: 1,
+    Moon: 2,
+    DebrisField: 3,
+} as const;
+export type PlanetZone = typeof PlanetZone[keyof typeof PlanetZone];
+export type PlanetZoneInfo =
+{
+	displayName: string;
+}
+
 export type SlotSizeRange =
 {
 	min: number;
@@ -190,7 +202,8 @@ export type PlanetAddress =
 {
     galaxy: number,
     system: number,
-    slot: number
+    slot: number,
+    zone: PlanetZone
 }
 //#endregion
 
