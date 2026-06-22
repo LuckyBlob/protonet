@@ -10,11 +10,7 @@ export function computeResearchDurationSeconds(currentResearchLevel: number, res
 {
     try
     {
-        const researchInfo: GameType.ResearchInfo | undefined = StaticDataHelper.getResearchInfo(researchType);
-        if (researchInfo === undefined)
-        {
-            throw new Error(`⚠️: Research type ${researchType} has no research info.`);
-        }
+        const researchInfo: GameType.ResearchInfo = StaticDataHelper.getResearchInfo(researchType);
         return computeResearchDurationSeconds_SimpleResearch(currentResearchLevel, researchInfo, researchType, playerData, planetId, serverData);
     }
     catch (error: unknown)

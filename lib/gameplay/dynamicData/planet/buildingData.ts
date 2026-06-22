@@ -86,8 +86,8 @@ function getProductionBuildingTypeMapForResourceType(resourceType: GameType.Reso
 	const buildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building)
 	for (const buildingType of buildingTypes)
 	{
-		const buildingStats: GameType.BuildingStats | undefined = StaticDataHelper.getBuildingStats(buildingType);
-		if (buildingStats === undefined || buildingStats.productionStats === undefined)
+		const buildingStats: GameType.BuildingStats = StaticDataHelper.getBuildingStats(buildingType);
+		if (buildingStats.productionStats === undefined)
 		{
 			continue;
 		}

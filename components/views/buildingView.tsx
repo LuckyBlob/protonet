@@ -228,8 +228,14 @@ export function BuildingView(props: BuildingViewProps): ReactElement
 	try
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
+		const selectedZone: GameType.PlanetZone = selectedPlanetDataPredicted.planetRow.zone as GameType.PlanetZone;
 
-		const rowElements: ReactElement[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building).map((buildingType: GameType.BuildingType): ReactElement =>
+		const buildableBuildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building).filter((buildingType: GameType.BuildingType): boolean =>
+		{
+			return StaticDataHelper.isBuildableOnZone(StaticDataHelper.getBuildingStats(buildingType).buildableZones, selectedZone);
+		});
+
+		const rowElements: ReactElement[] = buildableBuildingTypes.map((buildingType: GameType.BuildingType): ReactElement =>
 		{
 			return renderBuildingRow(props, selectedPlanetDataPredicted, buildingType);
 		});

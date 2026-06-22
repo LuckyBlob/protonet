@@ -35,6 +35,7 @@ export type BuildingStats =
 {
 	displayName: string,
 	requirements?: RequirementType.Requirement[];
+	buildableZones: PlanetZone[];
 	costFunctionType?: BuildingCostFunctionType;
 	costStats?: BuildingCostStats;
 	productionFunctionType?: ProductionFunctionType;

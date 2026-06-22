@@ -3,24 +3,59 @@ import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as DBType from "@/lib/db/dbTypes";
 
-export function getBuildingStats(buildingType: GameType.BuildingType): GameType.BuildingStats | undefined
+export function getBuildingStats(buildingType: GameType.BuildingType): GameType.BuildingStats
 {
-    return StaticData.BUILDING_STATS.get(buildingType);
+    const buildingStats: GameType.BuildingStats | undefined = StaticData.BUILDING_STATS.get(buildingType);
+    if (buildingStats === undefined)
+    {
+        throw new Error(`No BuildingStats for buildingType ${buildingType}.`);
+    }
+
+    return buildingStats;
 }
 
-export function getShipStats(shipType: GameType.ShipType): GameType.ShipStats | undefined
+export function getShipStats(shipType: GameType.ShipType): GameType.ShipStats
 {
-    return StaticData.SHIP_STATS.get(shipType);
+    const shipStats: GameType.ShipStats | undefined = StaticData.SHIP_STATS.get(shipType);
+    if (shipStats === undefined)
+    {
+        throw new Error(`No ShipStats for shipType ${shipType}.`);
+    }
+
+    return shipStats;
 }
 
-export function getResearchInfo(researchType: GameType.ResearchType): GameType.ResearchInfo | undefined
+export function getResearchInfo(researchType: GameType.ResearchType): GameType.ResearchInfo
 {
-    return StaticData.REASEARCH_INFO.get(researchType);
+    const researchInfo: GameType.ResearchInfo | undefined = StaticData.REASEARCH_INFO.get(researchType);
+    if (researchInfo === undefined)
+    {
+        throw new Error(`No ResearchInfo for researchType ${researchType}.`);
+    }
+
+    return researchInfo;
 }
 
-export function getPlanetZoneInfo(zone: GameType.PlanetZone): GameType.PlanetZoneInfo | undefined
+export function getFleetActionInfo(fleetActionType: GameType.FleetActionType): GameType.FleetActionInfo
 {
-    return StaticData.PLANET_ZONE_INFOS.get(zone);
+    const fleetActionInfo: GameType.FleetActionInfo | undefined = StaticData.FLEET_ACTION_INFOS.get(fleetActionType);
+    if (fleetActionInfo === undefined)
+    {
+        throw new Error(`No FleetActionInfo for fleetActionType ${fleetActionType}.`);
+    }
+
+    return fleetActionInfo;
+}
+
+export function getPlanetZoneInfo(zone: GameType.PlanetZone): GameType.PlanetZoneInfo
+{
+    const planetZoneInfo: GameType.PlanetZoneInfo | undefined = StaticData.PLANET_ZONE_INFOS.get(zone);
+    if (planetZoneInfo === undefined)
+    {
+        throw new Error(`No PlanetZoneInfo for zone ${zone}.`);
+    }
+
+    return planetZoneInfo;
 }
 
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Resource): GameType.ResourceType[];
@@ -91,22 +126,28 @@ export function getDistance(origin: GameType.PlanetAddress, target: GameType.Pla
         return StaticData.SLOT_DISTANCE + slotDifference * StaticData.SLOT_DISTANCE_FACTOR;
     }
 
+    const zoneDifference: number = origin.zone === target.zone ? 0 : 1;
+    if (zoneDifference !== 0)
+    {
+        return StaticData.PLANET_TO_MOON_DISTANCE;
+    }
+
     return 0;
 }
 
 export function isSameAddress(origin: GameType.PlanetAddress, target: GameType.PlanetAddress): boolean
 {
-    return (origin.galaxy === target.galaxy) && (origin.system === target.system) && (origin.slot === target.slot)
+    return (origin.galaxy === target.galaxy) && (origin.system === target.system) && (origin.slot === target.slot) && (origin.zone === target.zone);
+}
+
+export function isBuildableOnZone(buildableZones: GameType.PlanetZone[], zone: GameType.PlanetZone): boolean
+{
+    return buildableZones.includes(zone);
 }
 
 export function formatPlanetAddress(galaxy: number, system: number, slot: number, zone: GameType.PlanetZone): string
 {
-    const planetZoneInfo: GameType.PlanetZoneInfo | undefined = getPlanetZoneInfo(zone);
-    if (planetZoneInfo === undefined)
-    {
-        throw new Error(`formatPlanetAddress received an unknown zone ${zone} for [${galaxy}:${system}:${slot}].`);
-    }
-
+    const planetZoneInfo: GameType.PlanetZoneInfo = getPlanetZoneInfo(zone);
     const baseLabel: string = `[${galaxy}:${system}:${slot}]`;
 
     if (zone === GameType.PlanetZone.Planet)

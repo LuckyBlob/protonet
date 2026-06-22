@@ -8,6 +8,7 @@ import * as RequirementValueGetters from "@/lib/gameplay/coreData/requirement/re
 export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.BuildingStats> = new Map<GameType.BuildingType, GameType.BuildingStats>
 ([
     [GameType.BuildingType.MetalMine, { displayName: "Metal Mine",
+		buildableZones: [GameType.PlanetZone.Planet],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 1.5,
@@ -31,6 +32,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 
 	[GameType.BuildingType.MetalStorage, { displayName: "Metal Storage",
+		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -47,6 +49,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 
 	[GameType.BuildingType.CrystalGrower, { displayName: "Crystal Grower",
+		buildableZones: [GameType.PlanetZone.Planet],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 1.6,
@@ -70,6 +73,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 
 	[GameType.BuildingType.CrystalContainement, { displayName: "Crystal Containement",
+		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -87,6 +91,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 
 	[GameType.BuildingType.DeuteriumSynthesizer, { displayName: "Deuterium Synthesizer",
+		buildableZones: [GameType.PlanetZone.Planet],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -110,6 +115,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 
 	[GameType.BuildingType.DeuteriumTank, { displayName: "Deuterium Tank",
+		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -127,6 +133,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 
 	[GameType.BuildingType.SolarPlant, { displayName: "Solar Plant",
+		buildableZones: [GameType.PlanetZone.Planet],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 1.5,
@@ -143,6 +150,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 
 	[GameType.BuildingType.Shipyard, { displayName: "Shipyard",
+		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -162,6 +170,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 
 	[GameType.BuildingType.RoboticFactory, { displayName: "Robotic Factory",
+		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 1.5,
@@ -172,6 +181,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 	},],
 
 	[GameType.BuildingType.ResearchLab, { displayName: "Research Lab",
+		buildableZones: [GameType.PlanetZone.Planet],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -182,6 +192,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 	},],
 
 	[GameType.BuildingType.NaniteFactory, { displayName: "Nanite Factory",
+		buildableZones: [GameType.PlanetZone.Planet],
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -207,6 +218,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 	},],
 
 	[GameType.BuildingType.FusionReactor, { displayName: "Fusion Reactor",
+		buildableZones: [GameType.PlanetZone.Planet],
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -377,6 +389,13 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 			hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: GameType.PlanetZone.Planet,
+				valueGetter: RequirementValueGetters.getTargetPlanetZone(),},},
+			{
+			hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.LesserThan,
 				value: MAX_ALLOWED_PLANETS,
 				valueGetter: RequirementValueGetters.playerPlanetCount(),},},],}],
@@ -451,7 +470,8 @@ export const GALAXY_DISTANCE: number = 20000;
 export const SYSTEM_DISTANCE: number = 2700;
 export const SYSTEM_DISTANCE_FACTOR: number = 95;
 export const SLOT_DISTANCE: number = 1000;
-export const SLOT_DISTANCE_FACTOR: number = 55;
+export const SLOT_DISTANCE_FACTOR: number = 5;
+export const PLANET_TO_MOON_DISTANCE: number = 5;
 
 export const GALAXY_COUNT: number = 2;
 

@@ -13,11 +13,7 @@ export function computeUpgradeDurationSeconds(currentUpgradeLevel: number, build
 {
     try
     {
-        const buildingStats: GameType.BuildingStats | undefined = StaticDataHelper.getBuildingStats(buildingType);
-        if (buildingStats === undefined)
-        {
-            throw new Error(`⚠️: Building type ${buildingType} has no building stats.`); 
-        }
+        const buildingStats: GameType.BuildingStats = StaticDataHelper.getBuildingStats(buildingType);
         return computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel, buildingStats, buildingType, playerData, planetId, serverData);
     }
     catch (error: unknown)

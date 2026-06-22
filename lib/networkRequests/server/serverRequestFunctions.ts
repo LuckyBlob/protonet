@@ -787,6 +787,13 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
         return { success: false, failureReason: "Building doesnt meet requirements.", playerStateResult: playerData };
     }
 
+    const planetZone: GameType.PlanetZone = relevantPlanetData.planetRow.zone as GameType.PlanetZone;
+    const buildingStats: GameType.BuildingStats = StaticDataHelper.getBuildingStats(requestData.buildingType);
+    if (StaticDataHelper.isBuildableOnZone(buildingStats.buildableZones, planetZone) === false)
+    {
+        return { success: false, failureReason: "Building not allowed on this zone.", playerStateResult: playerData };
+    }
+
     const canAffordUpgrade: boolean = BuildingData.canAffordUpgrade(relevantPlanetData, requestData.buildingType);
     if (canAffordUpgrade === false)
     {

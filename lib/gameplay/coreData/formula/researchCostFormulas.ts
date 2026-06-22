@@ -3,12 +3,7 @@ import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelp
 
 export function computeResearchUpgradeCost(currentResearchLevel: number, researchType: GameType.ResearchType): Map<GameType.ResourceType, number> | null
 {
-	const researchInfo: GameType.ResearchInfo | undefined = StaticDataHelper.getResearchInfo(researchType);
-	if (researchInfo === undefined)
-	{
-		console.error("⚠️:", `Research type ${researchType} has no calculatable cost.`);
-		return null;
-	}
+	const researchInfo: GameType.ResearchInfo = StaticDataHelper.getResearchInfo(researchType);
 
 	switch (researchInfo.costFunctionType)
 	{

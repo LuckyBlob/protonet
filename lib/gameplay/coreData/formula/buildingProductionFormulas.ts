@@ -8,11 +8,7 @@ export function computeProductionRatePerHour(buildingType: GameType.BuildingType
 {
     try
     {
-        const buildingStats: GameType.BuildingStats | undefined = StaticDataHelper.getBuildingStats(buildingType);
-        if (buildingStats === undefined)
-        {
-            throw new Error(`⚠️: Building type ${buildingType} has no building stats.`);
-        }
+        const buildingStats: GameType.BuildingStats = StaticDataHelper.getBuildingStats(buildingType);
 
         switch (buildingStats.costFunctionType)
         {

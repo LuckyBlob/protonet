@@ -19,12 +19,7 @@ function buildPlayerWithResearch(researchLevels: [GameType.ResearchType, number]
 
 function getShipSpeedDatas(shipType: GameType.ShipType): GameType.EngineTechData<number>[]
 {
-    const shipStats: GameType.ShipStats | undefined = StaticDataHelper.getShipStats(shipType);
-    if (shipStats === undefined)
-    {
-        throw new Error(`No ship stats for ship type ${shipType}.`);
-    }
-
+    const shipStats: GameType.ShipStats = StaticDataHelper.getShipStats(shipType);
     return shipStats.speed;
 }
 

@@ -5,12 +5,7 @@ import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelp
 
 export function computeBuildingPlanetValueProduction(currentUpgradeLevel: number, buildingType: GameType.BuildingType, playerData: CoreType.PlayerData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null
 {
-    const buildingStats: GameType.BuildingStats | undefined = StaticDataHelper.getBuildingStats(buildingType);
-    if (buildingStats === undefined)
-    {
-        console.error("⚠️:", `Building type ${buildingType} has no Planet Value Production.`);
-        return null;
-    }
+    const buildingStats: GameType.BuildingStats = StaticDataHelper.getBuildingStats(buildingType);
 
     if (buildingStats.planetValueStats === undefined)
     {

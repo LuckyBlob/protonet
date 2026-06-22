@@ -18,11 +18,7 @@ const NANITE_FACTORY_DURATION_DIVIDER_PER_LEVEL: number = 2;
 
 export function computeConstructionDurationSeconds(shipType: GameType.ShipType, currentShipyardLevel: number, naniteFactoryLevel: number, serverData: CoreType.ServerData | null): number | null
 {
-    const shipStats: GameType.ShipStats | undefined = StaticDataHelper.getShipStats(shipType);
-    if (shipStats === undefined)
-    {
-        return null;
-    }
+    const shipStats: GameType.ShipStats = StaticDataHelper.getShipStats(shipType);
     return computeConstructionDurationSeconds_SimpleShip(currentShipyardLevel, shipStats.maxHealth, naniteFactoryLevel, SHIP_CONSTRUCTION_GENERIC_DATA, serverData);
 }
 

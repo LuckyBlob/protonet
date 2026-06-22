@@ -43,11 +43,7 @@ export function isValidEnergyPercentage(energyPercentage: number): boolean
 // buildings have no energy contribution and so never show the throttle control.
 export function buildingHasEnergyPlanetValue(buildingType: GameType.BuildingType): boolean
 {
-    const buildingStats: GameType.BuildingStats | undefined = StaticDataHelper.getBuildingStats(buildingType);
-    if (buildingStats === undefined)
-    {
-        return false;
-    }
+    const buildingStats: GameType.BuildingStats = StaticDataHelper.getBuildingStats(buildingType);
 
     if (buildingStats.planetValueStats === undefined)
     {

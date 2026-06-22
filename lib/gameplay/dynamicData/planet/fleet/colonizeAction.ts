@@ -138,8 +138,8 @@ function addTooManyPlanetsFailureMessage(fleetMovement: CoreType.FleetMovement):
 function addressIsTaken(address: GameType.PlanetAddress): boolean
 {
     const existingPlanet: { id: number } | undefined = DB.databaseConnection.prepare(
-        "SELECT id FROM planet WHERE galaxy = ? AND system = ? AND slot = ?"
-    ).get(address.galaxy, address.system, address.slot) as { id: number } | undefined;
+        "SELECT id FROM planet WHERE galaxy = ? AND system = ? AND slot = ? AND zone = ?"
+    ).get(address.galaxy, address.system, address.slot, address.zone) as { id: number } | undefined;
 
     return existingPlanet !== undefined;
 }

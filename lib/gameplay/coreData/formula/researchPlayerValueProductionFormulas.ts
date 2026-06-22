@@ -4,12 +4,7 @@ import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelp
 
 export function computeResearchPlayerValueProduction(currentResearchLevel: number, researchType: GameType.ResearchType): Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null
 {
-    const researchInfo: GameType.ResearchInfo | undefined = StaticDataHelper.getResearchInfo(researchType);
-    if (researchInfo === undefined)
-    {
-        console.error("⚠️:", `Research type ${researchType} has no Player Value Production.`);
-        return null;
-    }
+    const researchInfo: GameType.ResearchInfo = StaticDataHelper.getResearchInfo(researchType);
 
     if (researchInfo.playerValueStats === undefined)
     {

@@ -30,12 +30,21 @@ function renderPlanetRow(slot: number, selectedGalaxy: number, selectedSystem: n
 {
     const publicPlanetRow: DBType.PublicPlanetRow | undefined = publicPlanetRows.find((row: DBType.PublicPlanetRow): boolean =>
     {
-        return row.galaxy === selectedGalaxy && row.system === selectedSystem && row.slot === slot;
+        return row.galaxy === selectedGalaxy && row.system === selectedSystem && row.slot === slot && row.zone === GameType.PlanetZone.Planet;
+    });
+
+    const hasMoon: boolean = publicPlanetRows.some((row: DBType.PublicPlanetRow): boolean =>
+    {
+        return row.galaxy === selectedGalaxy && row.system === selectedSystem && row.slot === slot && row.zone === GameType.PlanetZone.Moon;
     });
 
     const ownershipText: string = (publicPlanetRow === undefined)
         ? "Unowned"
         : `Owned by: ${getPlayerUsername(publicPlanetRow.owner_player_id, publicPlayerRows)}`;
+
+    const moonIndicator: ReactElement | null = hasMoon === true
+        ? <img src="/icons/zone/2_color.png" alt="Moon" title="Moon present" className="w-4 h-4 object-contain" />
+        : null;
 
     const element: ReactElement =
     (
@@ -43,6 +52,7 @@ function renderPlanetRow(slot: number, selectedGalaxy: number, selectedSystem: n
             <span className="font-semibold w-4 text-right">{slot}</span>
             <span className="text-gray-400">|</span>
             <span>{ownershipText}</span>
+            {moonIndicator}
         </div>
     );
 

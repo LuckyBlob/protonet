@@ -68,11 +68,7 @@ export function calculateShipQuantitiesLowestMovementSpeed(playerData: CoreType.
 			continue;
 		}
 
-		const shipStats: GameType.ShipStats | undefined = StaticDataHelper.getShipStats(shipType);
-		if (shipStats === undefined)
-		{
-			throw new Error(`⚠️: Building type ${shipType} has no ship stats.`);
-		}
+		const shipStats: GameType.ShipStats = StaticDataHelper.getShipStats(shipType);
 
 		const shipSpeed: number | undefined = ShipSpeed.computeShipSpeed(playerData, shipStats.speed);
 		if (shipSpeed === undefined)
@@ -107,11 +103,7 @@ export function calculateTotalFleetSpace(shipQuantities: Map<GameType.ShipType, 
 	let totalSpace: number = 0;
 	for (const [shipType, shipQuantity] of shipQuantities)
 	{
-		const shipStats: GameType.ShipStats | undefined = StaticDataHelper.getShipStats(shipType);
-		if (shipStats === undefined)
-		{
-			throw new Error(`⚠️: Building type ${shipType} has no ship stats.`); 
-		}
+		const shipStats: GameType.ShipStats = StaticDataHelper.getShipStats(shipType);
 
 		totalSpace += shipStats.space * shipQuantity;
 	}

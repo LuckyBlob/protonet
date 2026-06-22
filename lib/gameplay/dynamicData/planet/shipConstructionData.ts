@@ -145,13 +145,7 @@ function computeSingleShipTypeConstructionCost(shipType: GameType.ShipType, ship
 
 export function getSingleShipCost(shipType: GameType.ShipType): Map<GameType.ResourceType, number> | null
 {
-	const singleShipCost: Map<GameType.ResourceType, number> | undefined = StaticDataHelper.getShipStats(shipType)?.costMap;
-	if (singleShipCost === undefined)
-	{
-		return null;
-	}
-
-	return singleShipCost;
+	return StaticDataHelper.getShipStats(shipType).costMap;
 }
 
 export function computeMaxAffordableShipQuantities(planetData: CoreType.PlanetData, shipQuantities: Map<GameType.ShipType, number>): Map<GameType.ShipType, number>

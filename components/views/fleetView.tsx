@@ -270,7 +270,60 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
         data.slotIdState[1](selectedPlanetData.planetRow.slot);
         data.systemIdState[1](selectedPlanetData.planetRow.system);
         data.galaxyIdState[1](selectedPlanetData.planetRow.galaxy);
+        data.zoneIdState[1](selectedPlanetData.planetRow.zone as GameType.PlanetZone);
     };
+
+    const handleGalaxyInputChange = (e: ChangeEvent<HTMLInputElement>): void =>
+    {
+        data.galaxyIdState[2](e);
+        data.zoneIdState[1](GameType.PlanetZone.Planet);
+    };
+
+    const handleSystemInputChange = (e: ChangeEvent<HTMLInputElement>): void =>
+    {
+        data.systemIdState[2](e);
+        data.zoneIdState[1](GameType.PlanetZone.Planet);
+    };
+
+    const handleSlotInputChange = (e: ChangeEvent<HTMLInputElement>): void =>
+    {
+        data.slotIdState[2](e);
+        data.zoneIdState[1](GameType.PlanetZone.Planet);
+    };
+
+    const zoneTypes: GameType.PlanetZone[] = Array.from(StaticData.PLANET_ZONE_INFOS.keys());
+    const zoneIconElements: ReactElement[] = zoneTypes.map((zone: GameType.PlanetZone): ReactElement =>
+    {
+        const zoneInfo: GameType.PlanetZoneInfo = StaticDataHelper.getPlanetZoneInfo(zone);
+
+        const bodyExists: boolean = playerData.publicPlanetRows.some((row: DBType.PublicPlanetRow): boolean =>
+        {
+            return (row.galaxy === data.galaxyIdState[0]) && (row.system === data.systemIdState[0]) && (row.slot === data.slotIdState[0]) && (row.zone === zone);
+        });
+        const isSelected: boolean = data.zoneIdState[0] === zone;
+        const imageVariant: string = bodyExists === true ? "color" : "gray";
+        const borderClass: string = isSelected === true ? "border-yellow-400" : "border-transparent";
+
+        const handleZoneSelect = (): void =>
+        {
+            data.zoneIdState[1](zone);
+        };
+
+        const zoneIconElement: ReactElement =
+        (
+            <button
+                key={zone}
+                type="button"
+                onClick={handleZoneSelect}
+                title={zoneInfo.displayName}
+                className={`border-2 ${borderClass} rounded p-1 bg-black`}
+            >
+                <img src={`/icons/zone/${zone}_${imageVariant}.png`} alt={zoneInfo.displayName} className="w-10 h-10 object-contain" />
+            </button>
+        );
+
+        return zoneIconElement;
+    });
 
     const ownedPlanetOptionElements: ReactElement[] = ownedPlanetDatas.map((planetData: CoreType.PlanetData): ReactElement =>
     {
@@ -299,7 +352,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
                     min={1}
                     max={StaticData.GALAXY_COUNT}
                     value={data.galaxyIdState[0]}
-                    onChange={data.galaxyIdState[2]}
+                    onChange={handleGalaxyInputChange}
                     className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-14 text-center"
                     placeholder="G"
                 />
@@ -309,7 +362,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
                     min={1}
                     max={StaticData.SYSTEM_COUNT}
                     value={data.systemIdState[0]}
-                    onChange={data.systemIdState[2]}
+                    onChange={handleSystemInputChange}
                     className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-14 text-center"
                     placeholder="S"
                 />
@@ -319,7 +372,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
                     min={1}
                     max={StaticData.SLOT_COUNT}
                     value={data.slotIdState[0]}
-                    onChange={data.slotIdState[2]}
+                    onChange={handleSlotInputChange}
                     className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-14 text-center"
                     placeholder="P"
                 />
@@ -331,6 +384,9 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
                     <option value="" disabled>My planets</option>
                     {ownedPlanetOptionElements}
                 </select>
+            </div>
+            <div className="flex flex-row items-center justify-center gap-2 pt-2">
+                {zoneIconElements}
             </div>
         </div>
     );
@@ -460,7 +516,8 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
         return (
             (row.galaxy === targetPlanetAddress.galaxy) &&
             (row.system === targetPlanetAddress.system) &&
-            (row.slot === targetPlanetAddress.slot)
+            (row.slot === targetPlanetAddress.slot) &&
+            (row.zone === targetPlanetAddress.zone)
         );
     });
 

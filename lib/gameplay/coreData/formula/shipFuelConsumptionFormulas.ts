@@ -43,11 +43,7 @@ function computeFuelConsumption_Base(playerData: CoreType.PlayerData, shipQuanti
 			continue;
 		}
 
-		const shipStats: GameType.ShipStats | undefined = StaticDataHelper.getShipStats(shipType);
-		if (shipStats === undefined)
-		{
-			throw new Error(`⚠️: Building type ${shipType} has no ship stats.`);
-		}
+		const shipStats: GameType.ShipStats = StaticDataHelper.getShipStats(shipType);
 
 		if (shipStats.baseFuelConsumption === undefined)
 		{

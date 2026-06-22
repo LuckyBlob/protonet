@@ -122,3 +122,16 @@ export function isTargetPlanetOwned(): RequirementType.ThingValueGetter
         return context.targetPlanetOwnerPlayerId === null ? 0 : 1;
     };
 }
+
+export function getTargetPlanetZone(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.targetPlanetAddress === undefined)
+        {
+            throw new Error(`getTargetPlanetZone requirement evaluated without a target planet address.`);
+        }
+
+        return context.targetPlanetAddress.zone;
+    };
+}

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as StaticDataHelper from '@/lib/gameplay/coreData/static/staticDataHelpers';
+import * as ThingType from '@/lib/gameplay/coreData/thing/thingTypes';
 
 describe('getDistance', () =>
 {
@@ -14,8 +15,16 @@ describe('getDistance', () =>
     {
         const origin: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
         const target: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 3, zone: GameType.PlanetZone.Planet };
-        // 1000 + 2*55 = 1110
-        expect(StaticDataHelper.getDistance(origin, target)).toBe(1110);
+        // 1000 + 2*5 = 1010
+        expect(StaticDataHelper.getDistance(origin, target)).toBe(1010);
+    });
+
+    it('returns the planet-to-moon distance for the same coordinate, different zone', () =>
+    {
+        const planet: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
+        const moon: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Moon };
+        expect(StaticDataHelper.getDistance(planet, moon)).toBe(5);
+        expect(StaticDataHelper.getDistance(moon, planet)).toBe(5);
     });
 
     it('computes system difference (same galaxy, ignores slot)', () =>
@@ -73,6 +82,55 @@ describe('isSameAddress', () =>
     {
         const base: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
         expect(StaticDataHelper.isSameAddress(base, { galaxy: 1, system: 1, slot: 2, zone: GameType.PlanetZone.Planet })).toBe(false);
+    });
+
+    it('returns false when only the zone differs (planet vs moon at one coordinate)', () =>
+    {
+        const base: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
+        expect(StaticDataHelper.isSameAddress(base, { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Moon })).toBe(false);
+    });
+});
+
+describe('isBuildableOnZone', () =>
+{
+    it('allows only the listed zones (Planet-only)', () =>
+    {
+        const planetOnly: GameType.PlanetZone[] = [GameType.PlanetZone.Planet];
+        expect(StaticDataHelper.isBuildableOnZone(planetOnly, GameType.PlanetZone.Planet)).toBe(true);
+        expect(StaticDataHelper.isBuildableOnZone(planetOnly, GameType.PlanetZone.Moon)).toBe(false);
+        expect(StaticDataHelper.isBuildableOnZone(planetOnly, GameType.PlanetZone.DebrisField)).toBe(false);
+    });
+
+    it('allows exactly the listed zones', () =>
+    {
+        const planetAndMoon: GameType.PlanetZone[] = [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon];
+        expect(StaticDataHelper.isBuildableOnZone(planetAndMoon, GameType.PlanetZone.Planet)).toBe(true);
+        expect(StaticDataHelper.isBuildableOnZone(planetAndMoon, GameType.PlanetZone.Moon)).toBe(true);
+        expect(StaticDataHelper.isBuildableOnZone(planetAndMoon, GameType.PlanetZone.DebrisField)).toBe(false);
+    });
+});
+
+describe('BUILDING_STATS moon-buildable set', () =>
+{
+    it('marks exactly the OGame moon buildings as Moon-buildable', () =>
+    {
+        const moonBuildable: GameType.BuildingType[] =
+        [
+            GameType.BuildingType.RoboticFactory,
+            GameType.BuildingType.Shipyard,
+            GameType.BuildingType.MetalStorage,
+            GameType.BuildingType.CrystalContainement,
+            GameType.BuildingType.DeuteriumTank,
+        ];
+
+        for (const buildingType of StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building))
+        {
+            const buildableZones: GameType.PlanetZone[] = StaticDataHelper.getBuildingStats(buildingType).buildableZones;
+            const expectedOnMoon: boolean = moonBuildable.includes(buildingType);
+            expect(StaticDataHelper.isBuildableOnZone(buildableZones, GameType.PlanetZone.Moon)).toBe(expectedOnMoon);
+            // Every building must still be buildable on a Planet.
+            expect(StaticDataHelper.isBuildableOnZone(buildableZones, GameType.PlanetZone.Planet)).toBe(true);
+        }
     });
 });
 

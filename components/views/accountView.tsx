@@ -25,11 +25,7 @@ function renderAbandonPlanetButton(props: AccountViewProps): ReactElement
 	const selectedZone: GameType.PlanetZone = selectedPlanetData !== null
 		? (selectedPlanetData.planetRow.zone as GameType.PlanetZone)
 		: GameType.PlanetZone.Planet;
-	const planetZoneInfo: GameType.PlanetZoneInfo | undefined = StaticDataHelper.getPlanetZoneInfo(selectedZone);
-	if (planetZoneInfo === undefined)
-	{
-		throw new Error(`No planet zone info for zone ${selectedZone}.`);
-	}
+	const planetZoneInfo: GameType.PlanetZoneInfo = StaticDataHelper.getPlanetZoneInfo(selectedZone);
 	const zoneName: string = planetZoneInfo.displayName;
 
 	// Only abandoning a planet (which also takes its moon/debris) is gated by the one-planet floor;
