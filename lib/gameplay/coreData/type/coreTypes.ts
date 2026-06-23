@@ -23,7 +23,7 @@ export type PlayerData =
 	playerRow: DBType.PlayerRow;
 	dynamicPlayerData: DynamicPlayerData;
 	planetDatas: PlanetData[];
-	publicPlanetRows: DBType.PublicPlanetRow[];
+	publicPlanetDatas: PublicPlanetData[];
 	publicPlayerRows: DBType.PublicPlayerRow[];
 };
 
@@ -71,6 +71,17 @@ export const EmptyPlanetData: DynamicPlanetData =
 	buildingUpgrades: [],
 
 } as const;
+
+export type PublicPlanetData =
+{
+	id: number;
+	zone: number;
+	slot: number;
+	system: number;
+	galaxy: number;
+	owner_player_id: number;
+	dynamicPlanetData: DynamicPlanetData;
+};
 
 export const PlanetDataContext =
 {
@@ -282,9 +293,6 @@ export function getPlanetAddress(planetData: PlanetData): GameType.PlanetAddress
     return planetAddress;
 }
 
-// Canonical "how many real planets does this player have" filter. A moon (and later a debris field)
-// is a planet row tagged with a non-Planet zone, so planetDatas.length over-counts. Colony caps,
-// the last-planet abandon guard and default planet selection must route through this.
 export function getOwnedPlanets(planetDatas: PlanetData[]): PlanetData[]
 {
     const ownedPlanets: PlanetData[] = planetDatas.filter((planetData: PlanetData): boolean =>

@@ -142,6 +142,7 @@ export const ShipType =
     SmallTransport: 1,
     LargeTransport: 2,
     ColonyShip: 3,
+    Recycler: 4,
 } as const;
 export type ShipType = typeof ShipType[keyof typeof ShipType];
 export type EngineTech =
@@ -163,6 +164,7 @@ export type ShipStats =
 	speed: EngineTechData<number>[];
 	space: number;
 	baseFuelConsumption?: EngineTechData<Map<ResourceType, number>>[];
+	canTargetDebrisField?: boolean;
 };
 //#endregion
 
@@ -172,6 +174,7 @@ export const FleetActionType =
     Station: 1,
     Collect: 2,
     Colonize: 3,
+    Recycle: 4,
 } as const;
 export type FleetActionType = typeof FleetActionType[keyof typeof FleetActionType];
 export type FleetActionInfo =
@@ -192,6 +195,7 @@ export type PlanetZone = typeof PlanetZone[keyof typeof PlanetZone];
 export type PlanetZoneInfo =
 {
 	displayName: string;
+	isSelectable: boolean;
 }
 
 export type SlotSizeRange =

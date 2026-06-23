@@ -8,6 +8,7 @@ import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as CollectAction from "@/lib/gameplay/dynamicData/planet/fleet/collectAction";
 import * as StationAction from "@/lib/gameplay/dynamicData/planet/fleet/stationAction";
+import * as RecycleAction from "@/lib/gameplay/dynamicData/planet/fleet/recycleAction";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
@@ -45,6 +46,11 @@ export class FleetActionResolver
 			case GameType.FleetActionType.Colonize:
 			{
 				fleetMovement.resolutionState = CoreType.FleetMovementResolution.ResolveResultUnknown;
+				break;
+			}
+			case GameType.FleetActionType.Recycle:
+			{
+				RecycleAction.resolveRecycleAction(originPlayerData, fleetMovement, serverData);
 				break;
 			}
 			default:
@@ -142,7 +148,8 @@ export function clampResoucesToAddToFleet(shipQuantities: Map<GameType.ShipType,
 
 export function resolveFleetMovementAtTarget(targetPlayerData: CoreType.PlayerData | null, originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData, fleetActionResolver: FleetActionResolver): CoreType.PlayerData | null
 {
-	const canTargetBeNull: boolean = fleetMovement.fleetMovementRow.fleet_action_type === GameType.FleetActionType.Colonize;
+	const canTargetBeNull: boolean = fleetMovement.fleetMovementRow.fleet_action_type === GameType.FleetActionType.Colonize
+		|| fleetMovement.fleetMovementRow.fleet_action_type === GameType.FleetActionType.Recycle;
 	if (fleetMovement.fleetMovementRow.player_target_id === null && !canTargetBeNull)
 	{
 		setFleetReturnTrip(null, fleetMovement);

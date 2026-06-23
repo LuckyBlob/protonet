@@ -173,7 +173,8 @@ describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
 
     function getFailed(player: CoreType.PlayerData, action: GameType.FleetActionType, shipQuantities: Map<GameType.ShipType, number>, targetOwnerPlayerId: number | null): RequirementType.Requirement[]
     {
-        return Requirements.getFailedFleetMovementRequirements(player, action, PLANET_ID, shipQuantities, noResources, dummyTargetAddress, targetOwnerPlayerId);
+        const targetZoneExists: boolean = targetOwnerPlayerId !== null;
+        return Requirements.getFailedFleetMovementRequirements(player, action, PLANET_ID, shipQuantities, noResources, dummyTargetAddress, targetOwnerPlayerId, targetZoneExists);
     }
 
     function buildPlayerWithPlanetCount(planetCount: number): CoreType.PlayerData

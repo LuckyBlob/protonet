@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as Serialization from '@/lib/helper/serialization';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
+import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
 describe('serializeNumberNumberMap / deserializeNumberNumberMap', () =>
@@ -220,15 +221,23 @@ describe('serializePlayerData / deserializePlayerData', () =>
         expect(restoredConstruction.shipConstructionShipRows[0]!.ship_quantity).toBe(5);
     });
 
-    it('round-trips publicPlanetRows and publicPlayerRows', () =>
+    it('round-trips publicPlanetDatas and publicPlayerRows', () =>
     {
         const playerRow = TestDataBuilders.buildPublicPlayerRow({ id: 42, username: "Foo" });
-        const planetRow = TestDataBuilders.buildPublicPlanetRow({ id: 99, owner_player_id: 42 });
+        const debrisPublicPlanetData = TestDataBuilders.buildPublicPlanetData({
+            id: 99,
+            owner_player_id: 42,
+            zone: GameType.PlanetZone.DebrisField,
+            dynamicPlanetData: {
+                ...structuredClone(CoreType.EmptyPlanetData),
+                resourceQuantity: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Metal, 1234], [GameType.ResourceType.Crystal, 567]]),
+            },
+        });
         const original: CoreType.PlayerData =
         {
             ...TestDataBuilders.buildPlayerData(),
             publicPlayerRows: [playerRow],
-            publicPlanetRows: [planetRow],
+            publicPlanetDatas: [debrisPublicPlanetData],
         };
 
         const serialized: Serialization.SerializedPlayerData = Serialization.serializePlayerData(original);
@@ -237,8 +246,11 @@ describe('serializePlayerData / deserializePlayerData', () =>
 
         expect(restored.publicPlayerRows).toHaveLength(1);
         expect(restored.publicPlayerRows[0]!.username).toBe("Foo");
-        expect(restored.publicPlanetRows).toHaveLength(1);
-        expect(restored.publicPlanetRows[0]!.id).toBe(99);
+        expect(restored.publicPlanetDatas).toHaveLength(1);
+        expect(restored.publicPlanetDatas[0]!.id).toBe(99);
+        // Debris resource quantities survive the Map (de)serialization round-trip.
+        expect(restored.publicPlanetDatas[0]!.dynamicPlanetData.resourceQuantity.get(GameType.ResourceType.Metal)).toBe(1234);
+        expect(restored.publicPlanetDatas[0]!.dynamicPlanetData.resourceQuantity.get(GameType.ResourceType.Crystal)).toBe(567);
     });
 
     it('round-trips a player with zero planets', () =>

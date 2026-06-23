@@ -42,12 +42,17 @@ export function serializePlayerData(playerData: CoreType.PlayerData): Serialized
 		return serializePlanetData(planetData);
 	});
 
+	const serializedPublicPlanetDatas: SerializedPublicPlanetData[] = playerData.publicPlanetDatas.map((publicPlanetData: CoreType.PublicPlanetData): SerializedPublicPlanetData =>
+	{
+		return serializePublicPlanetData(publicPlanetData);
+	});
+
 	const serialized: SerializedPlayerData =
 	{
 		playerRow: playerData.playerRow,
 		dynamicPlayerData: serializedDynamicPlayerData,
 		planetDatas: serializedPlanetDatas,
-		publicPlanetRows: playerData.publicPlanetRows,
+		publicPlanetDatas: serializedPublicPlanetDatas,
 		publicPlayerRows: playerData.publicPlayerRows,
 	};
 
@@ -63,13 +68,18 @@ export function deserializePlayerData(serialized: SerializedPlayerData): CoreTyp
 		return deserializePlanetData(serializedPlanetData);
 	});
 
+	const publicPlanetDatas: CoreType.PublicPlanetData[] = serialized.publicPlanetDatas.map((serializedPublicPlanetData: SerializedPublicPlanetData): CoreType.PublicPlanetData =>
+	{
+		return deserializePublicPlanetData(serializedPublicPlanetData);
+	});
+
 	const playerData: CoreType.PlayerData =
 	{
 		playerRow: serialized.playerRow,
 		dynamicPlayerData: dynamicPlayerData,
 
 		planetDatas: planetDatas,
-		publicPlanetRows: serialized.publicPlanetRows,
+		publicPlanetDatas: publicPlanetDatas,
 		publicPlayerRows: serialized.publicPlayerRows,
 	};
 
@@ -132,19 +142,85 @@ function serializePlanetData(planetData: CoreType.PlanetData): SerializedPlanetD
 	const serialized: SerializedPlanetData =
 	{
 		planetRow: planetData.planetRow,
-		dynamicPlanetData:
-		{
-			resourceQuantity: [...planetData.dynamicPlanetData.resourceQuantity],
-			buildingLevels: [...planetData.dynamicPlanetData.buildingLevels],
-			buildingEnergySettings: [...planetData.dynamicPlanetData.buildingEnergySettings],
-			shipQuantity: [...planetData.dynamicPlanetData.shipQuantity],
-			shipConstructions: [...planetData.dynamicPlanetData.shipConstructions],
-			futureFleetArrivals: [...planetData.dynamicPlanetData.futureFleetArrivals],
-			buildingUpgrades: [...planetData.dynamicPlanetData.buildingUpgrades],
-		},
+		dynamicPlanetData: serializeDynamicPlanetData(planetData.dynamicPlanetData),
 	};
 
 	return serialized;
+}
+
+function serializeDynamicPlanetData(dynamicPlanetData: CoreType.DynamicPlanetData): SerializedDynamicPlanetData
+{
+	const serialized: SerializedDynamicPlanetData =
+	{
+		resourceQuantity: [...dynamicPlanetData.resourceQuantity],
+		buildingLevels: [...dynamicPlanetData.buildingLevels],
+		buildingEnergySettings: [...dynamicPlanetData.buildingEnergySettings],
+		shipQuantity: [...dynamicPlanetData.shipQuantity],
+		shipConstructions: [...dynamicPlanetData.shipConstructions],
+		futureFleetArrivals: [...dynamicPlanetData.futureFleetArrivals],
+		buildingUpgrades: [...dynamicPlanetData.buildingUpgrades],
+	};
+
+	return serialized;
+}
+
+function deserializeDynamicPlanetData(serialized: SerializedDynamicPlanetData): CoreType.DynamicPlanetData
+{
+	const dynamicPlanetData: CoreType.DynamicPlanetData =
+	{
+		resourceQuantity: new Map<number, number>(serialized.resourceQuantity) as Map<GameType.ResourceType, number>,
+		buildingLevels: new Map<number, number>(serialized.buildingLevels) as Map<GameType.BuildingType, number>,
+		buildingEnergySettings: new Map<number, number>(serialized.buildingEnergySettings) as Map<GameType.BuildingType, number>,
+		shipQuantity: new Map<number, number>(serialized.shipQuantity) as Map<GameType.ShipType, number>,
+		shipConstructions: serialized.shipConstructions,
+		futureFleetArrivals: serialized.futureFleetArrivals,
+		buildingUpgrades: serialized.buildingUpgrades,
+	};
+
+	return dynamicPlanetData;
+}
+
+export type SerializedPublicPlanetData =
+{
+	id: number;
+	zone: number;
+	slot: number;
+	system: number;
+	galaxy: number;
+	owner_player_id: number;
+	dynamicPlanetData: SerializedDynamicPlanetData;
+};
+
+export function serializePublicPlanetData(publicPlanetData: CoreType.PublicPlanetData): SerializedPublicPlanetData
+{
+	const serialized: SerializedPublicPlanetData =
+	{
+		id: publicPlanetData.id,
+		zone: publicPlanetData.zone,
+		slot: publicPlanetData.slot,
+		system: publicPlanetData.system,
+		galaxy: publicPlanetData.galaxy,
+		owner_player_id: publicPlanetData.owner_player_id,
+		dynamicPlanetData: serializeDynamicPlanetData(publicPlanetData.dynamicPlanetData),
+	};
+
+	return serialized;
+}
+
+function deserializePublicPlanetData(serialized: SerializedPublicPlanetData): CoreType.PublicPlanetData
+{
+	const publicPlanetData: CoreType.PublicPlanetData =
+	{
+		id: serialized.id,
+		zone: serialized.zone,
+		slot: serialized.slot,
+		system: serialized.system,
+		galaxy: serialized.galaxy,
+		owner_player_id: serialized.owner_player_id,
+		dynamicPlanetData: deserializeDynamicPlanetData(serialized.dynamicPlanetData),
+	};
+
+	return publicPlanetData;
 }
 //#endregion
 
@@ -154,26 +230,16 @@ export type SerializedPlayerData =
 	playerRow: DBType.PlayerRow;
 	dynamicPlayerData: SerializedDynamicPlayerData;
 	planetDatas: SerializedPlanetData[];
-	publicPlanetRows: DBType.PublicPlanetRow[];
+	publicPlanetDatas: SerializedPublicPlanetData[];
 	publicPlayerRows: DBType.PublicPlayerRow[];
 };
 
 function deserializePlanetData(serialized: SerializedPlanetData): CoreType.PlanetData
 {
-	// The wire carries plain numbers; cast each rebuilt map to its enum-keyed in-memory type.
 	const planetData: CoreType.PlanetData =
 	{
 		planetRow: serialized.planetRow,
-		dynamicPlanetData:
-		{
-			resourceQuantity: new Map<number, number>(serialized.dynamicPlanetData.resourceQuantity) as Map<GameType.ResourceType, number>,
-			buildingLevels: new Map<number, number>(serialized.dynamicPlanetData.buildingLevels) as Map<GameType.BuildingType, number>,
-			buildingEnergySettings: new Map<number, number>(serialized.dynamicPlanetData.buildingEnergySettings ?? []) as Map<GameType.BuildingType, number>,
-			shipQuantity: new Map<number, number>(serialized.dynamicPlanetData.shipQuantity) as Map<GameType.ShipType, number>,
-			shipConstructions: serialized.dynamicPlanetData.shipConstructions,
-			futureFleetArrivals: serialized.dynamicPlanetData.futureFleetArrivals,
-			buildingUpgrades: serialized.dynamicPlanetData.buildingUpgrades ?? [],
-		},
+		dynamicPlanetData: deserializeDynamicPlanetData(serialized.dynamicPlanetData),
 	};
 
 	return planetData;

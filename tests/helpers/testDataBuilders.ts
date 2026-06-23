@@ -95,7 +95,7 @@ export function buildPlayerData(overrides?: { playerRow?: Partial<DBType.PlayerR
         playerRow: buildPlayerRow(overrides?.playerRow),
         dynamicPlayerData: overrides?.dynamicPlayerData ?? buildDynamicPlayerData(),
         planetDatas: overrides?.planetDatas ?? [buildPlanetData()],
-        publicPlanetRows: [],
+        publicPlanetDatas: [],
         publicPlayerRows: [],
     };
 
@@ -315,9 +315,9 @@ export function buildPublicPlayerRow(overrides?: Partial<DBType.PublicPlayerRow>
     return row;
 }
 
-export function buildPublicPlanetRow(overrides?: Partial<DBType.PublicPlanetRow>): DBType.PublicPlanetRow
+export function buildPublicPlanetData(overrides?: Partial<CoreType.PublicPlanetData>): CoreType.PublicPlanetData
 {
-    const row: DBType.PublicPlanetRow =
+    const publicPlanetData: CoreType.PublicPlanetData =
     {
         id: 1,
         zone: 1,
@@ -325,8 +325,9 @@ export function buildPublicPlanetRow(overrides?: Partial<DBType.PublicPlanetRow>
         system: 1,
         galaxy: 1,
         owner_player_id: 1,
+        dynamicPlanetData: structuredClone(CoreType.EmptyPlanetData),
         ...overrides,
     };
 
-    return row;
+    return publicPlanetData;
 }

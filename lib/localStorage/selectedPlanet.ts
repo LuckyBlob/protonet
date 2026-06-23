@@ -1,6 +1,7 @@
 "use client";
 
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 const SELECTED_PLANET_STORAGE_KEY: string = "protonet.selectedPlanetId";
 
@@ -76,14 +77,22 @@ function getRelevantSelectedPlanetId(planetDatas: CoreType.PlanetData[], candida
 
     // Default to a real planet rather than a moon/debris row when there's no valid stored choice.
     const ownedPlanets: CoreType.PlanetData[] = CoreType.getOwnedPlanets(planetDatas);
-    const defaultPlanetData: CoreType.PlanetData = ownedPlanets.length > 0 ? ownedPlanets[0] : planetDatas[0];
+    const selectableZones: CoreType.PlanetData[] = StaticDataHelper.getSelectableZones(planetDatas);
+    const defaultPlanetData: CoreType.PlanetData = ownedPlanets.length > 0
+        ? ownedPlanets[0]
+        : (selectableZones.length > 0 ? selectableZones[0] : planetDatas[0]);
 
     if (candidateId === null)
     {
         return defaultPlanetData.planetRow.id;
     }
 
-    return CoreType.getPlanetDataForId(planetDatas, candidateId)?.planetRow.id ?? defaultPlanetData.planetRow.id;
+    const candidateZone: CoreType.PlanetData | undefined = selectableZones.find((planetData: CoreType.PlanetData): boolean =>
+    {
+        return planetData.planetRow.id === candidateId;
+    });
+
+    return candidateZone?.planetRow.id ?? defaultPlanetData.planetRow.id;
 }
 
 export function getSelectedPlanetDataPredicted(playerState: CoreType.PlayerState): CoreType.PlanetData

@@ -24,6 +24,7 @@ export type RequirementContext =
     transportedResourceQuantities?: Map<GameType.ResourceType, number>;
     targetPlanetAddress?: GameType.PlanetAddress;
     targetPlanetOwnerPlayerId?: number | null;
+    targetZoneExists?: boolean;
 };
 
 export type ThingValueGetter = (context: RequirementContext) => number;

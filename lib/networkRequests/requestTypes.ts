@@ -28,7 +28,7 @@ export type ServerDataStateRequest = BaseServerResponse &
 
 export type AllPlanetDataRequest = BaseServerResponse &
 {
-	publicPlanetRows: DBType.PublicPlanetRow[];
+	planets: Serialization.SerializedPublicPlanetData[];
 }
 export type OwnedPlanetDataRequest = BaseServerResponse &
 {

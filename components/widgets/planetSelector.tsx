@@ -18,7 +18,8 @@ export function PlanetSelector(props: PlanetSelectorProps): ReactElement
 	const isOpen: boolean = isOpenState[0];
 	const setIsOpen: (value: boolean) => void = isOpenState[1];
 
-	const planetsWithDisplayName: { planetData: CoreType.PlanetData; displayName: string }[] = props.clientDataStateResult.psController[0].dbData.planetDatas.map((planetData: CoreType.PlanetData) =>
+	const selectableZones: CoreType.PlanetData[] = StaticDataHelper.getSelectableZones(props.clientDataStateResult.psController[0].dbData.planetDatas);
+	const planetsWithDisplayName: { planetData: CoreType.PlanetData; displayName: string }[] = selectableZones.map((planetData: CoreType.PlanetData) =>
 	{
 		const displayName: string = StaticDataHelper.formatPlanetAddress(planetData.planetRow.galaxy, planetData.planetRow.system, planetData.planetRow.slot, planetData.planetRow.zone as GameType.PlanetZone);
 

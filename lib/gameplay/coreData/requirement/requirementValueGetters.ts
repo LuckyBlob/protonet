@@ -5,6 +5,7 @@ import * as RequirementType from "@/lib/gameplay/coreData/requirement/requiremen
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 function getPlanetData(playerData: CoreType.PlayerData, planetId: number): CoreType.PlanetData
 {
@@ -133,5 +134,44 @@ export function getTargetPlanetZone(): RequirementType.ThingValueGetter
         }
 
         return context.targetPlanetAddress.zone;
+    };
+}
+
+export function doesTargetZoneExist(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.targetZoneExists === undefined)
+        {
+            throw new Error(`doesTargetZoneExist requirement evaluated without target zone existence info.`);
+        }
+
+        return context.targetZoneExists === true ? 1 : 0;
+    };
+}
+
+export function allFleetShipsCanTargetDebrisField(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.shipQuantities === undefined)
+        {
+            throw new Error(`allFleetShipsCanTargetDebrisField requirement evaluated without a potential fleet action.`);
+        }
+
+        for (const [shipType, shipQuantity] of context.shipQuantities)
+        {
+            if (shipQuantity <= 0)
+            {
+                continue;
+            }
+
+            if (StaticDataHelper.canShipTargetDebrisField(shipType) === false)
+            {
+                return 0;
+            }
+        }
+
+        return 1;
     };
 }

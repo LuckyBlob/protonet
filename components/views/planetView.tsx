@@ -26,25 +26,32 @@ function getPlayerUsername(ownerId: number, publicPlayerRows: DBType.PublicPlaye
     return publicPlayerRow?.username ?? `Player #${ownerId}`;
 }
 
-function renderPlanetRow(slot: number, selectedGalaxy: number, selectedSystem: number, publicPlanetRows: DBType.PublicPlanetRow[], publicPlayerRows: DBType.PublicPlayerRow[]): ReactElement
+function renderPlanetRow(slot: number, selectedGalaxy: number, selectedSystem: number, publicPlanetDatas: CoreType.PublicPlanetData[], publicPlayerRows: DBType.PublicPlayerRow[]): ReactElement
 {
-    const publicPlanetRow: DBType.PublicPlanetRow | undefined = publicPlanetRows.find((row: DBType.PublicPlanetRow): boolean =>
+    const planetPublicPlanetData: CoreType.PublicPlanetData | undefined = publicPlanetDatas.find((publicPlanetData: CoreType.PublicPlanetData): boolean =>
     {
-        return row.galaxy === selectedGalaxy && row.system === selectedSystem && row.slot === slot && row.zone === GameType.PlanetZone.Planet;
+        return publicPlanetData.galaxy === selectedGalaxy && publicPlanetData.system === selectedSystem && publicPlanetData.slot === slot && publicPlanetData.zone === GameType.PlanetZone.Planet;
     });
 
-    const hasMoon: boolean = publicPlanetRows.some((row: DBType.PublicPlanetRow): boolean =>
+    const hasMoon: boolean = publicPlanetDatas.some((publicPlanetData: CoreType.PublicPlanetData): boolean =>
     {
-        return row.galaxy === selectedGalaxy && row.system === selectedSystem && row.slot === slot && row.zone === GameType.PlanetZone.Moon;
+        return publicPlanetData.galaxy === selectedGalaxy && publicPlanetData.system === selectedSystem && publicPlanetData.slot === slot && publicPlanetData.zone === GameType.PlanetZone.Moon;
     });
 
-    const ownershipText: string = (publicPlanetRow === undefined)
+    const debrisPublicPlanetData: CoreType.PublicPlanetData | undefined = publicPlanetDatas.find((publicPlanetData: CoreType.PublicPlanetData): boolean =>
+    {
+        return publicPlanetData.galaxy === selectedGalaxy && publicPlanetData.system === selectedSystem && publicPlanetData.slot === slot && publicPlanetData.zone === GameType.PlanetZone.DebrisField;
+    });
+
+    const ownershipText: string = (planetPublicPlanetData === undefined)
         ? "Unowned"
-        : `Owned by: ${getPlayerUsername(publicPlanetRow.owner_player_id, publicPlayerRows)}`;
+        : `Owned by: ${getPlayerUsername(planetPublicPlanetData.owner_player_id, publicPlayerRows)}`;
 
     const moonIndicator: ReactElement | null = hasMoon === true
         ? <img src="/icons/zone/2_color.png" alt="Moon" title="Moon present" className="w-4 h-4 object-contain" />
         : null;
+
+    const debrisIndicator: ReactElement | null = renderDebrisIndicator(debrisPublicPlanetData);
 
     const element: ReactElement =
     (
@@ -53,6 +60,28 @@ function renderPlanetRow(slot: number, selectedGalaxy: number, selectedSystem: n
             <span className="text-gray-400">|</span>
             <span>{ownershipText}</span>
             {moonIndicator}
+            {debrisIndicator}
+        </div>
+    );
+
+    return element;
+}
+
+function renderDebrisIndicator(debrisPublicPlanetData: CoreType.PublicPlanetData | undefined): ReactElement | null
+{
+    if (debrisPublicPlanetData === undefined)
+    {
+        return null;
+    }
+
+    const debrisMetal: number = Math.floor(debrisPublicPlanetData.dynamicPlanetData.resourceQuantity.get(GameType.ResourceType.Metal) ?? 0);
+    const debrisCrystal: number = Math.floor(debrisPublicPlanetData.dynamicPlanetData.resourceQuantity.get(GameType.ResourceType.Crystal) ?? 0);
+
+    const element: ReactElement =
+    (
+        <div className="flex flex-row items-center gap-1" title="Debris field present">
+            <img src="/icons/zone/3_color.png" alt="Debris Field" className="w-4 h-4 object-contain" />
+            <span className="text-xs text-gray-300">{debrisMetal} M / {debrisCrystal} C</span>
         </div>
     );
 
@@ -65,7 +94,7 @@ function renderPlanetGrid(selectedGalaxy: number, selectedSystem: number, player
 
     const rowElements: ReactElement[] = slotNumbers.map((slot: number): ReactElement =>
     {
-        return renderPlanetRow(slot, selectedGalaxy, selectedSystem, playerData.publicPlanetRows, playerData.publicPlayerRows);
+        return renderPlanetRow(slot, selectedGalaxy, selectedSystem, playerData.publicPlanetDatas, playerData.publicPlayerRows);
     });
 
     const element: ReactElement =

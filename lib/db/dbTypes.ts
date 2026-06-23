@@ -60,16 +60,6 @@ export type PlanetRow =
 	last_updated: number;
 };
 
-export type PublicPlanetRow =
-{
-	id: number;
-	zone: number;
-	slot: number;
-	system: number;
-	galaxy: number;
-	owner_player_id: number;
-};
-
 export type PublicPlayerRow =
 {
 	id: number;

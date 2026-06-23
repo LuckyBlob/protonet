@@ -51,8 +51,8 @@ describe('Colonize fleet requirements — target zone must be Planet', () =>
         const planetTarget: GameType.PlanetAddress = { galaxy: 2, system: 5, slot: 3, zone: GameType.PlanetZone.Planet };
         const moonTarget: GameType.PlanetAddress = { galaxy: 2, system: 5, slot: 3, zone: GameType.PlanetZone.Moon };
 
-        const failedForPlanet: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Colonize, 1, shipQuantities, transportedResources, planetTarget, null);
-        const failedForMoon: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Colonize, 1, shipQuantities, transportedResources, moonTarget, null);
+        const failedForPlanet: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Colonize, 1, shipQuantities, transportedResources, planetTarget, null, false);
+        const failedForMoon: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Colonize, 1, shipQuantities, transportedResources, moonTarget, null, false);
 
         expect(failedForMoon.length).toBe(failedForPlanet.length + 1);
     });

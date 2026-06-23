@@ -327,6 +327,31 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 		baseFuelConsumption: [
 			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 1000]])},],
 	}],
+    [GameType.ShipType.Recycler, { displayName: "Recycler",
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.Shipyard,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 4,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+		costMap: new Map<GameType.ResourceType, number>([
+			[GameType.ResourceType.Metal, 10000],
+			[GameType.ResourceType.Crystal, 6000],
+			[GameType.ResourceType.Deuterium, 2000],]),
+		maxHealth: 16000,
+		space: 20000,
+		speed: [
+			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 2000},
+			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 17, value: 4000},
+			{ engineTech: GameType.ResearchType.HyperspaceDrive, researchLevel: 15, value: 6000}],
+		baseFuelConsumption: [
+			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 300]])},
+			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 17, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 600]])},
+			{ engineTech: GameType.ResearchType.HyperspaceDrive, researchLevel: 15, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 900]])},],
+		canTargetDebrisField: true,
+	}],
 ]);
 //#endregion
 
@@ -357,7 +382,7 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
-				valueGetter: RequirementValueGetters.isTargetPlanetOwned(),},},],}],
+				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},],}],
 	[GameType.FleetActionType.Collect, {
 		displayName: "Collect",
 			requirements:[{
@@ -366,7 +391,7 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
-				valueGetter: RequirementValueGetters.isTargetPlanetOwned(),},},],}],
+				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},],}],
 	[GameType.FleetActionType.Colonize, {
 		displayName: "Colonize",
 			requirements:[
@@ -399,6 +424,23 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				operator: RequirementType.RequirementOperator.LesserThan,
 				value: MAX_ALLOWED_PLANETS,
 				valueGetter: RequirementValueGetters.playerPlanetCount(),},},],}],
+	[GameType.FleetActionType.Recycle, {
+		displayName: "Recycle",
+			requirements:[
+			{
+			hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: GameType.PlanetZone.DebrisField,
+				valueGetter: RequirementValueGetters.getTargetPlanetZone(),},},
+			{
+			hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.allFleetShipsCanTargetDebrisField(),},},],}],
 ]);
 //#endregion
 
@@ -440,11 +482,14 @@ export const PLAYER_VALUE_INFOS: ReadonlyMap<GameType.PlayerValueType, GameType.
 export const PLANET_ZONE_INFOS: ReadonlyMap<GameType.PlanetZone, GameType.PlanetZoneInfo> = new Map<GameType.PlanetZone, GameType.PlanetZoneInfo>
 ([
     [GameType.PlanetZone.Planet, {
-		displayName: "Planet",}],
+		displayName: "Planet",
+		isSelectable: true,}],
 	[GameType.PlanetZone.Moon, {
-		displayName: "Moon",}],
+		displayName: "Moon",
+		isSelectable: true,}],
 	[GameType.PlanetZone.DebrisField, {
-		displayName: "Debris Field",}],
+		displayName: "Debris Field",
+		isSelectable: false,}],
 ]);
 
 export const STARTING_PLANET_DATA: CoreType.DynamicPlanetData =

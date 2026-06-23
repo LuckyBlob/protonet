@@ -2,6 +2,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as DBType from "@/lib/db/dbTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 
 export function getBuildingStats(buildingType: GameType.BuildingType): GameType.BuildingStats
 {
@@ -23,6 +24,11 @@ export function getShipStats(shipType: GameType.ShipType): GameType.ShipStats
     }
 
     return shipStats;
+}
+
+export function canShipTargetDebrisField(shipType: GameType.ShipType): boolean
+{
+    return getShipStats(shipType).canTargetDebrisField === true;
 }
 
 export function getResearchInfo(researchType: GameType.ResearchType): GameType.ResearchInfo
@@ -56,6 +62,14 @@ export function getPlanetZoneInfo(zone: GameType.PlanetZone): GameType.PlanetZon
     }
 
     return planetZoneInfo;
+}
+
+export function getSelectableZones(planetDatas: CoreType.PlanetData[]): CoreType.PlanetData[]
+{
+    return planetDatas.filter((planetData: CoreType.PlanetData): boolean =>
+    {
+        return getPlanetZoneInfo(planetData.planetRow.zone as GameType.PlanetZone).isSelectable;
+    });
 }
 
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Resource): GameType.ResourceType[];

@@ -41,7 +41,7 @@ export function getFailedResearchRequirements(playerData: CoreType.PlayerData, r
     return getFailedRequirements(requirementContext, requirements);
 }
 
-export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerData, fleetActionType: GameType.FleetActionType, planetId: number, shipQuantities: Map<GameType.ShipType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>, targetPlanetAddress: GameType.PlanetAddress, targetPlanetOwnerPlayerId: number | null): RequirementType.Requirement[]
+export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerData, fleetActionType: GameType.FleetActionType, planetId: number, shipQuantities: Map<GameType.ShipType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>, targetPlanetAddress: GameType.PlanetAddress, targetPlanetOwnerPlayerId: number | null, targetZoneExists: boolean): RequirementType.Requirement[]
 {
     const requirementContext: RequirementType.RequirementContext =
     {
@@ -51,6 +51,7 @@ export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerDa
         transportedResourceQuantities: transportedResourceQuantities,
         targetPlanetAddress: targetPlanetAddress,
         targetPlanetOwnerPlayerId: targetPlanetOwnerPlayerId,
+        targetZoneExists: targetZoneExists,
     };
     const requirements: RequirementType.Requirement[] = getFleetActionRequirements(ThingType.Thing.FleetMovement, fleetActionType, shipQuantities, transportedResourceQuantities, targetPlanetAddress);
     return getFailedRequirements(requirementContext, requirements);

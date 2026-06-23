@@ -474,7 +474,7 @@ export function serverGetPlayerData(playerId: number): CoreType.PlayerData
 
         planetDatas: serverGetPlanetDatas(playerId),
 
-        publicPlanetRows: serverFindAllPlanetsPublic(),
+        publicPlanetDatas: serverFindAllPlanetsPublic(),
         publicPlayerRows: serverGetPublicPlayerRows(),
     };
     return playerData;
@@ -540,12 +540,38 @@ export function serverGetPlanetDatas(playerId: number): CoreType.PlanetData[]
     return planetDatas;
 }
 
-export function serverFindAllPlanetsPublic(): DBType.PublicPlanetRow[]
+export function serverFindAllPlanetsPublic(): CoreType.PublicPlanetData[]
 {
-    const planetRows: DBType.PublicPlanetRow[] = DB.databaseConnection.prepare(
+    type PublicPlanetRowProjection = { id: number; zone: number; slot: number; system: number; galaxy: number; owner_player_id: number };
+    const planetRows: PublicPlanetRowProjection[] = DB.databaseConnection.prepare(
         "SELECT id, zone, slot, system, galaxy, owner_player_id FROM planet WHERE owner_player_id IS NOT NULL ORDER BY galaxy ASC, system ASC, slot ASC"
-    ).all() as DBType.PublicPlanetRow[];
-    return planetRows;
+    ).all() as PublicPlanetRowProjection[];
+
+    const publicPlanetDatas: CoreType.PublicPlanetData[] = planetRows.map((planetRow: PublicPlanetRowProjection): CoreType.PublicPlanetData =>
+    {
+        const dynamicPlanetData: CoreType.DynamicPlanetData = structuredClone(CoreType.EmptyPlanetData);
+
+        if (planetRow.zone === GameType.PlanetZone.DebrisField)
+        {
+            const debrisDynamicPlanetData: CoreType.DynamicPlanetData = ServerDynamicData.getDynamicPlanetData(planetRow.id);
+            dynamicPlanetData.resourceQuantity = debrisDynamicPlanetData.resourceQuantity;
+        }
+
+        const publicPlanetData: CoreType.PublicPlanetData =
+        {
+            id: planetRow.id,
+            zone: planetRow.zone,
+            slot: planetRow.slot,
+            system: planetRow.system,
+            galaxy: planetRow.galaxy,
+            owner_player_id: planetRow.owner_player_id,
+            dynamicPlanetData: dynamicPlanetData,
+        };
+
+        return publicPlanetData;
+    });
+
+    return publicPlanetDatas;
 }
 
 const PLANET_ROW_ALLOWED_COLUMNS: ReadonlySet<string> = new Set<string>([
@@ -593,14 +619,21 @@ function createPlayer(userId: number): void
 
         const now: number = Date.now();
         const firstPlanetId: number = ServerPlanetManagement.claimPlanet(null, playerRow.id, now);
+        const firstPlanetRow: DBType.PlanetRow = readPlanetRow(firstPlanetId);
+        const firstMoonAddress: GameType.PlanetAddress =
+        {
+            galaxy: firstPlanetRow.galaxy,
+            system: firstPlanetRow.system,
+            slot: firstPlanetRow.slot,
+            zone: GameType.PlanetZone.Moon,
+        };
+        const firstMoonId: number = ServerPlanetManagement.createZone(firstMoonAddress, playerRow.id, firstPlanetRow.size, now);
         const secondPlanetId: number = ServerPlanetManagement.claimPlanet(null, playerRow.id, now + 1);
 
         ServerDynamicData.serverUpdateAllPlanetData(firstPlanetId, playerRow.id, StaticData.STARTING_PLANET_DATA);
+        ServerDynamicData.serverUpdateAllPlanetData(firstMoonId, playerRow.id, StaticData.STARTING_PLANET_DATA);
         ServerDynamicData.serverUpdateAllPlanetData(secondPlanetId, playerRow.id, StaticData.STARTING_PLANET_DATA);
 
-        // Planet ids are -1 until updated when added for the first time.
-        const firstMoonId: number = ServerPlanetManagement.createMoonForPlanet(firstPlanetId, playerRow.id, now);
-        ServerDynamicData.serverUpdateAllPlanetData(firstMoonId, playerRow.id, StaticData.STARTING_PLANET_DATA);
 
         const serverData: CoreType.ServerData = ServerType.getServerData();
         ServerProgress.applyPlayerUpdate(playerRow.id, serverData, now + 1);
@@ -1265,11 +1298,6 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     }
 
     const targetPlanetData: CoreType.PlanetData | null = getPlanetDataByCoords(targetAddress.galaxy, targetAddress.system, targetAddress.slot, targetAddress.zone);
-    if (targetPlanetData === null && requestData.fleetAction !== GameType.FleetActionType.Colonize)
-    {
-        return { success: false, failureReason: "Target planet is invalid.", playerStateResult: playerData };
-    }
-
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
 
     for (const shipQuantity of shipQuantities.values())
@@ -1281,8 +1309,9 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     }
 
     const targetPlanetOwnerPlayerId: number | null = targetPlanetData === null ? null : targetPlanetData.planetRow.owner_player_id;
+    const targetZoneExists: boolean = targetPlanetData !== null;
 
-    if (Requirement.getFailedFleetMovementRequirements(playerData, requestData.fleetAction, originPlanetData.planetRow.id, shipQuantities, transportedResourceQuantities, targetAddress, targetPlanetOwnerPlayerId).length > 0)
+    if (Requirement.getFailedFleetMovementRequirements(playerData, requestData.fleetAction, originPlanetData.planetRow.id, shipQuantities, transportedResourceQuantities, targetAddress, targetPlanetOwnerPlayerId, targetZoneExists).length > 0)
     {
         return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
     }
@@ -1405,7 +1434,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
 	        planet_origin_galaxy: originPlanetData.planetRow.galaxy,
             player_target_id: targetPlanetData ? targetPlanetData.planetRow.owner_player_id : null,
             planet_target_id: targetPlanetData ? targetPlanetData.planetRow.id : null,
-            planet_target_zone: targetPlanetData ? targetPlanetData.planetRow.zone : 1,
+            planet_target_zone: targetAddress.zone,
             planet_target_slot: targetAddress.slot,
 	        planet_target_system: targetAddress.system,
 	        planet_target_galaxy: targetAddress.galaxy,

@@ -44,11 +44,25 @@ type FleetViewData =
 }
 
 //#region rendering helpers
-function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement, publicPlanetRows: DBType.PublicPlanetRow[]): ReactElement
+function renderZoneMarker(zone: GameType.PlanetZone): ReactElement | null
+{
+    if (zone === GameType.PlanetZone.Planet)
+    {
+        return null;
+    }
+
+    const zoneInfo: GameType.PlanetZoneInfo = StaticDataHelper.getPlanetZoneInfo(zone);
+
+    return <img src={`/icons/zone/${zone}_color.png`} alt={zoneInfo.displayName} title={zoneInfo.displayName} className="w-4 h-4 object-contain inline-block align-text-bottom" />;
+}
+
+function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement): ReactElement
 {
     const fleetMovementRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const originAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_origin_galaxy, fleetMovementRow.planet_origin_system, fleetMovementRow.planet_origin_slot, fleetMovementRow.planet_origin_zone as GameType.PlanetZone);
-    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot, fleetMovementRow.planet_target_zone as GameType.PlanetZone);
+    const originZone: GameType.PlanetZone = fleetMovementRow.planet_origin_zone as GameType.PlanetZone;
+    const targetZone: GameType.PlanetZone = fleetMovementRow.planet_target_zone as GameType.PlanetZone;
+    const originAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_origin_galaxy, fleetMovementRow.planet_origin_system, fleetMovementRow.planet_origin_slot, originZone);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot, targetZone);
     const actionName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.fleetAction(fleetMovementRow.fleet_action_type));
     const isReturnTrip: boolean = fleetMovementRow.is_return_trip === 1;
     const remainingMs: number | null = FleetData.getFleetMovementRemainingMs(fleetMovement);
@@ -63,7 +77,13 @@ function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement, publicPla
     const element: ReactElement =
     (
         <div key={fleetMovementRow.id} className="border border-gray-400 rounded px-4 py-2 text-sm text-white w-full">
-            <div>{originAddress} → {targetAddress}</div>
+            <div className="flex flex-row items-center gap-1">
+                <span>{originAddress}</span>
+                {renderZoneMarker(originZone)}
+                <span>→</span>
+                <span>{targetAddress}</span>
+                {renderZoneMarker(targetZone)}
+            </div>
             {isUnknownResult ?
             (
                 <div className="text-sm font-semibold text-yellow-400">Unknown result.</div>
@@ -84,9 +104,6 @@ function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement, publicPla
 function renderFleetMovementsSection(props: FleetViewProps): ReactElement
 {
     const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-    const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
-    
-    const publicPlanetRows: DBType.PublicPlanetRow[] = playerData.publicPlanetRows;
 
     const seenFleetIds: Set<number> = new Set<number>();
     const allFleetMovements: CoreType.FleetMovement[] = [];
@@ -114,7 +131,7 @@ function renderFleetMovementsSection(props: FleetViewProps): ReactElement
 
     const movementElements: ReactElement[] = allFleetMovements.map((fleetMovement: CoreType.FleetMovement): ReactElement =>
     {
-        return renderFleetMovementRow(fleetMovement, publicPlanetRows);
+        return renderFleetMovementRow(fleetMovement);
     });
 
     const element: ReactElement =
@@ -251,7 +268,8 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
 {
     const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
     const originPlanetId: number = data.planetData.planetRow.id;
-    const ownedPlanetDatas: CoreType.PlanetData[] = playerData.planetDatas.filter(
+
+    const ownedPlanetDatas: CoreType.PlanetData[] = StaticDataHelper.getSelectableZones(playerData.planetDatas).filter(
         (planetData: CoreType.PlanetData): boolean => planetData.planetRow.id !== originPlanetId
     );
 
@@ -296,9 +314,9 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
     {
         const zoneInfo: GameType.PlanetZoneInfo = StaticDataHelper.getPlanetZoneInfo(zone);
 
-        const bodyExists: boolean = playerData.publicPlanetRows.some((row: DBType.PublicPlanetRow): boolean =>
+        const bodyExists: boolean = playerData.publicPlanetDatas.some((publicPlanetData: CoreType.PublicPlanetData): boolean =>
         {
-            return (row.galaxy === data.galaxyIdState[0]) && (row.system === data.systemIdState[0]) && (row.slot === data.slotIdState[0]) && (row.zone === zone);
+            return (publicPlanetData.galaxy === data.galaxyIdState[0]) && (publicPlanetData.system === data.systemIdState[0]) && (publicPlanetData.slot === data.slotIdState[0]) && (publicPlanetData.zone === zone);
         });
         const isSelected: boolean = data.zoneIdState[0] === zone;
         const imageVariant: string = bodyExists === true ? "color" : "gray";
@@ -511,21 +529,22 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
 
     const targetPlanetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
 
-    const targetPublicRow: DBType.PublicPlanetRow | undefined = props.clientDataStateResult.psController[0].dbData.publicPlanetRows.find((row: DBType.PublicPlanetRow): boolean =>
+    const targetPublicPlanetData: CoreType.PublicPlanetData | undefined = props.clientDataStateResult.psController[0].dbData.publicPlanetDatas.find((publicPlanetData: CoreType.PublicPlanetData): boolean =>
     {
         return (
-            (row.galaxy === targetPlanetAddress.galaxy) &&
-            (row.system === targetPlanetAddress.system) &&
-            (row.slot === targetPlanetAddress.slot) &&
-            (row.zone === targetPlanetAddress.zone)
+            (publicPlanetData.galaxy === targetPlanetAddress.galaxy) &&
+            (publicPlanetData.system === targetPlanetAddress.system) &&
+            (publicPlanetData.slot === targetPlanetAddress.slot) &&
+            (publicPlanetData.zone === targetPlanetAddress.zone)
         );
     });
 
-    const targetOwnerPlayerId: number | null = targetPublicRow?.owner_player_id ?? null;
+    const targetOwnerPlayerId: number | null = targetPublicPlanetData?.owner_player_id ?? null;
+    const targetZoneExists: boolean = targetPublicPlanetData !== undefined;
 
     const validActionIds: GameType.FleetActionType[] = Array.from(StaticData.FLEET_ACTION_INFOS.keys()).filter((actionId: GameType.FleetActionType): boolean =>
     {
-        const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(data.playerData, actionId, data.planetData.planetRow.id, data.requestedShipQuantitiesState.requestedQuantities, data.requestedResourceQuantitiesState.requestedQuantities, targetPlanetAddress, targetOwnerPlayerId);
+        const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(data.playerData, actionId, data.planetData.planetRow.id, data.requestedShipQuantitiesState.requestedQuantities, data.requestedResourceQuantitiesState.requestedQuantities, targetPlanetAddress, targetOwnerPlayerId, targetZoneExists);
         return failedRequirements.length === 0;
     });
 
