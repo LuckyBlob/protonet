@@ -450,37 +450,41 @@ function collectSnapshotValueFailures(beforeSnapshots: TableSnapshot[], afterSna
     return valueFailures;
 }
 
-// Asserts 018's backfill: exactly one moon (zone=2) per synthetic player, sitting at their first
-// planet's coordinates and copying its owner / size / timestamps.
+// Asserts 018 + 020's backfill: a moon (zone=2) on each synthetic player's TWO oldest planets
+// (018 did the first, 020 the second), each sitting at its planet's coordinates and copying its
+// owner / size / timestamps.
 function collectMoonBackfillValueFailures(connection: Database.Database, syntheticPlayerIds: Set<number>): string[]
 {
     const valueFailures: string[] = [];
 
     for (const playerId of syntheticPlayerIds)
     {
-        const firstPlanet: Record<string, unknown> | undefined = connection.prepare(
-            "SELECT slot, system, galaxy, size, owner_player_id, claimed_at, last_updated FROM planet WHERE owner_player_id = ? AND zone = 1 ORDER BY id LIMIT 1"
-        ).get(playerId) as Record<string, unknown> | undefined;
+        const oldestPlanets: Record<string, unknown>[] = connection.prepare(
+            "SELECT slot, system, galaxy, size, owner_player_id, claimed_at, last_updated FROM planet WHERE owner_player_id = ? AND zone = 1 ORDER BY claimed_at ASC, id ASC LIMIT 2"
+        ).all(playerId) as Record<string, unknown>[];
 
-        if (firstPlanet === undefined)
+        if (oldestPlanets.length === 0)
         {
             valueFailures.push(`moon backfill: synthetic player ${playerId} has no zone=1 planet`);
             continue;
         }
 
         const moonRows: Record<string, unknown>[] = connection.prepare(
-            "SELECT slot, system, galaxy, size, owner_player_id, claimed_at, last_updated FROM planet WHERE owner_player_id = ? AND zone = 2 ORDER BY id"
+            "SELECT slot, system, galaxy, size, owner_player_id, claimed_at, last_updated FROM planet WHERE owner_player_id = ? AND zone = 2 ORDER BY claimed_at ASC, id ASC"
         ).all(playerId) as Record<string, unknown>[];
 
-        if (moonRows.length !== 1)
+        if (moonRows.length !== oldestPlanets.length)
         {
-            valueFailures.push(`moon backfill: synthetic player ${playerId} has ${moonRows.length} moon(s), expected exactly 1`);
+            valueFailures.push(`moon backfill: synthetic player ${playerId} has ${moonRows.length} moon(s), expected ${oldestPlanets.length}`);
             continue;
         }
 
-        if (JSON.stringify(moonRows[0]) !== JSON.stringify(firstPlanet))
+        for (let planetIndex: number = 0; planetIndex < oldestPlanets.length; planetIndex = planetIndex + 1)
         {
-            valueFailures.push(`moon backfill: synthetic player ${playerId} moon ${JSON.stringify(moonRows[0])} does not match its first planet ${JSON.stringify(firstPlanet)}`);
+            if (JSON.stringify(moonRows[planetIndex]) !== JSON.stringify(oldestPlanets[planetIndex]))
+            {
+                valueFailures.push(`moon backfill: synthetic player ${playerId} moon ${JSON.stringify(moonRows[planetIndex])} does not match its planet ${JSON.stringify(oldestPlanets[planetIndex])}`);
+            }
         }
     }
 
