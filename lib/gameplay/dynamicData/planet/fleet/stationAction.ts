@@ -27,12 +27,8 @@ export function resolveStationAction(originPlayerData: CoreType.PlayerData | nul
     if (originPlanetData !== null)
     {
         FleetData.removeFleetMovement(originPlanetData, fleetMovement.fleetMovementRow.id);
-        fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
     }
-    else
-    {
-        fleetMovement.resolutionState = CoreType.FleetMovementResolution.ResolvedOneWayTripForTargetOnly;
-    }
+    fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
 
     addStationActionMessages(targetPlayerData, fleetMovement);
 }

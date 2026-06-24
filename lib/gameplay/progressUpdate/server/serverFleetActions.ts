@@ -16,12 +16,6 @@ export function resolveFleetMovementAtTargetToDB(playerData: CoreType.PlayerData
         throw new Error(`⚠️: Resolving an unresolved fleet movement.`); 
     }
 
-    if (resolvedData.event.fleetMovement.resolutionState === CoreType.FleetMovementResolution.Invalid)
-    {
-        deleteFleetMovementFromDB(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement);
-        return;
-    }
-
     if (resolvedData.data.origin === null)
     {
         throw new Error(`⚠️: Origin is null when writing fleet action to DB.`);
@@ -56,11 +50,6 @@ function serverResolveFleetMovementAtTarget(originPlayerData: FleetData.FleetPla
     if (originPlayerData.playerData.playerRow.id !== resolvingPlayerId)
     {
         FleetData.addFleetMessagesToPlayerData(originPlayerData.playerData, fleetMovement);
-        if (fleetMovement.resolutionState === CoreType.FleetMovementResolution.ResolvedOneWayTripForTargetOnly)
-        {
-            FleetData.removeFleetMovementSafe(originPlayerData.planetData, fleetMovement.fleetMovementRow.id);
-            fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
-        }
     }
 
     if (updatedTargetFleetPlayerData !== null && updatedTargetFleetPlayerData.playerData.playerRow.id !== resolvingPlayerId)
@@ -100,19 +89,4 @@ function writeFleetActionToDB(originPlayerData: FleetData.FleetPlayerData, targe
     });
 
     transaction();
-}
-
-function deleteFleetMovementFromDB(originPlayerData: FleetData.FleetPlayerData | null, targetPlayerData: FleetData.FleetPlayerData | null, fleetMovement: CoreType.FleetMovement): void
-{
-    if (originPlayerData !== null)
-    {
-        const updatedPlanetData: CoreType.PlanetData = FleetData.removeFleetMovementSafe(originPlayerData.planetData, fleetMovement.fleetMovementRow.id);
-        ServerDynamicData.serverUpdatePlanetDataContext(updatedPlanetData.planetRow.id, originPlayerData.playerData.playerRow.id, CoreType.DataContext.FutureFleetArrivals, updatedPlanetData.dynamicPlanetData);
-    }
-
-    if (targetPlayerData !== null)
-    {
-        const updatedPlanetData: CoreType.PlanetData = FleetData.removeFleetMovementSafe(targetPlayerData.planetData, fleetMovement.fleetMovementRow.id);
-        ServerDynamicData.serverUpdatePlanetDataContext(updatedPlanetData.planetRow.id, targetPlayerData.playerData.playerRow.id, CoreType.DataContext.FutureFleetArrivals, updatedPlanetData.dynamicPlanetData);
-    }
 }

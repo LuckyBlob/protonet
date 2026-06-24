@@ -111,7 +111,7 @@ describe('resolveStationAction', () =>
         expect(targetPlanet.dynamicPlanetData.futureFleetArrivals).toHaveLength(0);
     });
 
-    it('marks the fleet ResolvedOneWayTripForTargetOnly when origin player data is null', () =>
+    it('marks the fleet Resolved even when origin player data is null', () =>
     {
         const fleet: CoreType.FleetMovement = buildFleetMovement();
         const targetFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
@@ -124,7 +124,7 @@ describe('resolveStationAction', () =>
 
         StationAction.resolveStationAction(null, targetPlayer, fleet, TestDataBuilders.buildServerData());
 
-        expect(fleet.resolutionState).toBe(CoreType.FleetMovementResolution.ResolvedOneWayTripForTargetOnly);
+        expect(fleet.resolutionState).toBe(CoreType.FleetMovementResolution.Resolved);
     });
 
     it('adds an origin message describing the stationed fleet', () =>

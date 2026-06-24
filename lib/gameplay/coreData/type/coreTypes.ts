@@ -168,8 +168,6 @@ export const FleetMovementResolution =
     Unresolved: 1,
     Resolved: 2,
     ResolveResultUnknown: 3,
-    Invalid: 4,
-    ResolvedOneWayTripForTargetOnly: 5,
 } as const;
 
 export type MessageData =
