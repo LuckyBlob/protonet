@@ -9,16 +9,12 @@ import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 
 export function resolveStationAction(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
-    if (fleetMovement.fleetMovementRow.planet_target_id === null)
-    {
-        throw new Error(`⚠️: Failed to resolve station action because target planet id was null.`);
-    }
-
     const originPlanetData: CoreType.PlanetData | null = originPlayerData !== null ? CoreType.getPlanetDataForId(originPlayerData.planetDatas, fleetMovement.fleetMovementRow.planet_origin_id) : null;
-    const targetPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(targetPlayerData.planetDatas, fleetMovement.fleetMovementRow.planet_target_id);
+    const targetPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForAddress(targetPlayerData.planetDatas, CoreType.getFleetTargetAddress(fleetMovement.fleetMovementRow));
     if (targetPlanetData === null)
     {
-        throw new Error(`⚠️: Failed to resolve station action because target planet data was null.`);
+        FleetData.bounceFleetForMissingTarget(originPlayerData, fleetMovement);
+        return;
     }
 
     const shipQuantities: Map<GameType.ShipType, number> = FleetData.buildShipQuantitiesFromRows(fleetMovement.fleetMovementShipRows);

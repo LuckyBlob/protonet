@@ -39,6 +39,80 @@ describe('isAnyBuildingUpgradeInProgress', () =>
     });
 });
 
+describe('playerPlanetCount', () =>
+{
+    it('counts only zone=Planet bodies, ignoring moons and debris fields', () =>
+    {
+        const planetA: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { id: 1, zone: GameType.PlanetZone.Planet } });
+        const planetB: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { id: 2, zone: GameType.PlanetZone.Planet } });
+        const moon: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { id: 3, zone: GameType.PlanetZone.Moon } });
+        const debris: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { id: 4, zone: GameType.PlanetZone.DebrisField } });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planetA, planetB, moon, debris] });
+
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.playerPlanetCount();
+        expect(getter({ playerData: playerData, planetId: 1 })).toBe(2);
+    });
+});
+
+describe('doesTargetZoneExist', () =>
+{
+    it('returns 1 when the target zone exists', () =>
+    {
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.doesTargetZoneExist();
+        expect(getter({ playerData: TestDataBuilders.buildPlayerData(), planetId: 1, targetZoneExists: true })).toBe(1);
+    });
+
+    it('returns 0 when the target zone does not exist', () =>
+    {
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.doesTargetZoneExist();
+        expect(getter({ playerData: TestDataBuilders.buildPlayerData(), planetId: 1, targetZoneExists: false })).toBe(0);
+    });
+
+    it('throws when target zone existence info was not threaded in', () =>
+    {
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.doesTargetZoneExist();
+        expect(() => getter({ playerData: TestDataBuilders.buildPlayerData(), planetId: 1 })).toThrow();
+    });
+});
+
+describe('isZoneAssociatedPlanetOwned', () =>
+{
+    it('returns 1 when the zone-associated planet has an owner', () =>
+    {
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.isZoneAssociatedPlanetOwned();
+        const context: RequirementType.RequirementContext =
+        {
+            playerData: TestDataBuilders.buildPlayerData(),
+            planetId: 1,
+            zoneAssociatedPlanetOwnerPlayerId: 7,
+        };
+        expect(getter(context)).toBe(1);
+    });
+
+    it('returns 0 when the zone-associated planet has no owner (empty slot)', () =>
+    {
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.isZoneAssociatedPlanetOwned();
+        const context: RequirementType.RequirementContext =
+        {
+            playerData: TestDataBuilders.buildPlayerData(),
+            planetId: 1,
+            zoneAssociatedPlanetOwnerPlayerId: null,
+        };
+        expect(getter(context)).toBe(0);
+    });
+
+    it('throws when the zone-associated planet ownership info was not threaded in', () =>
+    {
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.isZoneAssociatedPlanetOwned();
+        const context: RequirementType.RequirementContext =
+        {
+            playerData: TestDataBuilders.buildPlayerData(),
+            planetId: 1,
+        };
+        expect(() => getter(context)).toThrow();
+    });
+});
+
 describe('buildingLevel', () =>
 {
     it('returns the level for a known building type', () =>

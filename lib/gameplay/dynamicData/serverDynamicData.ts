@@ -427,9 +427,15 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): CoreTy
     {
         const fleetMovements: CoreType.FleetMovement[] = [];
 
-        const fleetMovementRows: DBType.FleetMovementRow[] = DB.databaseConnection.prepare(
-            "SELECT * FROM fleet_movement WHERE planet_origin_id = ? OR (is_return_trip = 0 AND planet_target_id = ?)"
-        ).all(planetId, planetId) as DBType.FleetMovementRow[];
+        const planetCoordsRow: { galaxy: number; system: number; slot: number; zone: number } | undefined = DB.databaseConnection.prepare(
+            "SELECT galaxy, system, slot, zone FROM planet WHERE id = ?"
+        ).get(planetId) as { galaxy: number; system: number; slot: number; zone: number } | undefined;
+
+        const fleetMovementRows: DBType.FleetMovementRow[] = planetCoordsRow === undefined
+            ? DB.databaseConnection.prepare("SELECT * FROM fleet_movement WHERE planet_origin_id = ?").all(planetId) as DBType.FleetMovementRow[]
+            : DB.databaseConnection.prepare(
+                "SELECT * FROM fleet_movement WHERE planet_origin_id = ? OR (is_return_trip = 0 AND planet_target_galaxy = ? AND planet_target_system = ? AND planet_target_slot = ? AND planet_target_zone = ?)"
+            ).all(planetId, planetCoordsRow.galaxy, planetCoordsRow.system, planetCoordsRow.slot, planetCoordsRow.zone) as DBType.FleetMovementRow[];
 
         for (const fleetMovementRow of fleetMovementRows)
         {
@@ -674,7 +680,7 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: CoreType
         
         // On delete cascade will delete the ship rows and resource rows
         const fleetMovementStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO fleet_movement (seed, player_origin_id, planet_origin_id, planet_origin_zone, planet_origin_slot, planet_origin_system, planet_origin_galaxy, player_target_id, planet_target_id, planet_target_zone, planet_target_slot, planet_target_system, planet_target_galaxy, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
+            "INSERT INTO fleet_movement (seed, player_origin_id, planet_origin_id, planet_origin_zone, planet_origin_slot, planet_origin_system, planet_origin_galaxy, player_target_id, planet_target_zone, planet_target_slot, planet_target_system, planet_target_galaxy, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
         );
         const fleetMovementShipStatement: Database.Statement = DB.databaseConnection.prepare(
             "INSERT INTO fleet_movement_ship VALUES (?, ?, ?)"
@@ -703,7 +709,6 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: CoreType
                 fleetMovement.fleetMovementRow.planet_origin_system,
                 fleetMovement.fleetMovementRow.planet_origin_galaxy,
                 fleetMovement.fleetMovementRow.player_target_id,
-                fleetMovement.fleetMovementRow.planet_target_id,
                 fleetMovement.fleetMovementRow.planet_target_zone,
                 fleetMovement.fleetMovementRow.planet_target_slot,
                 fleetMovement.fleetMovementRow.planet_target_system,

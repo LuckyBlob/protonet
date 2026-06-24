@@ -196,6 +196,7 @@ export type PlanetZoneInfo =
 {
 	displayName: string;
 	isSelectable: boolean;
+	canProduceResources: boolean;
 }
 
 export type SlotSizeRange =

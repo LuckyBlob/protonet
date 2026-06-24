@@ -63,7 +63,6 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | nu
     };
     originPlayerData.planetDatas.push(targetPlanetData);
     
-    fleetMovement.fleetMovementRow.planet_target_id = planetId;
     fleetMovement.fleetMovementRow.player_target_id = originPlayerData.playerRow.id;
 
     removeSingleColonyShipFromFleetMovement(fleetMovement);

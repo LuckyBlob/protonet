@@ -262,13 +262,12 @@ describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
         expect(failed.length).toBeGreaterThan(0);
     });
 
-    it('an unknown fleet action has no registered requirements (no gating failures)', () =>
+    it('throws for an unknown fleet action (no registered info)', () =>
     {
-        // The action type is constrained by the FleetActionType enum / FLEET_ACTION_INFOS keys upstream,
-        // and fleet resolution throws UNREACHABLE for an unknown action as a backstop.
+        // The action type is constrained by the FleetActionType enum / FLEET_ACTION_INFOS keys upstream;
+        // an unknown action has no registered info, so the requirement lookup throws.
         const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        const failed: RequirementType.Requirement[] = getFailed(originPlayer, 9999 as GameType.FleetActionType, shipQuantities, 42);
-        expect(failed).toHaveLength(0);
+        expect(() => getFailed(originPlayer, 9999 as GameType.FleetActionType, shipQuantities, 42)).toThrow();
     });
 });
 

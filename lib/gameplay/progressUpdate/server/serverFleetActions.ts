@@ -38,7 +38,7 @@ function serverCompletePartialResolution(originPlayerData: FleetData.FleetPlayer
     if (fleetMovement.resolutionState === CoreType.FleetMovementResolution.ResolveResultUnknown)
     {
         const updatedTargetPlayerData: CoreType.PlayerData | null = FleetData.resolveFleetMovementAtTarget(targetPlayerData?.playerData ?? null, originPlayerData.playerData, fleetMovement, serverData, fleetActionResolver);
-        const updatedTargetPlanetData: CoreType.PlanetData | null = updatedTargetPlayerData !== null ? CoreType.getPlanetDataForId(updatedTargetPlayerData.planetDatas, fleetMovement.fleetMovementRow.planet_target_id!) : null;
+        const updatedTargetPlanetData: CoreType.PlanetData | null = updatedTargetPlayerData !== null ? CoreType.getPlanetDataForAddress(updatedTargetPlayerData.planetDatas, CoreType.getFleetTargetAddress(fleetMovement.fleetMovementRow)) : null;
 
         if (updatedTargetPlayerData !== null && updatedTargetPlanetData !== null)
         {

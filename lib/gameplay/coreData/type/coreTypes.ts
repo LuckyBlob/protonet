@@ -293,6 +293,58 @@ export function getPlanetAddress(planetData: PlanetData): GameType.PlanetAddress
     return planetAddress;
 }
 
+export function getPlanetDataForAddress(planetDatas: PlanetData[], address: GameType.PlanetAddress): PlanetData | null
+{
+    const matchingPlanetData: PlanetData | undefined = planetDatas.find((planetData: PlanetData): boolean =>
+    {
+        return planetData.planetRow.galaxy === address.galaxy
+            && planetData.planetRow.system === address.system
+            && planetData.planetRow.slot === address.slot
+            && planetData.planetRow.zone === address.zone;
+    });
+
+    return matchingPlanetData ?? null;
+}
+
+export function getPublicPlanetDataForAddress(publicPlanetDatas: PublicPlanetData[], address: GameType.PlanetAddress): PublicPlanetData | null
+{
+    const matchingPublicPlanetData: PublicPlanetData | undefined = publicPlanetDatas.find((publicPlanetData: PublicPlanetData): boolean =>
+    {
+        return publicPlanetData.galaxy === address.galaxy
+            && publicPlanetData.system === address.system
+            && publicPlanetData.slot === address.slot
+            && publicPlanetData.zone === address.zone;
+    });
+
+    return matchingPublicPlanetData ?? null;
+}
+
+export function getFleetTargetAddress(fleetMovementRow: DBType.FleetMovementRow): GameType.PlanetAddress
+{
+    const targetAddress: GameType.PlanetAddress =
+    {
+        galaxy: fleetMovementRow.planet_target_galaxy,
+        system: fleetMovementRow.planet_target_system,
+        slot: fleetMovementRow.planet_target_slot,
+        zone: fleetMovementRow.planet_target_zone as GameType.PlanetZone,
+    }
+
+    return targetAddress;
+}
+
+export function getFleetOriginAddress(fleetMovementRow: DBType.FleetMovementRow): GameType.PlanetAddress
+{
+    const originAddress: GameType.PlanetAddress =
+    {
+        galaxy: fleetMovementRow.planet_origin_galaxy,
+        system: fleetMovementRow.planet_origin_system,
+        slot: fleetMovementRow.planet_origin_slot,
+        zone: fleetMovementRow.planet_origin_zone as GameType.PlanetZone,
+    }
+
+    return originAddress;
+}
+
 export function getOwnedPlanets(planetDatas: PlanetData[]): PlanetData[]
 {
     const ownedPlanets: PlanetData[] = planetDatas.filter((planetData: PlanetData): boolean =>

@@ -50,7 +50,7 @@ export class FleetActionResolver
 			}
 			case GameType.FleetActionType.Recycle:
 			{
-				RecycleAction.resolveRecycleAction(originPlayerData, fleetMovement, serverData);
+				RecycleAction.resolveRecycleAction(originPlayerData, targetPlayerData, fleetMovement, serverData);
 				break;
 			}
 			default:
@@ -148,13 +148,10 @@ export function clampResoucesToAddToFleet(shipQuantities: Map<GameType.ShipType,
 
 export function resolveFleetMovementAtTarget(targetPlayerData: CoreType.PlayerData | null, originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData, fleetActionResolver: FleetActionResolver): CoreType.PlayerData | null
 {
-	const canTargetBeNull: boolean = fleetMovement.fleetMovementRow.fleet_action_type === GameType.FleetActionType.Colonize
-		|| fleetMovement.fleetMovementRow.fleet_action_type === GameType.FleetActionType.Recycle;
+	const canTargetBeNull: boolean = fleetMovement.fleetMovementRow.fleet_action_type === GameType.FleetActionType.Colonize;
 	if (fleetMovement.fleetMovementRow.player_target_id === null && !canTargetBeNull)
 	{
-		setFleetReturnTrip(null, fleetMovement);
-		fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
-		addInvalidTargetFleetActionMessage(originPlayerData, fleetMovement);
+		bounceFleetForMissingTarget(originPlayerData, fleetMovement);
 		return targetPlayerData;
 	}
 
@@ -163,16 +160,6 @@ export function resolveFleetMovementAtTarget(targetPlayerData: CoreType.PlayerDa
 		// To resolve a fleet we need the target data since all the origin data is in the fleet itself
 		fleetMovement.resolutionState = CoreType.FleetMovementResolution.ResolveResultUnknown;
 		return targetPlayerData;
-	}
-
-	const targetPlanetData: CoreType.PlanetData | undefined = targetPlayerData?.planetDatas.find((planetData: CoreType.PlanetData) => 
-	{
-		return planetData.planetRow.id === fleetMovement.fleetMovementRow.planet_target_id;
-	});
-
-	if (targetPlanetData === undefined && !canTargetBeNull)
-	{
-		throw new Error(`Didnt find target planet ${fleetMovement.fleetMovementRow.planet_target_id} for player ${targetPlayerData?.playerRow.id}.`)
 	}
 
 	const updatedTargetPlayerData: CoreType.PlayerData | null = fleetActionResolver.resolveFleetAction(targetPlayerData, originPlayerData, fleetMovement, serverData);
@@ -225,15 +212,25 @@ function addFleetMessageToPlayerData(playerData: CoreType.PlayerData, messageRow
     playerData.dynamicPlayerData.messageDatas.push(newMessageData);
 }
 
-function addInvalidTargetFleetActionMessage(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement)
+// Generic missing-target bounce: a fleet action whose target no longer exists at the destination
+// turns around and returns home. Shared by the resolveFleetMovementAtTarget null-target guard and by
+// the resolvers (Station/Collect) whose action requires an existing target.
+export function bounceFleetForMissingTarget(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement): void
+{
+	setFleetReturnTrip(null, fleetMovement);
+	fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
+	addMissingTargetFleetActionMessage(originPlayerData, fleetMovement);
+}
+
+function addMissingTargetFleetActionMessage(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement): void
 {
 	if (originPlayerData === null)
 	{
 		return;
 	}
-	
+
 	const actionName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.fleetAction(fleetMovement.fleetMovementRow.fleet_action_type));
-	
+
 	fleetMovement.originMessageRow =
 	{
 		id: -1, // placeholder, will be set properly when message is created in DB
@@ -242,7 +239,7 @@ function addInvalidTargetFleetActionMessage(originPlayerData: CoreType.PlayerDat
 		type: MessageData.MessageType.FleetAction,
 		is_read: 0,
 		title: `${actionName} Fleet Action Report.`,
-		body: "Invalid Target."
+		body: `This fleet action needs a target, but none exists at the destination. Fleet returning.`
 	};
 
 	addFleetMessagesToPlayerData(originPlayerData, fleetMovement);
@@ -338,6 +335,24 @@ export function computeFleetFuelAndSpace(playerData: CoreType.PlayerData, origin
 	const availableSpace: number = Math.max(totalSpace - totalFuel, 0);
 
 	return { totalFuel: totalFuel, availableSpace: availableSpace };
+}
+
+export function computeRemainingFleetCargoSpace(fleetMovement: CoreType.FleetMovement): number
+{
+	const shipQuantities: Map<GameType.ShipType, number> = buildShipQuantitiesFromRows(fleetMovement.fleetMovementShipRows);
+	const totalFleetSpace: number = calculateTotalFleetSpace(shipQuantities);
+
+	let usedSpace: number = 0;
+	for (const fleetMovementFuelRow of fleetMovement.fleetMovementFuelRows)
+	{
+		usedSpace += fleetMovementFuelRow.resource_quantity;
+	}
+	for (const fleetMovementResourceRow of fleetMovement.fleetMovementResourceRows)
+	{
+		usedSpace += fleetMovementResourceRow.resource_quantity;
+	}
+
+	return Math.max(totalFleetSpace - usedSpace, 0);
 }
 
 export function getFleetMovementRemainingMs(fleetMovement: CoreType.FleetMovement): number | null

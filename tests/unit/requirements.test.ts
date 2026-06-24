@@ -111,11 +111,10 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         expect(failed).toHaveLength(0);
     });
 
-    it('returns empty array for a building type with no requirements registered', () =>
+    it('throws for an unknown building type (no registered info)', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, 9999 as GameType.BuildingType, 1);
-        expect(failed).toHaveLength(0);
+        expect(() => Requirements.getFailedBuildingUpgradeRequirements(playerData, 9999 as GameType.BuildingType, 1)).toThrow();
     });
 });
 

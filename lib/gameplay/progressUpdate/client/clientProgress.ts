@@ -3,6 +3,7 @@
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
@@ -22,17 +23,17 @@ class ClientPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
         return updatedPlayerData;
     }
 
-    getFleetPlayerData(playerId: number | null, planetId: number | null, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
+    getFleetPlayerData(playerId: number | null, address: GameType.PlanetAddress | null, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
     {
-        if (playerId === null || planetId === null || playerData.playerRow.id !== playerId)
+        if (playerId === null || address === null || playerData.playerRow.id !== playerId)
         {
             return null;
         }
 
-        const associatedPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, planetId);
+        const associatedPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForAddress(playerData.planetDatas, address);
         if (associatedPlanetData === null)
         {
-            throw new Error(`⚠️: Cant get full planet data for fleet.`); 
+            return null;
         }
 
         const fleetPlayerData: FleetData.FleetPlayerData =

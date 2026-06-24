@@ -111,16 +111,16 @@ export function hasFreeFleetSlot(): RequirementType.ThingValueGetter
     };
 }
 
-export function isTargetPlanetOwned(): RequirementType.ThingValueGetter
+export function isZoneAssociatedPlanetOwned(): RequirementType.ThingValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
-        if (context.targetPlanetOwnerPlayerId === undefined)
+        if (context.zoneAssociatedPlanetOwnerPlayerId === undefined)
         {
-            throw new Error(`isTargetPlanetOwned requirement evaluated without target planet ownership info.`);
+            throw new Error(`isZoneAssociatedPlanetOwned requirement evaluated without zone-associated planet ownership info.`);
         }
 
-        return context.targetPlanetOwnerPlayerId === null ? 0 : 1;
+        return context.zoneAssociatedPlanetOwnerPlayerId === null ? 0 : 1;
     };
 }
 

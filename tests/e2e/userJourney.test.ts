@@ -50,9 +50,17 @@ test('full user journey', async ({ page }) =>
 	await expect(E2EHelper.buildingCard(page, 'Shipyard')).toContainText('Robotic Factory >= 2 (current: 0)')
 	await E2EHelper.goToView(page, 'Game')
 
+	// A fresh account gets two starting planets, each with its own moon: 4 bodies total (2 zone=1
+	// planets + 2 zone=2 moons), all at the two starting coordinates.
+	const e2e1Bodies: E2EHelper.PlanetRow[] = E2EHelper.getPlanets('E2E1', db)
+	expect(e2e1Bodies.filter((body: E2EHelper.PlanetRow) => body.zone === 1).length).toBe(2)
+	expect(e2e1Bodies.filter((body: E2EHelper.PlanetRow) => body.zone === 2).length).toBe(2)
+
 	const e2e1FirstAddress: string = await E2EHelper.selectedPlanetAddress(page)
 	expect(e2e1FirstAddress).not.toBe('')
 
+	// The picker lists planets only (moons are reachable via the zone selector, not the planet
+	// dropdown), so this stays 2 — one per starting planet.
 	const e2e1Addresses: string[] = await E2EHelper.getDropdownAddresses(page)
 	expect(e2e1Addresses.length).toBe(2)
 
@@ -108,7 +116,9 @@ test('registration is rejected once every starting slot in the universe is claim
 	// hardcoded, so it tracks whatever a new account actually receives.
 	const firstUser: string = E2EHelper.uniqueUsername('Cap');
 	await E2EHelper.register(page, firstUser, '111111');
-	const planetsPerRegistration: number = E2EHelper.getPlanets(firstUser, db).length;
+	// Capacity is measured in starting SLOTS, and a moon shares its planet's slot — so only zone=1
+	// planets consume capacity. Count those, not the total bodies (which now include moons).
+	const planetsPerRegistration: number = E2EHelper.getPlanets(firstUser, db).filter((body: E2EHelper.PlanetRow) => body.zone === 1).length;
 	expect(planetsPerRegistration).toBeGreaterThan(0);
 
 	const maxRegistrations: number = Math.floor(freeSlotsBefore / planetsPerRegistration);

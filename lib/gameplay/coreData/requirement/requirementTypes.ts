@@ -23,7 +23,7 @@ export type RequirementContext =
     shipQuantities?: Map<GameType.ShipType, number>;
     transportedResourceQuantities?: Map<GameType.ResourceType, number>;
     targetPlanetAddress?: GameType.PlanetAddress;
-    targetPlanetOwnerPlayerId?: number | null;
+    zoneAssociatedPlanetOwnerPlayerId?: number | null;
     targetZoneExists?: boolean;
 };
 

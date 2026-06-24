@@ -6,10 +6,9 @@ import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 
 describe('computeConstructionDurationSeconds', () =>
 {
-    it('returns null for an unknown ship type', () =>
+    it('throws for an unknown ship type', () =>
     {
-        const result: number | null = ShipConstructionFormulas.computeConstructionDurationSeconds(9999 as GameType.ShipType, 0, 0, null);
-        expect(result).toBeNull();
+        expect(() => ShipConstructionFormulas.computeConstructionDurationSeconds(9999 as GameType.ShipType, 0, 0, null)).toThrow();
     });
 
     it('computes duration for Small Transport at shipyard level 0 without serverData', () =>

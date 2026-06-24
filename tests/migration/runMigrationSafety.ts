@@ -292,7 +292,7 @@ function injectShipConstructionQueue(databaseConnection: Database.Database, plan
 function injectFleetMovements(databaseConnection: Database.Database, planetId: number, playerId: number, slot: number, system: number, now: number): void
 {
     const insertFleet: Database.Statement = databaseConnection.prepare(
-        "INSERT INTO fleet_movement (seed, player_origin_id, planet_origin_id, planet_origin_slot, planet_origin_system, planet_origin_galaxy, player_target_id, planet_target_id, planet_target_slot, planet_target_system, planet_target_galaxy, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?, 0, 1, ?, ?, ?, ?) RETURNING id"
+        "INSERT INTO fleet_movement (seed, player_origin_id, planet_origin_id, planet_origin_slot, planet_origin_system, planet_origin_galaxy, player_target_id, planet_target_slot, planet_target_system, planet_target_galaxy, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, 0, 1, ?, ?, ?, ?) RETURNING id"
     );
     const insertFleetShip: Database.Statement = databaseConnection.prepare(
         "INSERT INTO fleet_movement_ship (fleet_id, ship_type, ship_quantity) VALUES (?, ?, 2)"
@@ -395,7 +395,7 @@ function captureSyntheticSnapshot(connection: Database.Database, syntheticPlayer
         {
             label: "fleet_movement",
             rows: connection.prepare(
-                `SELECT id, seed, player_origin_id, planet_origin_id, planet_origin_slot, planet_origin_system, planet_origin_galaxy, player_target_id, planet_target_id, planet_target_slot, planet_target_system, planet_target_galaxy, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at FROM fleet_movement WHERE player_origin_id IN (${idList}) ORDER BY id`
+                `SELECT id, seed, player_origin_id, planet_origin_id, planet_origin_slot, planet_origin_system, planet_origin_galaxy, player_target_id, planet_target_slot, planet_target_system, planet_target_galaxy, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at FROM fleet_movement WHERE player_origin_id IN (${idList}) ORDER BY id`
             ).all() as Record<string, unknown>[],
         },
         {

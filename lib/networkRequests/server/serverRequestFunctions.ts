@@ -629,10 +629,20 @@ function createPlayer(userId: number): void
         };
         const firstMoonId: number = ServerPlanetManagement.createZone(firstMoonAddress, playerRow.id, firstPlanetRow.size, now);
         const secondPlanetId: number = ServerPlanetManagement.claimPlanet(null, playerRow.id, now + 1);
+        const secondPlanetRow: DBType.PlanetRow = readPlanetRow(secondPlanetId);
+        const secondMoonAddress: GameType.PlanetAddress =
+        {
+            galaxy: secondPlanetRow.galaxy,
+            system: secondPlanetRow.system,
+            slot: secondPlanetRow.slot,
+            zone: GameType.PlanetZone.Moon,
+        };
+        const secondMoonId: number = ServerPlanetManagement.createZone(secondMoonAddress, playerRow.id, secondPlanetRow.size, now + 1);
 
         ServerDynamicData.serverUpdateAllPlanetData(firstPlanetId, playerRow.id, StaticData.STARTING_PLANET_DATA);
         ServerDynamicData.serverUpdateAllPlanetData(firstMoonId, playerRow.id, StaticData.STARTING_PLANET_DATA);
         ServerDynamicData.serverUpdateAllPlanetData(secondPlanetId, playerRow.id, StaticData.STARTING_PLANET_DATA);
+        ServerDynamicData.serverUpdateAllPlanetData(secondMoonId, playerRow.id, StaticData.STARTING_PLANET_DATA);
 
 
         const serverData: CoreType.ServerData = ServerType.getServerData();
@@ -1308,10 +1318,12 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         }
     }
 
-    const targetPlanetOwnerPlayerId: number | null = targetPlanetData === null ? null : targetPlanetData.planetRow.owner_player_id;
     const targetZoneExists: boolean = targetPlanetData !== null;
 
-    if (Requirement.getFailedFleetMovementRequirements(playerData, requestData.fleetAction, originPlanetData.planetRow.id, shipQuantities, transportedResourceQuantities, targetAddress, targetPlanetOwnerPlayerId, targetZoneExists).length > 0)
+    const zoneAssociatedPlanetData: CoreType.PlanetData | null = getPlanetDataByCoords(targetAddress.galaxy, targetAddress.system, targetAddress.slot, GameType.PlanetZone.Planet);
+    const zoneAssociatedPlanetOwnerPlayerId: number | null = zoneAssociatedPlanetData === null ? null : zoneAssociatedPlanetData.planetRow.owner_player_id;
+
+    if (Requirement.getFailedFleetMovementRequirements(playerData, requestData.fleetAction, originPlanetData.planetRow.id, shipQuantities, transportedResourceQuantities, targetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists).length > 0)
     {
         return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
     }
@@ -1432,8 +1444,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
             planet_origin_slot: originPlanetData.planetRow.slot,
 	        planet_origin_system: originPlanetData.planetRow.system,
 	        planet_origin_galaxy: originPlanetData.planetRow.galaxy,
-            player_target_id: targetPlanetData ? targetPlanetData.planetRow.owner_player_id : null,
-            planet_target_id: targetPlanetData ? targetPlanetData.planetRow.id : null,
+            player_target_id: zoneAssociatedPlanetOwnerPlayerId,
             planet_target_zone: targetAddress.zone,
             planet_target_slot: targetAddress.slot,
 	        planet_target_system: targetAddress.system,

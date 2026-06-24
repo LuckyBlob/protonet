@@ -267,11 +267,8 @@ function capRequestedShipQuantitiesToOwned(requestedShipQuantities: Map<GameType
 function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): ReactElement
 {
     const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
-    const originPlanetId: number = data.planetData.planetRow.id;
 
-    const ownedPlanetDatas: CoreType.PlanetData[] = StaticDataHelper.getSelectableZones(playerData.planetDatas).filter(
-        (planetData: CoreType.PlanetData): boolean => planetData.planetRow.id !== originPlanetId
-    );
+    const ownedPlanetDatas: CoreType.PlanetData[] = StaticDataHelper.getSelectableZones(playerData.planetDatas);
 
     const handleOwnedPlanetSelect = (e: ChangeEvent<HTMLSelectElement>): void =>
     {
@@ -529,22 +526,17 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
 
     const targetPlanetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
 
-    const targetPublicPlanetData: CoreType.PublicPlanetData | undefined = props.clientDataStateResult.psController[0].dbData.publicPlanetDatas.find((publicPlanetData: CoreType.PublicPlanetData): boolean =>
-    {
-        return (
-            (publicPlanetData.galaxy === targetPlanetAddress.galaxy) &&
-            (publicPlanetData.system === targetPlanetAddress.system) &&
-            (publicPlanetData.slot === targetPlanetAddress.slot) &&
-            (publicPlanetData.zone === targetPlanetAddress.zone)
-        );
-    });
+    const publicPlanetDatas: CoreType.PublicPlanetData[] = props.clientDataStateResult.psController[0].dbData.publicPlanetDatas;
+    const targetPublicPlanetData: CoreType.PublicPlanetData | null = CoreType.getPublicPlanetDataForAddress(publicPlanetDatas, targetPlanetAddress);
+    const targetZoneExists: boolean = targetPublicPlanetData !== null;
 
-    const targetOwnerPlayerId: number | null = targetPublicPlanetData?.owner_player_id ?? null;
-    const targetZoneExists: boolean = targetPublicPlanetData !== undefined;
+    const zoneAssociatedPlanetAddress: GameType.PlanetAddress = { ...targetPlanetAddress, zone: GameType.PlanetZone.Planet };
+    const zoneAssociatedPlanetData: CoreType.PublicPlanetData | null = CoreType.getPublicPlanetDataForAddress(publicPlanetDatas, zoneAssociatedPlanetAddress);
+    const zoneAssociatedPlanetOwnerPlayerId: number | null = zoneAssociatedPlanetData?.owner_player_id ?? null;
 
     const validActionIds: GameType.FleetActionType[] = Array.from(StaticData.FLEET_ACTION_INFOS.keys()).filter((actionId: GameType.FleetActionType): boolean =>
     {
-        const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(data.playerData, actionId, data.planetData.planetRow.id, data.requestedShipQuantitiesState.requestedQuantities, data.requestedResourceQuantitiesState.requestedQuantities, targetPlanetAddress, targetOwnerPlayerId, targetZoneExists);
+        const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(data.playerData, actionId, data.planetData.planetRow.id, data.requestedShipQuantitiesState.requestedQuantities, data.requestedResourceQuantitiesState.requestedQuantities, targetPlanetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists);
         return failedRequirements.length === 0;
     });
 

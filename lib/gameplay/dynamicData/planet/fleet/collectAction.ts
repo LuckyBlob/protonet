@@ -9,15 +9,11 @@ import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 
 export function resolveCollectAction(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
-    if (fleetMovement.fleetMovementRow.planet_target_id === null)
-    {
-        throw new Error(`⚠️: Failed to resolve collect action because target planet id was null.`);
-    }
-
-    const targetPlanetData: CoreType.PlanetData | null = targetPlayerData !== null ? CoreType.getPlanetDataForId(targetPlayerData.planetDatas, fleetMovement.fleetMovementRow.planet_target_id) : null;
+    const targetPlanetData: CoreType.PlanetData | null = targetPlayerData !== null ? CoreType.getPlanetDataForAddress(targetPlayerData.planetDatas, CoreType.getFleetTargetAddress(fleetMovement.fleetMovementRow)) : null;
     if (targetPlanetData === null)
     {
-        throw new Error(`⚠️: Failed to resolve collect action because target planet data was null.`);
+        FleetData.bounceFleetForMissingTarget(originPlayerData, fleetMovement);
+        return;
     }
 
 	// They caught you!
@@ -29,34 +25,12 @@ export function resolveCollectAction(originPlayerData: CoreType.PlayerData | nul
         return;
     }
 
-	const fleetShipQuantities: Map<GameType.ShipType, number> = FleetData.buildShipQuantitiesFromRows(fleetMovement.fleetMovementShipRows);
-	let totalResourcesInFleet: number = 0;
-	for (const fleetMovementResourceRow of fleetMovement.fleetMovementResourceRows)
-	{
-		totalResourcesInFleet += fleetMovementResourceRow.resource_quantity;
-	}
-	// Fuel was computed from the origin player's research at departure and stored on the fleet,
-	// so we read it back here instead of recomputing (the origin player's research is not available
-	// at the target and may have changed since the fleet left).
-	let totalFuelInFleet: number = 0;
-	for (const fleetMovementFuelRow of fleetMovement.fleetMovementFuelRows)
-	{
-		totalFuelInFleet += fleetMovementFuelRow.resource_quantity;
-	}
-
-	const totalFleetSpace: number = FleetData.calculateTotalFleetSpace(fleetShipQuantities);
-	const fuelSpaceData: { totalFuel: number, availableSpace: number } =
-	{
-		totalFuel: totalFuelInFleet,
-		availableSpace: Math.max(totalFleetSpace - totalFuelInFleet, 0),
-	}
-	totalResourcesInFleet += fuelSpaceData.totalFuel;
-	const availableSpace: number = fuelSpaceData.availableSpace - totalResourcesInFleet;
+	const availableSpace: number = FleetData.computeRemainingFleetCargoSpace(fleetMovement);
 
 	if (availableSpace > 0)
 	{
         const targetResourceQuantities: Map<GameType.ResourceType, number> = ResourceData.getResourceQuantities(targetPlanetData);
-        const collectedResourceQuantities: Map<GameType.ResourceType, number> = getCollectedResources(targetResourceQuantities, availableSpace);
+        const collectedResourceQuantities: Map<GameType.ResourceType, number> = ResourceData.computeCollectedResources(targetResourceQuantities, availableSpace);
         
         //Remove resources
         ResourceData.subtractPlanetResources(targetPlanetData, collectedResourceQuantities);
@@ -79,70 +53,6 @@ export function resolveCollectAction(originPlayerData: CoreType.PlayerData | nul
 	fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
 
     addCollectActionSuccessMessage(targetPlayerData, fleetMovement);
-}
-
-function getCollectedResources(targetResourceQuantities: Map<GameType.ResourceType, number>, availableSpace: number): Map<GameType.ResourceType, number>
-{
-	const collectedResourceQuantities: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
-
-	// Working copy of remaining resources on target
-	const remainingResourceQuantities: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>(targetResourceQuantities);
-	let remainingSpace: number = availableSpace;
-
-	while (remainingSpace > 0)
-	{
-		let totalRemaining: number = 0;
-		for (const quantity of remainingResourceQuantities.values())
-		{
-			totalRemaining += quantity;
-		}
-
-		if (totalRemaining <= 0)
-		{
-			break;
-		}
-
-		const spaceToFill: number = Math.min(remainingSpace, totalRemaining);
-		let collectedThisPass: number = 0;
-		let depletedAny: boolean = false;
-
-		for (const [resourceType, resourceQuantity] of remainingResourceQuantities)
-		{
-			const proportionalAmount: number = Math.floor((resourceQuantity / totalRemaining) * spaceToFill);
-			const actualAmount: number = Math.min(proportionalAmount, resourceQuantity);
-
-			if (actualAmount <= 0)
-			{
-				continue;
-			}
-
-			const previousCollected: number = collectedResourceQuantities.get(resourceType) ?? 0;
-			collectedResourceQuantities.set(resourceType, previousCollected + actualAmount);
-			remainingResourceQuantities.set(resourceType, resourceQuantity - actualAmount);
-			collectedThisPass += actualAmount;
-
-			if (resourceQuantity - actualAmount === 0)
-			{
-				depletedAny = true;
-			}
-		}
-
-		remainingSpace -= collectedThisPass;
-
-		// If no progress was made (rounding stalled the loop), bail out
-		if (collectedThisPass === 0)
-		{
-			break;
-		}
-
-		// If nothing depleted, the proportional split was clean — done
-		if (!depletedAny)
-		{
-			break;
-		}
-	}
-
-	return collectedResourceQuantities;
 }
 
 function addCollectActionSuccessMessage(targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement): void

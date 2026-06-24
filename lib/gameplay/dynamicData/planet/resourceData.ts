@@ -66,3 +66,64 @@ export function addPlanetResource(planetData: CoreType.PlanetData, resourceType:
                                (type: GameType.ResourceType): number | undefined => { return getResourceQuantity(planetData, type) },
                                (type: GameType.ResourceType, value: number): void => { setResourceQuantity(planetData, type, value) });
 }
+
+export function computeCollectedResources(availableResourceQuantities: Map<GameType.ResourceType, number>, availableSpace: number): Map<GameType.ResourceType, number>
+{
+	const collectedResourceQuantities: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
+
+	const remainingResourceQuantities: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>(availableResourceQuantities);
+	let remainingSpace: number = availableSpace;
+
+	while (remainingSpace > 0)
+	{
+		let totalRemaining: number = 0;
+		for (const quantity of remainingResourceQuantities.values())
+		{
+			totalRemaining += quantity;
+		}
+
+		if (totalRemaining <= 0)
+		{
+			break;
+		}
+
+		const spaceToFill: number = Math.min(remainingSpace, totalRemaining);
+		let collectedThisPass: number = 0;
+		let depletedAny: boolean = false;
+
+		for (const [resourceType, resourceQuantity] of remainingResourceQuantities)
+		{
+			const proportionalAmount: number = Math.floor((resourceQuantity / totalRemaining) * spaceToFill);
+			const actualAmount: number = Math.min(proportionalAmount, resourceQuantity);
+
+			if (actualAmount <= 0)
+			{
+				continue;
+			}
+
+			const previousCollected: number = collectedResourceQuantities.get(resourceType) ?? 0;
+			collectedResourceQuantities.set(resourceType, previousCollected + actualAmount);
+			remainingResourceQuantities.set(resourceType, resourceQuantity - actualAmount);
+			collectedThisPass += actualAmount;
+
+			if (resourceQuantity - actualAmount === 0)
+			{
+				depletedAny = true;
+			}
+		}
+
+		remainingSpace -= collectedThisPass;
+
+		if (collectedThisPass === 0)
+		{
+			break;
+		}
+
+		if (depletedAny === false)
+		{
+			break;
+		}
+	}
+
+	return collectedResourceQuantities;
+}

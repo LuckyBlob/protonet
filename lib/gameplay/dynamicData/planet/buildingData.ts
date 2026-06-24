@@ -22,6 +22,12 @@ export function getBuildingLevel(planetData: CoreType.PlanetData, buildingType: 
 
 export function getPlanetProductionRatePerSecond(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, serverData: CoreType.ServerData, playerData: CoreType.PlayerData): number
 {
+	const planetZoneInfo: GameType.PlanetZoneInfo = StaticDataHelper.getPlanetZoneInfo(planetData.planetRow.zone as GameType.PlanetZone);
+	if (planetZoneInfo.canProduceResources === false)
+	{
+		return 0;
+	}
+
 	const productionRatePerHour: number = computeProductionRatePerHourForResource(planetData, resourceType, serverData, playerData);
 	return productionRatePerHour / 3600;
 }

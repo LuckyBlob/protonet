@@ -106,7 +106,48 @@
       "PowerShell(pnpm exec tsc --noEmit; \"exit code: $LASTEXITCODE\")",
       "Bash(node -e \"console.log\\(JSON.stringify\\(require\\('./package.json'\\).scripts,null,2\\)\\)\")",
       "Bash(echo \"EXIT=$?\")",
-      "PowerShell(pnpm exec tsc --noEmit; Write-Output \"EXIT CODE: $LASTEXITCODE\")"
+      "PowerShell(pnpm exec tsc --noEmit; Write-Output \"EXIT CODE: $LASTEXITCODE\")",
+      "Read(//d//**)",
+      "Read(//c/Users/Utilisateur/.claude/**)",
+      "PowerShell(if \\($?\\) { \"TSC GREEN\" })",
+      "Bash(node ff_temp.js)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(command -v jq)",
+      "Bash(jq --version)",
+      "Bash(command -v git)",
+      "Bash(node .claude/hooks/ts-edit-nag.js)",
+      "Bash(echo \" \\(exit $?\\)\")",
+      "Bash(echo \"[non-ts exit $?]\")",
+      "Bash(echo \"[non-ts2 exit $?]\")",
+      "Bash(node -e \"const s=require\\('./.claude/settings.local.json'\\); const h=s.hooks.PostToolUse[0]; console.log\\('matcher:', h.matcher\\); console.log\\('command:', h.hooks[0].command\\); console.log\\('JSON VALID, allow entries:', s.permissions.allow.length\\);\")",
+      "Bash(sed -n '/CREATE TABLE server_config/,/\\);/p' db/schema.sql)",
+      "Bash(sed -n '/CREATE TABLE planet \\(/,/\\);/p' db/schema.sql)",
+      "PowerShell(npx vitest run tests/integration/recycleMidFlightDebris.test.ts --reporter=verbose 2>&1)",
+      "PowerShell(npx vitest run tests/unit/recycleAction.test.ts tests/unit/collectAction.test.ts tests/unit/recycleRequirements.test.ts 2>&1)",
+      "PowerShell(npx vitest run tests/unit tests/integration 2>&1)",
+      "Bash(sed -n '/CREATE TABLE fleet_movement/,/\\);/p' db/schema.sql)",
+      "Bash(sed -n '/export type FleetMovementRow/,/};/p' lib/db/dbTypes.ts)",
+      "PowerShell(pnpm exec tsc --noEmit 2>&1)",
+      "PowerShell(npx vitest run tests/unit/stationAction.test.ts tests/unit/collectAction.test.ts tests/unit/recycleAction.test.ts tests/unit/colonizeAction.test.ts tests/integration/fleetArrivalPipeline.test.ts tests/integration/recycleMidFlightDebris.test.ts tests/integration/productionCap.test.ts tests/unit/debrisInertProduction.test.ts 2>&1)",
+      "PowerShell(npx vitest run tests/integration/productionCap.test.ts tests/unit/stationAction.test.ts tests/unit/collectAction.test.ts tests/unit/recycleAction.test.ts tests/integration/fleetArrivalPipeline.test.ts tests/integration/recycleMidFlightDebris.test.ts 2>&1)",
+      "Bash(sed -n '/export function formatPlanetAddress/,/^}/p' lib/gameplay/coreData/static/staticDataHelpers.ts)",
+      "Bash(sed -n '/export function setFleetReturnTrip/,/^}/p' lib/gameplay/dynamicData/planet/fleet/fleetData.ts)",
+      "Bash(sed -n '/export function doesTargetZoneExist/,/^}/p' lib/gameplay/coreData/requirement/requirementValueGetters.ts)",
+      "Bash(sed -n '/export function getPlanetZoneInfo/,/^}/p' lib/gameplay/coreData/static/staticDataHelpers.ts)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/ts-edit-nag.js"
+          }
+        ]
+      }
     ]
   }
 }

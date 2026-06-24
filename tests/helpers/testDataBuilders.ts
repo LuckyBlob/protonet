@@ -233,7 +233,6 @@ export function buildFleetMovementRow(overrides?: Partial<DBType.FleetMovementRo
         planet_origin_system: 1,
         planet_origin_galaxy: 1,
         player_target_id: 2,
-        planet_target_id: 2,
         planet_target_zone: 1,
         planet_target_slot: 4,
         planet_target_system: 1,

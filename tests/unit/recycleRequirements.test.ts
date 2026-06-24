@@ -81,7 +81,7 @@ describe('Recycle fleet requirements', () =>
     const debrisTarget: GameType.PlanetAddress = { galaxy: 2, system: 5, slot: 3, zone: GameType.PlanetZone.DebrisField };
     const debrisOwnerId: number = 2;
 
-    it('passes for an all-Recycler fleet targeting an existing (owned) debris field', () =>
+    it('passes for an all-Recycler fleet targeting an occupied slot that has a debris field', () =>
     {
         const player: CoreType.PlayerData = buildRecyclingPlayer();
 
@@ -89,12 +89,20 @@ describe('Recycle fleet requirements', () =>
         expect(failed.length).toBe(0);
     });
 
-    it('passes when targeting a not-yet-existing debris field (like colonize to an empty slot)', () =>
+    it('passes when the slot is occupied but the debris field does not yet exist', () =>
+    {
+        const player: CoreType.PlayerData = buildRecyclingPlayer();
+
+        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Recycle, 1, recyclerFleet, noResources, debrisTarget, debrisOwnerId, false);
+        expect(failed.length).toBe(0);
+    });
+
+    it('fails when the slot is not occupied (no associated planet owner)', () =>
     {
         const player: CoreType.PlayerData = buildRecyclingPlayer();
 
         const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Recycle, 1, recyclerFleet, noResources, debrisTarget, null, false);
-        expect(failed.length).toBe(0);
+        expect(failed.length).toBeGreaterThan(0);
     });
 
     it('fails when the target zone is not a debris field', () =>

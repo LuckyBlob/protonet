@@ -145,6 +145,43 @@ describe('formatPlanetAddress', () =>
     {
         expect(StaticDataHelper.formatPlanetAddress(2, 20, 5, GameType.PlanetZone.Planet)).toBe("[2:20:5]");
     });
+
+    it('appends the zone display name for a moon', () =>
+    {
+        expect(StaticDataHelper.formatPlanetAddress(1, 5, 3, GameType.PlanetZone.Moon)).toBe("[1:5:3] (Moon)");
+    });
+
+    it('appends the zone display name for a debris field', () =>
+    {
+        expect(StaticDataHelper.formatPlanetAddress(1, 5, 3, GameType.PlanetZone.DebrisField)).toBe("[1:5:3] (Debris Field)");
+    });
+
+    it('throws on an unknown/missing zone', () =>
+    {
+        expect(() => StaticDataHelper.formatPlanetAddress(1, 5, 3, 999 as GameType.PlanetZone)).toThrow();
+    });
+});
+
+describe('getPlanetZoneInfo', () =>
+{
+    it('returns the info for each known zone', () =>
+    {
+        expect(StaticDataHelper.getPlanetZoneInfo(GameType.PlanetZone.Planet).isSelectable).toBe(true);
+        expect(StaticDataHelper.getPlanetZoneInfo(GameType.PlanetZone.Moon).isSelectable).toBe(true);
+        expect(StaticDataHelper.getPlanetZoneInfo(GameType.PlanetZone.DebrisField).isSelectable).toBe(false);
+    });
+
+    it('marks the moon and debris field as non-producing, the planet as producing', () =>
+    {
+        expect(StaticDataHelper.getPlanetZoneInfo(GameType.PlanetZone.Planet).canProduceResources).toBe(true);
+        expect(StaticDataHelper.getPlanetZoneInfo(GameType.PlanetZone.Moon).canProduceResources).toBe(false);
+        expect(StaticDataHelper.getPlanetZoneInfo(GameType.PlanetZone.DebrisField).canProduceResources).toBe(false);
+    });
+
+    it('throws on an unknown/missing zone', () =>
+    {
+        expect(() => StaticDataHelper.getPlanetZoneInfo(999 as GameType.PlanetZone)).toThrow();
+    });
 });
 
 describe('getPlayerName', () =>

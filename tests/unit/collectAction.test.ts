@@ -31,7 +31,6 @@ function setup(targetShipQuantities: Map<GameType.ShipType, number> = new Map(),
             player_origin_id: ORIGIN_PLAYER_ID,
             planet_origin_id: ORIGIN_PLANET_ID,
             player_target_id: TARGET_PLAYER_ID,
-            planet_target_id: TARGET_PLANET_ID,
             planet_origin_galaxy: 1, planet_origin_system: 1, planet_origin_slot: 3,
             planet_target_galaxy: 1, planet_target_system: 1, planet_target_slot: 4,
             fleet_action_type: GameType.FleetActionType.Collect,
@@ -51,7 +50,7 @@ function setup(targetShipQuantities: Map<GameType.ShipType, number> = new Map(),
     const targetFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
     const targetPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
     {
-        planetRow: { id: TARGET_PLANET_ID },
+        planetRow: { id: TARGET_PLANET_ID, slot: 4 },
         dynamicPlanetData:
         {
             shipQuantity: targetShipQuantities,
@@ -150,10 +149,14 @@ describe('resolveCollectAction — defender has no ships', () =>
         expect(result.fleet.resolutionState).toBe(CoreType.FleetMovementResolution.Resolved);
     });
 
-    it('throws when planet_target_id is null', () =>
+    it('bounces (return trip) when no target body exists at the target coords', () =>
     {
         const result: SetupResult = setup();
-        result.fleet.fleetMovementRow.planet_target_id = null;
-        expect(() => CollectAction.resolveCollectAction(result.originPlayer, result.targetPlayer, result.fleet, TestDataBuilders.buildServerData())).toThrow();
+        result.fleet.fleetMovementRow.planet_target_slot = 5;
+
+        CollectAction.resolveCollectAction(result.originPlayer, result.targetPlayer, result.fleet, TestDataBuilders.buildServerData());
+
+        expect(result.fleet.resolutionState).toBe(CoreType.FleetMovementResolution.Resolved);
+        expect(result.fleet.fleetMovementRow.is_return_trip).toBe(1);
     });
 });

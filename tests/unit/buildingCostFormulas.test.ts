@@ -4,10 +4,9 @@ import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 
 describe('computeBuildingUpgradeCost', () =>
 {
-    it('returns null for an unknown building type', () =>
+    it('throws for an unknown building type', () =>
     {
-        const result: Map<number, number> | null = BuildingCost.computeBuildingUpgradeCost(0, 9999 as GameType.BuildingType);
-        expect(result).toBeNull();
+        expect(() => BuildingCost.computeBuildingUpgradeCost(0, 9999 as GameType.BuildingType)).toThrow();
     });
 
     it('computes base cost at level 0 for Metal Mine', () =>

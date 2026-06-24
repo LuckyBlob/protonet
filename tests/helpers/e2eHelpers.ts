@@ -131,7 +131,7 @@ export function countFreeStartingSlots(db: Database.Database): number
     const totalStartingSlots: number = StaticData.GALAXY_COUNT * StaticData.SYSTEM_COUNT * startingSlotsPerSystem;
 
     const occupiedRow: { occupied: number } = db.prepare(
-        "SELECT COUNT(*) AS occupied FROM planet WHERE slot >= ? AND slot <= ?"
+        "SELECT COUNT(*) AS occupied FROM planet WHERE zone = 1 AND slot >= ? AND slot <= ?"
     ).get(StaticData.MIN_SLOT_STARTING_PLANET, StaticData.MAX_SLOT_STARTING_PLANET) as { occupied: number };
 
     return totalStartingSlots - occupiedRow.occupied;

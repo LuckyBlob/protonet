@@ -96,11 +96,11 @@ describe("researchData — canAffordResearch", () =>
         expect(ResearchData.canAffordResearch(playerData, planetData, GameType.ResearchType.EnergyTech)).toBe(false);
     });
 
-    it("cannot afford an unknown research (no calculable cost)", () =>
+    it("throws for an unknown research (no registered stats)", () =>
     {
         const planetData: CoreType.PlanetData = TestDataBuilders.buildPlanetData();
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        expect(ResearchData.canAffordResearch(playerData, planetData, 9999 as GameType.ResearchType)).toBe(false);
+        expect(() => ResearchData.canAffordResearch(playerData, planetData, 9999 as GameType.ResearchType)).toThrow();
     });
 });
 

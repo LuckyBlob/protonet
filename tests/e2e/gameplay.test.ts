@@ -1299,9 +1299,9 @@ test.describe("Fleets", () =>
         await E2EHelper.sendFleet(page, "Small Transport", 3, victimPlanet2, "Collect");
         await expect(E2EHelper.fleetMovementRow(page, attackerPlanet, victimPlanet2)).toBeVisible();
 
-        const fleetRows: { id: number, planet_target_id: number }[] = db.prepare(
-            "SELECT id, planet_target_id FROM fleet_movement WHERE planet_origin_id = ? ORDER BY id"
-        ).all(attackerPlanet.id) as { id: number, planet_target_id: number }[];
+        const fleetRows: { id: number }[] = db.prepare(
+            "SELECT id FROM fleet_movement WHERE planet_origin_id = ? ORDER BY id"
+        ).all(attackerPlanet.id) as { id: number }[];
         expect(fleetRows.length).toBe(2);
         // Both round-trips into the past so one applyProgress sweep crosses BOTH arrivals.
         E2EHelper.forceComplete("fleet_movement", fleetRows[0].id, db, 2);

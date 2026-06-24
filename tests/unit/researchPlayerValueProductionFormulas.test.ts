@@ -31,9 +31,8 @@ describe("researchPlayerValueProductionFormulas — null paths", () =>
         expect(result).toBeNull();
     });
 
-    it("returns null for an unknown research type", () =>
+    it("throws for an unknown research type", () =>
     {
-        const result: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null = ResearchPlayerValueProduction.computeResearchPlayerValueProduction(5, 9999 as GameType.ResearchType);
-        expect(result).toBeNull();
+        expect(() => ResearchPlayerValueProduction.computeResearchPlayerValueProduction(5, 9999 as GameType.ResearchType)).toThrow();
     });
 });

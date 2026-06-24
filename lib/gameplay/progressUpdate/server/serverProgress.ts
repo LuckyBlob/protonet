@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent"
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
@@ -87,19 +88,20 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
         }
     }
 
-    getFleetPlayerData(playerId: number | null, planetId: number | null, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
+    getFleetPlayerData(playerId: number | null, address: GameType.PlanetAddress | null, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null
     {
-        if (playerId === null || planetId === null)
+        if (playerId === null || address === null)
         {
             return null;
         }
 
         const needsToGetDataFromDB: boolean = playerData.playerRow.id !== playerId;
         const targetPlayerData: CoreType.PlayerData = needsToGetDataFromDB ? ServerRequestFunctions.serverGetPlayerData(playerId) : playerData;
-        const associatedPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(targetPlayerData.planetDatas, planetId);
+
+        const associatedPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForAddress(targetPlayerData.planetDatas, address);
         if (associatedPlanetData === null)
         {
-            throw new Error(`⚠️: Can get full planet data for fleet.`); 
+            return null;
         }
 
         const fleetPlayerData: FleetData.FleetPlayerData =

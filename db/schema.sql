@@ -186,7 +186,6 @@ CREATE TABLE IF NOT EXISTS fleet_movement
     planet_origin_system INTEGER NOT NULL,
     planet_origin_galaxy INTEGER NOT NULL,
     player_target_id INTEGER,
-    planet_target_id INTEGER,
     planet_target_zone INTEGER NOT NULL DEFAULT 1,
   	planet_target_slot INTEGER NOT NULL,
     planet_target_system INTEGER NOT NULL,
@@ -200,7 +199,6 @@ CREATE TABLE IF NOT EXISTS fleet_movement
     FOREIGN KEY (player_origin_id) REFERENCES player(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_fleet_movement_origin ON fleet_movement(planet_origin_id);
-CREATE INDEX IF NOT EXISTS idx_fleet_movement_target ON fleet_movement(planet_target_id);
 
 CREATE TABLE IF NOT EXISTS fleet_movement_ship
 (

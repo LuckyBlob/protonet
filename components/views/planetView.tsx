@@ -28,22 +28,13 @@ function getPlayerUsername(ownerId: number, publicPlayerRows: DBType.PublicPlaye
 
 function renderPlanetRow(slot: number, selectedGalaxy: number, selectedSystem: number, publicPlanetDatas: CoreType.PublicPlanetData[], publicPlayerRows: DBType.PublicPlayerRow[]): ReactElement
 {
-    const planetPublicPlanetData: CoreType.PublicPlanetData | undefined = publicPlanetDatas.find((publicPlanetData: CoreType.PublicPlanetData): boolean =>
-    {
-        return publicPlanetData.galaxy === selectedGalaxy && publicPlanetData.system === selectedSystem && publicPlanetData.slot === slot && publicPlanetData.zone === GameType.PlanetZone.Planet;
-    });
+    const planetPublicPlanetData: CoreType.PublicPlanetData | null = CoreType.getPublicPlanetDataForAddress(publicPlanetDatas, { galaxy: selectedGalaxy, system: selectedSystem, slot: slot, zone: GameType.PlanetZone.Planet });
+    const moonPublicPlanetData: CoreType.PublicPlanetData | null = CoreType.getPublicPlanetDataForAddress(publicPlanetDatas, { galaxy: selectedGalaxy, system: selectedSystem, slot: slot, zone: GameType.PlanetZone.Moon });
+    const debrisPublicPlanetData: CoreType.PublicPlanetData | null = CoreType.getPublicPlanetDataForAddress(publicPlanetDatas, { galaxy: selectedGalaxy, system: selectedSystem, slot: slot, zone: GameType.PlanetZone.DebrisField });
 
-    const hasMoon: boolean = publicPlanetDatas.some((publicPlanetData: CoreType.PublicPlanetData): boolean =>
-    {
-        return publicPlanetData.galaxy === selectedGalaxy && publicPlanetData.system === selectedSystem && publicPlanetData.slot === slot && publicPlanetData.zone === GameType.PlanetZone.Moon;
-    });
+    const hasMoon: boolean = moonPublicPlanetData !== null;
 
-    const debrisPublicPlanetData: CoreType.PublicPlanetData | undefined = publicPlanetDatas.find((publicPlanetData: CoreType.PublicPlanetData): boolean =>
-    {
-        return publicPlanetData.galaxy === selectedGalaxy && publicPlanetData.system === selectedSystem && publicPlanetData.slot === slot && publicPlanetData.zone === GameType.PlanetZone.DebrisField;
-    });
-
-    const ownershipText: string = (planetPublicPlanetData === undefined)
+    const ownershipText: string = (planetPublicPlanetData === null)
         ? "Unowned"
         : `Owned by: ${getPlayerUsername(planetPublicPlanetData.owner_player_id, publicPlayerRows)}`;
 
@@ -67,9 +58,9 @@ function renderPlanetRow(slot: number, selectedGalaxy: number, selectedSystem: n
     return element;
 }
 
-function renderDebrisIndicator(debrisPublicPlanetData: CoreType.PublicPlanetData | undefined): ReactElement | null
+function renderDebrisIndicator(debrisPublicPlanetData: CoreType.PublicPlanetData | null): ReactElement | null
 {
-    if (debrisPublicPlanetData === undefined)
+    if (debrisPublicPlanetData === null)
     {
         return null;
     }

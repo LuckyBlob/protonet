@@ -46,10 +46,10 @@ describe("buildingData — canAffordUpgrade", () =>
         expect(BuildingData.canAffordUpgrade(planetData, GameType.BuildingType.MetalMine)).toBe(false);
     });
 
-    it("cannot afford an unknown building (no calculable cost)", () =>
+    it("throws for an unknown building (no registered stats)", () =>
     {
         const planetData: CoreType.PlanetData = TestDataBuilders.buildPlanetData();
-        expect(BuildingData.canAffordUpgrade(planetData, 9999 as GameType.BuildingType)).toBe(false);
+        expect(() => BuildingData.canAffordUpgrade(planetData, 9999 as GameType.BuildingType)).toThrow();
     });
 });
 

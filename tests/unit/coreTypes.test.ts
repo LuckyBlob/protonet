@@ -48,3 +48,33 @@ describe('getSelectableZones', () =>
         expect(selectableZones.map((planetData: CoreType.PlanetData): number => planetData.planetRow.id)).toEqual([1, 2]);
     });
 });
+
+describe('getPublicPlanetDataForAddress', () =>
+{
+    const planet: CoreType.PublicPlanetData = TestDataBuilders.buildPublicPlanetData({ id: 1, galaxy: 2, system: 3, slot: 4, zone: GameType.PlanetZone.Planet });
+    const moon: CoreType.PublicPlanetData = TestDataBuilders.buildPublicPlanetData({ id: 2, galaxy: 2, system: 3, slot: 4, zone: GameType.PlanetZone.Moon });
+    const debris: CoreType.PublicPlanetData = TestDataBuilders.buildPublicPlanetData({ id: 3, galaxy: 2, system: 3, slot: 4, zone: GameType.PlanetZone.DebrisField });
+    const publicPlanetDatas: CoreType.PublicPlanetData[] = [planet, moon, debris];
+
+    it('matches on the full address including zone, distinguishing bodies at the same coords', () =>
+    {
+        const moonAddress: GameType.PlanetAddress = { galaxy: 2, system: 3, slot: 4, zone: GameType.PlanetZone.Moon };
+        expect(CoreType.getPublicPlanetDataForAddress(publicPlanetDatas, moonAddress)?.id).toBe(2);
+
+        const planetAddress: GameType.PlanetAddress = { galaxy: 2, system: 3, slot: 4, zone: GameType.PlanetZone.Planet };
+        expect(CoreType.getPublicPlanetDataForAddress(publicPlanetDatas, planetAddress)?.id).toBe(1);
+    });
+
+    it('returns null when no body exists at that address', () =>
+    {
+        const emptyAddress: GameType.PlanetAddress = { galaxy: 2, system: 3, slot: 5, zone: GameType.PlanetZone.Planet };
+        expect(CoreType.getPublicPlanetDataForAddress(publicPlanetDatas, emptyAddress)).toBeNull();
+    });
+
+    it('returns null when the coords match but the zone does not exist there', () =>
+    {
+        const moonOnly: CoreType.PublicPlanetData[] = [planet];
+        const moonAddress: GameType.PlanetAddress = { galaxy: 2, system: 3, slot: 4, zone: GameType.PlanetZone.Moon };
+        expect(CoreType.getPublicPlanetDataForAddress(moonOnly, moonAddress)).toBeNull();
+    });
+});

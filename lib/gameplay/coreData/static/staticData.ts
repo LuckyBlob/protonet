@@ -409,7 +409,7 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: false,
-				valueGetter: RequirementValueGetters.isTargetPlanetOwned(),},},
+				valueGetter: RequirementValueGetters.isZoneAssociatedPlanetOwned(),},},
 			{
 			hideDataWhenRequirementFailed: true,
 			thingRequirement:{
@@ -440,7 +440,14 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
-				valueGetter: RequirementValueGetters.allFleetShipsCanTargetDebrisField(),},},],}],
+				valueGetter: RequirementValueGetters.allFleetShipsCanTargetDebrisField(),},},
+			{
+			hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.isZoneAssociatedPlanetOwned(),},},],}],
 ]);
 //#endregion
 
@@ -483,13 +490,16 @@ export const PLANET_ZONE_INFOS: ReadonlyMap<GameType.PlanetZone, GameType.Planet
 ([
     [GameType.PlanetZone.Planet, {
 		displayName: "Planet",
-		isSelectable: true,}],
+		isSelectable: true,
+		canProduceResources: true,}],
 	[GameType.PlanetZone.Moon, {
 		displayName: "Moon",
-		isSelectable: true,}],
+		isSelectable: true,
+		canProduceResources: false,}],
 	[GameType.PlanetZone.DebrisField, {
 		displayName: "Debris Field",
-		isSelectable: false,}],
+		isSelectable: false,
+		canProduceResources: false,}],
 ]);
 
 export const STARTING_PLANET_DATA: CoreType.DynamicPlanetData =

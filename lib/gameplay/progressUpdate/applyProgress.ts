@@ -82,7 +82,7 @@ export abstract class PlayerProgressApplier
         updateResourcesToTime(playerData, serverData, time);
     }
 
-    abstract getFleetPlayerData(playerId: number | null, planetId: number | null, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null;
+    abstract getFleetPlayerData(playerId: number | null, address: GameType.PlanetAddress | null, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null;
 
     createFleetActionResolver(): FleetData.FleetActionResolver
     {

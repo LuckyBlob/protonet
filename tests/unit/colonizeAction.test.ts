@@ -32,7 +32,6 @@ describe('resolveColonizeAction — too many planets', () =>
                 player_origin_id: 1,
                 planet_origin_id: 1,
                 player_target_id: null,
-                planet_target_id: null,
                 fleet_action_type: GameType.FleetActionType.Colonize,
                 started_at: 1_000_000,
                 duration_at_start_time: 60_000,

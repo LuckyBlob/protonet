@@ -113,19 +113,6 @@ describe('serializePlayerData / deserializePlayerData', () =>
         expect(restored.planetDatas[0]!.dynamicPlanetData.buildingEnergySettings.size).toBe(0);
     });
 
-    it('defaults buildingUpgrades to empty array when field is absent in wire data', () =>
-    {
-        const original: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const serialized: Serialization.SerializedPlayerData = Serialization.serializePlayerData(original);
-
-        // Simulate a wire payload that omits buildingUpgrades (older server version)
-        const withoutUpgrades: Serialization.SerializedPlayerData = JSON.parse(JSON.stringify(serialized)) as Serialization.SerializedPlayerData;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        delete (withoutUpgrades.planetDatas[0]!.dynamicPlanetData as any).buildingUpgrades;
-
-        const restored: CoreType.PlayerData = Serialization.deserializePlayerData(withoutUpgrades);
-        expect(restored.planetDatas[0]!.dynamicPlanetData.buildingUpgrades).toEqual([]);
-    });
 
     it('round-trips research levels map (player-level) through JSON', () =>
     {

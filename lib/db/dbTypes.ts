@@ -148,8 +148,7 @@ export type FleetMovementRow =
 	planet_origin_slot: number;
 	planet_origin_system: number;
 	planet_origin_galaxy: number;
-    player_target_id: number | null; // == 0 for colonizing
-    planet_target_id: number | null; // == 0 for colonizing
+    player_target_id: number | null; // intended target owner; the target planet is re-derived by coords at arrival
 	planet_target_zone: number;
 	planet_target_slot: number;
 	planet_target_system: number;

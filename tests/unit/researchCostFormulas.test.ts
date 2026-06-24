@@ -4,10 +4,9 @@ import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 
 describe('computeResearchUpgradeCost', () =>
 {
-    it('returns null for an unknown research type', () =>
+    it('throws for an unknown research type', () =>
     {
-        const result: Map<number, number> | null = ResearchCost.computeResearchUpgradeCost(0, 9999 as GameType.ResearchType);
-        expect(result).toBeNull();
+        expect(() => ResearchCost.computeResearchUpgradeCost(0, 9999 as GameType.ResearchType)).toThrow();
     });
 
     it('computes base Metal cost at level 0 for Impulse Drive', () =>

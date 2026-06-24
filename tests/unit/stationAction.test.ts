@@ -22,7 +22,6 @@ function buildFleetMovement(overrides?: Parameters<typeof TestDataBuilders.build
             player_origin_id: ORIGIN_PLAYER_ID,
             planet_origin_id: ORIGIN_PLANET_ID,
             player_target_id: TARGET_PLAYER_ID,
-            planet_target_id: TARGET_PLANET_ID,
             fleet_action_type: GameType.FleetActionType.Station,
             started_at: 1_000_000,
             duration_at_start_time: 30_000,
@@ -49,7 +48,7 @@ describe('resolveStationAction', () =>
         const targetFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
         const targetPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
-            planetRow: { id: TARGET_PLANET_ID },
+            planetRow: { id: TARGET_PLANET_ID, slot: 4 },
             dynamicPlanetData: { futureFleetArrivals: [targetFleet] },
         });
         const originPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: ORIGIN_PLAYER_ID }, planetDatas: [originPlanet] });
@@ -75,7 +74,7 @@ describe('resolveStationAction', () =>
         const targetFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
         const targetPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
-            planetRow: { id: TARGET_PLANET_ID },
+            planetRow: { id: TARGET_PLANET_ID, slot: 4 },
             dynamicPlanetData: { futureFleetArrivals: [targetFleet] },
         });
         const originPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: ORIGIN_PLAYER_ID }, planetDatas: [originPlanet] });
@@ -99,7 +98,7 @@ describe('resolveStationAction', () =>
         const targetFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
         const targetPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
-            planetRow: { id: TARGET_PLANET_ID },
+            planetRow: { id: TARGET_PLANET_ID, slot: 4 },
             dynamicPlanetData: { futureFleetArrivals: [targetFleet] },
         });
         const originPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: ORIGIN_PLAYER_ID }, planetDatas: [originPlanet] });
@@ -118,7 +117,7 @@ describe('resolveStationAction', () =>
         const targetFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
         const targetPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
-            planetRow: { id: TARGET_PLANET_ID },
+            planetRow: { id: TARGET_PLANET_ID, slot: 4 },
             dynamicPlanetData: { futureFleetArrivals: [targetFleet] },
         });
         const targetPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: TARGET_PLAYER_ID }, planetDatas: [targetPlanet] });
@@ -140,7 +139,7 @@ describe('resolveStationAction', () =>
         const targetFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
         const targetPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
-            planetRow: { id: TARGET_PLANET_ID },
+            planetRow: { id: TARGET_PLANET_ID, slot: 4 },
             dynamicPlanetData: { futureFleetArrivals: [targetFleet] },
         });
         const originPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: ORIGIN_PLAYER_ID }, planetDatas: [originPlanet] });
@@ -165,7 +164,7 @@ describe('resolveStationAction', () =>
         const targetFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
         const targetPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
-            planetRow: { id: TARGET_PLANET_ID },
+            planetRow: { id: TARGET_PLANET_ID, slot: 4 },
             dynamicPlanetData: { futureFleetArrivals: [targetFleet] },
         });
         const originPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: ORIGIN_PLAYER_ID }, planetDatas: [originPlanet] });
@@ -180,7 +179,7 @@ describe('resolveStationAction', () =>
         // Same-player station: don't double-message.
         const fleet: CoreType.FleetMovement = buildFleetMovement(
         {
-            fleetMovementRow: { player_target_id: ORIGIN_PLAYER_ID, planet_target_id: TARGET_PLANET_ID },
+            fleetMovementRow: { player_target_id: ORIGIN_PLAYER_ID },
         });
         const originFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
         const originPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
@@ -191,7 +190,7 @@ describe('resolveStationAction', () =>
         const targetFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
         const targetPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
-            planetRow: { id: TARGET_PLANET_ID },
+            planetRow: { id: TARGET_PLANET_ID, slot: 4 },
             dynamicPlanetData: { futureFleetArrivals: [targetFleet] },
         });
         const samePlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
@@ -204,23 +203,26 @@ describe('resolveStationAction', () =>
         expect(fleet.targetMessageRow).toBeNull();
     });
 
-    it('throws when planet_target_id is null', () =>
+    it('bounces (return trip) when no target body exists at the target coords', () =>
     {
-        const fleet: CoreType.FleetMovement = buildFleetMovement(
-        {
-            fleetMovementRow: { planet_target_id: null },
-        });
-        const targetPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: TARGET_PLAYER_ID } });
+        const fleet: CoreType.FleetMovement = buildFleetMovement();
+        const targetPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: TARGET_PLAYER_ID }, planetDatas: [] });
 
-        expect(() => StationAction.resolveStationAction(null, targetPlayer, fleet, TestDataBuilders.buildServerData())).toThrow();
+        StationAction.resolveStationAction(null, targetPlayer, fleet, TestDataBuilders.buildServerData());
+
+        expect(fleet.resolutionState).toBe(CoreType.FleetMovementResolution.Resolved);
+        expect(fleet.fleetMovementRow.is_return_trip).toBe(1);
     });
 
-    it('throws when target planet is missing from target player planet data', () =>
+    it('bounces (return trip) when target planet is missing from target player planet data', () =>
     {
         const fleet: CoreType.FleetMovement = buildFleetMovement();
         const otherPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { id: 999 } });
         const targetPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: TARGET_PLAYER_ID }, planetDatas: [otherPlanet] });
 
-        expect(() => StationAction.resolveStationAction(null, targetPlayer, fleet, TestDataBuilders.buildServerData())).toThrow();
+        StationAction.resolveStationAction(null, targetPlayer, fleet, TestDataBuilders.buildServerData());
+
+        expect(fleet.resolutionState).toBe(CoreType.FleetMovementResolution.Resolved);
+        expect(fleet.fleetMovementRow.is_return_trip).toBe(1);
     });
 });

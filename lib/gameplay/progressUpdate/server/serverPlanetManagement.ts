@@ -65,11 +65,6 @@ export function claimPlanet(planetAddress: GameType.PlanetAddress | null, player
         const size: number = isNew ? StaticData.STARTING_PLANET_SIZE : StaticDataHelper.rollSizeForSlot(planetAddress.slot);
         const newPlanetId: number = createZone(planetAddress, playerId, size, claimedAt);
 
-        // do this last so the update fleet sees the new player target and acts accordingly
-        DB.databaseConnection.prepare(
-            "UPDATE fleet_movement SET player_target_id = ? WHERE planet_target_id = ?"
-        ).run(playerId, newPlanetId);
-
         return newPlanetId;
     })();
 
@@ -111,7 +106,7 @@ export function abandonPlanet(planetId: number, playerId: number): void
     })();
 }
 
-function deleteZone(zoneId: number): void
+export function deleteZone(zoneId: number): void
 {
     type ZoneCoordRow = { id: number; galaxy: number; system: number; slot: number };
     const zoneRow: ZoneCoordRow | undefined = DB.databaseConnection.prepare(
@@ -126,10 +121,6 @@ function deleteZone(zoneId: number): void
     const associatedPlanet: { id: number } | undefined = DB.databaseConnection.prepare(
         "SELECT id FROM planet WHERE galaxy = ? AND system = ? AND slot = ? AND zone = ? AND id != ?"
     ).get(zoneRow.galaxy, zoneRow.system, zoneRow.slot, GameType.PlanetZone.Planet, zoneId) as { id: number } | undefined;
-
-    DB.databaseConnection.prepare(
-        "UPDATE fleet_movement SET player_target_id = null, planet_target_id = null WHERE planet_target_id = ?"
-    ).run(zoneId);
 
     if (associatedPlanet !== undefined)
     {

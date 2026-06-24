@@ -1,5 +1,6 @@
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as DBType from "@/lib/db/dbTypes";
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
@@ -60,15 +61,16 @@ export function resolveFleetArrivalData(playerData: CoreType.PlayerData, anchorE
         throw new Error(`⚠️: fleet arrival anchor event doesnt have a resolver when trying to resolve.`); 
     }
 
-    const originPlayerId: number = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.player_origin_id;
-    const targetPlayerId: number | null = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.player_target_id;
-    
-    const originPlanetId: number = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.planet_origin_id;
-    const targetPlanetId: number | null = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow.planet_target_id;
-    const fleetPlayerDataPair: FleetData.FleetPlayerDataPair = 
+    const fleetRow: DBType.FleetMovementRow = fleetArrivalAnchorEvent.fleetMovement.fleetMovementRow;
+    const originPlayerId: number = fleetRow.player_origin_id;
+    const targetPlayerId: number | null = fleetRow.player_target_id;
+
+    const originAddress: GameType.PlanetAddress = CoreType.getFleetOriginAddress(fleetRow);
+    const targetAddress: GameType.PlanetAddress = CoreType.getFleetTargetAddress(fleetRow);
+    const fleetPlayerDataPair: FleetData.FleetPlayerDataPair =
     {
-        origin: fleetArrivalAnchorEvent.resolver.getFleetPlayerData(originPlayerId, originPlanetId, playerData, fleetArrivalAnchorEvent),
-        target: fleetArrivalAnchorEvent.resolver.getFleetPlayerData(targetPlayerId, targetPlanetId, playerData, fleetArrivalAnchorEvent),
+        origin: fleetArrivalAnchorEvent.resolver.getFleetPlayerData(originPlayerId, originAddress, playerData, fleetArrivalAnchorEvent),
+        target: fleetArrivalAnchorEvent.resolver.getFleetPlayerData(targetPlayerId, targetAddress, playerData, fleetArrivalAnchorEvent),
     }
 
     return { event: fleetArrivalAnchorEvent, data: fleetPlayerDataPair};
@@ -78,8 +80,9 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
 {
     if (anchorEvent.resolver === undefined)
     {
-        throw new Error(`⚠️: No resolver on fleet arrival resolveAnchorEvent.`); 
+        throw new Error(`⚠️: No resolver on fleet arrival resolveAnchorEvent.`);
     }
+
     const resolvedData: { event: FleetArrivalAnchorEvent, data: FleetData.FleetPlayerDataPair } = resolveFleetArrivalData(playerData, anchorEvent);
 
     if (resolvedData.event.fleetMovement.fleetMovementRow.started_at === null)

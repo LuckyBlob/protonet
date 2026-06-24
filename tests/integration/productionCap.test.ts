@@ -153,7 +153,6 @@ describe('production cap — fleet deliveries can push above the cap', () =>
                 player_origin_id: 1,
                 planet_origin_id: 1,
                 player_target_id: 2,
-                planet_target_id: 99,
                 is_return_trip: 1,
                 fleet_action_type: GameType.FleetActionType.Station,
                 started_at: BASE_TIME,
@@ -258,7 +257,6 @@ describe('production cap — losing resources via a fleet event drops us back un
                 planet_origin_system: 1,
                 planet_origin_galaxy: 1,
                 player_target_id: PLAYER_ID,
-                planet_target_id: TARGET_PLANET_ID,
                 planet_target_slot: 4,
                 planet_target_system: 1,
                 planet_target_galaxy: 1,
@@ -272,6 +270,7 @@ describe('production cap — losing resources via a fleet event drops us back un
 
         const targetPlanet: CoreType.PlanetData = buildCappedPlanet(METAL_CAP - 10, { futureFleetArrivals: [collectFleet] });
         targetPlanet.planetRow.id = TARGET_PLANET_ID;
+        targetPlanet.planetRow.slot = 4;
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: PLAYER_ID }, planetDatas: [targetPlanet] });
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
 

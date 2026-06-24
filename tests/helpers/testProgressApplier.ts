@@ -1,5 +1,6 @@
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 
@@ -12,7 +13,7 @@ export class TestProgressApplier extends ApplyProgress.PlayerProgressApplier
         return ApplyProgress.applyProgressToPlayerData(playerData, serverData, time, this);
     }
 
-    getFleetPlayerData(_playerId: number | null, _planetId: number | null, _playerData: CoreType.PlayerData, _anchorEvent: FleetArrival.FleetArrivalAnchorEvent): FleetData.FleetPlayerData | null
+    getFleetPlayerData(_playerId: number | null, _address: GameType.PlanetAddress | null, _playerData: CoreType.PlayerData, _anchorEvent: FleetArrival.FleetArrivalAnchorEvent): FleetData.FleetPlayerData | null
     {
         return null;
     }

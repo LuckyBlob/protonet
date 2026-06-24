@@ -115,10 +115,9 @@ describe("buildingPlanetValueProductionFormulas — null paths", () =>
         expect(result).toBeNull();
     });
 
-    it("returns null for an unknown building type", () =>
+    it("throws for an unknown building type", () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const result: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(5, 9999 as GameType.BuildingType, playerData);
-        expect(result).toBeNull();
+        expect(() => BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(5, 9999 as GameType.BuildingType, playerData)).toThrow();
     });
 });

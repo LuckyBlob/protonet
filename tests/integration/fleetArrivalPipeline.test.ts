@@ -17,9 +17,9 @@ const BASE_TIME: number = 1_000_000;
 class SingleOwnerFleetApplier extends TestProgressApplierHelper.TestProgressApplier
 {
     constructor(private readonly fleetOwnerData: CoreType.PlayerData) { super(); }
-    getFleetPlayerData(playerId: number | null, planetId: number | null, _playerData: CoreType.PlayerData): FleetData.FleetPlayerData | null
+    getFleetPlayerData(playerId: number | null, address: GameType.PlanetAddress | null, _playerData: CoreType.PlayerData): FleetData.FleetPlayerData | null
     {
-        if (playerId === null || planetId === null)
+        if (playerId === null || address === null)
         {
             return null;
         }
@@ -27,7 +27,7 @@ class SingleOwnerFleetApplier extends TestProgressApplierHelper.TestProgressAppl
         {
             return null;
         }
-        const planetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(this.fleetOwnerData.planetDatas, planetId);
+        const planetData: CoreType.PlanetData | null = CoreType.getPlanetDataForAddress(this.fleetOwnerData.planetDatas, address);
         if (planetData === null)
         {
             return null;
@@ -52,7 +52,6 @@ describe('fleet arrival — same-player STATION through applyProgress', () =>
                 player_origin_id: PLAYER_ID,
                 planet_origin_id: ORIGIN_PLANET_ID,
                 player_target_id: PLAYER_ID,
-                planet_target_id: TARGET_PLANET_ID,
                 fleet_action_type: GameType.FleetActionType.Station,
                 started_at: BASE_TIME,
                 duration_at_start_time: 30_000,
@@ -68,7 +67,7 @@ describe('fleet arrival — same-player STATION through applyProgress', () =>
         });
         const targetPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
-            planetRow: { id: TARGET_PLANET_ID, last_updated: BASE_TIME },
+            planetRow: { id: TARGET_PLANET_ID, slot: 4, last_updated: BASE_TIME },
             dynamicPlanetData: { futureFleetArrivals: [fleetOnTarget] },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
@@ -103,7 +102,6 @@ describe('fleet arrival — return trip through applyProgress', () =>
                 player_origin_id: PLAYER_ID,
                 planet_origin_id: ORIGIN_PLANET_ID,
                 player_target_id: 2,
-                planet_target_id: 99,
                 is_return_trip: 1,
                 fleet_action_type: GameType.FleetActionType.Station,
                 started_at: BASE_TIME,
@@ -151,7 +149,6 @@ describe('fleet arrival — invalid target marks the fleet as Resolved with a re
                 player_origin_id: PLAYER_ID,
                 planet_origin_id: ORIGIN_PLANET_ID,
                 player_target_id: null,
-                planet_target_id: null,
                 fleet_action_type: GameType.FleetActionType.Station,
                 started_at: BASE_TIME,
                 duration_at_start_time: 30_000,
