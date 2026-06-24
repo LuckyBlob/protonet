@@ -83,11 +83,6 @@ export abstract class PlayerProgressApplier
     }
 
     abstract getFleetPlayerData(playerId: number | null, address: GameType.PlanetAddress | null, playerData: CoreType.PlayerData, anchorEvent: FleetArrival.FleetArrivalAnchorEvent) : FleetData.FleetPlayerData | null;
-
-    createFleetActionResolver(): FleetData.FleetActionResolver
-    {
-        return new FleetData.FleetActionResolver();
-    }
 }
 
 export function applyProgressToPlayerData(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, now: number, playerProgressResolver: PlayerProgressApplier): CoreType.PlayerData

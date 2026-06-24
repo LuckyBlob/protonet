@@ -5,6 +5,7 @@ import * as ResourceData from '@/lib/gameplay/dynamicData/planet/resourceData';
 import * as BuildingData from '@/lib/gameplay/dynamicData/planet/buildingData';
 import * as ShipData from '@/lib/gameplay/dynamicData/planet/shipData';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
+import * as ServerFleetData from '@/lib/gameplay/dynamicData/planet/fleet/serverFleetData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 import * as TestProgressApplierHelper from '../helpers/testProgressApplier';
 
@@ -274,12 +275,16 @@ describe('production cap — losing resources via a fleet event drops us back un
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: PLAYER_ID }, planetDatas: [targetPlanet] });
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
 
-        // Collect arrives at BASE + 100h. Without per-step capping the planet would be holding ~23290 Metal
-        // by then and the collect would still leave it above the cap. But production is clamped to the cap at
-        // the arrival instant (20000), the collect hauls all of it away (-> 0), and only one further hour of
-        // production happens before "now" — leaving us well under the cap.
-        const afterCollectAndOneHour: number = BASE_TIME + 100 * HOUR_MS + HOUR_MS;
-        const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, afterCollectAndOneHour, APPLIER);
+        // Production is clamped to the cap (20000) at the collect's arrival instant. Fleets resolve only in
+        // the server pass, so produce up to the arrival, resolve the collect there (hauls all 20000 away -> 0),
+        // then produce the final hour (+33) — leaving us well under the cap.
+        const collectArrival: number = BASE_TIME + 100 * HOUR_MS;
+        const atCollect: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, collectArrival, APPLIER);
+
+        const pendingCollectFleet: CoreType.FleetMovement = atCollect.planetDatas[0]!.dynamicPlanetData.futureFleetArrivals[0]!;
+        ServerFleetData.serverResolveFleetAction(atCollect, atCollect, pendingCollectFleet, serverData);
+
+        const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(atCollect, serverData, collectArrival + HOUR_MS, APPLIER);
 
         const metal: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Metal);
         expect(metal).toBeLessThan(METAL_CAP);

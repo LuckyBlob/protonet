@@ -13,7 +13,6 @@ import * as ServerDynamicData from "@/lib/gameplay/dynamicData/serverDynamicData
 import * as ServerFleetAction from "@/lib/gameplay/progressUpdate/server/serverFleetActions";
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
-import * as ServerFleetData from "@/lib/gameplay/dynamicData/planet/fleet/serverFleetData";
 
 class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
 {
@@ -125,11 +124,6 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
         }
 
         return fleetPlayerData;
-    }
-    
-    createFleetActionResolver(): FleetData.FleetActionResolver
-    {
-        return new ServerFleetData.ServerFleetActionResolver();
     }
 }
 

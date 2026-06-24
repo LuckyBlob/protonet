@@ -110,8 +110,11 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
             }
         }
         
-        const isTarget: boolean = playerData.playerRow.id === resolvedData.event.fleetMovement.fleetMovementRow.player_target_id;
-        const isOrigin: boolean = playerData.playerRow.id === resolvedData.event.fleetMovement.fleetMovementRow.player_origin_id;
-        FleetData.resolveFleetMovementAtTarget(isTarget === true ? playerData : null, isOrigin === true ? playerData : null, resolvedData.event.fleetMovement, serverData, anchorEvent.resolver.createFleetActionResolver());
+        // The in-memory pass marks the fleet pending — but the victim-progress recursion above may have already
+        // resolved it (cross-player), so don't clobber that resolution.
+        if (resolvedData.event.fleetMovement.resolutionState === CoreType.FleetMovementResolution.Unresolved)
+        {
+            resolvedData.event.fleetMovement.resolutionState = CoreType.FleetMovementResolution.ResolveResultUnknown;
+        }
     }
 }

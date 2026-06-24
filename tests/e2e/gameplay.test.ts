@@ -753,7 +753,7 @@ test.describe("Fleets", () =>
         expect(E2EHelper.getMessageCount(playerId, db)).toBe(0);
     });
 
-    test("a same-player station completing during the animation tick adds a message client-side, no refresh needed", async ({ page }) =>
+    test("a fleet arrival is pending on the client and only resolves on a server refresh", async ({ page }) =>
     {
         const username: string = E2EHelper.uniqueUsername("Fleet");
         await E2EHelper.register(page, username, PASSWORD);
@@ -774,26 +774,29 @@ test.describe("Fleets", () =>
         await E2EHelper.sendFleet(page, "Small Transport", 2, target, "Station");
         await expect(E2EHelper.fleetMovementRow(page, origin, target)).toBeVisible();
 
-        // Snapshot the in-progress state, then schedule completion 2.5s into the future and reload.
-        // Because origin == target == this player, the client knows the full outcome — the arrival
-        // resolves on the animation tick (resolution = Resolved, not ResolveResultUnknown) and adds
-        // the originMessageRow into messageDatas locally, with the body already in memory.
+        // Schedule completion 2.5s out and reload. Fleets resolve ONLY on the server, so once the
+        // client animation tick crosses arrival the client marks it "Unknown result." (pending) — it
+        // does NOT resolve locally, so no message is added and the unread badge stays 0.
         const fleet: E2EHelper.FleetRow = E2EHelper.getFleetByOrigin(origin.id, db);
         E2EHelper.scheduleCompletionInMs("fleet_movement", fleet.id, 2500, db);
 
         await E2EHelper.reloadGame(page);
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
         await E2EHelper.goToView(page, "Fleets");
-        // On reload the server still reports the movement in-flight (badge=0, no preview yet).
         expect(await E2EHelper.getUnreadBadgeCount(page)).toBe(0);
-        // After the tick crosses arrival, the unread badge appears WITHOUT another playerData fetch.
-        await expect.poll(
-            async (): Promise<number> => await E2EHelper.getUnreadBadgeCount(page),
-            { timeout: 10_000 },
-        ).toBe(1);
 
-        // The preview is reachable from the Messages view; clicking shows the body without going
-        // through the server fetch path either (the messageRow was attached in-memory).
+        // After the tick crosses arrival the client shows the arrival as pending, and the badge is
+        // still 0 — the client never resolved it.
+        await expect.poll(
+            async (): Promise<number> => await page.getByText("Unknown result.").count(),
+            { timeout: 10_000 },
+        ).toBeGreaterThan(0);
+        expect(await E2EHelper.getUnreadBadgeCount(page)).toBe(0);
+
+        // A server refresh resolves it: the badge appears and the report is fetched and readable.
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
+        expect(await E2EHelper.getUnreadBadgeCount(page)).toBe(1);
         await E2EHelper.goToView(page, "Messages");
         await expect(E2EHelper.messagePreviewRow(page, "Station Fleet Action Report")).toBeVisible();
         await E2EHelper.selectMessageByTitle(page, "Station Fleet Action Report");

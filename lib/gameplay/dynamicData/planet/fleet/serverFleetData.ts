@@ -2,18 +2,49 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ColonizeAction from "@/lib/gameplay/dynamicData/planet/fleet/colonizeAction";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
+import * as CollectAction from "@/lib/gameplay/dynamicData/planet/fleet/collectAction";
+import * as StationAction from "@/lib/gameplay/dynamicData/planet/fleet/stationAction";
+import * as RecycleAction from "@/lib/gameplay/dynamicData/planet/fleet/recycleAction";
 
-export class ServerFleetActionResolver extends FleetData.FleetActionResolver
+export function serverResolveFleetAction(targetPlayerData: CoreType.PlayerData | null, originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): CoreType.PlayerData | null
 {
-    resolveFleetAction(targetPlayerData: CoreType.PlayerData | null, originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): CoreType.PlayerData | null
+    switch (fleetMovement.fleetMovementRow.fleet_action_type)
     {
-        const updatedTargetPlayerData: CoreType.PlayerData | null = super.resolveFleetAction(targetPlayerData, originPlayerData, fleetMovement, serverData);
-
-        if (fleetMovement.fleetMovementRow.fleet_action_type === GameType.FleetActionType.Colonize)
+        case GameType.FleetActionType.Station:
         {
-            return ColonizeAction.resolveColonizeAction(originPlayerData, fleetMovement, serverData);
+            StationAction.resolveStationAction(originPlayerData, targetPlayerData!, fleetMovement, serverData);
+            break;
         }
-
-        return updatedTargetPlayerData;
+        case GameType.FleetActionType.Collect:
+        {
+            CollectAction.resolveCollectAction(originPlayerData, targetPlayerData!, fleetMovement, serverData);
+            break;
+        }
+        case GameType.FleetActionType.Colonize:
+        {
+            targetPlayerData = ColonizeAction.resolveColonizeAction(originPlayerData, fleetMovement, serverData);
+            break;
+        }
+        case GameType.FleetActionType.Recycle:
+        {
+            RecycleAction.resolveRecycleAction(originPlayerData, targetPlayerData, fleetMovement, serverData);
+            break;
+        }
+        default:
+        {
+            throw new Error(`UNREACHABLE: No resolver found for fleet action ${fleetMovement.fleetMovementRow.fleet_action_type}`);
+        }
     }
+
+    if (originPlayerData !== null)
+    {
+        FleetData.addFleetMessagesToPlayerData(originPlayerData, fleetMovement);
+    }
+
+    if (targetPlayerData !== null && (originPlayerData === null || targetPlayerData.playerRow.id !== originPlayerData.playerRow.id))
+    {
+        FleetData.addFleetMessagesToPlayerData(targetPlayerData, fleetMovement);
+    }
+
+    return targetPlayerData;
 }

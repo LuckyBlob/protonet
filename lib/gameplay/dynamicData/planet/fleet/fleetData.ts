@@ -6,9 +6,6 @@ import * as MathHelp from "@/lib/helper/mathHelp";
 import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
-import * as CollectAction from "@/lib/gameplay/dynamicData/planet/fleet/collectAction";
-import * as StationAction from "@/lib/gameplay/dynamicData/planet/fleet/stationAction";
-import * as RecycleAction from "@/lib/gameplay/dynamicData/planet/fleet/recycleAction";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
@@ -25,42 +22,6 @@ export type FleetPlayerDataPair =
 {
     origin: FleetPlayerData | null,
     target: FleetPlayerData | null,
-}
-
-export class FleetActionResolver
-{
-    resolveFleetAction(targetPlayerData: CoreType.PlayerData | null, originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): CoreType.PlayerData | null
-    {
-		switch (fleetMovement.fleetMovementRow.fleet_action_type)
-		{
-			case GameType.FleetActionType.Station:
-			{
-				StationAction.resolveStationAction(originPlayerData, targetPlayerData!, fleetMovement, serverData);
-				break;
-			}
-			case GameType.FleetActionType.Collect:
-			{
-				CollectAction.resolveCollectAction(originPlayerData, targetPlayerData!, fleetMovement, serverData);
-				break;
-			}
-			case GameType.FleetActionType.Colonize:
-			{
-				fleetMovement.resolutionState = CoreType.FleetMovementResolution.ResolveResultUnknown;
-				break;
-			}
-			case GameType.FleetActionType.Recycle:
-			{
-				RecycleAction.resolveRecycleAction(originPlayerData, targetPlayerData, fleetMovement, serverData);
-				break;
-			}
-			default:
-			{
-				throw new Error(`UNREACHABLE: No resolver found for fleet action ${fleetMovement.fleetMovementRow.fleet_action_type}`);
-			}
-		}
-
-		return targetPlayerData;
-    }
 }
 
 export function calculateShipQuantitiesLowestMovementSpeed(playerData: CoreType.PlayerData, shipQuantities: Map<GameType.ShipType, number>): number
@@ -146,37 +107,6 @@ export function clampResoucesToAddToFleet(shipQuantities: Map<GameType.ShipType,
     return resourcesActuallyOnBoard;
 }
 
-export function resolveFleetMovementAtTarget(targetPlayerData: CoreType.PlayerData | null, originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData, fleetActionResolver: FleetActionResolver): CoreType.PlayerData | null
-{
-	const canTargetBeNull: boolean = fleetMovement.fleetMovementRow.fleet_action_type === GameType.FleetActionType.Colonize;
-	if (fleetMovement.fleetMovementRow.player_target_id === null && !canTargetBeNull)
-	{
-		bounceFleetForMissingTarget(originPlayerData, fleetMovement);
-		return targetPlayerData;
-	}
-
-	if (targetPlayerData === null && !canTargetBeNull)
-	{
-		// To resolve a fleet we need the target data since all the origin data is in the fleet itself
-		fleetMovement.resolutionState = CoreType.FleetMovementResolution.ResolveResultUnknown;
-		return targetPlayerData;
-	}
-
-	const updatedTargetPlayerData: CoreType.PlayerData | null = fleetActionResolver.resolveFleetAction(targetPlayerData, originPlayerData, fleetMovement, serverData);
-
-	if (originPlayerData !== null)
-    {
-		addFleetMessagesToPlayerData(originPlayerData, fleetMovement);
-	}
-
-	if (updatedTargetPlayerData !== null && (originPlayerData === null || updatedTargetPlayerData.playerRow.id !== originPlayerData.playerRow.id))
-    {
-		addFleetMessagesToPlayerData(updatedTargetPlayerData, fleetMovement);
-	}
-
-	return updatedTargetPlayerData;
-}
-
 export function addFleetMessagesToPlayerData(playerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement): void
 {
     if (fleetMovement.originMessageRow !== null && playerData.playerRow.id === fleetMovement.fleetMovementRow.player_origin_id)
@@ -213,8 +143,8 @@ function addFleetMessageToPlayerData(playerData: CoreType.PlayerData, messageRow
 }
 
 // Generic missing-target bounce: a fleet action whose target no longer exists at the destination
-// turns around and returns home. Shared by the resolveFleetMovementAtTarget null-target guard and by
-// the resolvers (Station/Collect) whose action requires an existing target.
+// turns around and returns home. Shared by the resolvers (Station/Collect) whose action requires an
+// existing target.
 export function bounceFleetForMissingTarget(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement): void
 {
 	setFleetReturnTrip(null, fleetMovement);
@@ -241,8 +171,22 @@ function addMissingTargetFleetActionMessage(originPlayerData: CoreType.PlayerDat
 		title: `${actionName} Fleet Action Report.`,
 		body: `This fleet action needs a target, but none exists at the destination. Fleet returning.`
 	};
+}
 
-	addFleetMessagesToPlayerData(originPlayerData, fleetMovement);
+export function setFleetReturnTrip(target: CoreType.PlanetData | null, fleetMovement: CoreType.FleetMovement): void
+{
+	fleetMovement.fleetMovementRow.is_return_trip = 1;
+	if (fleetMovement.fleetMovementRow.started_at === null || fleetMovement.fleetMovementRow.duration_at_start_time == null)
+	{
+		throw new Error("Fleet data has invalid started_at or duration_at_start_time for return trip.");
+	}
+
+	fleetMovement.fleetMovementRow.started_at = fleetMovement.fleetMovementRow.started_at + fleetMovement.fleetMovementRow.duration_at_start_time;
+
+	if (target !== null)
+	{
+		FleetData.removeFleetMovement(target, fleetMovement.fleetMovementRow.id);
+	}
 }
 
 export function resolveFleetMovementReturnTrip(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, fleetPlayerDataPair: FleetPlayerDataPair, serverData: CoreType.ServerData): void
@@ -368,22 +312,6 @@ export function getFleetMovementRemainingMs(fleetMovement: CoreType.FleetMovemen
 	}
 
 	return fleetMovement.fleetMovementRow.started_at + fleetMovement.fleetMovementRow.duration_at_start_time - Date.now();
-}
-
-export function setFleetReturnTrip(target: CoreType.PlanetData | null, fleetMovement: CoreType.FleetMovement): void
-{
-	fleetMovement.fleetMovementRow.is_return_trip = 1;
-	if (fleetMovement.fleetMovementRow.started_at === null || fleetMovement.fleetMovementRow.duration_at_start_time == null)
-	{
-		throw new Error("Fleet data has invalid started_at or duration_at_start_time for return trip.");
-	}
-
-	fleetMovement.fleetMovementRow.started_at = fleetMovement.fleetMovementRow.started_at + fleetMovement.fleetMovementRow.duration_at_start_time;
-
-	if (target !== null)
-	{
-		FleetData.removeFleetMovement(target, fleetMovement.fleetMovementRow.id);
-	}
 }
 
 export function buildResourcesListFromFleetMovement(fleetMovementResourceRows: DBType.FleetMovementResourceRow[]): string

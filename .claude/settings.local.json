@@ -146,10 +146,40 @@
       "Bash(node ./_snap_tmp.mjs /tmp/prodmig/prod_after.db)",
       "Bash(MIGRATION_TEST_SOURCE_DB=/tmp/prodmig/prod_before.db pnpm test:migration)",
       "Bash(node -e \"const D=require\\('better-sqlite3'\\); const db=new D\\('data/game.db',{readonly:true}\\); try{console.log\\(db.prepare\\('SELECT filename FROM applied_migrations ORDER BY filename'\\).all\\(\\).map\\(r=>r.filename\\).join\\('\\\\n'\\)\\)}catch\\(e\\){console.log\\('no applied_migrations table'\\)} db.close\\(\\);\")",
-      "Bash(pnpm db:migrate)"
+      "Bash(pnpm db:migrate)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); for\\(const[k,v]of Object.entries\\(p.scripts\\)\\) if\\(/test|build|migrate|transfer|^dev|start/.test\\(k\\)\\) console.log\\(k.padEnd\\(20\\), '=>', v\\)\")",
+      "Bash(cp data/game.db \"data/game.db.devbak.$\\(date +%s\\)\")",
+      "Bash(scp -o BatchMode=yes lawson@192.168.0.243:/var/lib/lawstrom/game.db /tmp/prodmig/prod_pristine.db)",
+      "Bash(cp /tmp/prodmig/prod_pristine.db data/game.db)",
+      "Bash(node -e \"const D=require\\('better-sqlite3'\\);const db=new D\\('data/game.db',{readonly:true}\\);console.log\\('players:',db.prepare\\('SELECT COUNT\\(*\\) c FROM player'\\).get\\(\\).c\\);try{db.prepare\\('SELECT zone FROM planet LIMIT 1'\\).get\\(\\);console.log\\('zone col: present'\\)}catch\\(e\\){console.log\\('zone col: ABSENT \\(pre-018, as expected\\)'\\)}db.close\\(\\)\")",
+      "Bash(pnpm db:transfer)",
+      "Bash(pnpm build *)",
+      "Bash(pnpm test:unit)",
+      "Bash(pnpm test:integration)",
+      "Bash(pnpm test:e2e)",
+      "Bash(grep -vE \"retrying|waiting|element is|^\\\\s*$\")",
+      "Bash(grep -vE \"retrying|waiting|element is|^\\\\s*$|WebServer\")",
+      "Bash(grep -n \"→\\\\|getByText\\(\\\\`\\\\${E2EHelper.planetAddress\\\\|getByText\\(\\\\`\\\\${.*planetAddress\" tests/e2e/gameplay.test.ts)",
+      "Bash(MIGRATION_TEST_SOURCE_DB=/tmp/prodmig/prod_pristine.db pnpm test:migration)",
+      "Bash(node .claude/hooks/block-git-write.js)",
+      "Bash(grep -vE \"retrying|waiting|element is|^\\\\s*$|WebServer|\\\\[2m|\\\\[22m\")",
+      "Bash(awk '{print $5}')",
+      "PowerShell($c = Get-NetTCPConnection -LocalPort 3101 -State Listen -ErrorAction SilentlyContinue; if \\($c\\) { Stop-Process -Id $c.OwningProcess -Force; \"killed stale 3101\" } else { \"3101 free\" })",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts,null,1\\)\\)\")"
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/block-git-write.js"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",

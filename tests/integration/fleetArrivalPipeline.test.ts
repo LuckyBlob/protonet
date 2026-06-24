@@ -5,6 +5,7 @@ import * as ShipData from '@/lib/gameplay/dynamicData/planet/shipData';
 import * as ResourceData from '@/lib/gameplay/dynamicData/planet/resourceData';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as FleetData from '@/lib/gameplay/dynamicData/planet/fleet/fleetData';
+import * as ServerFleetData from '@/lib/gameplay/dynamicData/planet/fleet/serverFleetData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 import * as TestProgressApplierHelper from '../helpers/testProgressApplier';
 
@@ -77,11 +78,10 @@ describe('fleet arrival — same-player STATION through applyProgress', () =>
         });
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
 
-        const applier: SingleOwnerFleetApplier = new SingleOwnerFleetApplier(playerData);
-        const after: number = BASE_TIME + 30_001;
-        const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, after, applier);
+        // Resolution now lives in the server DB pass, so call it directly. Same player owns both ends.
+        ServerFleetData.serverResolveFleetAction(playerData, playerData, fleetOnTarget, serverData);
 
-        const resultTarget: CoreType.PlanetData = result.planetDatas[1]!;
+        const resultTarget: CoreType.PlanetData = playerData.planetDatas[1]!;
         expect(ShipData.getShipQuantity(resultTarget, GameType.ShipType.SmallTransport)).toBe(1);
         expect(resultTarget.dynamicPlanetData.futureFleetArrivals).toHaveLength(0);
     });

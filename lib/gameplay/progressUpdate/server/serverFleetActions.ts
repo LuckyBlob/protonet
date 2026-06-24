@@ -5,6 +5,7 @@ import * as ServerDynamicData from "@/lib/gameplay/dynamicData/serverDynamicData
 import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
+import * as ServerFleetData from "@/lib/gameplay/dynamicData/planet/fleet/serverFleetData";
 
 export function resolveFleetMovementAtTargetToDB(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
 {
@@ -18,7 +19,7 @@ export function resolveFleetMovementAtTargetToDB(playerData: CoreType.PlayerData
     if (resolvedData.event.fleetMovement.resolutionState === CoreType.FleetMovementResolution.Invalid)
     {
         deleteFleetMovementFromDB(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement);
-        return;        
+        return;
     }
 
     if (resolvedData.data.origin === null)
@@ -26,18 +27,20 @@ export function resolveFleetMovementAtTargetToDB(playerData: CoreType.PlayerData
         throw new Error(`⚠️: Origin is null when writing fleet action to DB.`);
     }
 
-    const fleetActionResolver: FleetData.FleetActionResolver = anchorEvent.resolver.createFleetActionResolver();
-    resolvedData.data.target = serverCompletePartialResolution(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement, playerData.playerRow.id, serverData, fleetActionResolver);
+    resolvedData.data.target = serverResolveFleetMovementAtTarget(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement, playerData.playerRow.id, serverData);
     writeFleetActionToDB(resolvedData.data.origin, resolvedData.data.target, resolvedData.event.fleetMovement);
     return;
 }
 
-function serverCompletePartialResolution(originPlayerData: FleetData.FleetPlayerData, targetPlayerData: FleetData.FleetPlayerData | null, fleetMovement: CoreType.FleetMovement, resolvingPlayerId: number, serverData: CoreType.ServerData, fleetActionResolver: FleetData.FleetActionResolver): FleetData.FleetPlayerData | null
+function serverResolveFleetMovementAtTarget(originPlayerData: FleetData.FleetPlayerData, targetPlayerData: FleetData.FleetPlayerData | null, fleetMovement: CoreType.FleetMovement, resolvingPlayerId: number, serverData: CoreType.ServerData): FleetData.FleetPlayerData | null
 {
+    // Only resolve a fleet still pending. A cross-player fleet is already resolved (and its planet effects done)
+    // by the victim-progress recursion, and a return trip by resolveFleetMovementReturnTrip — in those cases we
+    // skip re-resolving but still fall through to write the result.
     let updatedTargetFleetPlayerData: FleetData.FleetPlayerData | null = targetPlayerData;
     if (fleetMovement.resolutionState === CoreType.FleetMovementResolution.ResolveResultUnknown)
     {
-        const updatedTargetPlayerData: CoreType.PlayerData | null = FleetData.resolveFleetMovementAtTarget(targetPlayerData?.playerData ?? null, originPlayerData.playerData, fleetMovement, serverData, fleetActionResolver);
+        const updatedTargetPlayerData: CoreType.PlayerData | null = ServerFleetData.serverResolveFleetAction(targetPlayerData?.playerData ?? null, originPlayerData.playerData, fleetMovement, serverData);
         const updatedTargetPlanetData: CoreType.PlanetData | null = updatedTargetPlayerData !== null ? CoreType.getPlanetDataForAddress(updatedTargetPlayerData.planetDatas, CoreType.getFleetTargetAddress(fleetMovement.fleetMovementRow)) : null;
 
         if (updatedTargetPlayerData !== null && updatedTargetPlanetData !== null)
@@ -45,7 +48,7 @@ function serverCompletePartialResolution(originPlayerData: FleetData.FleetPlayer
             updatedTargetFleetPlayerData =
             {
                 playerData: updatedTargetPlayerData,
-                planetData: updatedTargetPlanetData!,
+                planetData: updatedTargetPlanetData,
             }
         }
     }
