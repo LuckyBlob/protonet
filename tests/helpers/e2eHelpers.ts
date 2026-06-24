@@ -187,7 +187,18 @@ export function getPlayerId(username: string, db: Database.Database): number
     return row.id;
 }
 
+// Only zone=Planet bodies — callers treat the result as the player's distinct planets (planets[0],
+// planets[1], …). Moons/debris share a planet's coordinates and would otherwise interleave. Use
+// getOwnedBodies when every zone is wanted.
 export function getPlanets(username: string, db: Database.Database): PlanetRow[]
+{
+    const playerId: number = getPlayerId(username, db);
+    return db.prepare(
+        "SELECT id, zone, slot, system, galaxy FROM planet WHERE owner_player_id = ? AND zone = 1 ORDER BY claimed_at ASC, id ASC"
+    ).all(playerId) as PlanetRow[];
+}
+
+export function getOwnedBodies(username: string, db: Database.Database): PlanetRow[]
 {
     const playerId: number = getPlayerId(username, db);
     return db.prepare(
@@ -623,9 +634,14 @@ export async function sendColonizeFleet(
     await page.getByRole("button", { name: "Send fleet" }).click();
 }
 
+// The fleet row renders origin/arrow/target as separate spans with a zone-marker icon after each
+// endpoint, so the addresses are no longer one contiguous text node. Match the row container
+// (border-gray-400 is fleet-row specific) that contains both endpoint addresses.
 export function fleetMovementRow(page: Page, origin: PlanetRow, target: PlanetRow): Locator
 {
-    return page.getByText(`${planetAddress(origin)} → ${planetAddress(target)}`);
+    return page.locator("div.border-gray-400")
+        .filter({ hasText: planetAddress(origin) })
+        .filter({ hasText: planetAddress(target) });
 }
 
 // Synthetic PlanetRow that the UI helpers can target via (slot/system/galaxy). The `id` is unused

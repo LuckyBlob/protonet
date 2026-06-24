@@ -1077,13 +1077,13 @@ test.describe("Fleets", () =>
         expect(metalAfter).toBeGreaterThanOrEqual(PLENTY);
         expect(metalAfter).toBeLessThan(PLENTY + 5000);
 
-        // Invalid-target resolution path (addInvalidTargetFleetActionMessage): the attacker gets a
-        // single "Collect Fleet Action Report" with "Invalid Target." body, and the (now planetless)
-        // victim gets nothing because there is no target_player_id to address.
+        // Missing-target resolution path (bounceFleetForMissingTarget): the attacker gets a single
+        // "Collect Fleet Action Report" whose body says the action needs a target, and the (now
+        // planetless) victim gets nothing because the abandon nulled the fleet's target player.
         const attackerMessages: DBType.MessageRow[] = E2EHelper.getMessageRowsForPlayer(attackerPlayerId, db);
         expect(attackerMessages.length).toBe(1);
         expect(attackerMessages[0].title).toBe("Collect Fleet Action Report.");
-        expect(attackerMessages[0].body).toContain("Invalid Target.");
+        expect(attackerMessages[0].body).toContain("needs a target");
         expect(E2EHelper.getMessageCount(victimPlayerId, db)).toBe(0);
         expect(await E2EHelper.getUnreadBadgeCount(page)).toBe(1);
     });
@@ -1503,7 +1503,7 @@ test.describe("Colonize", () =>
             [{ resourceName: "Metal", quantity: 1000 }, { resourceName: "Crystal", quantity: 1000 }],
         );
         // The fleet movement row appears with the chosen target address — proves the request landed.
-        await expect(page.getByText(`${E2EHelper.planetAddress(origin)} → ${E2EHelper.planetAddress(target)}`)).toBeVisible();
+        await expect(E2EHelper.fleetMovementRow(page, origin, target)).toBeVisible();
 
         const fleet: E2EHelper.FleetRow = E2EHelper.getFleetByOrigin(origin.id, db);
         E2EHelper.forceComplete("fleet_movement", fleet.id, db, 1);
@@ -1772,7 +1772,7 @@ test.describe("Bug probes", () =>
             target,
             [{ shipName: "Colony Ship", quantity: 1 }],
         );
-        await expect(page.getByText(`${E2EHelper.planetAddress(colonizerOrigin)} → ${E2EHelper.planetAddress(target)}`)).toBeVisible();
+        await expect(E2EHelper.fleetMovementRow(page, colonizerOrigin, target)).toBeVisible();
         const fleet: E2EHelper.FleetRow = E2EHelper.getFleetByOrigin(colonizerOrigin.id, db);
 
         // The squatter grabs the address before the fleet arrives.

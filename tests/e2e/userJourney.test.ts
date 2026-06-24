@@ -52,7 +52,7 @@ test('full user journey', async ({ page }) =>
 
 	// A fresh account gets two starting planets, each with its own moon: 4 bodies total (2 zone=1
 	// planets + 2 zone=2 moons), all at the two starting coordinates.
-	const e2e1Bodies: E2EHelper.PlanetRow[] = E2EHelper.getPlanets('E2E1', db)
+	const e2e1Bodies: E2EHelper.PlanetRow[] = E2EHelper.getOwnedBodies('E2E1', db)
 	expect(e2e1Bodies.filter((body: E2EHelper.PlanetRow) => body.zone === 1).length).toBe(2)
 	expect(e2e1Bodies.filter((body: E2EHelper.PlanetRow) => body.zone === 2).length).toBe(2)
 

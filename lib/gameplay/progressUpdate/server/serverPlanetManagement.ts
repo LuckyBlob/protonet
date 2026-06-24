@@ -97,6 +97,8 @@ export function abandonPlanet(planetId: number, playerId: number): void
     {
         ServerProgress.applyPlayerUpdate(playerId, serverData, Date.now());
 
+        nullifyInboundFleetTargetsForPlanetAbandon(planetId);
+
         const zoneIdsToAbandon: number[] = getZoneIdsToAbandon(planetId);
 
         for (const zoneId of zoneIdsToAbandon)
@@ -104,6 +106,28 @@ export function abandonPlanet(planetId: number, playerId: number): void
             deleteZone(zoneId);
         }
     })();
+}
+
+// Abandoning a PLANET wipes the whole coordinate, so inbound fleets heading there lose their target.
+// Null their player_target_id so resolution bounces them home via the generic first guard. This is
+// essential for CROSS-PLAYER fleets: those defer (ResolveResultUnknown) and re-resolve by loading the
+// target player, whose zone is now gone — without the null they never resolve. (Same-player fleets
+// would also bounce in the resolver, but cross-player ones never reach it.)
+function nullifyInboundFleetTargetsForPlanetAbandon(planetId: number): void
+{
+    type PlanetCoordRow = { zone: number; galaxy: number; system: number; slot: number };
+    const planetRow: PlanetCoordRow | undefined = DB.databaseConnection.prepare(
+        "SELECT zone, galaxy, system, slot FROM planet WHERE id = ?"
+    ).get(planetId) as PlanetCoordRow | undefined;
+
+    if (planetRow === undefined || planetRow.zone !== GameType.PlanetZone.Planet)
+    {
+        return;
+    }
+
+    DB.databaseConnection.prepare(
+        "UPDATE fleet_movement SET player_target_id = NULL WHERE is_return_trip = 0 AND planet_target_galaxy = ? AND planet_target_system = ? AND planet_target_slot = ?"
+    ).run(planetRow.galaxy, planetRow.system, planetRow.slot);
 }
 
 export function deleteZone(zoneId: number): void
