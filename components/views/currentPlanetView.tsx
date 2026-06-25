@@ -37,6 +37,7 @@ function renderNameEditor(props: CurrentPlanetViewProps, planetData: CoreType.Pl
     const element: ReactElement =
     (
         <div className="flex flex-row items-center gap-2">
+            <span className="text-sm text-white">Planet name:</span>
             <input
                 type="text"
                 value={nameInput}

@@ -1,5 +1,5 @@
-﻿import { useRouter } from "next/navigation";
-import { ReactElement } from "react";
+import { useRouter } from "next/navigation";
+import { ReactElement, ReactNode } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
@@ -17,9 +17,17 @@ type SideBarProps =
 	onRefreshServerData: (clientDataStateResult: UseClientDataState.ClientDataStateResult) => void;
 };
 
+type NavItem =
+{
+	view: string;
+	label: ReactNode;
+	subItems: NavItem[];
+};
+
 export function SideBarElement(props: SideBarProps): ReactElement
 {
-	const navButtonClass: string = "px-4 py-1 text-center hover:bg-white/10 rounded transition-colors";
+	const currentView: string = props.cvController[0];
+	const setCurrentView: (value: string) => void = props.cvController[1];
 
 	const messageDatas: CoreType.MessageData[] = props.clientDataStateResult.psController[0].predictedDBData.dynamicPlayerData.messageDatas;
 	const unreadMessageCount: number = MessageData.computeUnreadMessageCount(messageDatas);
@@ -29,6 +37,32 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	        <span className="text-yellow-400 font-bold ml-1">({unreadMessageCount})</span>
 	    )
 	    : null;
+
+	const messagesLabel: ReactNode =
+	(
+	    <>Messages{unreadBadge}</>
+	);
+
+	const navItems: NavItem[] =
+	[
+	    { view: "game", label: "Game", subItems: [] },
+	    { view: "buildings", label: "Buildings", subItems: [] },
+	    { view: "research", label: "Research", subItems: [] },
+	    { view: "shipyard", label: "Shipyard", subItems: [] },
+	    { view: "fleets", label: "Fleets", subItems: [] },
+	    {
+	        view: "planets",
+	        label: "Planets",
+	        subItems:
+	        [
+	            { view: "planets", label: "Galaxy", subItems: [] },
+	            { view: "currentPlanet", label: "Current Planet", subItems: [] },
+	        ],
+	    },
+	    { view: "messages", label: messagesLabel, subItems: [] },
+	    { view: "stats", label: "Stats", subItems: [] },
+	    { view: "account", label: "Account", subItems: [] },
+	];
 
 	const adminSection: ReactElement | null = props.cuController[0].user!.admin_level === 0
 	    ?
@@ -51,16 +85,7 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	        </div>
 
 	        <div className="flex flex-col gap-0 w-full">
-	            <button onClick={() => props.cvController[1]("game")} className={navButtonClass}>Game</button>
-	            <button onClick={() => props.cvController[1]("buildings")} className={navButtonClass}>Buildings</button>
-	            <button onClick={() => props.cvController[1]("research")} className={navButtonClass}>Research</button>
-	            <button onClick={() => props.cvController[1]("shipyard")} className={navButtonClass}>Shipyard</button>
-	            <button onClick={() => props.cvController[1]("fleets")} className={navButtonClass}>Fleets</button>
-	            <button onClick={() => props.cvController[1]("currentPlanet")} className={navButtonClass}>Current Planet</button>
-	            <button onClick={() => props.cvController[1]("planets")} className={navButtonClass}>Planets</button>
-	            <button onClick={() => props.cvController[1]("messages")} className={navButtonClass}>Messages{unreadBadge}</button>
-	            <button onClick={() => props.cvController[1]("stats")} className={navButtonClass}>Stats</button>
-	            <button onClick={() => props.cvController[1]("account")} className={navButtonClass}>Account</button>
+	            {navItems.map((navItem: NavItem): ReactElement => renderNavItem(navItem, currentView, setCurrentView))}
 	        </div>
 
 	        <div className="flex-1" />
@@ -77,4 +102,45 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	);
 
 	return sideBarElement;
+}
+
+function renderNavItem(navItem: NavItem, currentView: string, setCurrentView: (value: string) => void): ReactElement
+{
+	const hasSubItems: boolean = navItem.subItems.length > 0;
+	const targetView: string = hasSubItems === true ? navItem.subItems[0].view : navItem.view;
+	const isGroupExpanded: boolean = hasSubItems === true && navItem.subItems.some((subItem: NavItem): boolean => subItem.view === currentView);
+	const isActive: boolean = hasSubItems === false && navItem.view === currentView;
+
+	const parentButton: ReactElement = renderNavButton(navItem.label, targetView, isActive, false, setCurrentView);
+
+	const subButtons: ReactElement[] = isGroupExpanded === true
+	    ? navItem.subItems.map((subItem: NavItem): ReactElement => renderNavButton(subItem.label, subItem.view, subItem.view === currentView, true, setCurrentView))
+	    : [];
+
+	const element: ReactElement =
+	(
+	    <div key={navItem.view} className="flex flex-col gap-0 w-full">
+	        {parentButton}
+	        {subButtons}
+	    </div>
+	);
+
+	return element;
+}
+
+function renderNavButton(label: ReactNode, view: string, isActive: boolean, isSubItem: boolean, setCurrentView: (value: string) => void): ReactElement
+{
+	const baseClass: string = "py-1 hover:bg-white/10 rounded transition-colors";
+	const sizeClass: string = isSubItem === true ? "px-4 ml-6 text-left text-sm text-gray-300" : "px-4 text-left";
+	const activeClass: string = isActive === true ? "bg-white/10 font-semibold" : "";
+	const navButtonClass: string = `${baseClass} ${sizeClass} ${activeClass}`;
+
+	const navButton: ReactElement =
+	(
+	    <button key={view} onClick={() => setCurrentView(view)} className={navButtonClass}>
+	        {label}
+	    </button>
+	);
+
+	return navButton;
 }
