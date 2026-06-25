@@ -56,6 +56,7 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	            <button onClick={() => props.cvController[1]("research")} className={navButtonClass}>Research</button>
 	            <button onClick={() => props.cvController[1]("shipyard")} className={navButtonClass}>Shipyard</button>
 	            <button onClick={() => props.cvController[1]("fleets")} className={navButtonClass}>Fleets</button>
+	            <button onClick={() => props.cvController[1]("currentPlanet")} className={navButtonClass}>Current Planet</button>
 	            <button onClick={() => props.cvController[1]("planets")} className={navButtonClass}>Planets</button>
 	            <button onClick={() => props.cvController[1]("messages")} className={navButtonClass}>Messages{unreadBadge}</button>
 	            <button onClick={() => props.cvController[1]("stats")} className={navButtonClass}>Stats</button>

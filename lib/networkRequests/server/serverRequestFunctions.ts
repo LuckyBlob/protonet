@@ -575,7 +575,7 @@ export function serverFindAllPlanetsPublic(): CoreType.PublicPlanetData[]
 }
 
 const PLANET_ROW_ALLOWED_COLUMNS: ReadonlySet<string> = new Set<string>([
-    "slot", "system", "galaxy", "size", "owner_player_id", "claimed_at", "last_updated",
+    "slot", "system", "galaxy", "size", "temperature", "name", "owner_player_id", "claimed_at", "last_updated",
 ]);
 
 export function serverUpdatePlanetRow(planetId: number, columnUpdates: Partial<DBType.PlanetRow>): DBType.PlanetRow
@@ -627,7 +627,7 @@ function createPlayer(userId: number): void
             slot: firstPlanetRow.slot,
             zone: GameType.PlanetZone.Moon,
         };
-        const firstMoonId: number = ServerPlanetManagement.createZone(firstMoonAddress, playerRow.id, firstPlanetRow.size, now);
+        const firstMoonId: number = ServerPlanetManagement.createZone(firstMoonAddress, playerRow.id, StaticData.STARTING_MOON_SIZE, StaticDataHelper.rollTemperatureForSlot(firstMoonAddress.slot), now);
         const secondPlanetId: number = ServerPlanetManagement.claimPlanet(null, playerRow.id, now + 1);
         const secondPlanetRow: DBType.PlanetRow = readPlanetRow(secondPlanetId);
         const secondMoonAddress: GameType.PlanetAddress =
@@ -637,7 +637,7 @@ function createPlayer(userId: number): void
             slot: secondPlanetRow.slot,
             zone: GameType.PlanetZone.Moon,
         };
-        const secondMoonId: number = ServerPlanetManagement.createZone(secondMoonAddress, playerRow.id, secondPlanetRow.size, now + 1);
+        const secondMoonId: number = ServerPlanetManagement.createZone(secondMoonAddress, playerRow.id, StaticData.STARTING_MOON_SIZE, StaticDataHelper.rollTemperatureForSlot(secondMoonAddress.slot), now + 1);
 
         ServerDynamicData.serverUpdateAllPlanetData(firstPlanetId, playerRow.id, StaticData.STARTING_PLANET_DATA);
         ServerDynamicData.serverUpdateAllPlanetData(firstMoonId, playerRow.id, StaticData.STARTING_PLANET_DATA);
@@ -1275,6 +1275,32 @@ export function tryAbandonPlanetLogic(playerId: number, serverData: CoreType.Ser
     {
         return { success: false, failureReason: "Failed to abandon planet.", playerStateResult: playerData };
     }
+
+    const playerActionResult: PlayerActionResult =
+    {
+        success: true,
+        failureReason: null,
+        playerStateResult: serverGetPlayerData(playerId),
+    }
+
+    return playerActionResult;
+}
+
+export function tryRenamePlanetLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.RenamePlanet>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    const relevantPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.planetId);
+    if (relevantPlanetData === null)
+    {
+        return { success: false, failureReason: "Wrong planet to rename.", playerStateResult: playerData };
+    }
+
+    const trimmedName: string = requestData.name.trim().slice(0, StaticData.MAX_PLANET_NAME_LENGTH);
+    const nameToStore: string | null = trimmedName.length > 0 ? trimmedName : null;
+
+    serverUpdatePlanetRow(requestData.planetId, { name: nameToStore });
 
     const playerActionResult: PlayerActionResult =
     {

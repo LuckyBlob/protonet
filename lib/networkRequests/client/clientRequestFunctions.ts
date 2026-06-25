@@ -457,4 +457,40 @@ export async function clientTryAbandonPlanet(psController: CoreType.PSController
         return String(error);
     }
 }
+
+export async function clientTryRenamePlanetRequest(psController: CoreType.PSController, planetId: number, name: string): Promise<string | null>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.RenamePlanet> =
+    {
+        planetId: planetId,
+        name: name,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RenamePlanet> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.RenamePlanet, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Rename planet failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+        return null;
+    }
+    catch (error: unknown)
+    {
+        if (error instanceof Error)
+        {
+            return error.message;
+        }
+
+        return String(error);
+    }
+}
 //#endregion

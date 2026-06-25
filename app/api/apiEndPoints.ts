@@ -16,6 +16,7 @@ export const ActionRequest =
     SetBuildingEnergySetting:   { endpoint: "buildings/setEnergySetting",   name: "SetBuildingEnergySetting" },
     SendFleet:   { endpoint: "buy/sendFleet",   name: "SendFleet" },
     AbandonPlanet:   { endpoint: "planets/abandon",   name: "AbandonPlanet" },
+    RenamePlanet:   { endpoint: "planet/rename",   name: "RenamePlanet" },
     DeleteMessage:   { endpoint: "message/delete",   name: "DeleteMessage" },
     MarkMessageRead: { endpoint: "message/markRead", name: "MarkMessageRead" },
 } as const satisfies Record<string, validEndpoint>;
@@ -32,6 +33,7 @@ export type ActionRequestMap =
     SetBuildingEnergySetting: RequestType.SetBuildingEnergySetting_ClientRequest;
     SendFleet: RequestType.SendFleet_ClientRequest;
     AbandonPlanet: RequestType.AbandonPlanet_ClientRequest;
+    RenamePlanet: RequestType.RenamePlanet_ClientRequest;
     DeleteMessage: RequestType.DeleteMessage_ClientRequest;
     MarkMessageRead: RequestType.MarkMessageRead_ClientRequest;
 }
@@ -48,6 +50,7 @@ export type ActionResponseMap =
     SetBuildingEnergySetting: RequestType.SetBuildingEnergySetting_ServerResponse;
     SendFleet: RequestType.SendFleet_ServerResponse;
     AbandonPlanet: RequestType.AbandonPlanet_ServerResponse;
+    RenamePlanet: RequestType.RenamePlanet_ServerResponse;
     DeleteMessage: RequestType.DeleteMessage_ServerResponse;
     MarkMessageRead: RequestType.MarkMessageRead_ServerResponse;
 }

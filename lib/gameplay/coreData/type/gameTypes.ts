@@ -29,6 +29,8 @@ export const BuildingType =
     ResearchLab: 10,
     NaniteFactory: 11,
     FusionReactor: 12,
+    Terraformer: 13,
+    LunarBase: 14,
 } as const;
 export type BuildingType = typeof BuildingType[keyof typeof BuildingType];
 export type BuildingStats =
@@ -57,6 +59,7 @@ export type BuildingCostStats =
 export const ProductionFunctionType =
 {
     SimpleProductionBuilding: 1,
+    TemperatureScaledProductionBuilding: 2,
 } as const;
 export type ProductionFunctionType = typeof ProductionFunctionType[keyof typeof ProductionFunctionType];
 export type ProductionStats =
@@ -70,9 +73,7 @@ export const BuildingPlanetValueProductionFormulasType =
 {
     SimpleExponential: 1,
     FlooredNaturalExponential: 2,
-    // factor * level * (researchScalingBaseFactor + researchScalingPerLevelFactor * researchLevel)^level.
-    // The Fusion Reactor's energy output, scaled by the player's researchScalingResearchType level.
-    ResearchScaledExponential: 3,
+     ResearchScaledExponential: 3,
 } as const;
 export type BuildingPlanetValueProductionFormulasType = typeof BuildingPlanetValueProductionFormulasType[keyof typeof BuildingPlanetValueProductionFormulasType];
 export type PlanetValueStats =
@@ -95,6 +96,8 @@ export const PlanetValueType =
     MetalStorage: 2,
     CrystalStorage: 3,
     DeuteriumStorage: 4,
+    Size: 6,
+    Temperature: 7,
 } as const;
 export type PlanetValueType = typeof PlanetValueType[keyof typeof PlanetValueType];
 export type PlanetValueInfo =
@@ -204,6 +207,11 @@ export type PlanetZoneInfo =
 }
 
 export type SlotSizeRange =
+{
+	min: number;
+	max: number;
+};
+export type SlotTemperatureRange =
 {
 	min: number;
 	max: number;

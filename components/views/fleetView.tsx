@@ -56,13 +56,13 @@ function renderZoneMarker(zone: GameType.PlanetZone): ReactElement | null
     return <img src={`/icons/zone/${zone}_color.png`} alt={zoneInfo.displayName} title={zoneInfo.displayName} className="w-4 h-4 object-contain inline-block align-text-bottom" />;
 }
 
-function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement): ReactElement
+function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement, playerData: CoreType.PlayerData): ReactElement
 {
     const fleetMovementRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
     const originZone: GameType.PlanetZone = fleetMovementRow.planet_origin_zone as GameType.PlanetZone;
     const targetZone: GameType.PlanetZone = fleetMovementRow.planet_target_zone as GameType.PlanetZone;
-    const originAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_origin_galaxy, fleetMovementRow.planet_origin_system, fleetMovementRow.planet_origin_slot, originZone);
-    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot, targetZone);
+    const originAddress: string = StaticDataHelper.getDisplayNameForAddress(playerData, { galaxy: fleetMovementRow.planet_origin_galaxy, system: fleetMovementRow.planet_origin_system, slot: fleetMovementRow.planet_origin_slot, zone: originZone });
+    const targetAddress: string = StaticDataHelper.getDisplayNameForAddress(playerData, { galaxy: fleetMovementRow.planet_target_galaxy, system: fleetMovementRow.planet_target_system, slot: fleetMovementRow.planet_target_slot, zone: targetZone });
     const actionName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.fleetAction(fleetMovementRow.fleet_action_type));
     const isReturnTrip: boolean = fleetMovementRow.is_return_trip === 1;
     const remainingMs: number | null = FleetData.getFleetMovementRemainingMs(fleetMovement);
@@ -129,9 +129,11 @@ function renderFleetMovementsSection(props: FleetViewProps): ReactElement
         return element;
     }
 
+    const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
+
     const movementElements: ReactElement[] = allFleetMovements.map((fleetMovement: CoreType.FleetMovement): ReactElement =>
     {
-        return renderFleetMovementRow(fleetMovement);
+        return renderFleetMovementRow(fleetMovement, playerData);
     });
 
     const element: ReactElement =
@@ -343,7 +345,7 @@ function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): Re
     const ownedPlanetOptionElements: ReactElement[] = ownedPlanetDatas.map((planetData: CoreType.PlanetData): ReactElement =>
     {
         const planetRow: DBType.PlanetRow = planetData.planetRow;
-        const addressLabel: string = StaticDataHelper.formatPlanetAddress(planetRow.galaxy, planetRow.system, planetRow.slot, planetRow.zone as GameType.PlanetZone);
+        const addressLabel: string = StaticDataHelper.getPlanetDisplayName(planetRow);
 
         const optionElement: ReactElement =
         (

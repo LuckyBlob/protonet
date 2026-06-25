@@ -63,7 +63,8 @@ export function claimPlanet(planetAddress: GameType.PlanetAddress | null, player
         }
 
         const size: number = isNew ? StaticData.STARTING_PLANET_SIZE : StaticDataHelper.rollSizeForSlot(planetAddress.slot);
-        const newPlanetId: number = createZone(planetAddress, playerId, size, claimedAt);
+        const temperature: number = StaticDataHelper.rollTemperatureForSlot(planetAddress.slot);
+        const newPlanetId: number = createZone(planetAddress, playerId, size, temperature, claimedAt);
 
         return newPlanetId;
     })();
@@ -71,16 +72,17 @@ export function claimPlanet(planetAddress: GameType.PlanetAddress | null, player
     return claimedPlanetId;
 }
 
-export function createZone(planetAddress: GameType.PlanetAddress, ownerPlayerId: number, size: number, claimedAt: number): number
+export function createZone(planetAddress: GameType.PlanetAddress, ownerPlayerId: number, size: number, temperature: number, claimedAt: number): number
 {
     const createdRow: { id: number } = DB.databaseConnection.prepare(
-        "INSERT INTO planet (zone, slot, system, galaxy, size, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
+        "INSERT INTO planet (zone, slot, system, galaxy, size, temperature, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
     ).get(
         planetAddress.zone,
         planetAddress.slot,
         planetAddress.system,
         planetAddress.galaxy,
         size,
+        temperature,
         ownerPlayerId,
         claimedAt,
         claimedAt

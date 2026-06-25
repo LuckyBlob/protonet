@@ -55,6 +55,8 @@ export type PlanetRow =
 	system: number;
 	galaxy: number;
 	size: number;
+	temperature: number;
+	name: string | null;
 	owner_player_id: number | null;
 	claimed_at: number;
 	last_updated: number;

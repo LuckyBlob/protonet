@@ -219,8 +219,16 @@ function meetsSingleRequirement(requirementContext: RequirementType.RequirementC
 
 function getFailedRequirements(requirementContext: RequirementType.RequirementContext, requirements: RequirementType.Requirement[]): RequirementType.Requirement[]
 {
+    const planetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(requirementContext.playerData.planetDatas, requirementContext.planetId);
+    const planetZone: GameType.PlanetZone | null = planetData === null ? null : planetData.planetRow.zone as GameType.PlanetZone;
+
     return requirements.filter((requirement: RequirementType.Requirement): boolean =>
     {
+        if (requirement.applicableZones !== undefined && planetZone !== null && requirement.applicableZones.includes(planetZone) === false)
+        {
+            return false;
+        }
+
         return meetsSingleRequirement(requirementContext, requirement) === false;
     });
 }

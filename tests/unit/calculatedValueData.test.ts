@@ -132,6 +132,64 @@ describe("calculatedValueData — resource maximums (storage caps)", () =>
     });
 });
 
+describe("calculatedValueData — size budget", () =>
+{
+    it("uses the planet's rolled size as the base field budget on a fresh planet", () =>
+    {
+        const planetData: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { size: 163 } });
+        const size: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(planetData, GameType.PlanetValueType.Size, TestDataBuilders.buildPlayerData());
+        expect(size!.production).toBe(163);
+        expect(size!.consumption).toBe(0);
+    });
+
+    it("consumes one field per building level, summed across buildings", () =>
+    {
+        const planetData: CoreType.PlanetData = buildPlanetWithBuildings(new Map<GameType.BuildingType, number>(
+        [
+            [GameType.BuildingType.MetalMine, 5],
+            [GameType.BuildingType.Shipyard, 3],
+        ]));
+
+        const size: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(planetData, GameType.PlanetValueType.Size, TestDataBuilders.buildPlayerData());
+        expect(size!.consumption).toBe(8);
+    });
+
+    it("adds floor(5.5 * level) fields from the Terraformer (and it still self-consumes a field per level)", () =>
+    {
+        const planetData: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            planetRow: { size: 163 },
+            dynamicPlanetData: { buildingLevels: new Map<GameType.BuildingType, number>([[GameType.BuildingType.Terraformer, 4]]) },
+        });
+
+        const size: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(planetData, GameType.PlanetValueType.Size, TestDataBuilders.buildPlayerData());
+        expect(size!.production).toBe(185);
+        expect(size!.consumption).toBe(4);
+    });
+
+    it("adds 3 fields per Lunar Base level on a moon's base size of 1", () =>
+    {
+        const moonData: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            planetRow: { size: 1, zone: GameType.PlanetZone.Moon },
+            dynamicPlanetData: { buildingLevels: new Map<GameType.BuildingType, number>([[GameType.BuildingType.LunarBase, 3]]) },
+        });
+
+        const size: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(moonData, GameType.PlanetValueType.Size, TestDataBuilders.buildPlayerData());
+        expect(size!.production).toBe(10);
+        expect(size!.consumption).toBe(3);
+    });
+
+    it("does not let the energy throttle scale field consumption", () =>
+    {
+        const planetData: CoreType.PlanetData = buildPlanetWithBuildings(new Map<GameType.BuildingType, number>([[GameType.BuildingType.MetalMine, 4]]));
+        planetData.dynamicPlanetData.buildingEnergySettings.set(GameType.BuildingType.MetalMine, 0);
+
+        const size: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(planetData, GameType.PlanetValueType.Size, TestDataBuilders.buildPlayerData());
+        expect(size!.consumption).toBe(4);
+    });
+});
+
 describe("calculatedValueData — player values", () =>
 {
     it("derives fleet slots from Computer Tech research", () =>

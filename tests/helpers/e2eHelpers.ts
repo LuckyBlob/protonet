@@ -11,7 +11,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
-export const PLANET_BUTTON_PATTERN: RegExp = /^Planet \[/;
+export const PLANET_BUTTON_PATTERN: RegExp = /^Planet /;
 
 //#region shared DB connection + types
 
@@ -248,6 +248,15 @@ export function setBuildingLevelOnAllPlanets(username: string, buildingType: num
     }
 }
 
+export function setTemperatureOnAllPlanets(username: string, temperature: number, db: Database.Database): void
+{
+    const planets: PlanetRow[] = getPlanets(username, db);
+    for (const planet of planets)
+    {
+        db.prepare("UPDATE planet SET temperature = ? WHERE id = ?").run(temperature, planet.id);
+    }
+}
+
 export function setShipQuantity(planetId: number, playerId: number, shipType: number, quantity: number, db: Database.Database): void
 {
     db.prepare(
@@ -473,7 +482,7 @@ export async function reloadGame(page: Page): Promise<void>
     await expect(page.getByRole("button", { name: PLANET_BUTTON_PATTERN })).toBeVisible();
 }
 
-export async function goToView(page: Page, view: "Game" | "Buildings" | "Research" | "Shipyard" | "Fleets" | "Planets" | "Messages" | "Stats" | "Account"): Promise<void>
+export async function goToView(page: Page, view: "Game" | "Buildings" | "Research" | "Shipyard" | "Fleets" | "Current Planet" | "Planets" | "Messages" | "Stats" | "Account"): Promise<void>
 {
     // The sidebar's Messages button accessible name is "Messages" when there are no unread, and
     // "Messages(N)" once the unread badge appears, so we can't rely on an exact name match here.

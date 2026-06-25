@@ -45,6 +45,8 @@ CREATE TABLE planet
 	system INTEGER NOT NULL,
 	galaxy INTEGER NOT NULL,
 	size INTEGER NOT NULL,
+	temperature INTEGER NOT NULL DEFAULT 273,
+	name TEXT,
 	owner_player_id INTEGER,
  	claimed_at INTEGER NOT NULL DEFAULT 0,
 	last_updated INTEGER NOT NULL DEFAULT 0,

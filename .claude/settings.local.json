@@ -173,7 +173,17 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(cp public/ships/4.png public/ships/5.png && echo \"placeholder ships/5.png created\")",
       "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts,null,2\\)\\)\")",
-      "mcp__Claude_in_Chrome__list_connected_browsers"
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "mcp__Claude_in_Chrome__select_browser",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__get_page_text",
+      "Bash(grep -v \"\\\\.test\\\\.ts.*//\")",
+      "Bash(sed -i 's/createZone\\(originAddress, playerId, PLANET_SIZE, Date.now\\(\\)\\)/createZone\\(originAddress, playerId, PLANET_SIZE, 0, Date.now\\(\\)\\)/; s/createZone\\(debrisAddress, scenario.playerId, PLANET_SIZE, Date.now\\(\\)\\)/createZone\\(debrisAddress, scenario.playerId, PLANET_SIZE, 0, Date.now\\(\\)\\)/' tests/integration/recycleMidFlightDebris.test.ts)",
+      "Bash(sed -i 's/createZone\\(address, playerId, PLANET_SIZE, Date.now\\(\\)\\)/createZone\\(address, playerId, PLANET_SIZE, 0, Date.now\\(\\)\\)/' tests/integration/sendThenAbandonTarget.test.ts)",
+      "Bash(sed -i 's/createZone\\(address, playerId, PLANET_SIZE, Date.now\\(\\)\\)/createZone\\(address, playerId, PLANET_SIZE, 0, Date.now\\(\\)\\)/; s/createZone\\({ galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Moon }, 1, PLANET_SIZE, 42\\)/createZone\\({ galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Moon }, 1, PLANET_SIZE, 0, 42\\)/' tests/integration/zoneLifecycle.test.ts)",
+      "Bash(node .claude/hooks/block-chrome-open.js)",
+      "Bash(echo \"jq exit: $?\")",
+      "Bash(node -e \"const s=require\\('./.claude/settings.local.json'\\); const m=s.hooks.PreToolUse.find\\(h=>h.matcher==='mcp__computer-use__open_application'\\); console.log\\('JSON valid. PreToolUse matchers:', s.hooks.PreToolUse.map\\(h=>h.matcher\\)\\); console.log\\('chrome hook command:', m && m.hooks[0].command\\);\")"
     ]
   },
   "hooks": {
@@ -184,6 +194,15 @@
           {
             "type": "command",
             "command": "node .claude/hooks/block-git-write.js"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__computer-use__open_application",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/block-chrome-open.js"
           }
         ]
       }

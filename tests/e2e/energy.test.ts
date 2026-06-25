@@ -124,6 +124,7 @@ test.describe("Energy", () =>
         // metal 30 -> 13, crystal 15 -> 6, deuterium 24 -> 11.
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.SolarPlant, 1, db);
         E2EHelper.setBuildingLevelOnAllPlanets(username, GameType.BuildingType.DeuteriumSynthesizer, 2, db);
+        E2EHelper.setTemperatureOnAllPlanets(username, 363, db);
         await E2EHelper.reloadGame(page);
 
         await E2EHelper.expectPlanetValueCard(page, "Energy", 22, 48);

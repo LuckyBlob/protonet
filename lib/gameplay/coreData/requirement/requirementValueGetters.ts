@@ -111,6 +111,21 @@ export function hasFreeFleetSlot(): RequirementType.ThingValueGetter
     };
 }
 
+export function freeSize(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
+        const sizeValueData: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(planetData, GameType.PlanetValueType.Size, context.playerData);
+        if (sizeValueData === null)
+        {
+            return 0;
+        }
+
+        return sizeValueData.production - sizeValueData.consumption;
+    };
+}
+
 export function isZoneAssociatedPlanetOwned(): RequirementType.ThingValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>

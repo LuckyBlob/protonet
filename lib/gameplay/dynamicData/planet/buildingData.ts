@@ -39,7 +39,7 @@ function computeProductionRatePerHourForResource(planetData: CoreType.PlanetData
 	const buildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building)
 	for (const buildingType of buildingTypes)
 	{
-		const productionRatePerHourMap: Map<GameType.ResourceType, number> | null = BuildingProduction.computeProductionRatePerHour(buildingType, planetData, serverData);
+		const productionRatePerHourMap: Map<GameType.ResourceType, number> | null = BuildingProduction.computeProductionRatePerHour(buildingType, planetData, serverData, playerData);
 		if (productionRatePerHourMap === null)
 		{
 			continue;

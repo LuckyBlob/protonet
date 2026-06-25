@@ -122,6 +122,16 @@ export type AbandonPlanet_ServerResponse = BaseServerResponse &
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
 
+export type RenamePlanet_ClientRequest = BaseClientRequest &
+{
+	planetId: number;
+	name: string;
+};
+export type RenamePlanet_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
 export type DeleteMessage_ClientRequest = BaseClientRequest &
 {
 	messageRowId: number;

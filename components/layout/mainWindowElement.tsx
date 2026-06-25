@@ -7,6 +7,7 @@ import * as ResearchView from "@/components/views/researchView";
 import * as ShipyardView from "@/components/views/shipyardView";
 import * as FleetView from "@/components/views/fleetView";
 import * as PlanetView from "@/components/views/planetView";
+import * as CurrentPlanetView from "@/components/views/currentPlanetView";
 import * as MessagesView from "@/components/views/messagesView";
 import * as AccountView from "@/components/views/accountView";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
@@ -50,6 +51,11 @@ export function MainWindowElement(props: MainWindowProps): ReactElement
 	if (props.cvController[0] === "stats")
 	{
 		return <StatsView.StatsView clientDataStateResult={props.clientDataStateResult} />;
+	}
+
+	if (props.cvController[0] === "currentPlanet")
+	{
+		return <CurrentPlanetView.CurrentPlanetView clientDataStateResult={props.clientDataStateResult} />;
 	}
 
 	if (props.cvController[0] === "planets")

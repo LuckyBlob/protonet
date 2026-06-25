@@ -66,7 +66,7 @@ function createPlayer(playerId: number): void
 function createZoneWithData(playerId: number, galaxy: number, system: number, slot: number, zone: GameType.PlanetZone): number
 {
     const address: GameType.PlanetAddress = { galaxy: galaxy, system: system, slot: slot, zone: zone };
-    const zoneId: number = ServerPlanetManagement.createZone(address, playerId, PLANET_SIZE, Date.now());
+    const zoneId: number = ServerPlanetManagement.createZone(address, playerId, PLANET_SIZE, 0, Date.now());
     ServerDynamicData.serverUpdateAllPlanetData(zoneId, playerId, structuredClone(CoreType.EmptyPlanetData));
     return zoneId;
 }
@@ -127,7 +127,7 @@ describe('zone lifecycle', () =>
     it('createZone inserts a body row at the given coords/owner/size/zone', () =>
     {
         createPlayer(1);
-        const moonId: number = ServerPlanetManagement.createZone({ galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Moon }, 1, PLANET_SIZE, 42);
+        const moonId: number = ServerPlanetManagement.createZone({ galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Moon }, 1, PLANET_SIZE, 0, 42);
 
         const row: { zone: number; slot: number; system: number; galaxy: number; size: number; owner_player_id: number } | undefined =
             databaseConnection.prepare("SELECT zone, slot, system, galaxy, size, owner_player_id FROM planet WHERE id = ?").get(moonId) as any;

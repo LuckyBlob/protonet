@@ -3,6 +3,8 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
+export const NEUTRAL_TEMPERATURE: number = (1 - StaticData.DEUTERIUM_TEMPERATURE_BASE) / StaticData.DEUTERIUM_TEMPERATURE_COEFF;
+
 export function buildPlayerRow(overrides?: Partial<DBType.PlayerRow>): DBType.PlayerRow
 {
     const playerRow: DBType.PlayerRow =
@@ -29,6 +31,8 @@ export function buildPlanetRow(overrides?: Partial<DBType.PlanetRow>): DBType.Pl
         system: 1,
         galaxy: 1,
         size: StaticData.STARTING_PLANET_SIZE,
+        temperature: NEUTRAL_TEMPERATURE,
+        name: null,
         owner_player_id: 1,
         claimed_at: 0,
         last_updated: 1_000_000,

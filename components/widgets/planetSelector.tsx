@@ -4,7 +4,6 @@ import { ReactElement, ReactNode } from "react";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 type PlanetSelectorProps =
@@ -21,7 +20,7 @@ export function PlanetSelector(props: PlanetSelectorProps): ReactElement
 	const selectableZones: CoreType.PlanetData[] = StaticDataHelper.getSelectableZones(props.clientDataStateResult.psController[0].dbData.planetDatas);
 	const planetsWithDisplayName: { planetData: CoreType.PlanetData; displayName: string }[] = selectableZones.map((planetData: CoreType.PlanetData) =>
 	{
-		const displayName: string = StaticDataHelper.formatPlanetAddress(planetData.planetRow.galaxy, planetData.planetRow.system, planetData.planetRow.slot, planetData.planetRow.zone as GameType.PlanetZone);
+		const displayName: string = StaticDataHelper.getPlanetDisplayName(planetData.planetRow);
 
 		return { planetData, displayName };
 	});
@@ -37,7 +36,7 @@ export function PlanetSelector(props: PlanetSelectorProps): ReactElement
 		return planetData.planetRow.id === props.clientDataStateResult.psController[0].selectedPlanetId;
 	});
 	const selectedPlanetDisplayName: string = selectedPlanetData !== undefined
-		? StaticDataHelper.formatPlanetAddress(selectedPlanetData.planetRow.galaxy, selectedPlanetData.planetRow.system, selectedPlanetData.planetRow.slot, selectedPlanetData.planetRow.zone as GameType.PlanetZone)
+		? StaticDataHelper.getPlanetDisplayName(selectedPlanetData.planetRow)
 		: "...";
 
 	const selectorElement: ReactElement =

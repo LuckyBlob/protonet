@@ -382,6 +382,82 @@ describe('getFailedResearchRequirements', () =>
     });
 });
 
+describe('Lunar Base gate (applicableZones = Moon)', () =>
+{
+    function buildMoon(buildingLevels: Map<GameType.BuildingType, number>): CoreType.PlanetData
+    {
+        return TestDataBuilders.buildPlanetData(
+        {
+            planetRow: { size: 5, zone: GameType.PlanetZone.Moon },
+            dynamicPlanetData: { buildingLevels: buildingLevels },
+        });
+    }
+
+    it('blocks other moon buildings until a Lunar Base exists', () =>
+    {
+        const moon: CoreType.PlanetData = buildMoon(new Map<GameType.BuildingType, number>());
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [moon] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalStorage, moon.planetRow.id);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('allows other moon buildings once the Lunar Base is level 1', () =>
+    {
+        const moon: CoreType.PlanetData = buildMoon(new Map<GameType.BuildingType, number>([[GameType.BuildingType.LunarBase, 1]]));
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [moon] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalStorage, moon.planetRow.id);
+        expect(failed).toHaveLength(0);
+    });
+
+    it('does not gate the Lunar Base itself on a fresh moon', () =>
+    {
+        const moon: CoreType.PlanetData = buildMoon(new Map<GameType.BuildingType, number>());
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [moon] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.LunarBase, moon.planetRow.id);
+        expect(failed).toHaveLength(0);
+    });
+
+    it('does not apply the Lunar Base gate to the same building on a planet zone', () =>
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { zone: GameType.PlanetZone.Planet } });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalStorage, planet.planetRow.id);
+        expect(failed).toHaveLength(0);
+    });
+});
+
+describe('Size build gate (free fields > 0)', () =>
+{
+    it('blocks any building once the planet has no free fields left', () =>
+    {
+        // size 1, Metal Mine L1 consumes the only field -> 0 free.
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            planetRow: { size: 1 },
+            dynamicPlanetData: { buildingLevels: new Map<GameType.BuildingType, number>([[GameType.BuildingType.MetalMine, 1]]) },
+        });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalMine, planet.planetRow.id);
+        const descriptions: string[] = Requirements.getRequirementDescriptions(failed, playerData, planet.planetRow.id);
+        expect(failed.length).toBeGreaterThan(0);
+        expect(descriptions.some((line: string): boolean => line.includes("Size"))).toBe(true);
+    });
+
+    it('allows building while free fields remain', () =>
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { size: 10 } });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalMine, planet.planetRow.id);
+        expect(failed).toHaveLength(0);
+    });
+});
+
 describe('getRequirementDescriptions', () =>
 {
     it('returns no descriptions when no requirements failed', () =>

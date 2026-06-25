@@ -155,12 +155,23 @@ export function computePlanetValueDatas(planetData: CoreType.PlanetData, playerD
 {
     const planetValueDataBySource: Map<GameType.PlanetValueType, CoreType.CalculatedValueData>[] =
     [
+        computePlanetBaseValues(planetData),
         computeBuildingPlanetValueDatas(planetData, playerData),
         computeShipPlanetValueDatas(planetData),
         computeResearchPlanetValueDatas(planetData),
     ];
 
     return mergeCalculatedValueDatas(StaticData.PLANET_VALUE_INFOS.keys(), planetValueDataBySource);
+}
+
+function computePlanetBaseValues(planetData: CoreType.PlanetData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
+{
+    const baseValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
+
+    baseValues.set(GameType.PlanetValueType.Size, { production: planetData.planetRow.size, consumption: 0 });
+    baseValues.set(GameType.PlanetValueType.Temperature, { production: planetData.planetRow.temperature, consumption: 0 });
+
+    return baseValues;
 }
 
 function computeShipPlanetValueDatas(planetData: CoreType.PlanetData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
@@ -185,28 +196,28 @@ function computeBuildingPlanetValueDatas(planetData: CoreType.PlanetData, player
     for (const buildingType of buildingTypes)
     {
         const buildingLevel: number = BuildingData.getBuildingLevel(planetData, buildingType);
-        const buildingPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(buildingLevel, buildingType, playerData);
-
-        if (buildingPlanetValues === null)
-        {
-            continue;
-        }
-
-        const energyFactor: number = BuildingEnergySetting.getBuildingEnergyFactor(planetData, buildingType);
+        const buildingPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = computeSingleBuildingPlanetValues(planetData, buildingType, buildingLevel, playerData);
 
         for (const [planetValueType, planetValueAmounts] of buildingPlanetValues)
         {
-            // The per-building energy throttle scales only the Energy contribution (both producers
-            // and consumers); storage planet values are unaffected.
-            const scaledPlanetValueAmounts: CoreType.CalculatedValueData = planetValueType === GameType.PlanetValueType.Energy
-                ? { production: planetValueAmounts.production * energyFactor, consumption: planetValueAmounts.consumption * energyFactor }
-                : planetValueAmounts;
-
-            addCalculatedValueData(newBuildingPlanetValues, planetValueType, scaledPlanetValueAmounts);
+            addCalculatedValueData(newBuildingPlanetValues, planetValueType, planetValueAmounts);
         }
     }
 
     return newBuildingPlanetValues;
+}
+
+function computeSingleBuildingPlanetValues(planetData: CoreType.PlanetData, buildingType: GameType.BuildingType, buildingLevel: number, playerData: CoreType.PlayerData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
+{
+    const energyFactor: number = BuildingEnergySetting.getBuildingEnergyFactor(planetData, buildingType);
+    const buildingPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(buildingLevel, buildingType, playerData, energyFactor) ?? new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
+
+    if (buildingLevel > 0)
+    {
+        addCalculatedValueData(buildingPlanetValues, GameType.PlanetValueType.Size, { production: 0, consumption: buildingLevel });
+    }
+
+    return buildingPlanetValues;
 }
 //#endregion
 

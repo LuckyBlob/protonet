@@ -79,7 +79,7 @@ function createPlayerWithOrigin(playerId: number, galaxy: number, system: number
     ).run(playerId, playerId);
 
     const originAddress: GameType.PlanetAddress = { galaxy: galaxy, system: system, slot: originSlot, zone: GameType.PlanetZone.Planet };
-    const originPlanetId: number = ServerPlanetManagement.createZone(originAddress, playerId, PLANET_SIZE, Date.now());
+    const originPlanetId: number = ServerPlanetManagement.createZone(originAddress, playerId, PLANET_SIZE, 0, Date.now());
     ServerDynamicData.serverUpdateAllPlanetData(originPlanetId, playerId, structuredClone(CoreType.EmptyPlanetData));
 
     return { playerId: playerId, originPlanetId: originPlanetId, galaxy: galaxy, system: system, originSlot: originSlot, debrisSlot: debrisSlot };
@@ -88,7 +88,7 @@ function createPlayerWithOrigin(playerId: number, galaxy: number, system: number
 function createDebrisField(scenario: ScenarioPlayer, metal: number, crystal: number): number
 {
     const debrisAddress: GameType.PlanetAddress = { galaxy: scenario.galaxy, system: scenario.system, slot: scenario.debrisSlot, zone: GameType.PlanetZone.DebrisField };
-    const debrisId: number = ServerPlanetManagement.createZone(debrisAddress, scenario.playerId, PLANET_SIZE, Date.now());
+    const debrisId: number = ServerPlanetManagement.createZone(debrisAddress, scenario.playerId, PLANET_SIZE, 0, Date.now());
     const debrisData: CoreType.DynamicPlanetData =
     {
         ...structuredClone(CoreType.EmptyPlanetData),

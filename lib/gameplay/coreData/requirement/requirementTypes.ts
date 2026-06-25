@@ -51,6 +51,7 @@ export type SpecificThingRequirement =
 export type Requirement =
 {
     hideDataWhenRequirementFailed: boolean;
+    applicableZones?: GameType.PlanetZone[];
     thingRequirement?: ThingRequirement;
     specificThingRequirement?: SpecificThingRequirement;
 };

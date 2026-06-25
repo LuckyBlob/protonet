@@ -68,7 +68,7 @@ function createPlayer(playerId: number): void
 function createZoneWithData(playerId: number, galaxy: number, system: number, slot: number, zone: GameType.PlanetZone): number
 {
     const address: GameType.PlanetAddress = { galaxy: galaxy, system: system, slot: slot, zone: zone };
-    const zoneId: number = ServerPlanetManagement.createZone(address, playerId, PLANET_SIZE, Date.now());
+    const zoneId: number = ServerPlanetManagement.createZone(address, playerId, PLANET_SIZE, 0, Date.now());
     ServerDynamicData.serverUpdateAllPlanetData(zoneId, playerId, structuredClone(CoreType.EmptyPlanetData));
     return zoneId;
 }

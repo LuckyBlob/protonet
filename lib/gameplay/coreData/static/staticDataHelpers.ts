@@ -182,6 +182,47 @@ export function formatPlanetAddress(galaxy: number, system: number, slot: number
     return `${baseLabel} (${planetZoneInfo.displayName})`;
 }
 
+export function getPlanetDisplayName(planetRow: DBType.PlanetRow): string
+{
+    const trimmedName: string = (planetRow.name ?? "").trim();
+    if (trimmedName.length > 0)
+    {
+        return trimmedName;
+    }
+
+    return formatPlanetAddress(planetRow.galaxy, planetRow.system, planetRow.slot, planetRow.zone as GameType.PlanetZone);
+}
+
+export function getDisplayNameForAddress(playerData: CoreType.PlayerData, address: GameType.PlanetAddress): string
+{
+    const ownPlanetData: CoreType.PlanetData | undefined = playerData.planetDatas.find((planetData: CoreType.PlanetData): boolean =>
+    {
+        return planetData.planetRow.galaxy === address.galaxy
+            && planetData.planetRow.system === address.system
+            && planetData.planetRow.slot === address.slot
+            && planetData.planetRow.zone === address.zone;
+    });
+
+    if (ownPlanetData !== undefined)
+    {
+        return getPlanetDisplayName(ownPlanetData.planetRow);
+    }
+
+    return formatPlanetAddress(address.galaxy, address.system, address.slot, address.zone);
+}
+
+export function kelvinToCelsius(kelvin: number): number
+{
+	return kelvin - StaticData.KELVIN_OFFSET;
+}
+
+export function rollTemperatureForSlot(slot: number): number
+{
+	const range: GameType.SlotTemperatureRange = StaticData.SLOT_TEMPERATURE_RANGES[slot - 1];
+	const span: number = range.max - range.min;
+	return range.min + Math.floor(Math.random() * (span + 1));
+}
+
 export function getPlayerName(publicPlayerRows: DBType.PublicPlayerRow[], playerId: number | null): string
 {
     if (playerId === null)

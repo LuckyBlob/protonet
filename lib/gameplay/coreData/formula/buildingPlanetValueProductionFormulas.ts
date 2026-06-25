@@ -3,7 +3,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
-export function computeBuildingPlanetValueProduction(currentUpgradeLevel: number, buildingType: GameType.BuildingType, playerData: CoreType.PlayerData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null
+export function computeBuildingPlanetValueProduction(currentUpgradeLevel: number, buildingType: GameType.BuildingType, playerData: CoreType.PlayerData, buildingEnergyFactor: number): Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null
 {
     const buildingStats: GameType.BuildingStats = StaticDataHelper.getBuildingStats(buildingType);
 
@@ -23,7 +23,7 @@ export function computeBuildingPlanetValueProduction(currentUpgradeLevel: number
 
         for (const [planetValueType, calculatedValueData] of partialPlanetValueMap)
         {
-            planetValueMap.set(planetValueType, calculatedValueData);
+            planetValueMap.set(planetValueType, { production: calculatedValueData.production * buildingEnergyFactor, consumption: calculatedValueData.consumption * buildingEnergyFactor });
         }
     }
 

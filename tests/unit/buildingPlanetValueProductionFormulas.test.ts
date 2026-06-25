@@ -7,7 +7,7 @@ import * as TestDataBuilders from "../helpers/testDataBuilders";
 
 function getEnergy(currentUpgradeLevel: number, buildingType: GameType.BuildingType, playerData: CoreType.PlayerData): CoreType.CalculatedValueData
 {
-    const result: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(currentUpgradeLevel, buildingType, playerData);
+    const result: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(currentUpgradeLevel, buildingType, playerData, 1);
     expect(result).not.toBeNull();
 
     const energy: CoreType.CalculatedValueData | undefined = result!.get(GameType.PlanetValueType.Energy);
@@ -64,7 +64,7 @@ describe("buildingPlanetValueProductionFormulas — FlooredNaturalExponential (s
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
 
-        const result: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(0, GameType.BuildingType.MetalStorage, playerData);
+        const result: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(0, GameType.BuildingType.MetalStorage, playerData, 1);
         expect(result).not.toBeNull();
 
         // 5000 * floor(2.5 * e^0) = 5000 * 2 = 10000.
@@ -77,7 +77,7 @@ describe("buildingPlanetValueProductionFormulas — FlooredNaturalExponential (s
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
 
-        const result: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(1, GameType.BuildingType.MetalStorage, playerData);
+        const result: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(1, GameType.BuildingType.MetalStorage, playerData, 1);
         // 5000 * floor(2.5 * e^(20/33)) = 5000 * floor(4.583) = 5000 * 4 = 20000.
         const metalStorage: CoreType.CalculatedValueData | undefined = result!.get(GameType.PlanetValueType.MetalStorage);
         expect(metalStorage!.production).toBe(20000);
@@ -111,13 +111,13 @@ describe("buildingPlanetValueProductionFormulas — null paths", () =>
     it("returns null for a building with no planet value stats", () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const result: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(5, GameType.BuildingType.RoboticFactory, playerData);
+        const result: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(5, GameType.BuildingType.RoboticFactory, playerData, 1);
         expect(result).toBeNull();
     });
 
     it("throws for an unknown building type", () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        expect(() => BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(5, 9999 as GameType.BuildingType, playerData)).toThrow();
+        expect(() => BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(5, 9999 as GameType.BuildingType, playerData, 1)).toThrow();
     });
 });
