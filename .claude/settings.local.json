@@ -183,7 +183,8 @@
       "Bash(sed -i 's/createZone\\(address, playerId, PLANET_SIZE, Date.now\\(\\)\\)/createZone\\(address, playerId, PLANET_SIZE, 0, Date.now\\(\\)\\)/; s/createZone\\({ galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Moon }, 1, PLANET_SIZE, 42\\)/createZone\\({ galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Moon }, 1, PLANET_SIZE, 0, 42\\)/' tests/integration/zoneLifecycle.test.ts)",
       "Bash(node .claude/hooks/block-chrome-open.js)",
       "Bash(echo \"jq exit: $?\")",
-      "Bash(node -e \"const s=require\\('./.claude/settings.local.json'\\); const m=s.hooks.PreToolUse.find\\(h=>h.matcher==='mcp__computer-use__open_application'\\); console.log\\('JSON valid. PreToolUse matchers:', s.hooks.PreToolUse.map\\(h=>h.matcher\\)\\); console.log\\('chrome hook command:', m && m.hooks[0].command\\);\")"
+      "Bash(node -e \"const s=require\\('./.claude/settings.local.json'\\); const m=s.hooks.PreToolUse.find\\(h=>h.matcher==='mcp__computer-use__open_application'\\); console.log\\('JSON valid. PreToolUse matchers:', s.hooks.PreToolUse.map\\(h=>h.matcher\\)\\); console.log\\('chrome hook command:', m && m.hooks[0].command\\);\")",
+      "PowerShell(git fetch --prune 2>&1)"
     ]
   },
   "hooks": {
