@@ -361,6 +361,14 @@ export function fleetExists(fleetId: number, db: Database.Database): boolean
     return row.count > 0;
 }
 
+// Pin a fleet's espionage/counterespionage RNG seed so the detection roll is deterministic in tests.
+// The seed is randomised at launch; overriding it after the send (before force-completing) fixes the
+// MathHelp.seededRandom outcome the resolver consumes.
+export function setFleetSeed(fleetId: number, seed: number, db: Database.Database): void
+{
+    db.prepare("UPDATE fleet_movement SET seed = ? WHERE id = ?").run(seed, fleetId);
+}
+
 //#region message helpers (DB side)
 
 // Seeds a message into the DB exactly the way the server would. Defaults: Admin type, unread,
@@ -587,7 +595,7 @@ export function fleetActionSelect(page: Page): Locator
     return page.locator("select").filter({ has: page.getByRole("option", { name: actionNamePattern }) });
 }
 
-export async function sendFleet(page: Page, shipName: string, shipQuantity: number, target: PlanetRow, actionLabel: "Station" | "Collect" | "Colonize"): Promise<void>
+export async function sendFleet(page: Page, shipName: string, shipQuantity: number, target: PlanetRow, actionLabel: "Station" | "Collect" | "Colonize" | "Espionage"): Promise<void>
 {
     await shipRowQuantityInput(page, shipName).fill(String(shipQuantity));
     await page.getByPlaceholder("P").fill(String(target.slot));
@@ -705,6 +713,59 @@ export function insertPlanetAtAddressForPlayer(playerId: number, address: Planet
         "INSERT INTO planet (slot, system, galaxy, size, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
     ).get(address.slot, address.system, address.galaxy, StaticData.STARTING_PLANET_SIZE, playerId, claimedAt, claimedAt) as { id: number };
     return result.id;
+}
+
+//#endregion
+
+// Insert a non-planet body (moon, debris field) at an exact address+zone owned by `ownerPlayerId`.
+// Ownership is what makes it appear in everyone's public planet list, so a spy/recycle target at a
+// known moon/debris zone can be seen and selected through the UI.
+export function insertBodyAtAddress(address: PlanetRow, ownerPlayerId: number, db: Database.Database): number
+{
+    const claimedAt: number = Date.now();
+    const result: { id: number } = db.prepare(
+        "INSERT INTO planet (slot, system, galaxy, zone, size, owner_player_id, claimed_at, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
+    ).get(address.slot, address.system, address.galaxy, address.zone, StaticData.STARTING_PLANET_SIZE, ownerPlayerId, claimedAt, claimedAt) as { id: number };
+    return result.id;
+}
+
+export function deleteBody(bodyId: number, db: Database.Database): void
+{
+    db.prepare("DELETE FROM planet WHERE id = ?").run(bodyId);
+}
+
+// Clears any body already sitting at an exact address+zone. Registration already creates a moon at each
+// starting planet's coordinates, so a test that wants to control that moon must drop it first; call this
+// before insertBodyAtAddress to keep the UNIQUE (slot, system, galaxy, zone) insert collision-free.
+export function deleteBodyAtAddress(address: PlanetRow, db: Database.Database): void
+{
+    db.prepare("DELETE FROM planet WHERE slot = ? AND system = ? AND galaxy = ? AND zone = ?")
+        .run(address.slot, address.system, address.galaxy, address.zone);
+}
+
+//#region galaxy-view (Planets) helpers
+
+// Pick a target zone in the fleet view by clicking its icon button (named by the zone's display name).
+// Editing the address inputs resets the zone to Planet, so always call this AFTER filling the address.
+export async function selectTargetZone(page: Page, zoneDisplayName: "Planet" | "Moon" | "Debris Field"): Promise<void>
+{
+    await page.getByRole("button", { name: zoneDisplayName, exact: true }).click();
+}
+
+// The galaxy view defaults to the selected planet's coordinates; drive the two dropdowns to point it
+// at an arbitrary system so a target row (and its espionage icon) becomes visible.
+export async function goToGalaxySystem(page: Page, galaxy: number, system: number): Promise<void>
+{
+    await page.locator("select").filter({ has: page.getByRole("option", { name: /^Galaxy / }) }).selectOption(String(galaxy));
+    await page.locator("select").filter({ has: page.getByRole("option", { name: /^System / }) }).selectOption(String(system));
+}
+
+// The per-slot espionage icon, scoped to the row of the planet owned by `ownerUsername`. Its src ends
+// in _color.png when a one-probe spy mission is launchable, _gray.png otherwise; clicking the colour
+// variant sends the probe.
+export function galaxySpyIcon(page: Page, ownerUsername: string): Locator
+{
+    return page.locator("div.border").filter({ hasText: ownerUsername }).locator("img[alt=\"Espionage\"]");
 }
 
 //#endregion

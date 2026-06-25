@@ -352,6 +352,32 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 			{ engineTech: GameType.ResearchType.HyperspaceDrive, researchLevel: 15, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 900]])},],
 		canTargetDebrisField: true,
 	}],
+	[GameType.ShipType.EspionageProbe, { displayName: "Espionage Probe",
+		requirements:[
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.Shipyard,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 3,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.EspionageTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 1,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EspionageTech),},},],
+		costMap: new Map<GameType.ResourceType, number>([
+			[GameType.ResourceType.Crystal, 1000],]),
+		maxHealth: 1000,
+		space: 5,
+		speed: [
+			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 100000000}],
+		baseFuelConsumption: [
+			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 1]])},],
+		canSpy: true,
+	}],
 ]);
 //#endregion
 
@@ -448,6 +474,38 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
 				valueGetter: RequirementValueGetters.isZoneAssociatedPlanetOwned(),},},],}],
+	[GameType.FleetActionType.Espionage, {
+		displayName: "Espionage",
+			requirements:[
+			{
+			hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
+			{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				specificThingType: GameType.ShipType.EspionageProbe,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 1,
+				valueGetter: RequirementValueGetters.shipQuantities(GameType.ShipType.EspionageProbe),},},
+			{
+			hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.allFleetShipsCanSpy(),},},
+			{
+			hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.isTargetPlanetZoneSpyable(),},},],}],
 ]);
 //#endregion
 
@@ -491,15 +549,18 @@ export const PLANET_ZONE_INFOS: ReadonlyMap<GameType.PlanetZone, GameType.Planet
     [GameType.PlanetZone.Planet, {
 		displayName: "Planet",
 		isSelectable: true,
-		canProduceResources: true,}],
+		canProduceResources: true,
+		canBeSpied: true,}],
 	[GameType.PlanetZone.Moon, {
 		displayName: "Moon",
 		isSelectable: true,
-		canProduceResources: false,}],
+		canProduceResources: false,
+		canBeSpied: true,}],
 	[GameType.PlanetZone.DebrisField, {
 		displayName: "Debris Field",
 		isSelectable: false,
-		canProduceResources: false,}],
+		canProduceResources: false,
+		canBeSpied: false,}],
 ]);
 
 export const STARTING_PLANET_DATA: CoreType.DynamicPlanetData =
@@ -672,6 +733,25 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 			playerValueProductionFormulasType: GameType.ResearchPlayerValueProductionFormulasType.ProportionalOneToOne,
 			basePlayerValueFactor: new Map<GameType.PlayerValueType, number>([
 				[GameType.PlayerValueType.FleetSlots, 1],]),}],}],
+
+
+	[GameType.ResearchType.EspionageTech, { displayName: "Espionage Technology",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 200],
+				[GameType.ResourceType.Crystal, 1000],
+				[GameType.ResourceType.Deuterium, 200],]),},
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 3,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
 ]);
 
 //#endregion

@@ -137,6 +137,19 @@ export function getTargetPlanetZone(): RequirementType.ThingValueGetter
     };
 }
 
+export function isTargetPlanetZoneSpyable(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.targetPlanetAddress === undefined)
+        {
+            throw new Error(`isTargetPlanetZoneSpyable requirement evaluated without a target planet address.`);
+        }
+
+        return StaticDataHelper.canPlanetZoneBeSpied(context.targetPlanetAddress.zone) === true ? 1 : 0;
+    };
+}
+
 export function doesTargetZoneExist(): RequirementType.ThingValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
@@ -167,6 +180,32 @@ export function allFleetShipsCanTargetDebrisField(): RequirementType.ThingValueG
             }
 
             if (StaticDataHelper.canShipTargetDebrisField(shipType) === false)
+            {
+                return 0;
+            }
+        }
+
+        return 1;
+    };
+}
+
+export function allFleetShipsCanSpy(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.shipQuantities === undefined)
+        {
+            throw new Error(`allFleetShipsCanSpy requirement evaluated without a potential fleet action.`);
+        }
+
+        for (const [shipType, shipQuantity] of context.shipQuantities)
+        {
+            if (shipQuantity <= 0)
+            {
+                continue;
+            }
+
+            if (StaticDataHelper.canShipSpy(shipType) === false)
             {
                 return 0;
             }

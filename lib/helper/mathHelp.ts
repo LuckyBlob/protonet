@@ -17,6 +17,17 @@ export function getEarliestByRequestedAt<T>(items: T[], getRequestedAt: (item: T
     return earliest;
 }
 
+// Deterministic [0, 1) pseudo-random from an integer seed (mulberry32). Used where a roll must agree
+// between the in-memory pass and the DB pass, and stay idempotent across re-resolution — the fleet
+// movement carries a persisted `seed` for exactly this. Never use Math.random in resolved game logic.
+export function seededRandom(seed: number): number
+{
+    let state: number = (seed >>> 0) + 0x6D2B79F5;
+    state = Math.imul(state ^ (state >>> 15), state | 1);
+    state ^= state + Math.imul(state ^ (state >>> 7), state | 61);
+    return ((state ^ (state >>> 14)) >>> 0) / 4294967296;
+}
+
 export function calculateTotalQuantityMap<K>(map: Map<K, number>): number
 {
     let total: number = 0;

@@ -31,6 +31,16 @@ export function canShipTargetDebrisField(shipType: GameType.ShipType): boolean
     return getShipStats(shipType).canTargetDebrisField === true;
 }
 
+export function canShipSpy(shipType: GameType.ShipType): boolean
+{
+    return getShipStats(shipType).canSpy === true;
+}
+
+export function canPlanetZoneBeSpied(zone: GameType.PlanetZone): boolean
+{
+    return getPlanetZoneInfo(zone).canBeSpied === true;
+}
+
 export function getResearchInfo(researchType: GameType.ResearchType): GameType.ResearchInfo
 {
     const researchInfo: GameType.ResearchInfo | undefined = StaticData.REASEARCH_INFO.get(researchType);

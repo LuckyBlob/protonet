@@ -10,6 +10,7 @@ export const MessageType =
 {
     Admin: 1,
     FleetAction: 2,
+    Espionage: 3,
 } as const;
 
 //#region message helpers

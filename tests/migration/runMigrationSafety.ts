@@ -39,6 +39,12 @@ const MIGRATIONS_DIRECTORY_PATH: string = join(PROJECT_ROOT, "db", "migrations")
 const ONE_DAY_MS: number = 24 * 60 * 60 * 1000;
 const FAR_FUTURE_MS: number = 10 * 365 * ONE_DAY_MS;
 
+// The moon-backfill assertion only means something while these migrations are still pending: they CREATE
+// moon rows for existing planets, and the synthetic players are injected (moonless) after the snapshot.
+// Once the source DB already has them applied, migrate is a no-op for them and the injected players can
+// never gain moons, so the check would fail forever. Guard it on both being pending.
+const MOON_BACKFILL_MIGRATION_PREFIXES: string[] = ["018_", "020_"];
+
 //#endregion
 
 //#region pure helpers
@@ -72,6 +78,12 @@ function getPendingMigrationFilenames(databaseConnection: Database.Database): st
     );
 
     return pendingMigrationFilenames;
+}
+
+function areAllMigrationsPending(pendingMigrationFilenames: string[], migrationPrefixes: string[]): boolean
+{
+    return migrationPrefixes.every((migrationPrefix: string): boolean =>
+        pendingMigrationFilenames.some((filename: string): boolean => filename.startsWith(migrationPrefix)));
 }
 
 function removeDatabaseFiles(databaseFilePath: string): void
@@ -572,9 +584,16 @@ async function main(): Promise<void>
     {
         valueFailures.push(snapshotFailure);
     }
-    for (const moonFailure of collectMoonBackfillValueFailures(verifyConnection, syntheticPlayerIds))
+    if (areAllMigrationsPending(pendingMigrationFilenames, MOON_BACKFILL_MIGRATION_PREFIXES) === true)
     {
-        valueFailures.push(moonFailure);
+        for (const moonFailure of collectMoonBackfillValueFailures(verifyConnection, syntheticPlayerIds))
+        {
+            valueFailures.push(moonFailure);
+        }
+    }
+    else
+    {
+        console.log("--- Skipping moon-backfill check: migrations 018/020 are already applied to the source DB, so they cannot backfill the injected synthetic players ---");
     }
     for (const fleetZoneFailure of collectFleetZoneValueFailures(verifyConnection, syntheticPlayerIds))
     {

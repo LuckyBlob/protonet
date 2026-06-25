@@ -143,6 +143,7 @@ export const ShipType =
     LargeTransport: 2,
     ColonyShip: 3,
     Recycler: 4,
+    EspionageProbe: 5,
 } as const;
 export type ShipType = typeof ShipType[keyof typeof ShipType];
 export type EngineTech =
@@ -165,6 +166,7 @@ export type ShipStats =
 	space: number;
 	baseFuelConsumption?: EngineTechData<Map<ResourceType, number>>[];
 	canTargetDebrisField?: boolean;
+	canSpy?: boolean;
 };
 //#endregion
 
@@ -175,6 +177,7 @@ export const FleetActionType =
     Collect: 2,
     Colonize: 3,
     Recycle: 4,
+    Espionage: 5,
 } as const;
 export type FleetActionType = typeof FleetActionType[keyof typeof FleetActionType];
 export type FleetActionInfo =
@@ -197,6 +200,7 @@ export type PlanetZoneInfo =
 	displayName: string;
 	isSelectable: boolean;
 	canProduceResources: boolean;
+	canBeSpied: boolean;
 }
 
 export type SlotSizeRange =
@@ -221,6 +225,7 @@ export const ResearchType =
     ImpulseDrive: 3,
     HyperspaceDrive: 4,
     ComputerTech: 5,
+    EspionageTech: 6,
 } as const;
 export type ResearchType = typeof ResearchType[keyof typeof ResearchType];
 export type ResearchInfo =

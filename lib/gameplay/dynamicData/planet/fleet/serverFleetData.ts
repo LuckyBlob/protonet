@@ -5,6 +5,7 @@ import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as CollectAction from "@/lib/gameplay/dynamicData/planet/fleet/collectAction";
 import * as StationAction from "@/lib/gameplay/dynamicData/planet/fleet/stationAction";
 import * as RecycleAction from "@/lib/gameplay/dynamicData/planet/fleet/recycleAction";
+import * as EspionageAction from "@/lib/gameplay/dynamicData/planet/fleet/espionageAction";
 
 export function serverResolveFleetAction(targetPlayerData: CoreType.PlayerData | null, originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): CoreType.PlayerData | null
 {
@@ -28,6 +29,11 @@ export function serverResolveFleetAction(targetPlayerData: CoreType.PlayerData |
         case GameType.FleetActionType.Recycle:
         {
             RecycleAction.resolveRecycleAction(originPlayerData, targetPlayerData, fleetMovement, serverData);
+            break;
+        }
+        case GameType.FleetActionType.Espionage:
+        {
+            EspionageAction.resolveEspionageAction(originPlayerData, targetPlayerData, fleetMovement, serverData);
             break;
         }
         default:
