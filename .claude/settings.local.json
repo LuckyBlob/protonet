@@ -184,7 +184,9 @@
       "Bash(node .claude/hooks/block-chrome-open.js)",
       "Bash(echo \"jq exit: $?\")",
       "Bash(node -e \"const s=require\\('./.claude/settings.local.json'\\); const m=s.hooks.PreToolUse.find\\(h=>h.matcher==='mcp__computer-use__open_application'\\); console.log\\('JSON valid. PreToolUse matchers:', s.hooks.PreToolUse.map\\(h=>h.matcher\\)\\); console.log\\('chrome hook command:', m && m.hooks[0].command\\);\")",
-      "PowerShell(git fetch --prune 2>&1)"
+      "PowerShell(git fetch --prune 2>&1)",
+      "Bash(ssh -o BatchMode=yes lawson@192.168.0.243 'ls -la /var/log/deploys/ 2>/dev/null; echo \"---var/www/logs---\"; ls -la /var/www/logs/ 2>/dev/null; echo \"---grep log in deploy.sh---\"; grep -niE \"log|tee|>>|>\" /var/www/deploy.sh | head -40')",
+      "Bash(ssh -o BatchMode=yes lawson@192.168.0.243 'tail -80 /var/log/deploys/2026-06-25_172200.log')"
     ]
   },
   "hooks": {

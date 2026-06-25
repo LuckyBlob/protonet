@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as StaticDataHelper from '@/lib/gameplay/coreData/static/staticDataHelpers';
 import * as ThingType from '@/lib/gameplay/coreData/thing/thingTypes';
+import * as RequirementType from '@/lib/gameplay/coreData/requirement/requirementTypes';
 
 describe('getDistance', () =>
 {
@@ -121,6 +122,12 @@ describe('BUILDING_STATS moon-buildable set', () =>
             GameType.BuildingType.MetalStorage,
             GameType.BuildingType.CrystalContainement,
             GameType.BuildingType.DeuteriumTank,
+            GameType.BuildingType.LunarBase,
+        ];
+
+        const moonOnly: GameType.BuildingType[] =
+        [
+            GameType.BuildingType.LunarBase,
         ];
 
         for (const buildingType of StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building))
@@ -128,8 +135,43 @@ describe('BUILDING_STATS moon-buildable set', () =>
             const buildableZones: GameType.PlanetZone[] = StaticDataHelper.getBuildingStats(buildingType).buildableZones;
             const expectedOnMoon: boolean = moonBuildable.includes(buildingType);
             expect(StaticDataHelper.isBuildableOnZone(buildableZones, GameType.PlanetZone.Moon)).toBe(expectedOnMoon);
-            // Every building must still be buildable on a Planet.
-            expect(StaticDataHelper.isBuildableOnZone(buildableZones, GameType.PlanetZone.Planet)).toBe(true);
+
+            const expectedOnPlanet: boolean = moonOnly.includes(buildingType) === false;
+            expect(StaticDataHelper.isBuildableOnZone(buildableZones, GameType.PlanetZone.Planet)).toBe(expectedOnPlanet);
+        }
+    });
+});
+
+describe('Moon-buildable buildings require a Lunar Base', () =>
+{
+    it('every Moon-buildable building except the Lunar Base itself requires Lunar Base level >= 1', () =>
+    {
+        for (const buildingType of StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building))
+        {
+            const buildingStats: GameType.BuildingStats = StaticDataHelper.getBuildingStats(buildingType);
+            const isMoonBuildable: boolean = StaticDataHelper.isBuildableOnZone(buildingStats.buildableZones, GameType.PlanetZone.Moon);
+
+            if (isMoonBuildable === false)
+            {
+                continue;
+            }
+
+            // The Lunar Base is what enables the Moon, so it cannot depend on itself.
+            if (buildingType === GameType.BuildingType.LunarBase)
+            {
+                continue;
+            }
+
+            const requirements: RequirementType.Requirement[] = buildingStats.requirements ?? [];
+            const hasLunarBaseRequirement: boolean = requirements.some((requirement: RequirementType.Requirement): boolean =>
+                requirement.specificThingRequirement !== undefined
+                && requirement.specificThingRequirement.thingType === ThingType.Thing.Building
+                && requirement.specificThingRequirement.specificThingType === GameType.BuildingType.LunarBase
+                && requirement.specificThingRequirement.operator === RequirementType.RequirementOperator.GreaterOrEqual
+                && typeof requirement.specificThingRequirement.value === "number"
+                && requirement.specificThingRequirement.value >= 1);
+
+            expect(hasLunarBaseRequirement).toBe(true);
         }
     });
 });
