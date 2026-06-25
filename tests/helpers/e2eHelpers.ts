@@ -257,6 +257,11 @@ export function setTemperatureOnAllPlanets(username: string, temperature: number
     }
 }
 
+export function setPlanetSize(planetId: number, size: number, db: Database.Database): void
+{
+    db.prepare("UPDATE planet SET size = ? WHERE id = ?").run(size, planetId);
+}
+
 export function setShipQuantity(planetId: number, playerId: number, shipType: number, quantity: number, db: Database.Database): void
 {
     db.prepare(
