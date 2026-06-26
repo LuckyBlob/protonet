@@ -291,6 +291,11 @@ export function serverUpdatePlanetDataContext(planetId: number, playerId: number
                 updateBuildingUpgrades(planetId, playerId, dynamicPlanetData);
                 break;
             }
+            case CoreType.DataContext.BuildingDeconstruction:
+            {
+                updateBuildingDeconstructions(planetId, playerId, dynamicPlanetData);
+                break;
+            }
             default:
                 throw new Error(`UNREACHABLE: Dynamic data update function undefined for data context ${dataContext}.`);
         }
@@ -308,6 +313,7 @@ export function getDynamicPlanetData(planetId: number): CoreType.DynamicPlanetDa
         shipConstructions: getDynamicPlanetShipConstructionData(planetId),
         futureFleetArrivals: getDynamicPlanetFutureFleetArrivalData(planetId),
         buildingUpgrades: getDynamicPlanetBuildingUpgradeData(planetId),
+        buildingDeconstructions: getDynamicPlanetBuildingDeconstructionData(planetId),
     };
 }
 
@@ -418,6 +424,35 @@ export function getDynamicPlanetBuildingUpgradeData(planetId: number): CoreType.
         }
 
         return buildingUpgrades;
+    })();
+}
+
+export function getDynamicPlanetBuildingDeconstructionData(planetId: number): CoreType.BuildingDeconstruction[]
+{
+    return DB.databaseConnection.transaction((): CoreType.BuildingDeconstruction[] =>
+    {
+        const buildingDeconstructions: CoreType.BuildingDeconstruction[] = [];
+
+        const buildingDeconstructionRows: DBType.BuildingDeconstructionRow[] = DB.databaseConnection.prepare(
+            "SELECT * FROM building_deconstruction WHERE planet_id = ?"
+        ).all(planetId) as DBType.BuildingDeconstructionRow[];
+
+        for (const buildingDeconstructionRow of buildingDeconstructionRows)
+        {
+            const buildingDeconstructionBuildingRows: DBType.BuildingDeconstructionBuildingRow[] = DB.databaseConnection.prepare(
+                "SELECT * FROM building_deconstruction_building WHERE building_deconstruction_id = ?"
+            ).all(buildingDeconstructionRow.id) as DBType.BuildingDeconstructionBuildingRow[];
+
+            const newBuildingDeconstruction: CoreType.BuildingDeconstruction =
+            {
+                buildingDeconstructionRow: buildingDeconstructionRow,
+                buildingDeconstructionBuildingRows: buildingDeconstructionBuildingRows,
+            };
+
+            buildingDeconstructions.push(newBuildingDeconstruction);
+        }
+
+        return buildingDeconstructions;
     })();
 }
 
@@ -661,6 +696,78 @@ function updateBuildingUpgrades(planetId: number, playerId: number, dynamicPlane
                         DB.databaseConnection.prepare(
                             "UPDATE building_upgrade SET current_building_upgrade_building_row_id = ? WHERE id = ?"
                         ).run(firstBuildingUpgradeBuildingRowId, buildingUpgradeRow.id);
+                    }
+                }
+            }
+        }
+    });
+    transaction();
+}
+
+function updateBuildingDeconstructions(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        DB.databaseConnection.prepare("DELETE FROM building_deconstruction WHERE planet_id = ?").run(planetId);
+        // On delete cascade will delete building_deconstruction_building rows
+        const insertDeconstructionStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO building_deconstruction (planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_building_deconstruction_building_row_id) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
+        );
+        const insertBuildingStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO building_deconstruction_building (building_deconstruction_id, building_type) VALUES (?, ?) RETURNING id"
+        );
+
+        if (dynamicPlanetData.buildingDeconstructions.length === 0)
+        {
+            return;
+        }
+
+        for (const buildingDeconstruction of dynamicPlanetData.buildingDeconstructions)
+        {
+            const buildingDeconstructionRow: DBType.BuildingDeconstructionRow = buildingDeconstruction.buildingDeconstructionRow;
+            const deconstructionIdResult: { id: number } = insertDeconstructionStatement.get(
+                planetId,
+                playerId,
+                buildingDeconstructionRow.requested_at,
+                buildingDeconstructionRow.duration_at_request_time,
+                buildingDeconstructionRow.duration_at_start_time,
+                buildingDeconstructionRow.started_at,
+                buildingDeconstructionRow.current_building_deconstruction_building_row_id,
+            ) as { id: number };
+
+            buildingDeconstructionRow.id = deconstructionIdResult.id;
+
+            let firstBuildingDeconstructionBuildingRowId: number | null = null;
+            for (const buildingDeconstructionBuildingRow of buildingDeconstruction.buildingDeconstructionBuildingRows)
+            {
+                const buildingRowIdResult: { id: number } = insertBuildingStatement.get(
+                    buildingDeconstructionRow.id,
+                    buildingDeconstructionBuildingRow.building_type,
+                ) as { id: number };
+
+                const oldBuildingRowId: number = buildingDeconstructionBuildingRow.id;
+                buildingDeconstructionBuildingRow.id = buildingRowIdResult.id;
+
+                if (oldBuildingRowId !== -1)
+                {
+                    // if we were pointing to the old building row id, update to the new one
+                    if (buildingDeconstructionRow.current_building_deconstruction_building_row_id === oldBuildingRowId)
+                    {
+                        buildingDeconstructionRow.current_building_deconstruction_building_row_id = buildingDeconstructionBuildingRow.id;
+                        DB.databaseConnection.prepare(
+                            "UPDATE building_deconstruction SET current_building_deconstruction_building_row_id = ? WHERE id = ?"
+                        ).run(buildingDeconstructionBuildingRow.id, buildingDeconstructionRow.id);
+                    }
+                }
+                else
+                {
+                    if (firstBuildingDeconstructionBuildingRowId === null)
+                    {
+                        firstBuildingDeconstructionBuildingRowId = buildingDeconstructionBuildingRow.id;
+                        buildingDeconstructionRow.current_building_deconstruction_building_row_id = firstBuildingDeconstructionBuildingRowId;
+                        DB.databaseConnection.prepare(
+                            "UPDATE building_deconstruction SET current_building_deconstruction_building_row_id = ? WHERE id = ?"
+                        ).run(firstBuildingDeconstructionBuildingRowId, buildingDeconstructionRow.id);
                     }
                 }
             }

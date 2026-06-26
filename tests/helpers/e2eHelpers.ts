@@ -323,6 +323,15 @@ export function getUpgradeId(planetId: number, db: Database.Database): number
     return row.id;
 }
 
+export function getDeconstructionId(planetId: number, db: Database.Database): number
+{
+    const row: { id: number } = db.prepare(
+        "SELECT id FROM building_deconstruction WHERE planet_id = ? ORDER BY id LIMIT 1"
+    ).get(planetId) as { id: number };
+
+    return row.id;
+}
+
 // Research is player-level, so the in-progress row is keyed by player, not planet.
 export function getCurrentlyResearchingId(playerId: number, db: Database.Database): number
 {
@@ -445,7 +454,7 @@ export function getMessageCount(playerId: number, db: Database.Database): number
 // Rewind a started_at so `legs` completions (each one single-leg duration long) are already in
 // the past — the server resolves them all on the next reload. legs=1 finishes one ship/upgrade
 // or a one-way trip; legs=2 finishes a round trip or the 2nd ship of a batch.
-export function forceComplete(table: "ship_construction" | "building_upgrade" | "fleet_movement" | "currently_researching", id: number, db: Database.Database, legs: number = 1): void
+export function forceComplete(table: "ship_construction" | "building_upgrade" | "building_deconstruction" | "fleet_movement" | "currently_researching", id: number, db: Database.Database, legs: number = 1): void
 {
     const row: TimedRow | undefined = db.prepare(
         `SELECT id, duration_at_start_time FROM ${table} WHERE id = ?`
@@ -462,7 +471,7 @@ export function forceComplete(table: "ship_construction" | "building_upgrade" | 
 
 // Schedule single-leg completion `msFromNow` in the future so the server still reports it as
 // in-progress on reload, and the client animation tick resolves it locally afterwards.
-export function scheduleCompletionInMs(table: "ship_construction" | "building_upgrade" | "fleet_movement" | "currently_researching", id: number, msFromNow: number, db: Database.Database): void
+export function scheduleCompletionInMs(table: "ship_construction" | "building_upgrade" | "building_deconstruction" | "fleet_movement" | "currently_researching", id: number, msFromNow: number, db: Database.Database): void
 {
     const row: TimedRow | undefined = db.prepare(
         `SELECT id, duration_at_start_time FROM ${table} WHERE id = ?`

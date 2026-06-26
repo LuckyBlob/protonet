@@ -9,10 +9,10 @@ import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as HelperElements from "@/components/helperElements";
+import * as HelperElements from "@/components/helpers/helperElements";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
-import * as HelperElement from "@/components/helperElements";
+import * as HelperElement from "@/components/helpers/helperElements";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as MathHelp from "@/lib/helper/mathHelp";
@@ -40,6 +40,7 @@ type FleetViewData =
     requestedShipQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ShipType>;
     requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ResourceType>;
     fleetActionState: [GameType.FleetActionType, (value: GameType.FleetActionType) => void];
+    speedPercentageState: [number, (value: number) => void];
     sendErrorState: [string | null, (value: string | null) => void];
 }
 
@@ -56,7 +57,7 @@ function renderZoneMarker(zone: GameType.PlanetZone): ReactElement | null
     return <img src={`/icons/zone/${zone}_color.png`} alt={zoneInfo.displayName} title={zoneInfo.displayName} className="w-4 h-4 object-contain inline-block align-text-bottom" />;
 }
 
-function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement, playerData: CoreType.PlayerData): ReactElement
+function renderFleetMovementRow(props: FleetViewProps, fleetMovement: CoreType.FleetMovement, playerData: CoreType.PlayerData): ReactElement
 {
     const fleetMovementRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
     const originZone: GameType.PlanetZone = fleetMovementRow.planet_origin_zone as GameType.PlanetZone;
@@ -73,6 +74,17 @@ function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement, playerDat
     }
 
     const isUnknownResult: boolean = remainingMs < 0 && fleetMovement.resolutionState === CoreType.FleetMovementResolution.ResolveResultUnknown;
+
+    const isOwnOutboundInFlight: boolean = (isReturnTrip === false) && (isUnknownResult === false) && (remainingMs > 0) && (fleetMovementRow.player_origin_id === playerData.playerRow.id);
+
+    const handleRecall = (): void =>
+    {
+        ClientRequestFunctions.clientTryRecallFleetRequest(props.clientDataStateResult.psController, fleetMovementRow.id);
+    };
+
+    const recallElement: ReactElement | null = isOwnOutboundInFlight === true
+        ? <button type="button" onClick={handleRecall} className="text-blue-400 hover:text-blue-300 underline text-xs">Recall</button>
+        : null;
 
     const element: ReactElement =
     (
@@ -93,6 +105,7 @@ function renderFleetMovementRow(fleetMovement: CoreType.FleetMovement, playerDat
                 <div className="text-gray-400">
                     {TimeFormat.formatRemainingTimeMs(remainingMs)}
                 </div>
+                {recallElement}
             </>
             )}
         </div>
@@ -133,7 +146,7 @@ function renderFleetMovementsSection(props: FleetViewProps): ReactElement
 
     const movementElements: ReactElement[] = allFleetMovements.map((fleetMovement: CoreType.FleetMovement): ReactElement =>
     {
-        return renderFleetMovementRow(fleetMovement, playerData);
+        return renderFleetMovementRow(props, fleetMovement, playerData);
     });
 
     const element: ReactElement =
@@ -205,7 +218,46 @@ function renderFleetActionInput(props: FleetViewProps, data: FleetViewData): Rea
             {renderPlanetTargetInput(props, data)}
             {renderFleetMaxResource(props, data)}
             {renderFleetResourceRows(props, data)}
+            {renderFleetSpeedChoice(props, data)}
             {renderFleetActionChoice(props, data)}
+        </div>
+    );
+
+    return element;
+}
+
+function renderFleetSpeedChoice(props: FleetViewProps, data: FleetViewData): ReactElement
+{
+    const speedPercentage: number = data.speedPercentageState[0];
+    const setSpeedPercentage: (value: number) => void = data.speedPercentageState[1];
+
+    const speedOptions: number[] = [];
+    for (let percentage: number = 100; percentage >= 10; percentage = percentage - 10)
+    {
+        speedOptions.push(percentage);
+    }
+
+    const handleChange = (e: ChangeEvent<HTMLSelectElement>): void =>
+    {
+        setSpeedPercentage(Number.parseInt(e.target.value, 10));
+    };
+
+    const optionElements: ReactElement[] = speedOptions.map((percentage: number): ReactElement =>
+    {
+        return <option key={percentage} value={percentage}>{percentage}%</option>;
+    });
+
+    const element: ReactElement =
+    (
+        <div className="flex flex-row items-center gap-2 text-sm font-normal text-white">
+            <span>Speed:</span>
+            <select
+                value={speedPercentage}
+                onChange={handleChange}
+                className="border border-gray-400 px-2 py-1 rounded bg-white text-black"
+            >
+                {optionElements}
+            </select>
         </div>
     );
 
@@ -416,14 +468,14 @@ function renderFleetMaxResource(props: FleetViewProps, data: FleetViewData): Rea
     const originPlayerData: CoreType.PlayerData = data.playerData;
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
     const targetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
-    const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originPlayerData, originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
+    const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originPlayerData, originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0], data.speedPercentageState[0]);
     const totalShipsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedShipQuantitiesState.requestedQuantities);
 
     let travelTimeElement: ReactElement | null = null;
 
     if (totalShipsRequested > 0)
     {
-        const durationSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(originPlayerData, originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
+        const durationSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(originPlayerData, originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0], data.speedPercentageState[0]);
         const formattedDuration: string = TimeFormat.formatRemainingTimeMs(durationSeconds * 1000);
         travelTimeElement =
         (
@@ -476,7 +528,7 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: GameType.Re
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
     const targetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
 
-    const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0]);
+    const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0], data.speedPercentageState[0]);
     const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
     const totalFleetSpace: number = FleetData.calculateTotalFleetSpace(data.requestedShipQuantitiesState.requestedQuantities);
     const specificFuelResource: number = fuelRequirements.get(resourceType) ?? 0;
@@ -523,6 +575,7 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
 {
     const selectedAction: GameType.FleetActionType = data.fleetActionState[0];
     const setSelectedAction: (value: GameType.FleetActionType) => void = data.fleetActionState[1];
+    const speedPercentage: number = data.speedPercentageState[0];
 
     const totalShipsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedShipQuantitiesState.requestedQuantities);
 
@@ -562,7 +615,8 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
             targetPlanetAddress,
             selectedAction,
             data.requestedShipQuantitiesState.requestedQuantities,
-            data.requestedResourceQuantitiesState.requestedQuantities);
+            data.requestedResourceQuantitiesState.requestedQuantities,
+            speedPercentage);
 
         setSendError(errorMessage);
     };
@@ -660,6 +714,7 @@ export function FleetView(props: FleetViewProps): ReactElement
     const requestedShipQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ShipType> = HelperElement.useRequestedQuantities<GameType.ShipType>();
     const requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ResourceType> = HelperElement.useRequestedQuantities<GameType.ResourceType>();
     const fleetActionState: [GameType.FleetActionType, (value: GameType.FleetActionType) => void] = useState<GameType.FleetActionType>(GameType.FleetActionType.Station);
+    const speedPercentageState: [number, (value: number) => void] = useState<number>(100);
     const sendErrorState: [string | null, (value: string | null) => void] = useState<string | null>(null);
 
     useEffect((): void =>
@@ -671,6 +726,7 @@ export function FleetView(props: FleetViewProps): ReactElement
         slotIdState[1](1);
         zoneIdState[1](GameType.PlanetZone.Planet);
         fleetActionState[1](GameType.FleetActionType.Station);
+        speedPercentageState[1](100);
         sendErrorState[1](null);
     }, [selectedPlanetId]);
 
@@ -695,6 +751,7 @@ export function FleetView(props: FleetViewProps): ReactElement
             requestedShipQuantitiesState: cappedRequestedShipQuantitiesState,
             requestedResourceQuantitiesState: requestedResourceQuantitiesState,
             fleetActionState: fleetActionState,
+            speedPercentageState: speedPercentageState,
             sendErrorState: sendErrorState,
         }
         return renderFleetViewLayout(props, fleetViewData);

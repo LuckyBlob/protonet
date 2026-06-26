@@ -58,11 +58,12 @@ export function calculateShipQuantitiesLowestMovementSpeed(playerData: CoreType.
 	return lowestSpeed;
 }
 
-export function calculateTotalFleetFuel(playerData: CoreType.PlayerData, from: GameType.PlanetAddress, to: GameType.PlanetAddress, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData): Map<GameType.ResourceType, number>
+export const FULL_SPEED_PERCENTAGE: number = 100;
+
+export function calculateTotalFleetFuel(playerData: CoreType.PlayerData, from: GameType.PlanetAddress, to: GameType.PlanetAddress, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData, speedPercentage: number = FULL_SPEED_PERCENTAGE): Map<GameType.ResourceType, number>
 {
 	const distance: number = StaticDataHelper.getDistance(from, to);
-	const speed: number = 10;
-	return ShipFuelConsumption.computeFuelConsumption(playerData, shipQuantities, distance, speed, serverData);
+	return ShipFuelConsumption.computeFuelConsumption(playerData, shipQuantities, distance, speedPercentage, serverData);
 }
 
 export function calculateTotalFleetSpace(shipQuantities: Map<GameType.ShipType, number>): number
@@ -271,9 +272,9 @@ export function removeFleetMovement(planetData: CoreType.PlanetData, fleetId: nu
 	return planetData;
 }
 
-export function computeFleetFuelAndSpace(playerData: CoreType.PlayerData, originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData): { totalFuel: number, availableSpace: number }
+export function computeFleetFuelAndSpace(playerData: CoreType.PlayerData, originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData, speedPercentage: number = FULL_SPEED_PERCENTAGE): { totalFuel: number, availableSpace: number }
 {
-	const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, shipQuantities, serverData);
+	const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, shipQuantities, serverData, speedPercentage);
 	const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
 	const totalSpace: number = FleetData.calculateTotalFleetSpace(shipQuantities);
 	const availableSpace: number = Math.max(totalSpace - totalFuel, 0);

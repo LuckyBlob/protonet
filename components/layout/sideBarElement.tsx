@@ -46,7 +46,15 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	const navItems: NavItem[] =
 	[
 	    { view: "game", label: "Game", subItems: [] },
-	    { view: "buildings", label: "Buildings", subItems: [] },
+	    {
+	        view: "buildings",
+	        label: "Buildings",
+	        subItems:
+	        [
+	            { view: "buildings", label: "Upgrade", subItems: [] },
+	            { view: "buildingsDeconstruct", label: "Deconstruct", subItems: [] },
+	        ],
+	    },
 	    { view: "research", label: "Research", subItems: [] },
 	    { view: "shipyard", label: "Shipyard", subItems: [] },
 	    { view: "fleets", label: "Fleets", subItems: [] },

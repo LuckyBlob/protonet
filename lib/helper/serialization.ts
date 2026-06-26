@@ -129,6 +129,7 @@ type SerializedDynamicPlanetData =
 	shipConstructions: CoreType.ShipConstruction[];
 	futureFleetArrivals: CoreType.FleetMovement[];
 	buildingUpgrades: CoreType.BuildingUpgrade[];
+	buildingDeconstructions: CoreType.BuildingDeconstruction[];
 };
 
 type SerializedPlanetData =
@@ -159,6 +160,7 @@ function serializeDynamicPlanetData(dynamicPlanetData: CoreType.DynamicPlanetDat
 		shipConstructions: [...dynamicPlanetData.shipConstructions],
 		futureFleetArrivals: [...dynamicPlanetData.futureFleetArrivals],
 		buildingUpgrades: [...dynamicPlanetData.buildingUpgrades],
+		buildingDeconstructions: [...dynamicPlanetData.buildingDeconstructions],
 	};
 
 	return serialized;
@@ -175,6 +177,7 @@ function deserializeDynamicPlanetData(serialized: SerializedDynamicPlanetData): 
 		shipConstructions: serialized.shipConstructions,
 		futureFleetArrivals: serialized.futureFleetArrivals,
 		buildingUpgrades: serialized.buildingUpgrades,
+		buildingDeconstructions: serialized.buildingDeconstructions,
 	};
 
 	return dynamicPlanetData;

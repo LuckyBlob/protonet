@@ -15,6 +15,11 @@ export function getBuildingStats(buildingType: GameType.BuildingType): GameType.
     return buildingStats;
 }
 
+export function canDeconstructBuilding(buildingType: GameType.BuildingType): boolean
+{
+    return getBuildingStats(buildingType).canDeconstruct !== false;
+}
+
 export function getShipStats(shipType: GameType.ShipType): GameType.ShipStats
 {
     const shipStats: GameType.ShipStats | undefined = StaticData.SHIP_STATS.get(shipType);

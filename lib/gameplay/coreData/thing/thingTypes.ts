@@ -16,6 +16,7 @@ export const Thing =
     Research: 8,
     ResearchingResearch: 9,
     PlayerValue: 10,
+    BuildingDeconstruction: 11,
 } as const;
 export type Thing = typeof Thing[keyof typeof Thing];
 

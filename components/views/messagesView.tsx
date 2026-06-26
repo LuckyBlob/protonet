@@ -7,7 +7,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
-import * as HelperElements from "@/components/helperElements";
+import * as HelperElements from "@/components/helpers/helperElements";
 
 type MessagesViewProps =
 {

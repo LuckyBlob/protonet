@@ -26,6 +26,15 @@ export function isAnyBuildingUpgradeInProgress(): RequirementType.ThingValueGett
     };
 }
 
+export function isAnyBuildingDeconstructionInProgress(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
+        return planetData.dynamicPlanetData.buildingDeconstructions.length > 0 ? 1 : 0;
+    };
+}
+
 export function isAnyResearchInProgress(): RequirementType.ThingValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>

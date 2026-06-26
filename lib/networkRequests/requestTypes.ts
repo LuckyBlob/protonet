@@ -66,6 +66,16 @@ export type BuildingUpgrade_ServerResponse = BaseServerResponse &
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
 
+export type BuildingDeconstruction_ClientRequest = BaseClientRequest &
+{
+	buildingType: GameType.BuildingType;
+	planetId: number;
+};
+export type BuildingDeconstruction_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
 export type Research_ClientRequest = BaseClientRequest &
 {
 	researchType: GameType.ResearchType;
@@ -107,8 +117,18 @@ export type SendFleet_ClientRequest = BaseClientRequest &
 	fleetAction: GameType.FleetActionType;
 	serializedShipQuantities: Serialization.SerializedNumberNumberMap;
 	serializedResourceQuantities: Serialization.SerializedNumberNumberMap
+	speedPercentage: number;
 };
 export type SendFleet_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
+export type RecallFleet_ClientRequest = BaseClientRequest &
+{
+	fleetId: number;
+};
+export type RecallFleet_ServerResponse = BaseServerResponse &
 {
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };

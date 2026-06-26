@@ -25,6 +25,7 @@ import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleetMov
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as ShipConstructionData from "@/lib/gameplay/dynamicData/planet/shipConstructionData";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
+import * as BuildingDeconstructionData from "@/lib/gameplay/dynamicData/planet/buildingDeconstructionData";
 import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 import * as ResearchCost from "@/lib/gameplay/coreData/formula/researchCostFormulas";
@@ -935,6 +936,107 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
     return playerActionResult;
 }
 
+export function tryDeconstructBuildingLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.DeconstructBuilding>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    const relevantPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.planetId);
+    if (relevantPlanetData === null)
+    {
+        return { success: false, failureReason: "Wrong planet to deconstruct building.", playerStateResult: playerData };
+    }
+
+    if (StaticDataHelper.canDeconstructBuilding(requestData.buildingType) === false)
+    {
+        return { success: false, failureReason: "This building cannot be deconstructed.", playerStateResult: playerData };
+    }
+
+    if (Requirement.getFailedBuildingDeconstructionRequirements(playerData, requestData.buildingType, relevantPlanetData.planetRow.id).length > 0)
+    {
+        return { success: false, failureReason: "Deconstruction doesnt meet requirements.", playerStateResult: playerData };
+    }
+
+    const currentBuildingLevel: number = BuildingData.getBuildingLevel(relevantPlanetData, requestData.buildingType);
+    if (currentBuildingLevel < 1)
+    {
+        return { success: false, failureReason: "Nothing to deconstruct.", playerStateResult: playerData };
+    }
+
+    const deconstructionDurationSeconds: number | null = BuildingDeconstructionData.getBuildingDeconstructionDurationSeconds(playerData, requestData.buildingType, relevantPlanetData, serverData);
+    if (deconstructionDurationSeconds === null)
+    {
+        return { success: false, failureReason: "Wrong building type to deconstruct.", playerStateResult: playerData };
+    }
+
+    const deconstructionCost: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingDeconstructionCost(currentBuildingLevel, requestData.buildingType);
+    if (deconstructionCost === null)
+    {
+        return { success: false, failureReason: "Wrong building type to deconstruct.", playerStateResult: playerData };
+    }
+
+    for (const [resourceType, resourceCost] of deconstructionCost)
+    {
+        const currentResourceQuantity: number = ResourceData.getResourceQuantity(relevantPlanetData, resourceType);
+        if (currentResourceQuantity < resourceCost)
+        {
+            return { success: false, failureReason: "Not enough resources.", playerStateResult: playerData };
+        }
+    }
+
+    for (const [resourceType, resourceCost] of deconstructionCost)
+    {
+        try
+        {
+            ResourceData.subtractPlanetResource(relevantPlanetData, resourceType, resourceCost);
+        }
+        catch (error: unknown)
+        {
+            return { success: false, failureReason: `Failed to substract planet resources for building deconstruction.`, playerStateResult: playerData };
+        }
+    }
+
+    const newBuildingDeconstructionBuildingRow: DBType.BuildingDeconstructionBuildingRow =
+    {
+        id: -1,
+        building_deconstruction_id: -1,
+        building_type: requestData.buildingType,
+    };
+    const newBuildingDeconstructionRow: DBType.BuildingDeconstructionRow =
+    {
+        id: -1,
+        planet_id: relevantPlanetData.planetRow.id,
+        player_id: playerId,
+        requested_at: now,
+        duration_at_request_time: deconstructionDurationSeconds * 1000,
+        duration_at_start_time: deconstructionDurationSeconds * 1000,
+        started_at: now,
+        current_building_deconstruction_building_row_id: -1,
+    };
+    const newBuildingDeconstruction: CoreType.BuildingDeconstruction =
+    {
+        buildingDeconstructionRow: newBuildingDeconstructionRow,
+        buildingDeconstructionBuildingRows: [newBuildingDeconstructionBuildingRow],
+    };
+    relevantPlanetData.dynamicPlanetData.buildingDeconstructions.push(newBuildingDeconstruction);
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.ResourceQuantity, relevantPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.BuildingDeconstruction, relevantPlanetData.dynamicPlanetData);
+
+        const playerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        }
+        return playerActionResult;
+    })();
+
+    return playerActionResult;
+}
+
 export function tryUpgradeResearchLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeResearch>): PlayerActionResult
 {
     const now: number = Date.now();
@@ -1360,10 +1462,12 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         return { success: false, failureReason: `Fleet action must have a different target than origin planet.`, playerStateResult: playerData };
     }
 
+    const speedPercentage: number = FleetMovementDuration.clampSpeedPercentage(requestData.speedPercentage);
+
     let fuelRequirements: Map<GameType.ResourceType, number>;
     try
     {
-        fuelRequirements = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, shipQuantities, serverData);
+        fuelRequirements = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, shipQuantities, serverData, speedPercentage);
     }
     catch (error: unknown)
     {
@@ -1374,7 +1478,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     let fleetMovementDurationSeconds: number = 0;
     try
     {
-         fleetMovementDurationSeconds = FleetMovementDuration.computeFleetMovementDurationSecondsWithAddress(playerData, originAddress, targetAddress, shipQuantities, serverData);
+         fleetMovementDurationSeconds = FleetMovementDuration.computeFleetMovementDurationSecondsWithAddress(playerData, originAddress, targetAddress, shipQuantities, serverData, speedPercentage);
     }
     catch (error: unknown)
     {
@@ -1493,9 +1597,82 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
             targetMessageRow: null,
         }
         originPlanetData.dynamicPlanetData.futureFleetArrivals.push(newFleetMovement);
-    
+
         ServerDynamicData.serverUpdatePlanetDataContext(originPlanetData.planetRow.id, playerId, CoreType.DataContext.ResourceQuantity, originPlanetData.dynamicPlanetData);
         ServerDynamicData.serverUpdatePlanetDataContext(originPlanetData.planetRow.id, playerId, CoreType.DataContext.ShipQuantity, originPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originPlanetData.planetRow.id, playerId, CoreType.DataContext.FutureFleetArrivals, originPlanetData.dynamicPlanetData);
+
+        const playerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        }
+        return playerActionResult;
+    })();
+
+    return playerActionResult;
+}
+
+export function tryRecallFleetLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.RecallFleet>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    let foundFleetMovement: CoreType.FleetMovement | null = null;
+    let foundOriginPlanetData: CoreType.PlanetData | null = null;
+    for (const planetData of playerData.planetDatas)
+    {
+        for (const fleetMovement of planetData.dynamicPlanetData.futureFleetArrivals)
+        {
+            if (fleetMovement.fleetMovementRow.id === requestData.fleetId && fleetMovement.fleetMovementRow.planet_origin_id === planetData.planetRow.id)
+            {
+                foundFleetMovement = fleetMovement;
+                foundOriginPlanetData = planetData;
+                break;
+            }
+        }
+
+        if (foundFleetMovement !== null)
+        {
+            break;
+        }
+    }
+
+    if (foundFleetMovement === null || foundOriginPlanetData === null)
+    {
+        return { success: false, failureReason: "Fleet to recall not found.", playerStateResult: playerData };
+    }
+
+    const fleetMovement: CoreType.FleetMovement = foundFleetMovement;
+    const originPlanetData: CoreType.PlanetData = foundOriginPlanetData;
+
+    if (fleetMovement.fleetMovementRow.player_origin_id !== playerId)
+    {
+        return { success: false, failureReason: "Cannot recall a fleet you do not own.", playerStateResult: playerData };
+    }
+
+    if (fleetMovement.fleetMovementRow.is_return_trip === 1)
+    {
+        return { success: false, failureReason: "Fleet is already returning.", playerStateResult: playerData };
+    }
+
+    const startedAt: number | null = fleetMovement.fleetMovementRow.started_at;
+    if (startedAt === null)
+    {
+        return { success: false, failureReason: "Fleet has not started travelling.", playerStateResult: playerData };
+    }
+
+    const returnLegDurationMs: number = Math.max(0, now - startedAt);
+    fleetMovement.fleetMovementRow.is_return_trip = 1;
+    fleetMovement.fleetMovementRow.started_at = now;
+    fleetMovement.fleetMovementRow.duration_at_start_time = returnLegDurationMs;
+    // Reset requested_at too so a later time_multiplier rescale recomputes the return leg, not the outbound one.
+    fleetMovement.fleetMovementRow.requested_at = now;
+    fleetMovement.fleetMovementRow.duration_at_request_time = returnLegDurationMs;
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
         ServerDynamicData.serverUpdatePlanetDataContext(originPlanetData.planetRow.id, playerId, CoreType.DataContext.FutureFleetArrivals, originPlanetData.dynamicPlanetData);
 
         const playerActionResult: PlayerActionResult =

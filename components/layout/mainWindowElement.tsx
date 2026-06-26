@@ -3,6 +3,7 @@ import { ReactElement } from "react";
 import * as GameView from "@/components/views/gameView";
 import * as StatsView from "@/components/views/statsView";
 import * as BuildingView from "@/components/views/buildingView";
+import * as BuildingDeconstructionView from "@/components/views/buildingDeconstructionView";
 import * as ResearchView from "@/components/views/researchView";
 import * as ShipyardView from "@/components/views/shipyardView";
 import * as FleetView from "@/components/views/fleetView";
@@ -31,6 +32,11 @@ export function MainWindowElement(props: MainWindowProps): ReactElement
 	if (props.cvController[0] === "buildings")
 	{
 		return <BuildingView.BuildingView clientDataStateResult={props.clientDataStateResult} />;
+	}
+
+	if (props.cvController[0] === "buildingsDeconstruct")
+	{
+		return <BuildingDeconstructionView.BuildingDeconstructionView clientDataStateResult={props.clientDataStateResult} />;
 	}
 
 	if (props.cvController[0] === "research")

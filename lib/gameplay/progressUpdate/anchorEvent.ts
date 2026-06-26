@@ -8,6 +8,7 @@ export const AnchorEventType =
     FleetArrival: 3,
     CurrentlyResearching: 4,
     ResourceProduction: 5,
+    BuildingDeconstruction: 6,
 } as const;
 export type AnchorEventType = typeof AnchorEventType[keyof typeof AnchorEventType];
 

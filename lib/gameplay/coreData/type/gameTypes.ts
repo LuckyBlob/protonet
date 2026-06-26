@@ -36,8 +36,10 @@ export type BuildingType = typeof BuildingType[keyof typeof BuildingType];
 export type BuildingStats =
 {
 	displayName: string,
-	requirements?: RequirementType.Requirement[];
+	upgradeRequirements?: RequirementType.Requirement[];
+	deconstructRequirements?: RequirementType.Requirement[];
 	buildableZones: PlanetZone[];
+	canDeconstruct?: boolean;
 	costFunctionType?: BuildingCostFunctionType;
 	costStats?: BuildingCostStats;
 	productionFunctionType?: ProductionFunctionType;

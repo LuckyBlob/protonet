@@ -45,7 +45,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.MetalStorage, { displayName: "Metal Storage",
 		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
-		requirements: [LUNAR_BASE_REQUIREMENT],
+		upgradeRequirements: [LUNAR_BASE_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -87,7 +87,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.CrystalContainement, { displayName: "Crystal Containement",
 		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
-		requirements: [LUNAR_BASE_REQUIREMENT],
+		upgradeRequirements: [LUNAR_BASE_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -130,7 +130,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.DeuteriumTank, { displayName: "Deuterium Tank",
 		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
-		requirements: [LUNAR_BASE_REQUIREMENT],
+		upgradeRequirements: [LUNAR_BASE_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -166,7 +166,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.Shipyard, { displayName: "Shipyard",
 		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
-		requirements:[{
+		upgradeRequirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.Building,
@@ -187,7 +187,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.RoboticFactory, { displayName: "Robotic Factory",
 		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
-		requirements: [LUNAR_BASE_REQUIREMENT],
+		upgradeRequirements: [LUNAR_BASE_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 1.5,
@@ -210,7 +210,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.NaniteFactory, { displayName: "Nanite Factory",
 		buildableZones: [GameType.PlanetZone.Planet],
-		requirements:[{
+		upgradeRequirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.Building,
@@ -236,7 +236,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.FusionReactor, { displayName: "Fusion Reactor",
 		buildableZones: [GameType.PlanetZone.Planet],
-		requirements:[{
+		upgradeRequirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.Building,
@@ -277,7 +277,8 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.Terraformer, { displayName: "Terraformer",
 		buildableZones: [GameType.PlanetZone.Planet],
-		requirements:[{
+		canDeconstruct: false,
+		upgradeRequirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.Building,
@@ -301,6 +302,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.LunarBase, { displayName: "Lunar Base",
 		buildableZones: [GameType.PlanetZone.Moon],
+		canDeconstruct: false,
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -689,6 +691,12 @@ export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requireme
 			operator: RequirementType.RequirementOperator.Equal,
 			value: false,
 			valueGetter: RequirementValueGetters.isAnyBuildingUpgradeInProgress(),}},
+		{hideDataWhenRequirementFailed: false,
+		thingRequirement: {
+			thingType: ThingType.Thing.BuildingDeconstruction,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,
+			valueGetter: RequirementValueGetters.isAnyBuildingDeconstructionInProgress(),}},
 		{hideDataWhenRequirementFailed: true,
 		specificThingRequirement: {
 			thingType: ThingType.Thing.PlanetValue,
@@ -696,6 +704,19 @@ export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requireme
 			operator: RequirementType.RequirementOperator.GreaterThan,
 			value: 0,
 			valueGetter: RequirementValueGetters.freeSize(),}}]],
+	[ThingType.Thing.BuildingDeconstruction, [{
+		hideDataWhenRequirementFailed: false,
+		thingRequirement: {
+			thingType: ThingType.Thing.BuildingUpgrade,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,
+			valueGetter: RequirementValueGetters.isAnyBuildingUpgradeInProgress(),}},
+		{hideDataWhenRequirementFailed: false,
+		thingRequirement: {
+			thingType: ThingType.Thing.BuildingDeconstruction,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,
+			valueGetter: RequirementValueGetters.isAnyBuildingDeconstructionInProgress(),}}]],
 	[ThingType.Thing.ShipConstruction, [{
 		hideDataWhenRequirementFailed: false,
 		thingRequirement: {

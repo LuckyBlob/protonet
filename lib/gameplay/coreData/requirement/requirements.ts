@@ -19,6 +19,17 @@ export function getFailedBuildingUpgradeRequirements(playerData: CoreType.Player
     return getFailedRequirements(requirementContext, requirements);
 }
 
+export function getFailedBuildingDeconstructionRequirements(playerData: CoreType.PlayerData, buildingType: GameType.BuildingType, planetId: number): RequirementType.Requirement[]
+{
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: planetId,
+    };
+    const requirements: RequirementType.Requirement[] = getBuildingRequirements(ThingType.Thing.BuildingDeconstruction, buildingType);
+    return getFailedRequirements(requirementContext, requirements);
+}
+
 export function getFailedShipBuildRequirements(playerData: CoreType.PlayerData, shipType: GameType.ShipType, planetId: number): RequirementType.Requirement[]
 {
     const requirementContext: RequirementType.RequirementContext =
@@ -82,7 +93,10 @@ export function getRequirementDescriptions(failedRequirements: RequirementType.R
 function getBuildingRequirements(thingType: ThingType.Thing, buildingType: GameType.BuildingType): RequirementType.Requirement[]
 {
     const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(thingType) ?? [];
-    const specificRequirements: RequirementType.Requirement[] = StaticDataHelper.getBuildingStats(buildingType).requirements ?? [];
+    const buildingStats: GameType.BuildingStats = StaticDataHelper.getBuildingStats(buildingType);
+    const specificRequirements: RequirementType.Requirement[] = (thingType === ThingType.Thing.BuildingDeconstruction)
+        ? (buildingStats.deconstructRequirements ?? [])
+        : (buildingStats.upgradeRequirements ?? []);
 
     return [...globalRequirements, ...specificRequirements];
 }

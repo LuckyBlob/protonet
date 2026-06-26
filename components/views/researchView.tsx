@@ -8,7 +8,7 @@ import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as HelperElements from "@/components/helperElements";
+import * as HelperElements from "@/components/helpers/helperElements";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";

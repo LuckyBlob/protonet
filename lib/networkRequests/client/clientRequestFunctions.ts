@@ -204,6 +204,36 @@ export async function clientTryUpgradeBuildingRequest(psController: CoreType.PSC
     }
 }
 
+export async function clientTryDeconstructBuildingRequest(psController: CoreType.PSController, planetId: number, buildingType: GameType.BuildingType): Promise<void>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.DeconstructBuilding> =
+    {
+        buildingType: buildingType,
+        planetId: planetId,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DeconstructBuilding> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.DeconstructBuilding, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+        throw new Error(`Building deconstruction failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
+}
+
 export async function clientTryUpgradeResearchRequest(psController: CoreType.PSController, planetId: number, researchType: GameType.ResearchType): Promise<void>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpgradeResearch> =
@@ -295,8 +325,10 @@ export async function clientTrySetBuildingEnergySettingRequest(psController: Cor
     }
 }
 
-export async function clientTrySendFleetRequest(psController: CoreType.PSController, originPlanetId: number, targetPlanetAddress: GameType.PlanetAddress, fleetAction: GameType.FleetActionType, shipQuantities: Map<GameType.ShipType, number>, resourceQuantities: Map<GameType.ResourceType, number>): Promise<string | null>
+export async function clientTrySendFleetRequest(psController: CoreType.PSController, originPlanetId: number, targetPlanetAddress: GameType.PlanetAddress, fleetAction: GameType.FleetActionType, shipQuantities: Map<GameType.ShipType, number>, resourceQuantities: Map<GameType.ResourceType, number>, speedPercentage?: number): Promise<string | null>
 {
+    const effectiveSpeedPercentage: number = speedPercentage ?? 100;
+
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.SendFleet> =
     {
         originPlanetId: originPlanetId,
@@ -307,6 +339,7 @@ export async function clientTrySendFleetRequest(psController: CoreType.PSControl
         fleetAction: fleetAction,
         serializedShipQuantities: Serialization.serializeNumberNumberMap(shipQuantities),
         serializedResourceQuantities: Serialization.serializeNumberNumberMap(resourceQuantities),
+        speedPercentage: effectiveSpeedPercentage,
     };
 
     try
@@ -334,6 +367,35 @@ export async function clientTrySendFleetRequest(psController: CoreType.PSControl
         }
 
         return String(error);
+    }
+}
+
+export async function clientTryRecallFleetRequest(psController: CoreType.PSController, fleetId: number): Promise<void>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.RecallFleet> =
+    {
+        fleetId: fleetId,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RecallFleet> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.RecallFleet, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Recall fleet failed for fleetId ${fleetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
     }
 }
 

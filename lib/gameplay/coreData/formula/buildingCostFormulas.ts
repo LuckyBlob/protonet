@@ -16,6 +16,29 @@ export function computeBuildingUpgradeCost(currentUpgradeLevel: number, building
 			return null;
 	}
 }
+
+export function computeBuildingDeconstructionCost(currentLevel: number, buildingType: GameType.BuildingType): Map<GameType.ResourceType, number> | null
+{
+	if (currentLevel < 1)
+	{
+		return null;
+	}
+
+	const removedLevelBuildCost: Map<GameType.ResourceType, number> | null = computeBuildingUpgradeCost(currentLevel - 1, buildingType);
+	if (removedLevelBuildCost === null)
+	{
+		return null;
+	}
+
+	const deconstructionCost: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
+	for (const [resourceType, buildResourceCost] of removedLevelBuildCost)
+	{
+		deconstructionCost.set(resourceType, Math.floor(buildResourceCost / 2));
+	}
+
+	return deconstructionCost;
+}
+
 function computeBuildingUpgradeCost_SimpleExponential(currentUpgradeLevel: number, buildingStats: GameType.BuildingStats): Map<GameType.ResourceType, number>
 {
 	if (buildingStats.costStats === undefined)

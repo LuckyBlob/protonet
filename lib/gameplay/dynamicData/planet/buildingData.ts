@@ -59,6 +59,20 @@ function computeProductionRatePerHourForResource(planetData: CoreType.PlanetData
 	return totalResourceTypeProductionRatePerHour * resourceProductionRatio;
 }
 
+export function canAffordResourceCost(planetData: CoreType.PlanetData, costMap: Map<GameType.ResourceType, number>): boolean
+{
+	for (const [resourceType, resourceCost] of costMap)
+	{
+        const currentResourceQuantity: number = ResourceData.getResourceQuantity(planetData, resourceType);
+		if (currentResourceQuantity < resourceCost)
+		{
+			return false;
+		}
+    }
+
+	return true;
+}
+
 export function canAffordUpgrade(planetData: CoreType.PlanetData, buildingType: GameType.BuildingType): boolean
 {
 	const currentUpgradeLevel: number = getBuildingLevel(planetData, buildingType);
@@ -68,16 +82,7 @@ export function canAffordUpgrade(planetData: CoreType.PlanetData, buildingType: 
 	    return false;
 	}
 
-	for (const [resourceType, resourceCost] of nextUpgradeCostMap)
-	{
-        const currentResourceQuantity: number = ResourceData.getResourceQuantity(planetData, resourceType); 
-		if (currentResourceQuantity < resourceCost)
-		{
-			return false;
-		}
-    }
-
-	return true;
+	return canAffordResourceCost(planetData, nextUpgradeCostMap);
 }
 
 // Could have more than a single type of building producing a resource. Whether a building produces a

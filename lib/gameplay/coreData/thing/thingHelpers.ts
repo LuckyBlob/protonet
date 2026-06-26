@@ -30,6 +30,11 @@ export function getThingValues(playerData: CoreType.PlayerData | null, planetDat
         throw new Error("BuildingUpgrade context does not have specific things that have a value... yet.");
     }
 
+    if (dataContext === CoreType.DataContext.BuildingDeconstruction)
+    {
+        throw new Error("BuildingDeconstruction context does not have specific things that have a value... yet.");
+    }
+
     if (dataContext === CoreType.DataContext.Messages)
     {
         throw new Error("Messages context does not have specific things that have a value.");
@@ -73,6 +78,11 @@ export function setSpecificThingValue(playerData: CoreType.PlayerData | null, pl
     if (dataContext === CoreType.DataContext.BuildingUpgrade)
     {
         throw new Error("BuildingUpgrade context is not supported for type setters since it doesnt have specific things.");
+    }
+
+    if (dataContext === CoreType.DataContext.BuildingDeconstruction)
+    {
+        throw new Error("BuildingDeconstruction context is not supported for type setters since it doesnt have specific things.");
     }
 
     if (dataContext === CoreType.DataContext.Messages)

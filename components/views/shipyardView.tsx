@@ -9,14 +9,14 @@ import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequ
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
-import * as HelperElements from "@/components/helperElements";
+import * as HelperElements from "@/components/helpers/helperElements";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
-import * as HelperElement from "@/components/helperElements";
+import * as HelperElement from "@/components/helpers/helperElements";
 import * as ShipConstructionData from "@/lib/gameplay/dynamicData/planet/shipConstructionData";
 import * as DBType from "@/lib/db/dbTypes";
 

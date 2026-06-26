@@ -20,8 +20,8 @@ import * as TestDataBuilders from '../helpers/testDataBuilders';
 // every app module that touches the DB is loaded dynamically in beforeAll, and only DB-free modules
 // (types, the pure fuel formula, builders) are imported statically up top.
 
-// Speed FleetData.calculateTotalFleetFuel feeds into the formula for every real send. Using the same
-// value here keeps the persisted fuel identical to what a live send would charge.
+// A fixed speed (matching the pure shipFuelConsumptionFormulas.test.ts fixture) keeps the persisted
+// number deterministic; the persistence path is identical whatever a live send's speed factor is.
 const FLEET_SPEED: number = 10;
 
 const PLAYER_ID: number = 1;

@@ -3,6 +3,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
+import * as BuildingDeconstruction from "@/lib/gameplay/progressUpdate/anchorEvent/buildingDeconstructionAnchorEvent"
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent"
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
 import * as CurrentlyResearching from "@/lib/gameplay/progressUpdate/anchorEvent/currentlyResearchingAnchorEvent"
@@ -20,6 +21,7 @@ export abstract class PlayerProgressApplier
     {
         const anchorEvents: (AnchorEvent.AnchorEvent | null)[] = [];
         anchorEvents.push(BuildingUpgrade.findNextAnchorEvent(playerData, serverData, this));
+        anchorEvents.push(BuildingDeconstruction.findNextAnchorEvent(playerData, serverData, this));
         anchorEvents.push(ShipConstruction.findNextAnchorEvent(playerData, serverData, this));
         anchorEvents.push(FleetArrival.findNextAnchorEvent(playerData, serverData, this));
         anchorEvents.push(CurrentlyResearching.findNextAnchorEvent(playerData, serverData, this));
@@ -50,6 +52,11 @@ export abstract class PlayerProgressApplier
             case AnchorEvent.AnchorEventType.BuildingUpgrade:
             {
                 BuildingUpgrade.resolveAnchorEvent(playerData, serverData, anchorEvent);
+                break;
+            }
+            case AnchorEvent.AnchorEventType.BuildingDeconstruction:
+            {
+                BuildingDeconstruction.resolveAnchorEvent(playerData, serverData, anchorEvent);
                 break;
             }
             case AnchorEvent.AnchorEventType.ShipConstruction:

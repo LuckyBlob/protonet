@@ -11,10 +11,12 @@ export const ActionRequest =
     Logout:   { endpoint: "authentication/logout",   name: "Logout" },
     RefreshServer:   { endpoint: "refreshServerData",   name: "RefreshServer" },
     UpgradeBuilding:   { endpoint: "buy/upgradeBuilding",   name: "UpgradeBuilding" },
+    DeconstructBuilding:   { endpoint: "buy/deconstructBuilding",   name: "DeconstructBuilding" },
     UpgradeResearch:   { endpoint: "buy/upgradeResearch",   name: "UpgradeResearch" },
     BuildShips:   { endpoint: "buy/buildShips",   name: "BuildShips" },
     SetBuildingEnergySetting:   { endpoint: "buildings/setEnergySetting",   name: "SetBuildingEnergySetting" },
     SendFleet:   { endpoint: "buy/sendFleet",   name: "SendFleet" },
+    RecallFleet:   { endpoint: "buy/recallFleet",   name: "RecallFleet" },
     AbandonPlanet:   { endpoint: "planets/abandon",   name: "AbandonPlanet" },
     RenamePlanet:   { endpoint: "planet/rename",   name: "RenamePlanet" },
     DeleteMessage:   { endpoint: "message/delete",   name: "DeleteMessage" },
@@ -28,10 +30,12 @@ export type ActionRequestMap =
     Logout: null;
     RefreshServer: null;
     UpgradeBuilding: RequestType.BuildingUpgrade_ClientRequest;
+    DeconstructBuilding: RequestType.BuildingDeconstruction_ClientRequest;
     UpgradeResearch: RequestType.Research_ClientRequest;
     BuildShips: RequestType.BuildShips_ClientRequest;
     SetBuildingEnergySetting: RequestType.SetBuildingEnergySetting_ClientRequest;
     SendFleet: RequestType.SendFleet_ClientRequest;
+    RecallFleet: RequestType.RecallFleet_ClientRequest;
     AbandonPlanet: RequestType.AbandonPlanet_ClientRequest;
     RenamePlanet: RequestType.RenamePlanet_ClientRequest;
     DeleteMessage: RequestType.DeleteMessage_ClientRequest;
@@ -45,10 +49,12 @@ export type ActionResponseMap =
     Logout: RequestType.BaseAuthenticationServerResponse;
     RefreshServer: RequestType.RefreshServer_ServerResponse;
     UpgradeBuilding: RequestType.BuildingUpgrade_ServerResponse;
+    DeconstructBuilding: RequestType.BuildingDeconstruction_ServerResponse;
     UpgradeResearch: RequestType.Research_ServerResponse;
     BuildShips: RequestType.BuildShips_ServerResponse;
     SetBuildingEnergySetting: RequestType.SetBuildingEnergySetting_ServerResponse;
     SendFleet: RequestType.SendFleet_ServerResponse;
+    RecallFleet: RequestType.RecallFleet_ServerResponse;
     AbandonPlanet: RequestType.AbandonPlanet_ServerResponse;
     RenamePlanet: RequestType.RenamePlanet_ServerResponse;
     DeleteMessage: RequestType.DeleteMessage_ServerResponse;

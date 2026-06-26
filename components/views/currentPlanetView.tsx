@@ -5,7 +5,7 @@ import { ReactElement, ChangeEvent, useState, useEffect } from "react";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as HelperElements from "@/components/helperElements";
+import * as HelperElements from "@/components/helpers/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";

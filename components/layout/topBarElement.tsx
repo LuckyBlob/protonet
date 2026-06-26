@@ -7,7 +7,7 @@ import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as HelperElements from "@/components/helperElements";
+import * as HelperElements from "@/components/helpers/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";

@@ -62,6 +62,7 @@ export function buildDynamicPlanetData(overrides?: Partial<CoreType.DynamicPlane
         shipConstructions: [],
         futureFleetArrivals: [],
         buildingUpgrades: [],
+        buildingDeconstructions: [],
         ...overrides,
     };
 
@@ -144,6 +145,37 @@ export function buildBuildingUpgradeBuildingRow(overrides?: Partial<DBType.Build
     {
         id: 1,
         building_upgrade_id: 1,
+        building_type: GameType.BuildingType.MetalMine,
+        ...overrides,
+    };
+
+    return row;
+}
+
+export function buildBuildingDeconstructionRow(overrides?: Partial<DBType.BuildingDeconstructionRow>): DBType.BuildingDeconstructionRow
+{
+    const row: DBType.BuildingDeconstructionRow =
+    {
+        id: 1,
+        planet_id: 1,
+        player_id: 1,
+        requested_at: 1_000_000,
+        duration_at_request_time: 10_000,
+        duration_at_start_time: 10_000,
+        started_at: 1_000_000,
+        current_building_deconstruction_building_row_id: 1,
+        ...overrides,
+    };
+
+    return row;
+}
+
+export function buildBuildingDeconstructionBuildingRow(overrides?: Partial<DBType.BuildingDeconstructionBuildingRow>): DBType.BuildingDeconstructionBuildingRow
+{
+    const row: DBType.BuildingDeconstructionBuildingRow =
+    {
+        id: 1,
+        building_deconstruction_id: 1,
         building_type: GameType.BuildingType.MetalMine,
         ...overrides,
     };

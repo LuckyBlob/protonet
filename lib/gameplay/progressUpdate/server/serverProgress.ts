@@ -4,6 +4,7 @@ import * as AnchorEvent from "@/lib/gameplay/progressUpdate/anchorEvent"
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
+import * as BuildingDeconstruction from "@/lib/gameplay/progressUpdate/anchorEvent/buildingDeconstructionAnchorEvent"
 import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent"
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 import * as DB from "@/lib/db/db";
@@ -46,6 +47,11 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
             case AnchorEvent.AnchorEventType.BuildingUpgrade:
             {
                 resolveBuildingUpgradeAnchorEventToDB(playerData, serverData, anchorEvent);
+                break;
+            }
+            case AnchorEvent.AnchorEventType.BuildingDeconstruction:
+            {
+                resolveBuildingDeconstructionAnchorEventToDB(playerData, serverData, anchorEvent);
                 break;
             }
             case AnchorEvent.AnchorEventType.ShipConstruction:
@@ -140,6 +146,24 @@ function resolveBuildingUpgradeAnchorEventToDB(playerData: CoreType.PlayerData, 
     {
         ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.BuildingLevel, planetData.dynamicPlanetData);
         ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.BuildingUpgrade, planetData.dynamicPlanetData);
+    });
+
+    transaction();
+}
+
+function resolveBuildingDeconstructionAnchorEventToDB(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
+{
+    const buildingDeconstructionAnchorEvent: BuildingDeconstruction.BuildingDeconstructionAnchorEvent = anchorEvent as BuildingDeconstruction.BuildingDeconstructionAnchorEvent;
+    const planetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, buildingDeconstructionAnchorEvent.event.buildingDeconstructionRow.planet_id);
+    if (planetData === null)
+    {
+        throw new Error(`⚠️: Cant get full planet data for building deconstruction.`);
+    }
+
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.BuildingLevel, planetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.BuildingDeconstruction, planetData.dynamicPlanetData);
     });
 
     transaction();

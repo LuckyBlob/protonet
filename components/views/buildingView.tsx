@@ -4,69 +4,24 @@ import { ChangeEvent, ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
-import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as HelperElements from "@/components/helperElements";
+import * as HelperElements from "@/components/helpers/helperElements";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
-import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
-import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurationFormulas";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
-import * as DBType from "@/lib/db/dbTypes";
-
-type BuildingViewProps =
-{
-	clientDataStateResult: UseClientDataState.ClientDataStateResult;
-};
-
-// Image changes every IMAGE_TIER_LEVEL_STEP levels, capped at MAX_IMAGE_TIER so
-// missing high-level art falls back to the last available image. Tune freely.
-// Expected files: public/buildings/buildingType_{buildingType}/{tier}.png
-const IMAGE_TIER_LEVEL_STEP: number = 5;
-const MAX_IMAGE_TIER: number = 5;
-
-function getBuildingImageTier(level: number): number
-{
-	const rawTier: number = Math.floor(level / IMAGE_TIER_LEVEL_STEP);
-
-	if (rawTier > MAX_IMAGE_TIER)
-	{
-		return MAX_IMAGE_TIER;
-	}
-
-	return rawTier;
-}
-
-function getBuildingImagePath(buildingType: number, level: number): string
-{
-	const tier: number = getBuildingImageTier(level);
-
-	return `/buildings/buildingType_${buildingType}/${tier}.png`;
-}
-
-function renderCostLine(nextCostMap: Map<GameType.ResourceType, number>): ReactElement
-{
-	const parts: string[] = HelperElements.buildCostParts(nextCostMap);
-
-	return <span>{parts.join(" / ")}</span>;
-}
-
-function renderRowDivider(): ReactElement
-{
-	return <div className="self-stretch border-l border-gray-400" />;
-}
+import * as BuildingViewHelpers from "@/components/helpers/buildingViewHelpers";
 
 // Energy throttle dropdown. Only shown for built (level >= 1) buildings that produce or consume
 // energy. Setting it scales the building's energy prod/cons and its resource production.
-function renderEnergySettingDropdown(props: BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType, currentLevel: number): ReactElement | null
+function renderEnergySettingDropdown(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType, currentLevel: number): ReactElement | null
 {
 	if (currentLevel < 1)
 	{
@@ -113,7 +68,7 @@ function renderEnergySettingDropdown(props: BuildingViewProps, selectedPlanetDat
 	return dropdownElement;
 }
 
-function renderBuildingRow(props: BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType): ReactElement
+function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType): ReactElement
 {
 	const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 	const planetId: number = selectedPlanetDataPredicted.planetRow.id;
@@ -133,12 +88,11 @@ function renderBuildingRow(props: BuildingViewProps, selectedPlanetDataPredicted
 		);
 	}
 
-	const imagePath: string = getBuildingImagePath(buildingType, currentLevel);
+	const imagePath: string = BuildingViewHelpers.getBuildingImagePath(buildingType, currentLevel);
 
 	const isThisBuildingUpgrading: boolean = BuildingUpgradeData.isBuildingTypeCurrentlyUpgrading(selectedPlanetDataPredicted, buildingType);
 	const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedBuildingUpgradeRequirements(playerData, buildingType, planetId);
-	const failedHidingRequirements: RequirementType.Requirement[] = failedRequirements.filter((requirement: RequirementType.Requirement): boolean => requirement.hideDataWhenRequirementFailed === true);
-	const hidingDescriptions: string[] = Requirement.getRequirementDescriptions(failedHidingRequirements, playerData, planetId);
+	const failedRequirementsBox: ReactElement | null = BuildingViewHelpers.renderFailedRequirementsBox(failedRequirements, playerData, planetId);
 
 	const remainingMs: number = BuildingUpgradeData.getBuildingUpgradeRemainingMs(selectedPlanetDataPredicted) ?? 0;
 	const canAfford: boolean = BuildingData.canAffordUpgrade(selectedPlanetDataPredicted, buildingType);
@@ -159,15 +113,8 @@ function renderBuildingRow(props: BuildingViewProps, selectedPlanetDataPredicted
 				<div className="text-xs">Time: {TimeFormat.formatRemainingTimeMs(remainingMs)}</div>
 			</div>
 		)
-		: (failedHidingRequirements.length > 0)
-		? (
-			<div className="w-full px-4 py-2 bg-gray-600 text-white rounded text-center">
-				{hidingDescriptions.map((description: string) =>
-				{
-					return <div key={description} className="text-xs">{description}</div>;
-				})}
-			</div>
-		)
+		: (failedRequirementsBox !== null)
+		? failedRequirementsBox
 		: (
 			<button
 				onClick={handleBuyUpgrade}
@@ -175,65 +122,30 @@ function renderBuildingRow(props: BuildingViewProps, selectedPlanetDataPredicted
 				className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex flex-col items-center"
 			>
 				<span className="font-bold">Build Upgrade</span>
-				<span className="text-xs">{renderCostLine(nextCostMap)}</span>
+				<span className="text-xs">{BuildingViewHelpers.renderCostLine(nextCostMap)}</span>
 				<span className="text-xs">Time: {TimeFormat.formatRemainingTimeMs(buildDurationSeconds * 1000)}</span>
 			</button>
 		);
 
-	const rowElement: ReactElement =
+	const middleColumn: ReactElement =
 	(
-		<div key={buildingType} className="border border-gray-400 rounded p-2 flex flex-row items-center gap-4">
-			<div className="w-16 h-16 flex flex-col items-center justify-center text-center shrink-0">
-				<img
-					src={imagePath}
-					alt=""
-					className="w-16 h-16 object-contain"
-					onError={(e) =>
-					{
-						(e.currentTarget as HTMLImageElement).style.display = "none";
-						const fallback: HTMLElement | null = (e.currentTarget.nextElementSibling as HTMLElement | null);
-
-						if (fallback !== null)
-						{
-							fallback.style.display = "flex";
-						}
-					}}
-				/>
-				<div className="hidden flex-col items-center justify-center text-[10px] gap-1">
-					<span>[No Image]</span>
-				</div>
-			</div>
-
-			{renderRowDivider()}
-
-			<div className="flex flex-col justify-center min-w-48">
-				<div className="font-bold">{displayName}</div>
-				{levelLine}
-				{renderEnergySettingDropdown(props, selectedPlanetDataPredicted, buildingType, currentLevel)}
-			</div>
-
-			{renderRowDivider()}
-
-			<div className="w-64 shrink-0">
-				{actionElement}
-			</div>
+		<div className="flex flex-col justify-center min-w-48">
+			<div className="font-bold">{displayName}</div>
+			{levelLine}
+			{renderEnergySettingDropdown(props, selectedPlanetDataPredicted, buildingType, currentLevel)}
 		</div>
 	);
 
-	return rowElement;
+	return BuildingViewHelpers.renderBuildingRowShell(buildingType, imagePath, middleColumn, actionElement);
 }
 
-export function BuildingView(props: BuildingViewProps): ReactElement
+export function BuildingView(props: BuildingViewHelpers.BuildingViewProps): ReactElement
 {
 	try
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 		const selectedZone: GameType.PlanetZone = selectedPlanetDataPredicted.planetRow.zone as GameType.PlanetZone;
-
-		const buildableBuildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building).filter((buildingType: GameType.BuildingType): boolean =>
-		{
-			return StaticDataHelper.isBuildableOnZone(StaticDataHelper.getBuildingStats(buildingType).buildableZones, selectedZone);
-		});
+		const buildableBuildingTypes: GameType.BuildingType[] = BuildingViewHelpers.getBuildableBuildingTypes(selectedZone);
 
 		const rowElements: ReactElement[] = buildableBuildingTypes.map((buildingType: GameType.BuildingType): ReactElement =>
 		{

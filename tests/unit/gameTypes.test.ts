@@ -162,7 +162,7 @@ describe('Moon-buildable buildings require a Lunar Base', () =>
                 continue;
             }
 
-            const requirements: RequirementType.Requirement[] = buildingStats.requirements ?? [];
+            const requirements: RequirementType.Requirement[] = buildingStats.upgradeRequirements ?? [];
             const hasLunarBaseRequirement: boolean = requirements.some((requirement: RequirementType.Requirement): boolean =>
                 requirement.specificThingRequirement !== undefined
                 && requirement.specificThingRequirement.thingType === ThingType.Thing.Building

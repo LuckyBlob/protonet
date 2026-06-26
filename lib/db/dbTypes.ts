@@ -115,6 +115,25 @@ export type BuildingUpgradeBuildingRow =
     building_type: number;
 };
 
+export type BuildingDeconstructionRow =
+{
+    id: number;
+    planet_id: number;
+    player_id: number;
+    requested_at: number;
+    duration_at_request_time: number;
+    duration_at_start_time: number | null;
+    started_at: number | null;
+	current_building_deconstruction_building_row_id: number | null;
+};
+
+export type BuildingDeconstructionBuildingRow =
+{
+    id: number;
+    building_deconstruction_id: number;
+    building_type: number;
+};
+
 export type PlayerResearchRow =
 {
 	player_id: number;
