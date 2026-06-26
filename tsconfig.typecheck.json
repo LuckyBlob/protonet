@@ -1,0 +1,20 @@
+// Type-check config for the pre-submit / deploy gate. Identical to tsconfig.json EXCEPT it drops the
+// generated `.next/types` + `.next/dev/types` from the program. Those are Next's per-route validators,
+// regenerated only by `build`/`dev`, so they are always stale relative to the current commit — and after a
+// route is renamed/removed they keep a dead `import` of the gone route.js, which fails `tsc --noEmit` with
+// a TS2307 false positive (this is what broke the ship->unit deploy). Source + tests are still fully
+// checked, so real type errors (the reason the gate exists — vitest strips types, `next build` skips
+// tests/) are still caught.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

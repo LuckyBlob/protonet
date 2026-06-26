@@ -60,7 +60,9 @@
       "mcp__Claude_in_Chrome__list_connected_browsers",
       "mcp__Claude_in_Chrome__select_browser",
       "mcp__Claude_in_Chrome__navigate",
-      "mcp__Claude_in_Chrome__get_page_text"
+      "mcp__Claude_in_Chrome__get_page_text",
+      "Bash(base64 -w0 /tmp/edit_deploy.py)",
+      "Bash(find /d/ /c/Users/Utilisateur -iname \"*devis*340*\" 2>/dev/null | head -20; echo \"---\"; find /c/Users/Utilisateur -iname \"*devis*\" 2>/dev/null | head -20)"
     ]
   },
   "hooks": {
