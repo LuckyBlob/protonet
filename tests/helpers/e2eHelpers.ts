@@ -496,6 +496,15 @@ export async function goToView(page: Page, view: "Game" | "Buildings" | "Researc
         await page.getByRole("button", { name: /^Messages/ }).click();
         return;
     }
+
+    // "Current Planet" sub-button only renders once its parent "Planets" group is expanded.
+    if (view === "Current Planet")
+    {
+        await page.getByRole("button", { name: "Planets", exact: true }).click();
+        await page.getByRole("button", { name: "Current Planet", exact: true }).click();
+        return;
+    }
+
     await page.getByRole("button", { name: view, exact: true }).click();
 }
 
