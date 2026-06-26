@@ -84,12 +84,12 @@ Default scope: a **deep pass** on the listed priority flows + a **shallow pass**
    - Client-side prediction of upgrade progress
    - Server-side resolution when the upgrade completes
 
-3. **Fleet building (ship construction)**
-   - Client UI that initiates ship construction
-   - Validation: shipyard exists, ship requirements met, cost paid, batch slots available
-   - DB writes (`ship_construction` table — note the row type is `ShipConstructionRow`)
+3. **Fleet building (unit construction)**
+   - Client UI that initiates unit construction
+   - Validation: shipyard exists, unit requirements met, cost paid, batch slots available
+   - DB writes (`unit_construction` table — note the row type is `UnitConstructionRow`)
    - Anchor event creation
-   - Per-ship vs per-batch completion logic
+   - Per-unit vs per-batch completion logic
    - Client-side prediction of construction progress
    - Server-side resolution when the batch completes
 
@@ -97,7 +97,7 @@ Default scope: a **deep pass** on the listed priority flows + a **shallow pass**
    - All of the above checks applied to it
 
 5. **Anchor event resolution** (both sides):
-   - For each anchor event type (BuildingUpgrade, ShipConstruction, FleetArrival, and any others):
+   - For each anchor event type (BuildingUpgrade, UnitConstruction, FleetArrival, and any others):
      - **Client-side**: when the event resolves during a client tick, what state does it update in `predictedDBData`? Is the update consistent with what the server will write?
      - **Server-side**: when the server reconciles past `now` and resolves the event, what DB writes happen? Are they all inside a transaction? Are all the affected rows updated, or just some?
    - Look specifically for: client predicting one thing but server writing another (a desync source); resolution that updates some fields but not `last_updated`; events resolved out of chronological order; events that should fire-and-forget but linger; events whose resolution depends on stale data.
@@ -138,7 +138,7 @@ Each finding gets **two ratings**: severity (impact if it's real) and confidence
 
 **Severity:**
 - 🔴 **CRITICAL** — Auth bypass; player can affect resources / state they don't own; player can execute an action without paying for it; client can write directly to server DB; server trusts client-supplied identity; race condition that corrupts persistent state.
-- 🟡 **HIGH** — Validation gap that an unsophisticated user wouldn't hit but a crafted request would (e.g., `quantity: -1` accepted as -1 ships); switch statement with no default; transaction boundary missing on a 2-statement write where the second can fail; client/server contract mismatch that causes a desync.
+- 🟡 **HIGH** — Validation gap that an unsophisticated user wouldn't hit but a crafted request would (e.g., `quantity: -1` accepted as -1 units); switch statement with no default; transaction boundary missing on a 2-statement write where the second can fail; client/server contract mismatch that causes a desync.
 - 🟠 **MEDIUM** — Error handling swallows failure but the failure is recoverable; off-by-one in display logic; missing case in a switch with a default that throws (so it'd error visibly, but it shouldn't); time/timestamp handling that could be inconsistent under unusual conditions.
 - 🔵 **LOW** — Likely-benign-but-worth-knowing: numeric overflow at unreasonable resource counts; redundant validation that masks a missing one elsewhere; defensive code that returns a different shape than the happy path.
 
@@ -175,7 +175,7 @@ Output a single Markdown report with this structure:
 <2-4 sentences. Be concrete about what input or sequence triggers it.>
 
 **How to verify:**
-<1-2 concrete steps the human can take to confirm. E.g., "Send a POST to /api/buy/buildShips with playerId set to another user's ID — check whether the server uses the request body's playerId or the session's." Not "audit the auth flow." Specific.>
+<1-2 concrete steps the human can take to confirm. E.g., "Send a POST to /api/buy/buildUnits with playerId set to another user's ID — check whether the server uses the request body's playerId or the session's." Not "audit the auth flow." Specific.>
 
 **Fix sketch:**
 <One sentence on what the fix would look like, if it's a real bug.>
@@ -218,7 +218,7 @@ If a severity level has no findings, write the heading and `_None._` rather than
 
 ### Report-writing rules
 
-- Title each finding so it's understandable without reading the body. "Server trusts client-supplied playerId in BuildShips handler" — not "Auth bug."
+- Title each finding so it's understandable without reading the body. "Server trusts client-supplied playerId in BuildUnits handler" — not "Auth bug."
 - "Where" must be a real file path and line number you read. If you grep'd a pattern but didn't read the file, go read the file before adding the finding.
 - "How to verify" is the most important field. If you can't write it, your finding isn't ready.
 - "Fix sketch" is one sentence. The agent's job isn't to write the fix.
