@@ -10,15 +10,15 @@ const PLAYER_DATA: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
 const SERVER_DATA: CoreType.ServerData = TestDataBuilders.buildServerData();
 const ORIGIN: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 3, zone: GameType.PlanetZone.Planet };
 const TARGET: GameType.PlanetAddress = { galaxy: 1, system: 8, slot: 3, zone: GameType.PlanetZone.Planet };
-const SHIP_QUANTITIES: Map<GameType.ShipType, number> = new Map<GameType.ShipType, number>([[GameType.ShipType.SmallTransport, 1]]);
+const UNIT_QUANTITIES: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>([[GameType.UnitType.SmallTransport, 1]]);
 
 describe('fleet speed factor — travel duration', () =>
 {
     it('scales the distance term with the inverse of speed while leaving the flat overhead unscaled (OGame)', () =>
     {
-        const fullSpeedSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(PLAYER_DATA, ORIGIN, TARGET, SHIP_QUANTITIES, SERVER_DATA, 100);
-        const halfSpeedSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(PLAYER_DATA, ORIGIN, TARGET, SHIP_QUANTITIES, SERVER_DATA, 50);
-        const tenthSpeedSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(PLAYER_DATA, ORIGIN, TARGET, SHIP_QUANTITIES, SERVER_DATA, 10);
+        const fullSpeedSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(PLAYER_DATA, ORIGIN, TARGET, UNIT_QUANTITIES, SERVER_DATA, 100);
+        const halfSpeedSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(PLAYER_DATA, ORIGIN, TARGET, UNIT_QUANTITIES, SERVER_DATA, 50);
+        const tenthSpeedSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(PLAYER_DATA, ORIGIN, TARGET, UNIT_QUANTITIES, SERVER_DATA, 10);
 
         expect(halfSpeedSeconds).toBeGreaterThan(fullSpeedSeconds);
         expect(tenthSpeedSeconds).toBeGreaterThan(halfSpeedSeconds);
@@ -32,8 +32,8 @@ describe('fleet speed factor — travel duration', () =>
 
     it('defaults to full speed when no percentage is supplied', () =>
     {
-        const defaultSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(PLAYER_DATA, ORIGIN, TARGET, SHIP_QUANTITIES, SERVER_DATA);
-        const fullSpeedSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(PLAYER_DATA, ORIGIN, TARGET, SHIP_QUANTITIES, SERVER_DATA, 100);
+        const defaultSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(PLAYER_DATA, ORIGIN, TARGET, UNIT_QUANTITIES, SERVER_DATA);
+        const fullSpeedSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(PLAYER_DATA, ORIGIN, TARGET, UNIT_QUANTITIES, SERVER_DATA, 100);
 
         expect(defaultSeconds).toBe(fullSpeedSeconds);
     });
@@ -61,9 +61,9 @@ describe('fleet speed factor — fuel consumption', () =>
 {
     it('burns less fuel as the speed percentage drops', () =>
     {
-        const fullSpeedFuel: number = MathHelp.calculateTotalQuantityMap(FleetData.calculateTotalFleetFuel(PLAYER_DATA, ORIGIN, TARGET, SHIP_QUANTITIES, SERVER_DATA, 100));
-        const halfSpeedFuel: number = MathHelp.calculateTotalQuantityMap(FleetData.calculateTotalFleetFuel(PLAYER_DATA, ORIGIN, TARGET, SHIP_QUANTITIES, SERVER_DATA, 50));
-        const tenthSpeedFuel: number = MathHelp.calculateTotalQuantityMap(FleetData.calculateTotalFleetFuel(PLAYER_DATA, ORIGIN, TARGET, SHIP_QUANTITIES, SERVER_DATA, 10));
+        const fullSpeedFuel: number = MathHelp.calculateTotalQuantityMap(FleetData.calculateTotalFleetFuel(PLAYER_DATA, ORIGIN, TARGET, UNIT_QUANTITIES, SERVER_DATA, 100));
+        const halfSpeedFuel: number = MathHelp.calculateTotalQuantityMap(FleetData.calculateTotalFleetFuel(PLAYER_DATA, ORIGIN, TARGET, UNIT_QUANTITIES, SERVER_DATA, 50));
+        const tenthSpeedFuel: number = MathHelp.calculateTotalQuantityMap(FleetData.calculateTotalFleetFuel(PLAYER_DATA, ORIGIN, TARGET, UNIT_QUANTITIES, SERVER_DATA, 10));
 
         expect(fullSpeedFuel).toBeGreaterThan(halfSpeedFuel);
         expect(halfSpeedFuel).toBeGreaterThan(tenthSpeedFuel);

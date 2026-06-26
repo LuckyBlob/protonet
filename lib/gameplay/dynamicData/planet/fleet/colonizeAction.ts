@@ -3,7 +3,7 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
+import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as DBType from "@/lib/db/dbTypes";
@@ -67,8 +67,8 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | nu
 
     removeSingleColonyShipFromFleetMovement(fleetMovement);
     
-    const shipQuantities: Map<GameType.ShipType, number> = FleetData.buildShipQuantitiesFromRows(fleetMovement.fleetMovementShipRows);
-    ShipData.addPlanetShips(targetPlanetData, shipQuantities);
+    const unitQuantities: Map<GameType.UnitType, number> = FleetData.buildUnitQuantitiesFromRows(fleetMovement.fleetMovementUnitRows);
+    UnitData.addPlanetUnits(targetPlanetData, unitQuantities);
 
     const resourceQuantities: Map<GameType.ResourceType, number> = FleetData.buildResourceQuantitiesFromRows(fleetMovement.fleetMovementResourceRows);
     ResourceData.addPlanetResources(targetPlanetData, resourceQuantities);
@@ -86,7 +86,7 @@ function addColonizeActionMessages(fleetMovement: CoreType.FleetMovement): void
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
     const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
-    const shipsList: string = FleetData.buildShipsListFromFleetMovement(fleetMovement.fleetMovementShipRows);
+    const unitsList: string = FleetData.buildUnitsListFromFleetMovement(fleetMovement.fleetMovementUnitRows);
     const resourcesList: string = FleetData.buildResourcesListFromFleetMovement(fleetMovement.fleetMovementResourceRows);
 
     fleetMovement.originMessageRow =
@@ -97,19 +97,19 @@ function addColonizeActionMessages(fleetMovement: CoreType.FleetMovement): void
         type: MessageData.MessageType.FleetAction,
         is_read: 0,
         title: "Colonize Fleet Action Report",
-        body: `Colonized planet ${targetAddress} successfully, stored ${resourcesList} and stationed ${shipsList}.`,
+        body: `Colonized planet ${targetAddress} successfully, stored ${resourcesList} and stationed ${unitsList}.`,
     };
 }
 
 function removeSingleColonyShipFromFleetMovement(fleetMovement: CoreType.FleetMovement): void
 {
-    for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)
+    for (const fleetMovementUnitRow of fleetMovement.fleetMovementUnitRows)
     {
-        if (fleetMovementShipRow.ship_type === GameType.ShipType.ColonyShip)
+        if (fleetMovementUnitRow.unit_type === GameType.UnitType.ColonyShip)
         {
-            if (fleetMovementShipRow.ship_quantity > 0)
+            if (fleetMovementUnitRow.unit_quantity > 0)
             {
-                fleetMovementShipRow.ship_quantity -= 1;
+                fleetMovementUnitRow.unit_quantity -= 1;
                 return;
             }
         }

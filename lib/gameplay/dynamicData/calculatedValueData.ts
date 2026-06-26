@@ -1,6 +1,6 @@
 // Calculated value data: planet values (energy, storage) and player values (fleet slots).
 // Planet and player values share the same data shape and aggregation logic and differ only in their
-// sources (buildings/ships/research) and the value-type domain they range over, so they live together
+// sources (buildings/units/research) and the value-type domain they range over, so they live together
 // here with the merge + accumulate primitives parameterized over the value-type key.
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
@@ -157,7 +157,7 @@ export function computePlanetValueDatas(planetData: CoreType.PlanetData, playerD
     [
         computePlanetBaseValues(planetData),
         computeBuildingPlanetValueDatas(planetData, playerData),
-        computeShipPlanetValueDatas(planetData),
+        computeUnitPlanetValueDatas(planetData),
         computeResearchPlanetValueDatas(planetData),
     ];
 
@@ -174,11 +174,11 @@ function computePlanetBaseValues(planetData: CoreType.PlanetData): Map<GameType.
     return baseValues;
 }
 
-function computeShipPlanetValueDatas(planetData: CoreType.PlanetData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
+function computeUnitPlanetValueDatas(planetData: CoreType.PlanetData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
 {
-    const newShipPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
+    const newUnitPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
 
-    return newShipPlanetValues;
+    return newUnitPlanetValues;
 }
 
 function computeResearchPlanetValueDatas(planetData: CoreType.PlanetData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
@@ -233,7 +233,7 @@ export function computePlayerValueDatas(playerData: CoreType.PlayerData): Map<Ga
     const playerValueDataBySource: Map<GameType.PlayerValueType, CoreType.CalculatedValueData>[] =
     [
         computeBuildingPlayerValueDatas(playerData),
-        computeShipPlayerValueDatas(playerData),
+        computeUnitPlayerValueDatas(playerData),
         computeResearchPlayerValueDatas(playerData),
     ];
 
@@ -247,11 +247,11 @@ function computeBuildingPlayerValueDatas(playerData: CoreType.PlayerData): Map<G
     return newBuildingPlayerValues;
 }
 
-function computeShipPlayerValueDatas(playerData: CoreType.PlayerData): Map<GameType.PlayerValueType, CoreType.CalculatedValueData>
+function computeUnitPlayerValueDatas(playerData: CoreType.PlayerData): Map<GameType.PlayerValueType, CoreType.CalculatedValueData>
 {
-    const newShipPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> = new Map<GameType.PlayerValueType, CoreType.CalculatedValueData>();
+    const newUnitPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> = new Map<GameType.PlayerValueType, CoreType.CalculatedValueData>();
 
-    return newShipPlayerValues;
+    return newUnitPlayerValues;
 }
 
 function computeResearchPlayerValueDatas(playerData: CoreType.PlayerData): Map<GameType.PlayerValueType, CoreType.CalculatedValueData>

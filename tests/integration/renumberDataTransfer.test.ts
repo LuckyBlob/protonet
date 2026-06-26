@@ -8,7 +8,7 @@ import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as ThingHelpers from '@/lib/gameplay/coreData/thing/thingHelpers';
 import * as ThingDataHelpers from '@/lib/gameplay/coreData/thing/thingDataHelpers';
 
-// Renumber-safety guard. Persisted columns (resource_type, building_type, ship_type, fleet_action_type)
+// Renumber-safety guard. Persisted columns (resource_type, building_type, unit_type, fleet_action_type)
 // store enum values as raw NUMBERS, so renumbering an enum silently re-points existing rows unless a data
 // transfer remaps them. This test seeds data in the ORIGINAL on-disk numbering (frozen — what the oldest
 // production rows actually hold), runs the FULL data-transfer chain (every db/dataTransfers file, in order,
@@ -16,7 +16,7 @@ import * as ThingDataHelpers from '@/lib/gameplay/coreData/thing/thingDataHelper
 //
 // Why it needs no upkeep, yet catches a forgotten transfer:
 //   - Display name is the stable identity, read from today's static data. A rename (Iron -> Metal) doesn't
-//     break it, and a renumber that ships its transfer keeps the name correct -> pass.
+//     break it, and a renumber that units its transfer keeps the name correct -> pass.
 //   - The transfer chain is read from disk, so a NEW transfer is picked up automatically -> no edit here.
 //   - Renumber WITHOUT a transfer -> the old number lands on a different (or unknown) name -> fail.
 //   - No renumber at all -> nothing remaps -> names match -> pass.
@@ -41,11 +41,11 @@ const ORIGINAL_RESOURCE_NUMBERS: [number, GameType.ResourceType][] =
     [3, GameType.ResourceType.Deuterium],
 ];
 
-const ORIGINAL_SHIP_NUMBERS: [number, GameType.ShipType][] =
+const ORIGINAL_UNIT_NUMBERS: [number, GameType.UnitType][] =
 [
-    [1, GameType.ShipType.SmallTransport],
-    [2, GameType.ShipType.LargeTransport],
-    [3, GameType.ShipType.ColonyShip],
+    [1, GameType.UnitType.SmallTransport],
+    [2, GameType.UnitType.LargeTransport],
+    [3, GameType.UnitType.ColonyShip],
 ];
 
 // Old fleet actions Station(1)/Colonize(3)/Collect(4) were the only creatable ones; Transport(2) was never
@@ -96,9 +96,9 @@ function resourceName(resourceType: number): string
     return ThingDataHelpers.getSpecificThingName(ThingHelpers.resource(resourceType));
 }
 
-function shipName(shipType: number): string
+function unitName(unitType: number): string
 {
-    return ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(shipType));
+    return ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(unitType));
 }
 
 function fleetActionName(fleetActionType: number): string
@@ -179,31 +179,31 @@ describe('renumber safety: original-numbered data resolves to the right thing af
         databaseConnection.close();
     });
 
-    it('preserves every ship by display name', async () =>
+    it('preserves every unit by display name', async () =>
     {
         const databaseConnection: Database.Database = createSchemaDatabase();
         const insert: Database.Statement = databaseConnection.prepare(
-            "INSERT INTO planet_ship (planet_id, player_id, ship_type, ship_quantity) VALUES (1, 1, ?, ?)"
+            "INSERT INTO planet_unit (planet_id, player_id, unit_type, unit_quantity) VALUES (1, 1, ?, ?)"
         );
 
         const expectedQuantityByName: Record<string, number> = {};
         let quantity: number = 50;
-        for (const [originalNumber, shipType] of ORIGINAL_SHIP_NUMBERS)
+        for (const [originalNumber, unitType] of ORIGINAL_UNIT_NUMBERS)
         {
             insert.run(originalNumber, quantity);
-            expectedQuantityByName[shipName(shipType)] = quantity;
+            expectedQuantityByName[unitName(unitType)] = quantity;
             quantity = quantity + 1;
         }
 
         await runAllDataTransfers(databaseConnection);
 
         const actualQuantityByName: Record<string, number> = {};
-        const rows: { ship_type: number; ship_quantity: number }[] = databaseConnection.prepare(
-            "SELECT ship_type, ship_quantity FROM planet_ship"
-        ).all() as { ship_type: number; ship_quantity: number }[];
+        const rows: { unit_type: number; unit_quantity: number }[] = databaseConnection.prepare(
+            "SELECT unit_type, unit_quantity FROM planet_unit"
+        ).all() as { unit_type: number; unit_quantity: number }[];
         for (const row of rows)
         {
-            actualQuantityByName[shipName(row.ship_type)] = row.ship_quantity;
+            actualQuantityByName[unitName(row.unit_type)] = row.unit_quantity;
         }
         expect(actualQuantityByName).toEqual(expectedQuantityByName);
 

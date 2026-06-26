@@ -20,25 +20,25 @@ export function canDeconstructBuilding(buildingType: GameType.BuildingType): boo
     return getBuildingStats(buildingType).canDeconstruct !== false;
 }
 
-export function getShipStats(shipType: GameType.ShipType): GameType.ShipStats
+export function getUnitStats(unitType: GameType.UnitType): GameType.UnitStats
 {
-    const shipStats: GameType.ShipStats | undefined = StaticData.SHIP_STATS.get(shipType);
-    if (shipStats === undefined)
+    const unitStats: GameType.UnitStats | undefined = StaticData.UNIT_STATS.get(unitType);
+    if (unitStats === undefined)
     {
-        throw new Error(`No ShipStats for shipType ${shipType}.`);
+        throw new Error(`No UnitStats for unitType ${unitType}.`);
     }
 
-    return shipStats;
+    return unitStats;
 }
 
-export function canShipTargetDebrisField(shipType: GameType.ShipType): boolean
+export function canUnitTargetDebrisField(unitType: GameType.UnitType): boolean
 {
-    return getShipStats(shipType).canTargetDebrisField === true;
+    return getUnitStats(unitType).canTargetDebrisField === true;
 }
 
-export function canShipSpy(shipType: GameType.ShipType): boolean
+export function canUnitSpy(unitType: GameType.UnitType): boolean
 {
-    return getShipStats(shipType).canSpy === true;
+    return getUnitStats(unitType).canSpy === true;
 }
 
 export function canPlanetZoneBeSpied(zone: GameType.PlanetZone): boolean
@@ -89,7 +89,7 @@ export function getSelectableZones(planetDatas: CoreType.PlanetData[]): CoreType
 
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Resource): GameType.ResourceType[];
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Building): GameType.BuildingType[];
-export function getAllSpecificThings(thingType: typeof ThingType.Thing.Ship): GameType.ShipType[];
+export function getAllSpecificThings(thingType: typeof ThingType.Thing.Unit): GameType.UnitType[];
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.PlanetValue): GameType.PlanetValueType[];
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.PlayerValue): GameType.PlayerValueType[];
 export function getAllSpecificThings(thingType: typeof ThingType.Thing.Research): GameType.ResearchType[];
@@ -106,9 +106,9 @@ export function getAllSpecificThings(thingType: ThingType.Thing): ThingType.Spec
         {
             return [...StaticData.REASEARCH_INFO.keys()];
         }
-        case ThingType.Thing.Ship:
+        case ThingType.Thing.Unit:
         {
-            return [...StaticData.SHIP_STATS.keys()];
+            return [...StaticData.UNIT_STATS.keys()];
         }
         case ThingType.Thing.Resource:
         {

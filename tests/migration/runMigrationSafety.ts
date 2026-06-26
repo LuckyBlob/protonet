@@ -246,7 +246,7 @@ function injectSyntheticPlanet(databaseConnection: Database.Database, playerId: 
 
     databaseConnection.prepare(
         "INSERT INTO planet_ship (planet_id, player_id, ship_type, ship_quantity) VALUES (?, ?, ?, 5)"
-    ).run(planetId, playerId, GameType.ShipType.SmallTransport);
+    ).run(planetId, playerId, GameType.UnitType.SmallTransport);
 
     injectBuildingUpgrade(databaseConnection, planetId, playerId, cohort, now);
     injectShipConstructionQueue(databaseConnection, planetId, playerId, cohort, now);
@@ -293,7 +293,7 @@ function injectShipConstructionQueue(databaseConnection: Database.Database, plan
         const durationAtStart: number | null = isStarted ? startedActionDurationMs(cohort) : null;
 
         const constructionInsert: { id: number } = insertConstruction.get(planetId, playerId, now - ONE_DAY_MS, ONE_DAY_MS, durationAtStart, startedAt) as { id: number };
-        const shipInsert: { id: number } = insertShip.get(constructionInsert.id, GameType.ShipType.SmallTransport) as { id: number };
+        const shipInsert: { id: number } = insertShip.get(constructionInsert.id, GameType.UnitType.SmallTransport) as { id: number };
         updateCurrent.run(shipInsert.id, constructionInsert.id);
     }
 }
@@ -322,7 +322,7 @@ function injectFleetMovements(databaseConnection: Database.Database, planetId: n
     for (let actionIndex: number = 0; actionIndex < SYNTHETIC_ACTIONS_PER_PLANET; actionIndex = actionIndex + 1)
     {
         const fleetInsert: { id: number } = insertFleet.get(12345 + actionIndex, playerId, planetId, slot, system, SYNTHETIC_GALAXY, slot + 1, system, SYNTHETIC_GALAXY, now, FAR_FUTURE_MS, FAR_FUTURE_MS, now) as { id: number };
-        insertFleetShip.run(fleetInsert.id, GameType.ShipType.SmallTransport);
+        insertFleetShip.run(fleetInsert.id, GameType.UnitType.SmallTransport);
         insertFleetResource.run(fleetInsert.id, GameType.ResourceType.Metal);
         insertFleetFuel.run(fleetInsert.id, GameType.ResourceType.Deuterium);
     }
@@ -339,6 +339,11 @@ function injectFleetMovements(databaseConnection: Database.Database, planetId: n
 // byte-for-byte AFTER migrate + transfer. Scoped to synthetic players because their building / ship /
 // resource / fleet-action types are renumber-STABLE, so db:transfer's 003 renumber can't confound the
 // diff; the real copied rows are covered by the load checks.
+//
+// Migration 024 renames the ship_* tables/columns to unit_* in place. The synthetic rows are injected in
+// the pre-migration (ship_*) schema, so the BEFORE snapshot reads ship_* and the AFTER snapshot reads the
+// renamed unit_* tables, aliasing each renamed column back to its old ship_* key so the byte-for-byte
+// JSON compare still lines up (a pure RENAME can't shift values; this only keeps the keys identical).
 
 type TableSnapshot =
 {
@@ -377,19 +382,25 @@ function captureSyntheticSnapshot(connection: Database.Database, syntheticPlayer
         {
             label: "planet_ship",
             rows: connection.prepare(
-                `SELECT planet_id, player_id, ship_type, ship_quantity FROM planet_ship WHERE player_id IN (${idList}) ORDER BY planet_id, ship_type`
+                postMigration === true
+                    ? `SELECT planet_id, player_id, unit_type AS ship_type, unit_quantity AS ship_quantity FROM planet_unit WHERE player_id IN (${idList}) ORDER BY planet_id, unit_type`
+                    : `SELECT planet_id, player_id, ship_type, ship_quantity FROM planet_ship WHERE player_id IN (${idList}) ORDER BY planet_id, ship_type`
             ).all() as Record<string, unknown>[],
         },
         {
             label: "ship_construction",
             rows: connection.prepare(
-                `SELECT id, planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_ship_construction_ship_row_id FROM ship_construction WHERE player_id IN (${idList}) ORDER BY id`
+                postMigration === true
+                    ? `SELECT id, planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_unit_construction_unit_row_id AS current_ship_construction_ship_row_id FROM unit_construction WHERE player_id IN (${idList}) ORDER BY id`
+                    : `SELECT id, planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_ship_construction_ship_row_id FROM ship_construction WHERE player_id IN (${idList}) ORDER BY id`
             ).all() as Record<string, unknown>[],
         },
         {
             label: "ship_construction_ship",
             rows: connection.prepare(
-                `SELECT id, ship_construction_id, ship_type, ship_quantity FROM ship_construction_ship WHERE ship_construction_id IN (SELECT id FROM ship_construction WHERE player_id IN (${idList})) ORDER BY id`
+                postMigration === true
+                    ? `SELECT id, unit_construction_id AS ship_construction_id, unit_type AS ship_type, unit_quantity AS ship_quantity FROM unit_construction_unit WHERE unit_construction_id IN (SELECT id FROM unit_construction WHERE player_id IN (${idList})) ORDER BY id`
+                    : `SELECT id, ship_construction_id, ship_type, ship_quantity FROM ship_construction_ship WHERE ship_construction_id IN (SELECT id FROM ship_construction WHERE player_id IN (${idList})) ORDER BY id`
             ).all() as Record<string, unknown>[],
         },
         {
@@ -413,7 +424,9 @@ function captureSyntheticSnapshot(connection: Database.Database, syntheticPlayer
         {
             label: "fleet_movement_ship",
             rows: connection.prepare(
-                `SELECT fleet_id, ship_type, ship_quantity FROM fleet_movement_ship WHERE fleet_id IN (SELECT id FROM fleet_movement WHERE player_origin_id IN (${idList})) ORDER BY fleet_id, ship_type`
+                postMigration === true
+                    ? `SELECT fleet_id, unit_type AS ship_type, unit_quantity AS ship_quantity FROM fleet_movement_unit WHERE fleet_id IN (SELECT id FROM fleet_movement WHERE player_origin_id IN (${idList})) ORDER BY fleet_id, unit_type`
+                    : `SELECT fleet_id, ship_type, ship_quantity FROM fleet_movement_ship WHERE fleet_id IN (SELECT id FROM fleet_movement WHERE player_origin_id IN (${idList})) ORDER BY fleet_id, ship_type`
             ).all() as Record<string, unknown>[],
         },
         {

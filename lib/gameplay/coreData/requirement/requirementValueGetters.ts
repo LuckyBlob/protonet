@@ -72,16 +72,16 @@ export function isSpecificBuildingBeingUpgraded(buildingType: GameType.BuildingT
     };
 }
 
-export function shipQuantities(shipType: GameType.ShipType): RequirementType.ThingValueGetter
+export function unitQuantities(unitType: GameType.UnitType): RequirementType.ThingValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
-        if (context.shipQuantities === undefined)
+        if (context.unitQuantities === undefined)
         {
-            throw new Error(`shipQuantities requirement evaluated without a potential fleet action for shipType ${shipType}.`);
+            throw new Error(`unitQuantities requirement evaluated without a potential fleet action for unitType ${unitType}.`);
         }
 
-        return context.shipQuantities.get(shipType) ?? 0;
+        return context.unitQuantities.get(unitType) ?? 0;
     };
 }
 
@@ -187,23 +187,23 @@ export function doesTargetZoneExist(): RequirementType.ThingValueGetter
     };
 }
 
-export function allFleetShipsCanTargetDebrisField(): RequirementType.ThingValueGetter
+export function allFleetUnitsCanTargetDebrisField(): RequirementType.ThingValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
-        if (context.shipQuantities === undefined)
+        if (context.unitQuantities === undefined)
         {
-            throw new Error(`allFleetShipsCanTargetDebrisField requirement evaluated without a potential fleet action.`);
+            throw new Error(`allFleetUnitsCanTargetDebrisField requirement evaluated without a potential fleet action.`);
         }
 
-        for (const [shipType, shipQuantity] of context.shipQuantities)
+        for (const [unitType, unitQuantity] of context.unitQuantities)
         {
-            if (shipQuantity <= 0)
+            if (unitQuantity <= 0)
             {
                 continue;
             }
 
-            if (StaticDataHelper.canShipTargetDebrisField(shipType) === false)
+            if (StaticDataHelper.canUnitTargetDebrisField(unitType) === false)
             {
                 return 0;
             }
@@ -213,23 +213,23 @@ export function allFleetShipsCanTargetDebrisField(): RequirementType.ThingValueG
     };
 }
 
-export function allFleetShipsCanSpy(): RequirementType.ThingValueGetter
+export function allFleetUnitsCanSpy(): RequirementType.ThingValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
-        if (context.shipQuantities === undefined)
+        if (context.unitQuantities === undefined)
         {
-            throw new Error(`allFleetShipsCanSpy requirement evaluated without a potential fleet action.`);
+            throw new Error(`allFleetUnitsCanSpy requirement evaluated without a potential fleet action.`);
         }
 
-        for (const [shipType, shipQuantity] of context.shipQuantities)
+        for (const [unitType, unitQuantity] of context.unitQuantities)
         {
-            if (shipQuantity <= 0)
+            if (unitQuantity <= 0)
             {
                 continue;
             }
 
-            if (StaticDataHelper.canShipSpy(shipType) === false)
+            if (StaticDataHelper.canUnitSpy(unitType) === false)
             {
                 return 0;
             }

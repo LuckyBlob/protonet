@@ -55,8 +55,8 @@ export type DynamicPlanetData =
 	resourceQuantity: Map<GameType.ResourceType, number>;
 	buildingLevels: Map<GameType.BuildingType, number>;
 	buildingEnergySettings: Map<GameType.BuildingType, number>;
-	shipQuantity: Map<GameType.ShipType, number>,
-	shipConstructions: ShipConstruction[];
+	unitQuantity: Map<GameType.UnitType, number>,
+	unitConstructions: UnitConstruction[];
 	futureFleetArrivals: FleetMovement[];
 	buildingUpgrades: BuildingUpgrade[];
 	buildingDeconstructions: BuildingDeconstruction[];
@@ -66,8 +66,8 @@ export const EmptyPlanetData: DynamicPlanetData =
 	resourceQuantity: new Map<GameType.ResourceType, number>(),
 	buildingLevels: new Map<GameType.BuildingType, number>(),
 	buildingEnergySettings: new Map<GameType.BuildingType, number>(),
-	shipQuantity: new Map<GameType.ShipType, number>(),
-	shipConstructions: [],
+	unitQuantity: new Map<GameType.UnitType, number>(),
+	unitConstructions: [],
 	futureFleetArrivals: [],
 	buildingUpgrades: [],
 	buildingDeconstructions: [],
@@ -89,8 +89,8 @@ export const PlanetDataContext =
 {
 	ResourceQuantity: 1,
 	BuildingLevel: 2,
-	ShipQuantity: 3,
-	ShipConstruction: 4,
+	UnitQuantity: 3,
+	UnitConstruction: 4,
 	FutureFleetArrivals: 5,
 	BuildingUpgrade: 6,
 	BuildingDeconstruction: 10,
@@ -114,8 +114,8 @@ export const PlanetDataContextToVariableNameMap =
 {
     [PlanetDataContext.ResourceQuantity]: "resourceQuantity",
     [PlanetDataContext.BuildingLevel]: "buildingLevels",
-    [PlanetDataContext.ShipQuantity]: "shipQuantity",
-    [PlanetDataContext.ShipConstruction]: "shipConstructions",
+    [PlanetDataContext.UnitQuantity]: "unitQuantity",
+    [PlanetDataContext.UnitConstruction]: "unitConstructions",
     [PlanetDataContext.FutureFleetArrivals]: "futureFleetArrivals",
     [PlanetDataContext.BuildingUpgrade]: "buildingUpgrades",
     [PlanetDataContext.BuildingDeconstruction]: "buildingDeconstructions",
@@ -138,10 +138,10 @@ export type PlanetData =
 	dynamicPlanetData: DynamicPlanetData;
 };
 
-export type ShipConstruction =
+export type UnitConstruction =
 {
-	shipConstructionRow: DBType.ShipConstructionRow;
-	shipConstructionShipRows: DBType.ShipConstructionShipRow[];
+	unitConstructionRow: DBType.UnitConstructionRow;
+	unitConstructionUnitRows: DBType.UnitConstructionUnitRow[];
 };
 
 export type BuildingUpgrade =
@@ -165,7 +165,7 @@ export type CurrentlyResearching =
 export type FleetMovement =
 {
 	fleetMovementRow: DBType.FleetMovementRow;
-	fleetMovementShipRows: DBType.FleetMovementShipRow[];
+	fleetMovementUnitRows: DBType.FleetMovementUnitRow[];
 	fleetMovementResourceRows: DBType.FleetMovementResourceRow[];
 	fleetMovementFuelRows: DBType.FleetMovementFuelRow[];
 	resolutionState: FleetMovementResolution;

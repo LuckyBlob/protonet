@@ -4,7 +4,7 @@ import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 export const AnchorEventType =
 {
     BuildingUpgrade: 1,
-    ShipConstruction: 2,
+    UnitConstruction: 2,
     FleetArrival: 3,
     CurrentlyResearching: 4,
     ResourceProduction: 5,

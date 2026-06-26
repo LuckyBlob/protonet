@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as StationAction from '@/lib/gameplay/dynamicData/planet/fleet/stationAction';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
-import * as ShipData from '@/lib/gameplay/dynamicData/planet/shipData';
+import * as UnitData from '@/lib/gameplay/dynamicData/planet/unitData';
 import * as ResourceData from '@/lib/gameplay/dynamicData/planet/resourceData';
 import * as MessageData from '@/lib/gameplay/dynamicData/player/messageData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
@@ -27,7 +27,7 @@ function buildFleetMovement(overrides?: Parameters<typeof TestDataBuilders.build
             duration_at_start_time: 30_000,
             ...(overrides?.fleetMovementRow ?? {}),
         },
-        fleetMovementShipRows: overrides?.fleetMovementShipRows ?? [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 1, ship_quantity: 2 })],
+        fleetMovementUnitRows: overrides?.fleetMovementUnitRows ?? [TestDataBuilders.buildFleetMovementUnitRow({ fleet_id: 1, unit_quantity: 2 })],
         fleetMovementResourceRows: overrides?.fleetMovementResourceRows,
     });
     if (overrides?.resolutionState !== undefined) base.resolutionState = overrides.resolutionState;
@@ -36,7 +36,7 @@ function buildFleetMovement(overrides?: Parameters<typeof TestDataBuilders.build
 
 describe('resolveStationAction', () =>
 {
-    it('adds ships to the target planet', () =>
+    it('adds units to the target planet', () =>
     {
         const fleet: CoreType.FleetMovement = buildFleetMovement();
         const originFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
@@ -56,7 +56,7 @@ describe('resolveStationAction', () =>
 
         StationAction.resolveStationAction(originPlayer, targetPlayer, fleet, TestDataBuilders.buildServerData());
 
-        expect(ShipData.getShipQuantity(targetPlanet, GameType.ShipType.SmallTransport)).toBe(2);
+        expect(UnitData.getUnitQuantity(targetPlanet, GameType.UnitType.SmallTransport)).toBe(2);
     });
 
     it('adds resources to the target planet', () =>

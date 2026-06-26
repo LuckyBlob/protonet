@@ -36,7 +36,7 @@ describe('resolveColonizeAction — too many planets', () =>
                 started_at: 1_000_000,
                 duration_at_start_time: 60_000,
             },
-            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 99, ship_type: GameType.ShipType.ColonyShip, ship_quantity: 1 })],
+            fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ fleet_id: 99, unit_type: GameType.UnitType.ColonyShip, unit_quantity: 1 })],
         });
     }
 
@@ -82,7 +82,7 @@ describe('resolveColonizeAction — too many planets', () =>
                 started_at: 1_000_000,
                 duration_at_start_time: 60_000,
             },
-            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.ShipType.ColonyShip, ship_quantity: 1 })],
+            fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ unit_type: GameType.UnitType.ColonyShip, unit_quantity: 1 })],
         });
         const player: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
 

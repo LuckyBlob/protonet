@@ -65,7 +65,7 @@ test.describe("Fleet recall and speed factor", () =>
         const origin: E2EHelper.PlanetRow = planets[0]!;
         const target: E2EHelper.PlanetRow = planets[1]!;
 
-        E2EHelper.setShipQuantity(origin.id, playerId, GameType.ShipType.SmallTransport, 5, db);
+        E2EHelper.setUnitQuantity(origin.id, playerId, GameType.UnitType.SmallTransport, 5, db);
         E2EHelper.setAllResources(origin.id, playerId, 1_000_000, db);
         await E2EHelper.reloadGame(page);
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
@@ -91,7 +91,7 @@ test.describe("Fleet recall and speed factor", () =>
         const origin: E2EHelper.PlanetRow = planets[0]!;
         const target: E2EHelper.PlanetRow = planets[1]!;
 
-        E2EHelper.setShipQuantity(origin.id, playerId, GameType.ShipType.SmallTransport, 5, db);
+        E2EHelper.setUnitQuantity(origin.id, playerId, GameType.UnitType.SmallTransport, 5, db);
         E2EHelper.setAllResources(origin.id, playerId, 1_000_000, db);
         await E2EHelper.reloadGame(page);
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
@@ -119,12 +119,12 @@ test.describe("Fleet recall and speed factor", () =>
         const playerId: number = E2EHelper.getPlayerId(username, db);
         const origin: E2EHelper.PlanetRow = E2EHelper.getPlanets(username, db)[0]!;
 
-        E2EHelper.setShipQuantity(origin.id, playerId, GameType.ShipType.SmallTransport, 1, db);
+        E2EHelper.setUnitQuantity(origin.id, playerId, GameType.UnitType.SmallTransport, 1, db);
         await E2EHelper.reloadGame(page);
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
         await E2EHelper.goToView(page, "Fleets");
 
-        await E2EHelper.shipRowQuantityInput(page, "Small Transport").fill("1");
+        await E2EHelper.unitRowQuantityInput(page, "Small Transport").fill("1");
         // A far target (different galaxy) makes the duration large enough that 100% vs 10% clearly differ.
         await page.getByPlaceholder("G").fill("2");
         await page.getByPlaceholder("S").fill("1");

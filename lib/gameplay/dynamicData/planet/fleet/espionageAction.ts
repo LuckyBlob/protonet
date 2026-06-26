@@ -29,13 +29,13 @@ export function resolveEspionageAction(originPlayerData: CoreType.PlayerData | n
     const reportLevel: number = Espionage.computeEspionageReportLevel(probeCount, attackerEspionageTech, defenderEspionageTech);
     const revealedInfoBlocks: Set<Espionage.EspionageInfoBlock> = Espionage.getRevealedInfoBlocks(reportLevel);
 
-    const defenderFleetSize: number = MathHelp.calculateTotalQuantityMap(targetPlanetData.dynamicPlanetData.shipQuantity);
+    const defenderFleetSize: number = MathHelp.calculateTotalQuantityMap(targetPlanetData.dynamicPlanetData.unitQuantity);
     const detectionChance: number = Espionage.computeCounterEspionageDetectionChance(probeCount, attackerEspionageTech, defenderEspionageTech, defenderFleetSize);
     const probesDetected: boolean = Espionage.rollCounterEspionageDetection(fleetMovement.fleetMovementRow.seed, detectionChance);
 
     addEspionageReportMessage(originPlayerData, targetPlayerData, targetPlanetData, fleetMovement, revealedInfoBlocks);
 
-    // Detected probes are shot down (they do not return home, so their ships are simply lost), and the
+    // Detected probes are shot down (they do not return home, so their units are simply lost), and the
     // defender learns who spied them. Either way the report has already reached the attacker.
     if (probesDetected === true)
     {
@@ -56,8 +56,8 @@ export function resolveEspionageAction(originPlayerData: CoreType.PlayerData | n
 
 function countEspionageProbes(fleetMovement: CoreType.FleetMovement): number
 {
-    const shipQuantities: Map<GameType.ShipType, number> = FleetData.buildShipQuantitiesFromRows(fleetMovement.fleetMovementShipRows);
-    return shipQuantities.get(GameType.ShipType.EspionageProbe) ?? 0;
+    const unitQuantities: Map<GameType.UnitType, number> = FleetData.buildUnitQuantitiesFromRows(fleetMovement.fleetMovementUnitRows);
+    return unitQuantities.get(GameType.UnitType.EspionageProbe) ?? 0;
 }
 
 function buildEspionageReportBody(targetPlayerData: CoreType.PlayerData, targetPlanetData: CoreType.PlanetData, revealedInfoBlocks: Set<Espionage.EspionageInfoBlock>): string
@@ -65,7 +65,7 @@ function buildEspionageReportBody(targetPlayerData: CoreType.PlayerData, targetP
     const reportLines: string[] = [];
 
     reportLines.push(`Resources: ${buildBlockOrRedacted(revealedInfoBlocks, Espionage.EspionageInfoBlock.Resources, (): string => buildQuantityList(targetPlanetData.dynamicPlanetData.resourceQuantity, (resourceType: GameType.ResourceType): ThingType.SpecificThingType => ThingHelpers.resource(resourceType)))}`);
-    reportLines.push(`Fleet: ${buildBlockOrRedacted(revealedInfoBlocks, Espionage.EspionageInfoBlock.Fleet, (): string => buildQuantityList(targetPlanetData.dynamicPlanetData.shipQuantity, (shipType: GameType.ShipType): ThingType.SpecificThingType => ThingHelpers.ship(shipType)))}`);
+    reportLines.push(`Fleet: ${buildBlockOrRedacted(revealedInfoBlocks, Espionage.EspionageInfoBlock.Fleet, (): string => buildQuantityList(targetPlanetData.dynamicPlanetData.unitQuantity, (unitType: GameType.UnitType): ThingType.SpecificThingType => ThingHelpers.unit(unitType)))}`);
     reportLines.push(`Buildings: ${buildBlockOrRedacted(revealedInfoBlocks, Espionage.EspionageInfoBlock.Buildings, (): string => buildLevelList(targetPlanetData.dynamicPlanetData.buildingLevels, (buildingType: GameType.BuildingType): ThingType.SpecificThingType => ThingHelpers.building(buildingType)))}`);
     reportLines.push(`Research: ${buildBlockOrRedacted(revealedInfoBlocks, Espionage.EspionageInfoBlock.Research, (): string => buildLevelList(ResearchData.getResearchLevelMap(targetPlayerData), (researchType: GameType.ResearchType): ThingType.SpecificThingType => ThingHelpers.research(researchType)))}`);
 

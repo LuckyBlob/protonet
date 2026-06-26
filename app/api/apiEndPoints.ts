@@ -13,7 +13,7 @@ export const ActionRequest =
     UpgradeBuilding:   { endpoint: "buy/upgradeBuilding",   name: "UpgradeBuilding" },
     DeconstructBuilding:   { endpoint: "buy/deconstructBuilding",   name: "DeconstructBuilding" },
     UpgradeResearch:   { endpoint: "buy/upgradeResearch",   name: "UpgradeResearch" },
-    BuildShips:   { endpoint: "buy/buildShips",   name: "BuildShips" },
+    BuildUnits:   { endpoint: "buy/buildUnits",   name: "BuildUnits" },
     SetBuildingEnergySetting:   { endpoint: "buildings/setEnergySetting",   name: "SetBuildingEnergySetting" },
     SendFleet:   { endpoint: "buy/sendFleet",   name: "SendFleet" },
     RecallFleet:   { endpoint: "buy/recallFleet",   name: "RecallFleet" },
@@ -32,7 +32,7 @@ export type ActionRequestMap =
     UpgradeBuilding: RequestType.BuildingUpgrade_ClientRequest;
     DeconstructBuilding: RequestType.BuildingDeconstruction_ClientRequest;
     UpgradeResearch: RequestType.Research_ClientRequest;
-    BuildShips: RequestType.BuildShips_ClientRequest;
+    BuildUnits: RequestType.BuildUnits_ClientRequest;
     SetBuildingEnergySetting: RequestType.SetBuildingEnergySetting_ClientRequest;
     SendFleet: RequestType.SendFleet_ClientRequest;
     RecallFleet: RequestType.RecallFleet_ClientRequest;
@@ -51,7 +51,7 @@ export type ActionResponseMap =
     UpgradeBuilding: RequestType.BuildingUpgrade_ServerResponse;
     DeconstructBuilding: RequestType.BuildingDeconstruction_ServerResponse;
     UpgradeResearch: RequestType.Research_ServerResponse;
-    BuildShips: RequestType.BuildShips_ServerResponse;
+    BuildUnits: RequestType.BuildUnits_ServerResponse;
     SetBuildingEnergySetting: RequestType.SetBuildingEnergySetting_ServerResponse;
     SendFleet: RequestType.SendFleet_ServerResponse;
     RecallFleet: RequestType.RecallFleet_ServerResponse;

@@ -68,15 +68,15 @@ export type PublicPlayerRow =
 	username: string;
 };
 
-export type PlanetShipRow =
+export type PlanetUnitRow =
 {
     planet_id: number;
     player_id: number;
-    ship_type: number;
-    ship_quantity: number;
+    unit_type: number;
+    unit_quantity: number;
 };
 
-export type ShipConstructionRow =
+export type UnitConstructionRow =
 {
     id: number;
     planet_id: number;
@@ -85,15 +85,15 @@ export type ShipConstructionRow =
     duration_at_request_time: number;
     duration_at_start_time: number | null;
     started_at: number | null;
-	current_ship_construction_ship_row_id: number | null;
+	current_unit_construction_unit_row_id: number | null;
 };
 
-export type ShipConstructionShipRow =
+export type UnitConstructionUnitRow =
 {
     id: number,
-	ship_construction_id: number;
-    ship_type: number;
-    ship_quantity: number;
+	unit_construction_id: number;
+    unit_type: number;
+    unit_quantity: number;
 };
 
 export type BuildingUpgradeRow =
@@ -182,11 +182,11 @@ export type FleetMovementRow =
     started_at: number | null;
 };
 
-export type FleetMovementShipRow =
+export type FleetMovementUnitRow =
 {
     fleet_id: number;
-    ship_type: number;
-    ship_quantity: number;
+    unit_type: number;
+    unit_quantity: number;
 };
 
 export type FleetMovementResourceRow =

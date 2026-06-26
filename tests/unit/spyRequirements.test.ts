@@ -7,57 +7,57 @@ import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as StaticDataHelper from '@/lib/gameplay/coreData/static/staticDataHelpers';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
-describe('canShipSpy', () =>
+describe('canUnitSpy', () =>
 {
-    it('is true for the Espionage Probe and false for other ships', () =>
+    it('is true for the Espionage Probe and false for other units', () =>
     {
-        expect(StaticDataHelper.canShipSpy(GameType.ShipType.EspionageProbe)).toBe(true);
-        expect(StaticDataHelper.canShipSpy(GameType.ShipType.SmallTransport)).toBe(false);
-        expect(StaticDataHelper.canShipSpy(GameType.ShipType.Recycler)).toBe(false);
+        expect(StaticDataHelper.canUnitSpy(GameType.UnitType.EspionageProbe)).toBe(true);
+        expect(StaticDataHelper.canUnitSpy(GameType.UnitType.SmallTransport)).toBe(false);
+        expect(StaticDataHelper.canUnitSpy(GameType.UnitType.Recycler)).toBe(false);
     });
 });
 
-describe('allFleetShipsCanSpy requirement getter', () =>
+describe('allFleetUnitsCanSpy requirement getter', () =>
 {
-    it('returns 1 when every ship in the fleet is a probe', () =>
+    it('returns 1 when every unit in the fleet is a probe', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.allFleetShipsCanSpy();
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.allFleetUnitsCanSpy();
         const context: RequirementType.RequirementContext =
         {
             playerData: TestDataBuilders.buildPlayerData(),
             planetId: 1,
-            shipQuantities: new Map<GameType.ShipType, number>([[GameType.ShipType.EspionageProbe, 5]]),
+            unitQuantities: new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, 5]]),
         };
         expect(getter(context)).toBe(1);
     });
 
-    it('returns 0 when any ship in the fleet is not a probe', () =>
+    it('returns 0 when any unit in the fleet is not a probe', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.allFleetShipsCanSpy();
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.allFleetUnitsCanSpy();
         const context: RequirementType.RequirementContext =
         {
             playerData: TestDataBuilders.buildPlayerData(),
             planetId: 1,
-            shipQuantities: new Map<GameType.ShipType, number>([[GameType.ShipType.EspionageProbe, 5], [GameType.ShipType.SmallTransport, 1]]),
+            unitQuantities: new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, 5], [GameType.UnitType.SmallTransport, 1]]),
         };
         expect(getter(context)).toBe(0);
     });
 
-    it('ignores zero-quantity ship types', () =>
+    it('ignores zero-quantity unit types', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.allFleetShipsCanSpy();
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.allFleetUnitsCanSpy();
         const context: RequirementType.RequirementContext =
         {
             playerData: TestDataBuilders.buildPlayerData(),
             planetId: 1,
-            shipQuantities: new Map<GameType.ShipType, number>([[GameType.ShipType.EspionageProbe, 5], [GameType.ShipType.SmallTransport, 0]]),
+            unitQuantities: new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, 5], [GameType.UnitType.SmallTransport, 0]]),
         };
         expect(getter(context)).toBe(1);
     });
 
-    it('throws when there is no fleet (shipQuantities undefined)', () =>
+    it('throws when there is no fleet (unitQuantities undefined)', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.allFleetShipsCanSpy();
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.allFleetUnitsCanSpy();
         const context: RequirementType.RequirementContext =
         {
             playerData: TestDataBuilders.buildPlayerData(),
@@ -77,7 +77,7 @@ describe('Espionage fleet requirements', () =>
         return TestDataBuilders.buildPlayerData({ playerRow: { id: 1 }, planetDatas: [planet] });
     }
 
-    const probeFleet: Map<GameType.ShipType, number> = new Map<GameType.ShipType, number>([[GameType.ShipType.EspionageProbe, 1]]);
+    const probeFleet: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, 1]]);
     const noResources: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
     const target: GameType.PlanetAddress = { galaxy: 2, system: 5, slot: 3, zone: GameType.PlanetZone.Planet };
     const moonTarget: GameType.PlanetAddress = { galaxy: 2, system: 5, slot: 3, zone: GameType.PlanetZone.Moon };
@@ -108,10 +108,10 @@ describe('Espionage fleet requirements', () =>
         expect(failed.length).toBeGreaterThan(0);
     });
 
-    it('fails when the fleet contains a non-spy ship', () =>
+    it('fails when the fleet contains a non-spy unit', () =>
     {
         const player: CoreType.PlayerData = buildSpyingPlayer();
-        const mixedFleet: Map<GameType.ShipType, number> = new Map<GameType.ShipType, number>([[GameType.ShipType.EspionageProbe, 1], [GameType.ShipType.SmallTransport, 1]]);
+        const mixedFleet: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, 1], [GameType.UnitType.SmallTransport, 1]]);
 
         const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Espionage, 1, mixedFleet, noResources, target, targetOwnerId, true);
         expect(failed.length).toBeGreaterThan(0);
@@ -120,7 +120,7 @@ describe('Espionage fleet requirements', () =>
     it('fails when the fleet has no probe at all', () =>
     {
         const player: CoreType.PlayerData = buildSpyingPlayer();
-        const transportFleet: Map<GameType.ShipType, number> = new Map<GameType.ShipType, number>([[GameType.ShipType.SmallTransport, 1]]);
+        const transportFleet: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>([[GameType.UnitType.SmallTransport, 1]]);
 
         const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Espionage, 1, transportFleet, noResources, target, targetOwnerId, true);
         expect(failed.length).toBeGreaterThan(0);

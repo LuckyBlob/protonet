@@ -3,7 +3,7 @@ import * as ApplyProgress from '@/lib/gameplay/progressUpdate/applyProgress';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as ResourceData from '@/lib/gameplay/dynamicData/planet/resourceData';
 import * as BuildingData from '@/lib/gameplay/dynamicData/planet/buildingData';
-import * as ShipData from '@/lib/gameplay/dynamicData/planet/shipData';
+import * as UnitData from '@/lib/gameplay/dynamicData/planet/unitData';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 import * as TestProgressApplierHelper from '../helpers/testProgressApplier';
@@ -84,19 +84,19 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
         expect(BuildingData.getBuildingLevel(result.planetDatas[1]!, GameType.BuildingType.MetalMine)).toBe(0);
     });
 
-    it('resolves a ship construction only on the planet that owns it', () =>
+    it('resolves a unit construction only on the planet that owns it', () =>
     {
-        const shipRow = TestDataBuilders.buildShipConstructionShipRow({ id: 1, ship_type: GameType.ShipType.SmallTransport, ship_quantity: 1 });
-        const construction: CoreType.ShipConstruction =
+        const unitRow = TestDataBuilders.buildUnitConstructionUnitRow({ id: 1, unit_type: GameType.UnitType.SmallTransport, unit_quantity: 1 });
+        const construction: CoreType.UnitConstruction =
         {
-            shipConstructionRow: TestDataBuilders.buildShipConstructionRow(
+            unitConstructionRow: TestDataBuilders.buildUnitConstructionRow(
             {
                 planet_id: 2,
                 started_at: BASE_TIME,
                 duration_at_start_time: 30_000,
-                current_ship_construction_ship_row_id: 1,
+                current_unit_construction_unit_row_id: 1,
             }),
-            shipConstructionShipRows: [shipRow],
+            unitConstructionUnitRows: [unitRow],
         };
 
         const planet1: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
@@ -106,7 +106,7 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
         const planet2: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
             planetRow: { id: 2, last_updated: BASE_TIME },
-            dynamicPlanetData: { shipConstructions: [construction] },
+            dynamicPlanetData: { unitConstructions: [construction] },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet1, planet2] });
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
@@ -114,8 +114,8 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
         const afterCompletion: number = BASE_TIME + 30_001;
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, afterCompletion, APPLIER);
 
-        expect(ShipData.getShipQuantity(result.planetDatas[1]!, GameType.ShipType.SmallTransport)).toBe(1);
-        expect(ShipData.getShipQuantity(result.planetDatas[0]!, GameType.ShipType.SmallTransport)).toBe(0);
+        expect(UnitData.getUnitQuantity(result.planetDatas[1]!, GameType.UnitType.SmallTransport)).toBe(1);
+        expect(UnitData.getUnitQuantity(result.planetDatas[0]!, GameType.UnitType.SmallTransport)).toBe(0);
     });
 
     it('handles the earliest event across planets first, then later ones', () =>

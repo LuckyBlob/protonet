@@ -1,7 +1,7 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
+import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as DBType from "@/lib/db/dbTypes";
@@ -17,7 +17,7 @@ export function resolveCollectAction(originPlayerData: CoreType.PlayerData | nul
     }
 
 	// They caught you!
-    if (ShipData.hasShips(targetPlanetData))
+    if (UnitData.hasUnits(targetPlanetData))
     {
         FleetData.setFleetReturnTrip(targetPlanetData, fleetMovement);
         fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
@@ -108,7 +108,7 @@ function addCollectActionFailureMessage(targetPlayerData: CoreType.PlayerData, f
         type: MessageData.MessageType.FleetAction,
         is_read: 0,
         title: "Collect Fleet Action Report",
-        body: `Failed to collect from ${targetPlayerName} at ${targetAddress} due to enemy ships on the planet.`,
+        body: `Failed to collect from ${targetPlayerName} at ${targetAddress} due to enemy units on the planet.`,
     };
 
     if (fleetRow.player_target_id !== null)
@@ -121,7 +121,7 @@ function addCollectActionFailureMessage(targetPlayerData: CoreType.PlayerData, f
             type: MessageData.MessageType.FleetAction,
             is_read: 0,
             title: "Collect Fleet Action Report",
-            body: `${originPlayerName} attempted to collect from your planet at ${targetAddress} but was repelled by your ships.`,
+            body: `${originPlayerName} attempted to collect from your planet at ${targetAddress} but was repelled by your units.`,
         };
     }
 }

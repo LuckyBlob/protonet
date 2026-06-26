@@ -71,16 +71,16 @@ function writeFleetActionToDB(originPlayerData: FleetData.FleetPlayerData, targe
     {
         if (targetPlayerData !== null)
         {
-            ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.planetData.planetRow.id, targetPlayerData.playerData.playerRow.id, CoreType.DataContext.ShipQuantity, targetPlayerData.planetData.dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.planetData.planetRow.id, targetPlayerData.playerData.playerRow.id, CoreType.DataContext.UnitQuantity, targetPlayerData.planetData.dynamicPlanetData);
             ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.planetData.planetRow.id, targetPlayerData.playerData.playerRow.id, CoreType.DataContext.ResourceQuantity, targetPlayerData.planetData.dynamicPlanetData);
             ServerDynamicData.serverUpdatePlayerDataContext(targetPlayerData.playerData.playerRow.id, CoreType.DataContext.Messages, targetPlayerData.playerData.dynamicPlayerData);
             // Target never updates the fleet movement DB data, owner of that is origin only
         }
 
-        // The ship is returning or stationed, we have to update that
+        // The unit is returning or stationed, we have to update that
         if (fleetMovement.fleetMovementRow.is_return_trip)
         {
-            ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.planetData.planetRow.id, originPlayerData.playerData.playerRow.id, CoreType.DataContext.ShipQuantity, originPlayerData.planetData.dynamicPlanetData);
+            ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.planetData.planetRow.id, originPlayerData.playerData.playerRow.id, CoreType.DataContext.UnitQuantity, originPlayerData.planetData.dynamicPlanetData);
             ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.planetData.planetRow.id, originPlayerData.playerData.playerRow.id, CoreType.DataContext.ResourceQuantity, originPlayerData.planetData.dynamicPlanetData);
         }
         

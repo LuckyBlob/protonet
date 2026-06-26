@@ -99,7 +99,7 @@ function persistStationFleet(playerId: number, originPlanetId: number, galaxy: n
             duration_at_start_time: OUTBOUND_DURATION_MS,
             started_at: startedAt,
         },
-        fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.ShipType.SmallTransport, ship_quantity: 1 })],
+        fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ unit_type: GameType.UnitType.SmallTransport, unit_quantity: 1 })],
         fleetMovementResourceRows: [],
         fleetMovementFuelRows: [],
     });

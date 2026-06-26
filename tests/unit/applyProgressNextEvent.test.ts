@@ -25,17 +25,17 @@ function buildUpgradeAt(planetId: number, completionTime: number): CoreType.Buil
     };
 }
 
-function buildConstructionAt(planetId: number, completionTime: number): CoreType.ShipConstruction
+function buildConstructionAt(planetId: number, completionTime: number): CoreType.UnitConstruction
 {
     return {
-        shipConstructionRow: TestDataBuilders.buildShipConstructionRow(
+        unitConstructionRow: TestDataBuilders.buildUnitConstructionRow(
         {
             planet_id: planetId,
             started_at: BASE_TIME,
             duration_at_start_time: completionTime - BASE_TIME,
-            current_ship_construction_ship_row_id: 1,
+            current_unit_construction_unit_row_id: 1,
         }),
-        shipConstructionShipRows: [TestDataBuilders.buildShipConstructionShipRow({ id: 1 })],
+        unitConstructionUnitRows: [TestDataBuilders.buildUnitConstructionUnitRow({ id: 1 })],
     };
 }
 
@@ -61,14 +61,14 @@ describe('PlayerProgressApplier.getNextAnchorEvent — across-type priority', ()
         expect(result).toBeNull();
     });
 
-    it('picks a building upgrade when it completes before a ship construction', () =>
+    it('picks a building upgrade when it completes before a unit construction', () =>
     {
         const upgrade: CoreType.BuildingUpgrade = buildUpgradeAt(1, BASE_TIME + 10_000);
-        const construction: CoreType.ShipConstruction = buildConstructionAt(1, BASE_TIME + 50_000);
+        const construction: CoreType.UnitConstruction = buildConstructionAt(1, BASE_TIME + 50_000);
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
-            dynamicPlanetData: { buildingUpgrades: [upgrade], shipConstructions: [construction] },
+            dynamicPlanetData: { buildingUpgrades: [upgrade], unitConstructions: [construction] },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
@@ -78,20 +78,20 @@ describe('PlayerProgressApplier.getNextAnchorEvent — across-type priority', ()
         expect(result!.time).toBe(BASE_TIME + 10_000);
     });
 
-    it('picks a ship construction when it completes before a building upgrade', () =>
+    it('picks a unit construction when it completes before a building upgrade', () =>
     {
         const upgrade: CoreType.BuildingUpgrade = buildUpgradeAt(1, BASE_TIME + 50_000);
-        const construction: CoreType.ShipConstruction = buildConstructionAt(1, BASE_TIME + 10_000);
+        const construction: CoreType.UnitConstruction = buildConstructionAt(1, BASE_TIME + 10_000);
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
-            dynamicPlanetData: { buildingUpgrades: [upgrade], shipConstructions: [construction] },
+            dynamicPlanetData: { buildingUpgrades: [upgrade], unitConstructions: [construction] },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
         const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData, TestDataBuilders.buildServerData());
         expect(result).not.toBeNull();
-        expect(result!.type).toBe(AnchorEvent.AnchorEventType.ShipConstruction);
+        expect(result!.type).toBe(AnchorEvent.AnchorEventType.UnitConstruction);
         expect(result!.time).toBe(BASE_TIME + 10_000);
     });
 
@@ -116,11 +116,11 @@ describe('PlayerProgressApplier.getNextAnchorEvent — across-type priority', ()
         // The base PlayerProgressApplier uses `>` (strictly greater) for replacement.
         // Pin the current order: BuildingUpgrade is checked first, so ties are kept as BuildingUpgrade.
         const upgrade: CoreType.BuildingUpgrade = buildUpgradeAt(1, BASE_TIME + 10_000);
-        const construction: CoreType.ShipConstruction = buildConstructionAt(1, BASE_TIME + 10_000);
+        const construction: CoreType.UnitConstruction = buildConstructionAt(1, BASE_TIME + 10_000);
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
-            dynamicPlanetData: { buildingUpgrades: [upgrade], shipConstructions: [construction] },
+            dynamicPlanetData: { buildingUpgrades: [upgrade], unitConstructions: [construction] },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
@@ -149,7 +149,7 @@ describe('PlayerProgressApplier.getNextAnchorEvent — across-type priority', ()
     it('picks the earliest across planets even when each planet has a different event type', () =>
     {
         const upgradeFar: CoreType.BuildingUpgrade = buildUpgradeAt(1, BASE_TIME + 50_000);
-        const constructionNear: CoreType.ShipConstruction = buildConstructionAt(2, BASE_TIME + 5_000);
+        const constructionNear: CoreType.UnitConstruction = buildConstructionAt(2, BASE_TIME + 5_000);
 
         const planet1: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
@@ -159,13 +159,13 @@ describe('PlayerProgressApplier.getNextAnchorEvent — across-type priority', ()
         const planet2: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
             planetRow: { id: 2 },
-            dynamicPlanetData: { shipConstructions: [constructionNear] },
+            dynamicPlanetData: { unitConstructions: [constructionNear] },
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet1, planet2] });
 
         const result: AnchorEvent.AnchorEvent | null = APPLIER.getNextAnchorEvent(playerData, TestDataBuilders.buildServerData());
         expect(result).not.toBeNull();
-        expect(result!.type).toBe(AnchorEvent.AnchorEventType.ShipConstruction);
+        expect(result!.type).toBe(AnchorEvent.AnchorEventType.UnitConstruction);
         expect(result!.time).toBe(BASE_TIME + 5_000);
     });
 });

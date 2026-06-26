@@ -11,7 +11,7 @@ import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelper
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as HelperElements from "@/components/helpers/helperElements";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
-import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
+import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as HelperElement from "@/components/helpers/helperElements";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
@@ -37,7 +37,7 @@ type FleetViewData =
     systemIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void];
     slotIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void];
     zoneIdState: [GameType.PlanetZone, (value: GameType.PlanetZone) => void];
-    requestedShipQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ShipType>;
+    requestedUnitQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.UnitType>;
     requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ResourceType>;
     fleetActionState: [GameType.FleetActionType, (value: GameType.FleetActionType) => void];
     speedPercentageState: [number, (value: number) => void];
@@ -159,15 +159,15 @@ function renderFleetMovementsSection(props: FleetViewProps): ReactElement
     return element;
 }
 
-function renderFleetShipRows(props: FleetViewProps, data: FleetViewData): ReactElement
+function renderFleetUnitRows(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const shipTypes: GameType.ShipType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Ship);
+    const unitTypes: GameType.UnitType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Unit);
 
-    const rowElements: (ReactElement | null)[] = shipTypes.map((shipType: GameType.ShipType) =>
+    const rowElements: (ReactElement | null)[] = unitTypes.map((unitType: GameType.UnitType) =>
     {
-        const requestedQuantity: number = data.requestedShipQuantitiesState.requestedQuantities.get(shipType) ?? 0;
+        const requestedQuantity: number = data.requestedUnitQuantitiesState.requestedQuantities.get(unitType) ?? 0;
 
-        return renderFleetShipRow(props, shipType, requestedQuantity, data.requestedShipQuantitiesState.setRequestedQuantity);
+        return renderFleetUnitRow(props, unitType, requestedQuantity, data.requestedUnitQuantitiesState.setRequestedQuantity);
     });
 
     const element: ReactElement =
@@ -180,12 +180,12 @@ function renderFleetShipRows(props: FleetViewProps, data: FleetViewData): ReactE
     return element;
 }
 
-function renderFleetShipRow(props: FleetViewProps, shipType: GameType.ShipType, requestedQuantity: number, setRequestedQuantity: (shipType: GameType.ShipType, value: number) => void): ReactElement | null
+function renderFleetUnitRow(props: FleetViewProps, unitType: GameType.UnitType, requestedQuantity: number, setRequestedQuantity: (unitType: GameType.UnitType, value: number) => void): ReactElement | null
 {
     const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
 
-    const shipName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(shipType));
-    const ownedQuantity: number = ShipData.getShipQuantity(selectedPlanetDataPredicted, shipType);
+    const unitName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(unitType));
+    const ownedQuantity: number = UnitData.getUnitQuantity(selectedPlanetDataPredicted, unitType);
     if (ownedQuantity === 0)
     {
         return null;
@@ -193,15 +193,15 @@ function renderFleetShipRow(props: FleetViewProps, shipType: GameType.ShipType, 
 
     const element: ReactElement =
     (
-        <div key={shipType} className="flex flex-row items-center border border-gray-400 rounded h-31 w-full">
+        <div key={unitType} className="flex flex-row items-center border border-gray-400 rounded h-31 w-full">
             
             <div className="flex flex-col items-center justify-center px-4 py-2 border-r border-gray-400 gap-1 w-[160px] h-full">
-                {HelperElement.renderShipImage(shipType)}
-                <div className="font-bold text-sm text-center whitespace-nowrap">{shipName}</div>
+                {HelperElement.renderUnitImage(unitType)}
+                <div className="font-bold text-sm text-center whitespace-nowrap">{unitName}</div>
             </div>
 
             <div className="flex flex-col items-center justify-center h-full px-4 gap-1 flex-1">
-                {HelperElement.renderQuantityInput(shipType, 0, ownedQuantity, requestedQuantity, selectedPlanetDataPredicted, setRequestedQuantity)}
+                {HelperElement.renderQuantityInput(unitType, 0, ownedQuantity, requestedQuantity, selectedPlanetDataPredicted, setRequestedQuantity)}
                 <div className="text-sm font-semibold whitespace-nowrap">{ownedQuantity} owned</div>
             </div>
         </div>
@@ -296,26 +296,26 @@ function getFleetViewTargetAddress(data: FleetViewData): GameType.PlanetAddress
     return targetAddress;
 }
 
-// The requested ship quantities persist in state across sends (we deliberately don't reset the inputs),
-// so after a send — or any drop in owned ships — a stored request can exceed what's now on the planet.
+// The requested unit quantities persist in state across sends (we deliberately don't reset the inputs),
+// so after a send — or any drop in owned units — a stored request can exceed what's now on the planet.
 // Cap each request to the currently owned amount so the displayed value, fuel/space math, and the send
-// payload all stay valid. The underlying state is left untouched, so the old value comes back if ships do.
-function capRequestedShipQuantitiesToOwned(requestedShipQuantities: Map<GameType.ShipType, number>, planetData: CoreType.PlanetData): Map<GameType.ShipType, number>
+// payload all stay valid. The underlying state is left untouched, so the old value comes back if units do.
+function capRequestedUnitQuantitiesToOwned(requestedUnitQuantities: Map<GameType.UnitType, number>, planetData: CoreType.PlanetData): Map<GameType.UnitType, number>
 {
-    const cappedShipQuantities: Map<GameType.ShipType, number> = new Map<GameType.ShipType, number>();
+    const cappedUnitQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();
 
-    for (const [shipType, requestedQuantity] of requestedShipQuantities)
+    for (const [unitType, requestedQuantity] of requestedUnitQuantities)
     {
-        const ownedQuantity: number = ShipData.getShipQuantity(planetData, shipType);
+        const ownedQuantity: number = UnitData.getUnitQuantity(planetData, unitType);
         const cappedQuantity: number = Math.min(requestedQuantity, ownedQuantity);
 
         if (cappedQuantity > 0)
         {
-            cappedShipQuantities.set(shipType, cappedQuantity);
+            cappedUnitQuantities.set(unitType, cappedQuantity);
         }
     }
 
-    return cappedShipQuantities;
+    return cappedUnitQuantities;
 }
 
 function renderPlanetTargetInput(props: FleetViewProps, data: FleetViewData): ReactElement
@@ -468,14 +468,14 @@ function renderFleetMaxResource(props: FleetViewProps, data: FleetViewData): Rea
     const originPlayerData: CoreType.PlayerData = data.playerData;
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
     const targetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
-    const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originPlayerData, originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0], data.speedPercentageState[0]);
-    const totalShipsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedShipQuantitiesState.requestedQuantities);
+    const fuelSpaceData: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(originPlayerData, originAddress, targetAddress, data.requestedUnitQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0], data.speedPercentageState[0]);
+    const totalUnitsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedUnitQuantitiesState.requestedQuantities);
 
     let travelTimeElement: ReactElement | null = null;
 
-    if (totalShipsRequested > 0)
+    if (totalUnitsRequested > 0)
     {
-        const durationSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(originPlayerData, originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0], data.speedPercentageState[0]);
+        const durationSeconds: number = FleetMovementDuration.computeFleetMovementDurationSecondsFromAddresses(originPlayerData, originAddress, targetAddress, data.requestedUnitQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0], data.speedPercentageState[0]);
         const formattedDuration: string = TimeFormat.formatRemainingTimeMs(durationSeconds * 1000);
         travelTimeElement =
         (
@@ -528,9 +528,9 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: GameType.Re
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
     const targetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
 
-    const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, data.requestedShipQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0], data.speedPercentageState[0]);
+    const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, data.requestedUnitQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0], data.speedPercentageState[0]);
     const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
-    const totalFleetSpace: number = FleetData.calculateTotalFleetSpace(data.requestedShipQuantitiesState.requestedQuantities);
+    const totalFleetSpace: number = FleetData.calculateTotalFleetSpace(data.requestedUnitQuantitiesState.requestedQuantities);
     const specificFuelResource: number = fuelRequirements.get(resourceType) ?? 0;
 
     let otherResourcesRequested: number = 0;
@@ -544,6 +544,7 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: GameType.Re
 
     const availableSpaceForThisResource: number = Math.max(totalFleetSpace - otherResourcesRequested - totalFuel, 0);
     const maxResourcePossible: number = Math.max(0, Math.min(ownedResourceQuantity - specificFuelResource, availableSpaceForThisResource));
+    const cappedRequestedResourceQuantity: number = Math.min(requestedResourceQuantity, maxResourcePossible);
 
     const handleFillMax = (): void =>
     {
@@ -557,7 +558,7 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: GameType.Re
                 {resourceName}
             </span>
             <div>
-                {HelperElement.renderQuantityInput(resourceType, 0, maxResourcePossible, requestedResourceQuantity, data.planetData, data.requestedResourceQuantitiesState.setRequestedQuantity)}
+                {HelperElement.renderQuantityInput(resourceType, 0, maxResourcePossible, cappedRequestedResourceQuantity, data.planetData, data.requestedResourceQuantitiesState.setRequestedQuantity)}
             </div>
             <button
                 onClick={handleFillMax}
@@ -577,7 +578,7 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
     const setSelectedAction: (value: GameType.FleetActionType) => void = data.fleetActionState[1];
     const speedPercentage: number = data.speedPercentageState[0];
 
-    const totalShipsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedShipQuantitiesState.requestedQuantities);
+    const totalUnitsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedUnitQuantitiesState.requestedQuantities);
 
     const targetPlanetAddress: GameType.PlanetAddress = getFleetViewTargetAddress(data);
 
@@ -591,14 +592,14 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
 
     const validActionIds: GameType.FleetActionType[] = Array.from(StaticData.FLEET_ACTION_INFOS.keys()).filter((actionId: GameType.FleetActionType): boolean =>
     {
-        const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(data.playerData, actionId, data.planetData.planetRow.id, data.requestedShipQuantitiesState.requestedQuantities, data.requestedResourceQuantitiesState.requestedQuantities, targetPlanetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists);
+        const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(data.playerData, actionId, data.planetData.planetRow.id, data.requestedUnitQuantitiesState.requestedQuantities, data.requestedResourceQuantitiesState.requestedQuantities, targetPlanetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists);
         return failedRequirements.length === 0;
     });
 
     const isSelectedActionValid: boolean = validActionIds.includes(selectedAction);
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
     const isSamePlanet: boolean = StaticDataHelper.isSameAddress(originAddress, targetPlanetAddress);
-    const isSendDisabled: boolean = (totalShipsRequested === 0) || (isSelectedActionValid === false) || (isSamePlanet === true);
+    const isSendDisabled: boolean = (totalUnitsRequested === 0) || (isSelectedActionValid === false) || (isSamePlanet === true);
 
     const handleChange = (e: ChangeEvent<HTMLSelectElement>): void =>
     {
@@ -614,7 +615,7 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
             data.planetData.planetRow.id,
             targetPlanetAddress,
             selectedAction,
-            data.requestedShipQuantitiesState.requestedQuantities,
+            data.requestedUnitQuantitiesState.requestedQuantities,
             data.requestedResourceQuantitiesState.requestedQuantities,
             speedPercentage);
 
@@ -683,7 +684,7 @@ function renderFleetViewLayout(props: FleetViewProps, data: FleetViewData): Reac
         <div className="w-full flex flex-col items-center pt-4">
             <div className="flex flex-row items-center justify-center">
                 <div className="flex flex-col items-center gap-2 px-6">
-                    {renderFleetShipRows(props, data)}
+                    {renderFleetUnitRows(props, data)}
                 </div>
 
                 <div className="w-px bg-gray-400 h-80 my-0" />
@@ -711,7 +712,7 @@ export function FleetView(props: FleetViewProps): ReactElement
     const systemIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(StaticData.SYSTEM_COUNT);
     const slotIdState: [number, (value: number) => void, (e: ChangeEvent<HTMLInputElement>) => void] = useIdState(StaticData.SLOT_COUNT);
     const zoneIdState: [GameType.PlanetZone, (value: GameType.PlanetZone) => void] = useState<GameType.PlanetZone>(GameType.PlanetZone.Planet);
-    const requestedShipQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ShipType> = HelperElement.useRequestedQuantities<GameType.ShipType>();
+    const requestedUnitQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.UnitType> = HelperElement.useRequestedQuantities<GameType.UnitType>();
     const requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ResourceType> = HelperElement.useRequestedQuantities<GameType.ResourceType>();
     const fleetActionState: [GameType.FleetActionType, (value: GameType.FleetActionType) => void] = useState<GameType.FleetActionType>(GameType.FleetActionType.Station);
     const speedPercentageState: [number, (value: number) => void] = useState<number>(100);
@@ -719,7 +720,7 @@ export function FleetView(props: FleetViewProps): ReactElement
 
     useEffect((): void =>
     {
-        requestedShipQuantitiesState.resetRequestedQuantities();
+        requestedUnitQuantitiesState.resetRequestedQuantities();
         requestedResourceQuantitiesState.resetRequestedQuantities();
         galaxyIdState[1](1);
         systemIdState[1](1);
@@ -733,11 +734,11 @@ export function FleetView(props: FleetViewProps): ReactElement
     try
     {
         const selectedPlanetData: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-        const cappedRequestedShipQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ShipType> =
+        const cappedRequestedUnitQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.UnitType> =
         {
-            requestedQuantities: capRequestedShipQuantitiesToOwned(requestedShipQuantitiesState.requestedQuantities, selectedPlanetData),
-            setRequestedQuantity: requestedShipQuantitiesState.setRequestedQuantity,
-            resetRequestedQuantities: requestedShipQuantitiesState.resetRequestedQuantities,
+            requestedQuantities: capRequestedUnitQuantitiesToOwned(requestedUnitQuantitiesState.requestedQuantities, selectedPlanetData),
+            setRequestedQuantity: requestedUnitQuantitiesState.setRequestedQuantity,
+            resetRequestedQuantities: requestedUnitQuantitiesState.resetRequestedQuantities,
         };
 
         const fleetViewData: FleetViewData =
@@ -748,7 +749,7 @@ export function FleetView(props: FleetViewProps): ReactElement
             systemIdState: systemIdState,
             slotIdState: slotIdState,
             zoneIdState: zoneIdState,
-            requestedShipQuantitiesState: cappedRequestedShipQuantitiesState,
+            requestedUnitQuantitiesState: cappedRequestedUnitQuantitiesState,
             requestedResourceQuantitiesState: requestedResourceQuantitiesState,
             fleetActionState: fleetActionState,
             speedPercentageState: speedPercentageState,

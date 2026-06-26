@@ -165,7 +165,7 @@ describe('serializePlayerData / deserializePlayerData', () =>
         const fleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement(
         {
             fleetMovementRow: { id: 7 },
-            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 7, ship_quantity: 4 })],
+            fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ fleet_id: 7, unit_quantity: 4 })],
             fleetMovementResourceRows: [TestDataBuilders.buildFleetMovementResourceRow({ fleet_id: 7, resource_quantity: 250 })],
             resolutionState: CoreType.FleetMovementResolution.Unresolved,
         });
@@ -181,21 +181,21 @@ describe('serializePlayerData / deserializePlayerData', () =>
 
         const restoredFleet: CoreType.FleetMovement = restored.planetDatas[0]!.dynamicPlanetData.futureFleetArrivals[0]!;
         expect(restoredFleet.fleetMovementRow.id).toBe(7);
-        expect(restoredFleet.fleetMovementShipRows[0]!.ship_quantity).toBe(4);
+        expect(restoredFleet.fleetMovementUnitRows[0]!.unit_quantity).toBe(4);
         expect(restoredFleet.fleetMovementResourceRows[0]!.resource_quantity).toBe(250);
         expect(restoredFleet.resolutionState).toBe(CoreType.FleetMovementResolution.Unresolved);
     });
 
-    it('round-trips shipConstructions through JSON', () =>
+    it('round-trips unitConstructions through JSON', () =>
     {
-        const construction: CoreType.ShipConstruction =
+        const construction: CoreType.UnitConstruction =
         {
-            shipConstructionRow: TestDataBuilders.buildShipConstructionRow({ id: 3 }),
-            shipConstructionShipRows: [TestDataBuilders.buildShipConstructionShipRow({ id: 3, ship_construction_id: 3, ship_quantity: 5 })],
+            unitConstructionRow: TestDataBuilders.buildUnitConstructionRow({ id: 3 }),
+            unitConstructionUnitRows: [TestDataBuilders.buildUnitConstructionUnitRow({ id: 3, unit_construction_id: 3, unit_quantity: 5 })],
         };
         const planetData: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
-            dynamicPlanetData: { shipConstructions: [construction] },
+            dynamicPlanetData: { unitConstructions: [construction] },
         });
         const original: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planetData] });
 
@@ -203,9 +203,9 @@ describe('serializePlayerData / deserializePlayerData', () =>
         const wire: string = JSON.stringify(serialized);
         const restored: CoreType.PlayerData = Serialization.deserializePlayerData(JSON.parse(wire) as Serialization.SerializedPlayerData);
 
-        const restoredConstruction: CoreType.ShipConstruction = restored.planetDatas[0]!.dynamicPlanetData.shipConstructions[0]!;
-        expect(restoredConstruction.shipConstructionRow.id).toBe(3);
-        expect(restoredConstruction.shipConstructionShipRows[0]!.ship_quantity).toBe(5);
+        const restoredConstruction: CoreType.UnitConstruction = restored.planetDatas[0]!.dynamicPlanetData.unitConstructions[0]!;
+        expect(restoredConstruction.unitConstructionRow.id).toBe(3);
+        expect(restoredConstruction.unitConstructionUnitRows[0]!.unit_quantity).toBe(5);
     });
 
     it('round-trips publicPlanetDatas and publicPlayerRows', () =>

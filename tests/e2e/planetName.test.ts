@@ -1,7 +1,7 @@
 // End-to-end coverage for renaming a planet: the name is set from the Current Planet view and must
 // update the planet selector immediately (no reload), appear in the selector dropdown, the Fleets
 // "My planets" dropdown, and as the origin of an active fleet movement; survive a reload; and reset to
-// the coordinate label when cleared. Seeds ships/fuel into the shared SQLite universe for the fleet case.
+// the coordinate label when cleared. Seeds units/fuel into the shared SQLite universe for the fleet case.
 
 import { test, expect } from "@playwright/test";
 import Database from "better-sqlite3";
@@ -89,8 +89,8 @@ test.describe("Planet name", () =>
         await page.getByRole("button", { name: "Save", exact: true }).click();
         await expect(page.getByRole("button", { name: `Planet ${NEW_NAME}`, exact: true })).toBeVisible();
 
-        // Seed a ship + fuel so a Station fleet can launch from the renamed planet.
-        E2EHelper.setShipQuantity(origin.id, playerId, GameType.ShipType.SmallTransport, 1, db);
+        // Seed a unit + fuel so a Station fleet can launch from the renamed planet.
+        E2EHelper.setUnitQuantity(origin.id, playerId, GameType.UnitType.SmallTransport, 1, db);
         E2EHelper.setResource(origin.id, playerId, GameType.ResourceType.Deuterium, 100000, db);
         await E2EHelper.reloadGame(page);
         await E2EHelper.selectPlanetByAddress(page, NEW_NAME);

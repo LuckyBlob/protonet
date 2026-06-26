@@ -54,12 +54,12 @@ export function buildDynamicPlanetData(overrides?: Partial<CoreType.DynamicPlane
         ]),
         buildingLevels: new Map<GameType.BuildingType, number>(),
         buildingEnergySettings: new Map<GameType.BuildingType, number>(),
-        shipQuantity: new Map<GameType.ShipType, number>
+        unitQuantity: new Map<GameType.UnitType, number>
         ([
-            [GameType.ShipType.SmallTransport, 0],
-            [GameType.ShipType.LargeTransport, 0],
+            [GameType.UnitType.SmallTransport, 0],
+            [GameType.UnitType.LargeTransport, 0],
         ]),
-        shipConstructions: [],
+        unitConstructions: [],
         futureFleetArrivals: [],
         buildingUpgrades: [],
         buildingDeconstructions: [],
@@ -224,9 +224,9 @@ export function buildCurrentlyResearching(overrides?: { currentlyResearchingRow?
     return currentlyResearching;
 }
 
-export function buildShipConstructionRow(overrides?: Partial<DBType.ShipConstructionRow>): DBType.ShipConstructionRow
+export function buildUnitConstructionRow(overrides?: Partial<DBType.UnitConstructionRow>): DBType.UnitConstructionRow
 {
-    const row: DBType.ShipConstructionRow =
+    const row: DBType.UnitConstructionRow =
     {
         id: 1,
         planet_id: 1,
@@ -235,21 +235,21 @@ export function buildShipConstructionRow(overrides?: Partial<DBType.ShipConstruc
         duration_at_request_time: 10_000,
         duration_at_start_time: 10_000,
         started_at: 1_000_000,
-        current_ship_construction_ship_row_id: 1,
+        current_unit_construction_unit_row_id: 1,
         ...overrides,
     };
 
     return row;
 }
 
-export function buildShipConstructionShipRow(overrides?: Partial<DBType.ShipConstructionShipRow>): DBType.ShipConstructionShipRow
+export function buildUnitConstructionUnitRow(overrides?: Partial<DBType.UnitConstructionUnitRow>): DBType.UnitConstructionUnitRow
 {
-    const row: DBType.ShipConstructionShipRow =
+    const row: DBType.UnitConstructionUnitRow =
     {
         id: 1,
-        ship_construction_id: 1,
-        ship_type: GameType.ShipType.SmallTransport,
-        ship_quantity: 1,
+        unit_construction_id: 1,
+        unit_type: GameType.UnitType.SmallTransport,
+        unit_quantity: 1,
         ...overrides,
     };
 
@@ -285,13 +285,13 @@ export function buildFleetMovementRow(overrides?: Partial<DBType.FleetMovementRo
     return row;
 }
 
-export function buildFleetMovementShipRow(overrides?: Partial<DBType.FleetMovementShipRow>): DBType.FleetMovementShipRow
+export function buildFleetMovementUnitRow(overrides?: Partial<DBType.FleetMovementUnitRow>): DBType.FleetMovementUnitRow
 {
-    const row: DBType.FleetMovementShipRow =
+    const row: DBType.FleetMovementUnitRow =
     {
         fleet_id: 1,
-        ship_type: GameType.ShipType.SmallTransport,
-        ship_quantity: 1,
+        unit_type: GameType.UnitType.SmallTransport,
+        unit_quantity: 1,
         ...overrides,
     };
 
@@ -314,7 +314,7 @@ export function buildFleetMovementResourceRow(overrides?: Partial<DBType.FleetMo
 export type FleetMovementOverrides =
 {
     fleetMovementRow?: Partial<DBType.FleetMovementRow>;
-    fleetMovementShipRows?: DBType.FleetMovementShipRow[];
+    fleetMovementUnitRows?: DBType.FleetMovementUnitRow[];
     fleetMovementResourceRows?: DBType.FleetMovementResourceRow[];
     fleetMovementFuelRows?: DBType.FleetMovementFuelRow[];
     resolutionState?: CoreType.FleetMovementResolution;
@@ -327,7 +327,7 @@ export function buildFleetMovement(overrides?: FleetMovementOverrides): CoreType
     const fleetMovement: CoreType.FleetMovement =
     {
         fleetMovementRow: buildFleetMovementRow(overrides?.fleetMovementRow),
-        fleetMovementShipRows: overrides?.fleetMovementShipRows ?? [buildFleetMovementShipRow()],
+        fleetMovementUnitRows: overrides?.fleetMovementUnitRows ?? [buildFleetMovementUnitRow()],
         fleetMovementResourceRows: overrides?.fleetMovementResourceRows ?? [],
         fleetMovementFuelRows: overrides?.fleetMovementFuelRows ?? [],
         resolutionState: overrides?.resolutionState ?? CoreType.FleetMovementResolution.Unresolved,

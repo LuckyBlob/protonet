@@ -156,7 +156,7 @@ describe('no building can be queued while another upgrade is already in progress
     });
 });
 
-describe('getFailedShipBuildRequirements', () =>
+describe('getFailedUnitBuildRequirements', () =>
 {
     it('blocks Small Transport when Shipyard level is below 2', () =>
     {
@@ -169,7 +169,7 @@ describe('getFailedShipBuildRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.SmallTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -184,7 +184,7 @@ describe('getFailedShipBuildRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.SmallTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
         expect(failed).toHaveLength(0);
     });
 
@@ -206,7 +206,7 @@ describe('getFailedShipBuildRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.SmallTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -228,7 +228,7 @@ describe('getFailedShipBuildRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.SmallTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
         expect(failed).toHaveLength(0);
     });
 
@@ -243,7 +243,7 @@ describe('getFailedShipBuildRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.LargeTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.LargeTransport, 1);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -258,7 +258,7 @@ describe('getFailedShipBuildRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.LargeTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.LargeTransport, 1);
         expect(failed).toHaveLength(0);
     });
 
@@ -273,7 +273,7 @@ describe('getFailedShipBuildRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.ColonyShip, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.ColonyShip, 1);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -288,15 +288,15 @@ describe('getFailedShipBuildRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.ColonyShip, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.ColonyShip, 1);
         expect(failed).toHaveLength(0);
     });
 });
 
-describe('no ship can be started while the Shipyard is being built', () =>
+describe('no unit can be started while the Shipyard is being built', () =>
 {
-    // A planet whose Shipyard is high enough to satisfy every ship's level requirement, but is
-    // currently being upgraded. While the Shipyard is under construction, no ship should be buildable.
+    // A planet whose Shipyard is high enough to satisfy every unit's level requirement, but is
+    // currently being upgraded. While the Shipyard is under construction, no unit should be buildable.
     function buildPlanetWithShipyardUpgrading(): CoreType.PlanetData
     {
         const shipyardUpgradeRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.Shipyard });
@@ -310,29 +310,29 @@ describe('no ship can be started while the Shipyard is being built', () =>
         {
             dynamicPlanetData:
             {
-                // Level 10 clears every ship's Shipyard-level requirement, isolating the "being upgraded" rule.
+                // Level 10 clears every unit's Shipyard-level requirement, isolating the "being upgraded" rule.
                 buildingLevels: new Map([[GameType.BuildingType.Shipyard, 10]]),
                 buildingUpgrades: [ongoingUpgrade],
             },
         });
     }
 
-    it('every ship type reports a failed requirement (cannot be started)', () =>
+    it('every unit type reports a failed requirement (cannot be started)', () =>
     {
         const planet: CoreType.PlanetData = buildPlanetWithShipyardUpgrading();
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const buildableShipNames: string[] = [];
-        for (const shipType of StaticData.SHIP_STATS.keys())
+        const buildableUnitNames: string[] = [];
+        for (const unitType of StaticData.UNIT_STATS.keys())
         {
-            const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, shipType, planet.planetRow.id);
+            const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, unitType, planet.planetRow.id);
             if (failed.length === 0)
             {
-                buildableShipNames.push(StaticData.SHIP_STATS.get(shipType)!.displayName);
+                buildableUnitNames.push(StaticData.UNIT_STATS.get(unitType)!.displayName);
             }
         }
 
-        expect(buildableShipNames).toEqual([]);
+        expect(buildableUnitNames).toEqual([]);
     });
 });
 
@@ -498,7 +498,7 @@ describe('getRequirementDescriptions', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedShipBuildRequirements(playerData, GameType.ShipType.SmallTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
         const descriptions: string[] = Requirements.getRequirementDescriptions(failed, playerData, 1);
 
         const containsShipyardClause: boolean = descriptions.some((line: string): boolean => line.includes("Shipyard"));

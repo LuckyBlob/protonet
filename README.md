@@ -1,6 +1,6 @@
 # Protonet
 
-Protonet is a Next.js browser game prototype backed by SQLite. Players can register and log in, load shared server state, manage planets, upgrade buildings, and build ships from a single app that contains both the UI and the API routes.
+Protonet is a Next.js browser game prototype backed by SQLite. Players can register and log in, load shared server state, manage planets, upgrade buildings, and build units from a single app that contains both the UI and the API routes.
 
 ## Project workflow
 

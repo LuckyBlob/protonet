@@ -86,12 +86,12 @@ export type Research_ServerResponse = BaseServerResponse &
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
 
-export type BuildShips_ClientRequest = BaseClientRequest &
+export type BuildUnits_ClientRequest = BaseClientRequest &
 {
 	planetId: number;
-	serializedShipQuantities: Serialization.SerializedNumberNumberMap;
+	serializedUnitQuantities: Serialization.SerializedNumberNumberMap;
 };
-export type BuildShips_ServerResponse = BaseServerResponse &
+export type BuildUnits_ServerResponse = BaseServerResponse &
 {
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
@@ -115,7 +115,7 @@ export type SendFleet_ClientRequest = BaseClientRequest &
 	targetPlanetPosition: number;
 	targetPlanetZone: GameType.PlanetZone;
 	fleetAction: GameType.FleetActionType;
-	serializedShipQuantities: Serialization.SerializedNumberNumberMap;
+	serializedUnitQuantities: Serialization.SerializedNumberNumberMap;
 	serializedResourceQuantities: Serialization.SerializedNumberNumberMap
 	speedPercentage: number;
 };

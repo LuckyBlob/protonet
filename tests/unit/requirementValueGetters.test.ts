@@ -184,37 +184,37 @@ describe('isSpecificBuildingBeingUpgraded', () =>
     });
 });
 
-describe('shipQuantities', () =>
+describe('unitQuantities', () =>
 {
-    it('returns the requested ship quantity from the context', () =>
+    it('returns the requested unit quantity from the context', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const context: RequirementType.RequirementContext =
         {
             playerData: playerData,
             planetId: 1,
-            shipQuantities: new Map<GameType.ShipType, number>([[GameType.ShipType.ColonyShip, 2]]),
+            unitQuantities: new Map<GameType.UnitType, number>([[GameType.UnitType.ColonyShip, 2]]),
         };
 
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.shipQuantities(GameType.ShipType.ColonyShip);
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.unitQuantities(GameType.UnitType.ColonyShip);
         expect(getter(context)).toBe(2);
     });
 
-    it('returns 0 when the requested ship type is absent', () =>
+    it('returns 0 when the requested unit type is absent', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const context: RequirementType.RequirementContext =
         {
             playerData: playerData,
             planetId: 1,
-            shipQuantities: new Map<GameType.ShipType, number>(),
+            unitQuantities: new Map<GameType.UnitType, number>(),
         };
 
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.shipQuantities(GameType.ShipType.ColonyShip);
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.unitQuantities(GameType.UnitType.ColonyShip);
         expect(getter(context)).toBe(0);
     });
 
-    it('throws when the context has no ship quantities', () =>
+    it('throws when the context has no unit quantities', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         const context: RequirementType.RequirementContext =
@@ -223,7 +223,7 @@ describe('shipQuantities', () =>
             planetId: 1,
         };
 
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.shipQuantities(GameType.ShipType.ColonyShip);
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.unitQuantities(GameType.UnitType.ColonyShip);
         expect(() => getter(context)).toThrow();
     });
 });

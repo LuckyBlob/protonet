@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import * as ShipSpeed from '@/lib/gameplay/coreData/formula/shipSpeedFormulas';
+import * as UnitSpeed from '@/lib/gameplay/coreData/formula/unitSpeedFormulas';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as ResearchData from '@/lib/gameplay/dynamicData/player/researchData';
@@ -17,10 +17,10 @@ function buildPlayerWithResearch(researchLevels: [GameType.ResearchType, number]
     return playerData;
 }
 
-function getShipSpeedDatas(shipType: GameType.ShipType): GameType.EngineTechData<number>[]
+function getUnitSpeedDatas(unitType: GameType.UnitType): GameType.EngineTechData<number>[]
 {
-    const shipStats: GameType.ShipStats = StaticDataHelper.getShipStats(shipType);
-    return shipStats.speed;
+    const unitStats: GameType.UnitStats = StaticDataHelper.getUnitStats(unitType);
+    return unitStats.speed;
 }
 
 // Mirrors a Small Transport: a Combustion base tier and an Impulse tier that unlocks at Impulse level 5.
@@ -30,19 +30,19 @@ const SMALL_TRANSPORT_SPEED: GameType.EngineTechData<number>[] =
     { engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 5, value: 10000 },
 ];
 
-// A hypothetical ship with a Hyperspace tier, to exercise the +30%/level bonus.
-const HYPERSPACE_SHIP_SPEED: GameType.EngineTechData<number>[] =
+// A hypothetical unit with a Hyperspace tier, to exercise the +30%/level bonus.
+const HYPERSPACE_UNIT_SPEED: GameType.EngineTechData<number>[] =
 [
     { engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 1000 },
     { engineTech: GameType.ResearchType.HyperspaceDrive, researchLevel: 1, value: 2000 },
 ];
 
-describe('computeShipSpeed', () =>
+describe('computeUnitSpeed', () =>
 {
     it('returns the base tier speed when the player has no research', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        expect(ShipSpeed.computeShipSpeed(playerData, SMALL_TRANSPORT_SPEED)).toBe(5000);
+        expect(UnitSpeed.computeUnitSpeed(playerData, SMALL_TRANSPORT_SPEED)).toBe(5000);
     });
 
     it('adds 10% per Combustion Drive level while on the Combustion tier', () =>
@@ -50,7 +50,7 @@ describe('computeShipSpeed', () =>
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         ResearchData.setResearchLevel(playerData, GameType.ResearchType.CombustionDrive, 3);
         // 5000 * (1 + 0.10 * 3) = 6500
-        expect(ShipSpeed.computeShipSpeed(playerData, SMALL_TRANSPORT_SPEED)).toBe(6500);
+        expect(UnitSpeed.computeUnitSpeed(playerData, SMALL_TRANSPORT_SPEED)).toBe(6500);
     });
 
     it('stays on the Combustion tier until Impulse Drive reaches the unlock level', () =>
@@ -59,7 +59,7 @@ describe('computeShipSpeed', () =>
         ResearchData.setResearchLevel(playerData, GameType.ResearchType.CombustionDrive, 4);
         ResearchData.setResearchLevel(playerData, GameType.ResearchType.ImpulseDrive, 4);
         // Impulse 4 < 5, so still Combustion: 5000 * (1 + 0.10 * 4) = 7000
-        expect(ShipSpeed.computeShipSpeed(playerData, SMALL_TRANSPORT_SPEED)).toBe(7000);
+        expect(UnitSpeed.computeUnitSpeed(playerData, SMALL_TRANSPORT_SPEED)).toBe(7000);
     });
 
     it('switches to the Impulse tier and its 20%/level bonus once Impulse Drive unlocks it', () =>
@@ -67,7 +67,7 @@ describe('computeShipSpeed', () =>
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         ResearchData.setResearchLevel(playerData, GameType.ResearchType.ImpulseDrive, 5);
         // 10000 * (1 + 0.20 * 5) = 20000
-        expect(ShipSpeed.computeShipSpeed(playerData, SMALL_TRANSPORT_SPEED)).toBe(20000);
+        expect(UnitSpeed.computeUnitSpeed(playerData, SMALL_TRANSPORT_SPEED)).toBe(20000);
     });
 
     it('applies the bonus of the active engine only, ignoring the other engine levels', () =>
@@ -76,7 +76,7 @@ describe('computeShipSpeed', () =>
         ResearchData.setResearchLevel(playerData, GameType.ResearchType.CombustionDrive, 9);
         ResearchData.setResearchLevel(playerData, GameType.ResearchType.ImpulseDrive, 5);
         // Now on the Impulse tier, so the Combustion level 9 is irrelevant: 10000 * (1 + 0.20 * 5) = 20000
-        expect(ShipSpeed.computeShipSpeed(playerData, SMALL_TRANSPORT_SPEED)).toBe(20000);
+        expect(UnitSpeed.computeUnitSpeed(playerData, SMALL_TRANSPORT_SPEED)).toBe(20000);
     });
 
     it('adds 30% per Hyperspace Drive level while on the Hyperspace tier', () =>
@@ -84,7 +84,7 @@ describe('computeShipSpeed', () =>
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         ResearchData.setResearchLevel(playerData, GameType.ResearchType.HyperspaceDrive, 2);
         // 2000 * (1 + 0.30 * 2) = 3200
-        expect(ShipSpeed.computeShipSpeed(playerData, HYPERSPACE_SHIP_SPEED)).toBe(3200);
+        expect(UnitSpeed.computeUnitSpeed(playerData, HYPERSPACE_UNIT_SPEED)).toBe(3200);
     });
 
     it('returns undefined when no tier matches the player research', () =>
@@ -94,102 +94,102 @@ describe('computeShipSpeed', () =>
         [
             { engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 5, value: 10000 },
         ];
-        expect(ShipSpeed.computeShipSpeed(playerData, noBaseTier)).toBeUndefined();
+        expect(UnitSpeed.computeUnitSpeed(playerData, noBaseTier)).toBeUndefined();
     });
 });
 
-describe('engine tech speed bonuses on the real ships', () =>
+describe('engine tech speed bonuses on the real units', () =>
 {
     // Base speeds from staticData: Small Transport 5000 (Combustion, Impulse tier at 5),
-    // Large Transport 7500 (Combustion only), Colony Ship 2500 (Impulse only). No ship has a
-    // Hyperspace engine, so Hyperspace Drive must never change any current ship's speed.
+    // Large Transport 7500 (Combustion only), Colony Ship 2500 (Impulse only). No unit has a
+    // Hyperspace engine, so Hyperspace Drive must never change any current unit's speed.
 
-    describe('Combustion Drive (+10% per level) applies only to Combustion-engine ships', () =>
+    describe('Combustion Drive (+10% per level) applies only to Combustion-engine units', () =>
     {
-        it('boosts the Large Transport (a pure Combustion ship)', () =>
+        it('boosts the Large Transport (a pure Combustion unit)', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.CombustionDrive, 4]]);
             // 7500 * (1 + 0.10 * 4) = 10500
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.LargeTransport))).toBe(10500);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.LargeTransport))).toBe(10500);
         });
 
         it('boosts the Small Transport while it is still on its Combustion tier', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.CombustionDrive, 5]]);
             // Impulse is 0 (< 5), so still Combustion: 5000 * (1 + 0.10 * 5) = 7500
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.SmallTransport))).toBe(7500);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.SmallTransport))).toBe(7500);
         });
 
-        it('does NOT boost the Colony Ship (a pure Impulse ship)', () =>
+        it('does NOT boost the Colony Ship (a pure Impulse unit)', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.CombustionDrive, 10]]);
             // Colony Ship base 2500 (Impulse); Combustion is the wrong engine, so it stays at base
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.ColonyShip))).toBe(2500);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.ColonyShip))).toBe(2500);
         });
     });
 
-    describe('Impulse Drive (+20% per level) applies only to Impulse-engine ships', () =>
+    describe('Impulse Drive (+20% per level) applies only to Impulse-engine units', () =>
     {
-        it('boosts the Colony Ship (a pure Impulse ship)', () =>
+        it('boosts the Colony Ship (a pure Impulse unit)', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.ImpulseDrive, 3]]);
             // 2500 * (1 + 0.20 * 3) = 4000
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.ColonyShip))).toBe(4000);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.ColonyShip))).toBe(4000);
         });
 
         it('boosts the Small Transport after it switches to its Impulse tier at level 5', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.ImpulseDrive, 6]]);
             // Impulse tier (base 10000): 10000 * (1 + 0.20 * 6) = 22000
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.SmallTransport))).toBe(22000);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.SmallTransport))).toBe(22000);
         });
 
-        it('does NOT boost the Large Transport (a pure Combustion ship)', () =>
+        it('does NOT boost the Large Transport (a pure Combustion unit)', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.ImpulseDrive, 10]]);
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.LargeTransport))).toBe(7500);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.LargeTransport))).toBe(7500);
         });
 
         it('does NOT boost the Small Transport while it is still on its Combustion tier (Impulse < 5)', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.ImpulseDrive, 4]]);
             // Impulse 4 does not unlock the Impulse tier and gives no Combustion-tier bonus: stays at base 5000
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.SmallTransport))).toBe(5000);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.SmallTransport))).toBe(5000);
         });
     });
 
-    describe('Hyperspace Drive (+30% per level) applies to no current ship', () =>
+    describe('Hyperspace Drive (+30% per level) applies to no current unit', () =>
     {
-        it('leaves every current ship at its base speed regardless of Hyperspace level', () =>
+        it('leaves every current unit at its base speed regardless of Hyperspace level', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.HyperspaceDrive, 10]]);
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.SmallTransport))).toBe(5000);
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.LargeTransport))).toBe(7500);
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.ColonyShip))).toBe(2500);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.SmallTransport))).toBe(5000);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.LargeTransport))).toBe(7500);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.ColonyShip))).toBe(2500);
         });
     });
 
-    describe('only the active engine of a ship is bonused', () =>
+    describe('only the active engine of a unit is bonused', () =>
     {
         it('bonuses the Small Transport by Combustion while below the Impulse unlock', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.CombustionDrive, 9], [GameType.ResearchType.ImpulseDrive, 4]]);
             // Still Combustion (Impulse 4 < 5): 5000 * (1 + 0.10 * 9) = 9500
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.SmallTransport))).toBe(9500);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.SmallTransport))).toBe(9500);
         });
 
         it('ignores the Combustion level on the Small Transport once it is on the Impulse tier', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.CombustionDrive, 9], [GameType.ResearchType.ImpulseDrive, 5]]);
             // Now Impulse tier; Combustion 9 is irrelevant: 10000 * (1 + 0.20 * 5) = 20000
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.SmallTransport))).toBe(20000);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.SmallTransport))).toBe(20000);
         });
 
         it('ignores the Combustion level on the Colony Ship and counts only Impulse', () =>
         {
             const playerData: CoreType.PlayerData = buildPlayerWithResearch([[GameType.ResearchType.CombustionDrive, 5], [GameType.ResearchType.ImpulseDrive, 2]]);
             // Colony Ship is Impulse-only: Combustion 5 ignored, 2500 * (1 + 0.20 * 2) = 3500
-            expect(ShipSpeed.computeShipSpeed(playerData, getShipSpeedDatas(GameType.ShipType.ColonyShip))).toBe(3500);
+            expect(UnitSpeed.computeUnitSpeed(playerData, getUnitSpeedDatas(GameType.UnitType.ColonyShip))).toBe(3500);
         });
     });
 });

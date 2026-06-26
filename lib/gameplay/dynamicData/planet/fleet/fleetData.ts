@@ -1,9 +1,9 @@
 ﻿import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ShipFuelConsumption from "@/lib/gameplay/coreData/formula/shipFuelConsumptionFormulas";
-import * as ShipSpeed from "@/lib/gameplay/coreData/formula/shipSpeedFormulas";
+import * as UnitFuelConsumption from "@/lib/gameplay/coreData/formula/unitFuelConsumptionFormulas";
+import * as UnitSpeed from "@/lib/gameplay/coreData/formula/unitSpeedFormulas";
 import * as MathHelp from "@/lib/helper/mathHelp";
-import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
+import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
@@ -24,35 +24,35 @@ export type FleetPlayerDataPair =
     target: FleetPlayerData | null,
 }
 
-export function calculateShipQuantitiesLowestMovementSpeed(playerData: CoreType.PlayerData, shipQuantities: Map<GameType.ShipType, number>): number
+export function calculateUnitQuantitiesLowestMovementSpeed(playerData: CoreType.PlayerData, unitQuantities: Map<GameType.UnitType, number>): number
 {
 	let bFoundData: boolean = false;
 	let lowestSpeed: number = Number.MAX_SAFE_INTEGER;
-	for (const [shipType, shipQuantity] of shipQuantities)
+	for (const [unitType, unitQuantity] of unitQuantities)
 	{
-		if (shipQuantity === 0)
+		if (unitQuantity === 0)
 		{
 			continue;
 		}
 
-		const shipStats: GameType.ShipStats = StaticDataHelper.getShipStats(shipType);
+		const unitStats: GameType.UnitStats = StaticDataHelper.getUnitStats(unitType);
 
-		const shipSpeed: number | undefined = ShipSpeed.computeShipSpeed(playerData, shipStats.speed);
-		if (shipSpeed === undefined)
+		const unitSpeed: number | undefined = UnitSpeed.computeUnitSpeed(playerData, unitStats.speed);
+		if (unitSpeed === undefined)
 		{
-			throw new Error(`⚠️: Ship type ${shipType} has no engine-tech speed tier matching the player's research.`);
+			throw new Error(`⚠️: Unit type ${unitType} has no engine-tech speed tier matching the player's research.`);
 		}
 
-		if (lowestSpeed > shipSpeed)
+		if (lowestSpeed > unitSpeed)
 		{
 			bFoundData = true;
-			lowestSpeed = shipSpeed;
+			lowestSpeed = unitSpeed;
 		}
 	}
 
 	if (bFoundData === false)
 	{
-		throw new Error(`⚠️: Trying to find ship quantities speed with no ships.`); 
+		throw new Error(`⚠️: Trying to find unit quantities speed with no units.`); 
 	}
 
 	return lowestSpeed;
@@ -60,38 +60,38 @@ export function calculateShipQuantitiesLowestMovementSpeed(playerData: CoreType.
 
 export const FULL_SPEED_PERCENTAGE: number = 100;
 
-export function calculateTotalFleetFuel(playerData: CoreType.PlayerData, from: GameType.PlanetAddress, to: GameType.PlanetAddress, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData, speedPercentage: number = FULL_SPEED_PERCENTAGE): Map<GameType.ResourceType, number>
+export function calculateTotalFleetFuel(playerData: CoreType.PlayerData, from: GameType.PlanetAddress, to: GameType.PlanetAddress, unitQuantities: Map<GameType.UnitType, number>, serverData: CoreType.ServerData, speedPercentage: number = FULL_SPEED_PERCENTAGE): Map<GameType.ResourceType, number>
 {
 	const distance: number = StaticDataHelper.getDistance(from, to);
-	return ShipFuelConsumption.computeFuelConsumption(playerData, shipQuantities, distance, speedPercentage, serverData);
+	return UnitFuelConsumption.computeFuelConsumption(playerData, unitQuantities, distance, speedPercentage, serverData);
 }
 
-export function calculateTotalFleetSpace(shipQuantities: Map<GameType.ShipType, number>): number
+export function calculateTotalFleetSpace(unitQuantities: Map<GameType.UnitType, number>): number
 {
 	let totalSpace: number = 0;
-	for (const [shipType, shipQuantity] of shipQuantities)
+	for (const [unitType, unitQuantity] of unitQuantities)
 	{
-		const shipStats: GameType.ShipStats = StaticDataHelper.getShipStats(shipType);
+		const unitStats: GameType.UnitStats = StaticDataHelper.getUnitStats(unitType);
 
-		totalSpace += shipStats.space * shipQuantity;
+		totalSpace += unitStats.space * unitQuantity;
 	}
 
 	return totalSpace;
 }
 
-export function hasSpaceForResourceQuantities(shipQuantities: Map<GameType.ShipType, number>, resourceQuantities: Map<GameType.ResourceType, number>): boolean
+export function hasSpaceForResourceQuantities(unitQuantities: Map<GameType.UnitType, number>, resourceQuantities: Map<GameType.ResourceType, number>): boolean
 {
     const totalFuel: number = MathHelp.calculateTotalQuantityMap(resourceQuantities);
-    const totalSpace: number = calculateTotalFleetSpace(shipQuantities);
+    const totalSpace: number = calculateTotalFleetSpace(unitQuantities);
 
     return totalFuel <= totalSpace;
 }
 
-export function clampResoucesToAddToFleet(shipQuantities: Map<GameType.ShipType, number>, fuelRequirements: Map<GameType.ResourceType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>): Map<GameType.ResourceType, number>
+export function clampResoucesToAddToFleet(unitQuantities: Map<GameType.UnitType, number>, fuelRequirements: Map<GameType.ResourceType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>): Map<GameType.ResourceType, number>
 {
     const totalResources: number = MathHelp.calculateTotalQuantityMap(transportedResourceQuantities);
     const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
-    const availableSpace: number = Math.max(calculateTotalFleetSpace(shipQuantities) - totalFuel, 0);
+    const availableSpace: number = Math.max(calculateTotalFleetSpace(unitQuantities) - totalFuel, 0);
 
     if (availableSpace >= totalResources)
     {
@@ -207,8 +207,8 @@ export function resolveFleetMovementReturnTrip(originPlayerData: CoreType.Player
 		throw new Error("Resolving return trip but origin full planet data is null.");
 	}
 
-	const shipQuantities: Map<GameType.ShipType, number> = buildShipQuantitiesFromRows(fleetMovement.fleetMovementShipRows);
-	ShipData.addPlanetShips(originPlanetData, shipQuantities);
+	const unitQuantities: Map<GameType.UnitType, number> = buildUnitQuantitiesFromRows(fleetMovement.fleetMovementUnitRows);
+	UnitData.addPlanetUnits(originPlanetData, unitQuantities);
 
 	const resourceQuantities: Map<GameType.ResourceType, number> = buildResourceQuantitiesFromRows(fleetMovement.fleetMovementResourceRows);
 	ResourceData.addPlanetResources(originPlanetData, resourceQuantities);
@@ -272,11 +272,11 @@ export function removeFleetMovement(planetData: CoreType.PlanetData, fleetId: nu
 	return planetData;
 }
 
-export function computeFleetFuelAndSpace(playerData: CoreType.PlayerData, originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, shipQuantities: Map<GameType.ShipType, number>, serverData: CoreType.ServerData, speedPercentage: number = FULL_SPEED_PERCENTAGE): { totalFuel: number, availableSpace: number }
+export function computeFleetFuelAndSpace(playerData: CoreType.PlayerData, originAddress: GameType.PlanetAddress, targetAddress: GameType.PlanetAddress, unitQuantities: Map<GameType.UnitType, number>, serverData: CoreType.ServerData, speedPercentage: number = FULL_SPEED_PERCENTAGE): { totalFuel: number, availableSpace: number }
 {
-	const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, shipQuantities, serverData, speedPercentage);
+	const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, unitQuantities, serverData, speedPercentage);
 	const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
-	const totalSpace: number = FleetData.calculateTotalFleetSpace(shipQuantities);
+	const totalSpace: number = FleetData.calculateTotalFleetSpace(unitQuantities);
 	const availableSpace: number = Math.max(totalSpace - totalFuel, 0);
 
 	return { totalFuel: totalFuel, availableSpace: availableSpace };
@@ -284,8 +284,8 @@ export function computeFleetFuelAndSpace(playerData: CoreType.PlayerData, origin
 
 export function computeRemainingFleetCargoSpace(fleetMovement: CoreType.FleetMovement): number
 {
-	const shipQuantities: Map<GameType.ShipType, number> = buildShipQuantitiesFromRows(fleetMovement.fleetMovementShipRows);
-	const totalFleetSpace: number = calculateTotalFleetSpace(shipQuantities);
+	const unitQuantities: Map<GameType.UnitType, number> = buildUnitQuantitiesFromRows(fleetMovement.fleetMovementUnitRows);
+	const totalFleetSpace: number = calculateTotalFleetSpace(unitQuantities);
 
 	let usedSpace: number = 0;
 	for (const fleetMovementFuelRow of fleetMovement.fleetMovementFuelRows)
@@ -331,17 +331,17 @@ export function buildResourcesListFromFleetMovement(fleetMovementResourceRows: D
 	return parts.join(", ");
 }
 
-// Fleet rows carry ship/resource types as plain DB numbers, narrowed to their enum at this boundary.
-export function buildShipQuantitiesFromRows(fleetMovementShipRows: DBType.FleetMovementShipRow[]): Map<GameType.ShipType, number>
+// Fleet rows carry unit/resource types as plain DB numbers, narrowed to their enum at this boundary.
+export function buildUnitQuantitiesFromRows(fleetMovementUnitRows: DBType.FleetMovementUnitRow[]): Map<GameType.UnitType, number>
 {
-	const shipQuantities: Map<GameType.ShipType, number> = new Map<GameType.ShipType, number>();
-	for (const fleetMovementShipRow of fleetMovementShipRows)
+	const unitQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();
+	for (const fleetMovementUnitRow of fleetMovementUnitRows)
 	{
-		const shipType: GameType.ShipType = fleetMovementShipRow.ship_type as GameType.ShipType;
-		shipQuantities.set(shipType, (shipQuantities.get(shipType) ?? 0) + fleetMovementShipRow.ship_quantity);
+		const unitType: GameType.UnitType = fleetMovementUnitRow.unit_type as GameType.UnitType;
+		unitQuantities.set(unitType, (unitQuantities.get(unitType) ?? 0) + fleetMovementUnitRow.unit_quantity);
 	}
 
-	return shipQuantities;
+	return unitQuantities;
 }
 
 export function buildResourceQuantitiesFromRows(fleetMovementResourceRows: DBType.FleetMovementResourceRow[]): Map<GameType.ResourceType, number>
@@ -356,18 +356,18 @@ export function buildResourceQuantitiesFromRows(fleetMovementResourceRows: DBTyp
 	return resourceQuantities;
 }
 
-export function buildShipsListFromFleetMovement(fleetMovementShipRows: DBType.FleetMovementShipRow[]): string
+export function buildUnitsListFromFleetMovement(fleetMovementUnitRows: DBType.FleetMovementUnitRow[]): string
 {
-	if (fleetMovementShipRows.length === 0)
+	if (fleetMovementUnitRows.length === 0)
 	{
-		return "no ships";
+		return "no units";
 	}
 
 	const parts: string[] = [];
-	for (const fleetMovementShipRow of fleetMovementShipRows)
+	for (const fleetMovementUnitRow of fleetMovementUnitRows)
 	{
-		const shipName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(fleetMovementShipRow.ship_type)) ?? "Unknown";
-		parts.push(`${fleetMovementShipRow.ship_quantity} ${shipName}`);
+		const unitName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(fleetMovementUnitRow.unit_type)) ?? "Unknown";
+		parts.push(`${fleetMovementUnitRow.unit_quantity} ${unitName}`);
 	}
 	return parts.join(", ");
 }

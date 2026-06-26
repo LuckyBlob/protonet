@@ -3,7 +3,7 @@ import * as CollectAction from '@/lib/gameplay/dynamicData/planet/fleet/collectA
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as ResourceData from '@/lib/gameplay/dynamicData/planet/resourceData';
-import * as ShipData from '@/lib/gameplay/dynamicData/planet/shipData';
+import * as UnitData from '@/lib/gameplay/dynamicData/planet/unitData';
 import * as MessageData from '@/lib/gameplay/dynamicData/player/messageData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
@@ -21,7 +21,7 @@ type SetupResult =
     targetPlayer: CoreType.PlayerData,
 };
 
-function setup(targetShipQuantities: Map<GameType.ShipType, number> = new Map(), targetResources: Map<GameType.ResourceType, number> = new Map()): SetupResult
+function setup(targetUnitQuantities: Map<GameType.UnitType, number> = new Map(), targetResources: Map<GameType.ResourceType, number> = new Map()): SetupResult
 {
     const fleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement(
     {
@@ -37,7 +37,7 @@ function setup(targetShipQuantities: Map<GameType.ShipType, number> = new Map(),
             started_at: 1_000_000,
             duration_at_start_time: 30_000,
         },
-        fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 1, ship_type: GameType.ShipType.LargeTransport, ship_quantity: 1 })],
+        fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ fleet_id: 1, unit_type: GameType.UnitType.LargeTransport, unit_quantity: 1 })],
     });
 
     const originFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
@@ -53,7 +53,7 @@ function setup(targetShipQuantities: Map<GameType.ShipType, number> = new Map(),
         planetRow: { id: TARGET_PLANET_ID, slot: 4 },
         dynamicPlanetData:
         {
-            shipQuantity: targetShipQuantities,
+            unitQuantity: targetUnitQuantities,
             resourceQuantity: targetResources,
             futureFleetArrivals: [targetFleet],
         },
@@ -73,11 +73,11 @@ function setup(targetShipQuantities: Map<GameType.ShipType, number> = new Map(),
     return { fleet, originPlanet, targetPlanet, originPlayer, targetPlayer };
 }
 
-describe('resolveCollectAction — defender has ships ("caught you")', () =>
+describe('resolveCollectAction — defender has units ("caught you")', () =>
 {
     it('sets fleet to a return trip and Resolved', () =>
     {
-        const result: SetupResult = setup(new Map([[GameType.ShipType.SmallTransport, 1]]));
+        const result: SetupResult = setup(new Map([[GameType.UnitType.SmallTransport, 1]]));
         CollectAction.resolveCollectAction(result.originPlayer, result.targetPlayer, result.fleet, TestDataBuilders.buildServerData());
 
         expect(result.fleet.fleetMovementRow.is_return_trip).toBe(1);
@@ -87,7 +87,7 @@ describe('resolveCollectAction — defender has ships ("caught you")', () =>
     it('does not collect any resources from the target', () =>
     {
         const result: SetupResult = setup(
-            new Map([[GameType.ShipType.SmallTransport, 1]]),
+            new Map([[GameType.UnitType.SmallTransport, 1]]),
             new Map([[GameType.ResourceType.Metal, 5000]]),
         );
         CollectAction.resolveCollectAction(result.originPlayer, result.targetPlayer, result.fleet, TestDataBuilders.buildServerData());
@@ -95,9 +95,9 @@ describe('resolveCollectAction — defender has ships ("caught you")', () =>
         expect(ResourceData.getResourceQuantity(result.targetPlanet, GameType.ResourceType.Metal)).toBe(5000);
     });
 
-    it('attaches a failure message mentioning enemy ships', () =>
+    it('attaches a failure message mentioning enemy units', () =>
     {
-        const result: SetupResult = setup(new Map([[GameType.ShipType.SmallTransport, 1]]));
+        const result: SetupResult = setup(new Map([[GameType.UnitType.SmallTransport, 1]]));
         CollectAction.resolveCollectAction(result.originPlayer, result.targetPlayer, result.fleet, TestDataBuilders.buildServerData());
 
         expect(result.fleet.originMessageRow).not.toBeNull();
@@ -106,12 +106,12 @@ describe('resolveCollectAction — defender has ships ("caught you")', () =>
     });
 });
 
-describe('resolveCollectAction — defender has no ships', () =>
+describe('resolveCollectAction — defender has no units', () =>
 {
     it('collects resources from the target up to available space', () =>
     {
         const result: SetupResult = setup(
-            new Map([[GameType.ShipType.SmallTransport, 0]]),
+            new Map([[GameType.UnitType.SmallTransport, 0]]),
             new Map([[GameType.ResourceType.Metal, 10_000], [GameType.ResourceType.Crystal, 10_000]]),
         );
         CollectAction.resolveCollectAction(result.originPlayer, result.targetPlayer, result.fleet, TestDataBuilders.buildServerData());

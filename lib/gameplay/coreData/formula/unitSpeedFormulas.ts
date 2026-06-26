@@ -2,8 +2,8 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 
-// Each level of the engine tech a ship currently runs on raises its speed by this fraction. The bonus
-// only ever applies to the ship's active engine: a Small Transport on its Combustion tier gains
+// Each level of the engine tech a unit currently runs on raises its speed by this fraction. The bonus
+// only ever applies to the unit's active engine: a Small Transport on its Combustion tier gains
 // 10%/level of Combustion Drive, but once Impulse Drive unlocks its Impulse tier it instead gains
 // 20%/level of Impulse Drive (and the Combustion level stops mattering for it).
 const ENGINE_TECH_SPEED_BONUS_PER_LEVEL: ReadonlyMap<GameType.EngineTech, number> = new Map<GameType.EngineTech, number>
@@ -13,9 +13,9 @@ const ENGINE_TECH_SPEED_BONUS_PER_LEVEL: ReadonlyMap<GameType.EngineTech, number
 	[GameType.ResearchType.HyperspaceDrive, 0.30],
 ]);
 
-export function computeShipSpeed(playerData: CoreType.PlayerData, shipSpeedDatas: GameType.EngineTechData<number>[]): number | undefined
+export function computeUnitSpeed(playerData: CoreType.PlayerData, unitSpeedDatas: GameType.EngineTechData<number>[]): number | undefined
 {
-	const resolvedEngineTechData: GameType.EngineTechData<number> | undefined = ResearchData.resolveEngineTechData(playerData, shipSpeedDatas);
+	const resolvedEngineTechData: GameType.EngineTechData<number> | undefined = ResearchData.resolveEngineTechData(playerData, unitSpeedDatas);
 	if (resolvedEngineTechData === undefined)
 	{
 		return undefined;

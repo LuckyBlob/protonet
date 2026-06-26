@@ -52,7 +52,7 @@ test.afterAll((): void =>
 });
 
 // Registers an attacker + victim, arms the attacker with probes/tech/fuel and seeds the victim with a
-// known stash of resources/ship/building/research, and returns the handles tests need.
+// known stash of resources/unit/building/research, and returns the handles tests need.
 type SpyScenario =
 {
     attacker: string,
@@ -77,7 +77,7 @@ async function setupSpyScenario(page: Page, probeCount: number, attackerEspionag
     const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
     const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
-    E2EHelper.setShipQuantity(attackerPlanet.id, attackerPlayerId, GameType.ShipType.EspionageProbe, probeCount, db);
+    E2EHelper.setUnitQuantity(attackerPlanet.id, attackerPlayerId, GameType.UnitType.EspionageProbe, probeCount, db);
     E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
     E2EHelper.setResearchLevel(attackerPlayerId, GameType.ResearchType.EspionageTech, attackerEspionageTech, db);
     E2EHelper.touchPlanet(attackerPlanet.id, Date.now(), db);
@@ -85,7 +85,7 @@ async function setupSpyScenario(page: Page, probeCount: number, attackerEspionag
     E2EHelper.setResearchLevel(victimPlayerId, GameType.ResearchType.EspionageTech, victimEspionageTech, db);
     E2EHelper.setResearchLevel(victimPlayerId, GameType.ResearchType.EnergyTech, 3, db);
     E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Metal, 4321, db);
-    E2EHelper.setShipQuantity(victimPlanet.id, victimPlayerId, GameType.ShipType.SmallTransport, victimFleetSize, db);
+    E2EHelper.setUnitQuantity(victimPlanet.id, victimPlayerId, GameType.UnitType.SmallTransport, victimFleetSize, db);
     E2EHelper.setBuildingLevel(victimPlanet.id, victimPlayerId, GameType.BuildingType.MetalMine, 5, db);
     E2EHelper.touchPlanet(victimPlanet.id, Date.now(), db);
 
@@ -151,7 +151,7 @@ test.describe("Espionage", () =>
 
         // Probe flew back: no fleet left and the one probe is home again.
         expect(E2EHelper.getFleetsByOrigin(scenario.attackerPlanet.id, db).length).toBe(0);
-        expect(E2EHelper.getShipQuantityDb(scenario.attackerPlanet.id, GameType.ShipType.EspionageProbe, db)).toBe(1);
+        expect(E2EHelper.getUnitQuantityDb(scenario.attackerPlanet.id, GameType.UnitType.EspionageProbe, db)).toBe(1);
 
         // Attacker got a report; victim got nothing.
         expect(E2EHelper.getMessageRowsForPlayer(scenario.attackerPlayerId, db).length).toBe(1);
@@ -160,7 +160,7 @@ test.describe("Espionage", () =>
 
     test("detected probes are destroyed and the defender gets a counterespionage warning", async ({ page }) =>
     {
-        // A sizeable defending fleet is what powers counterespionage: 2 probes * 40 ships * 0.25% = 0.2,
+        // A sizeable defending fleet is what powers counterespionage: 2 probes * 40 units * 0.25% = 0.2,
         // comfortably above the pinned-seed roll, so the probes are shot down.
         const scenario: SpyScenario = await setupSpyScenario(page, 2, 0, 0, 40);
 
@@ -168,7 +168,7 @@ test.describe("Espionage", () =>
 
         // Probes shot down: the fleet is gone AND none returned home.
         expect(E2EHelper.getFleetsByOrigin(scenario.attackerPlanet.id, db).length).toBe(0);
-        expect(E2EHelper.getShipQuantityDb(scenario.attackerPlanet.id, GameType.ShipType.EspionageProbe, db)).toBe(0);
+        expect(E2EHelper.getUnitQuantityDb(scenario.attackerPlanet.id, GameType.UnitType.EspionageProbe, db)).toBe(0);
 
         // The report still reaches the attacker; the victim is warned.
         const attackerMessages: DBType.MessageRow[] = E2EHelper.getMessageRowsForPlayer(scenario.attackerPlayerId, db);
@@ -198,9 +198,9 @@ test.describe("Espionage", () =>
     test("the Espionage action requires a probe-only fleet", async ({ page }) =>
     {
         const scenario: SpyScenario = await setupSpyScenario(page, 1, 1, 0);
-        // The fleet view only shows a ship row for ships you own, so give the attacker a transport to
+        // The fleet view only shows a unit row for units you own, so give the attacker a transport to
         // form the "mixed fleet" case.
-        E2EHelper.setShipQuantity(scenario.attackerPlanet.id, scenario.attackerPlayerId, GameType.ShipType.SmallTransport, 1, db);
+        E2EHelper.setUnitQuantity(scenario.attackerPlanet.id, scenario.attackerPlayerId, GameType.UnitType.SmallTransport, 1, db);
         await E2EHelper.login(page, scenario.attacker, PASSWORD);
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(scenario.attackerPlanet));
         await E2EHelper.goToView(page, "Fleets");
@@ -208,15 +208,15 @@ test.describe("Espionage", () =>
         await page.getByPlaceholder("S").fill(String(scenario.victimPlanet.system));
         await page.getByPlaceholder("G").fill(String(scenario.victimPlanet.galaxy));
 
-        // No ship picked yet → Espionage is not offered.
+        // No unit picked yet → Espionage is not offered.
         await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Espionage" })).toHaveCount(0);
 
         // A probe-only fleet → Espionage is offered.
-        await E2EHelper.shipRowQuantityInput(page, "Espionage Probe").fill("1");
+        await E2EHelper.unitRowQuantityInput(page, "Espionage Probe").fill("1");
         await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Espionage" })).toHaveCount(1);
 
-        // Adding a non-probe ship → Espionage disappears (it must be probe-only).
-        await E2EHelper.shipRowQuantityInput(page, "Small Transport").fill("1");
+        // Adding a non-probe unit → Espionage disappears (it must be probe-only).
+        await E2EHelper.unitRowQuantityInput(page, "Small Transport").fill("1");
         await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Espionage" })).toHaveCount(0);
     });
 
@@ -235,7 +235,7 @@ test.describe("Espionage", () =>
         await spyIcon.click();
 
         await expect.poll((): number => E2EHelper.getFleetsByOrigin(scenario.attackerPlanet.id, db).length).toBe(1);
-        expect(E2EHelper.getShipQuantityDb(scenario.attackerPlanet.id, GameType.ShipType.EspionageProbe, db)).toBe(0);
+        expect(E2EHelper.getUnitQuantityDb(scenario.attackerPlanet.id, GameType.UnitType.EspionageProbe, db)).toBe(0);
     });
 
     test("the galaxy view spy icon is greyed out and inert without a probe", async ({ page }) =>
@@ -289,7 +289,7 @@ test.describe("Espionage", () =>
         await E2EHelper.login(page, scenario.attacker, PASSWORD);
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(scenario.attackerPlanet));
         await E2EHelper.goToView(page, "Fleets");
-        await E2EHelper.shipRowQuantityInput(page, "Espionage Probe").fill("2");
+        await E2EHelper.unitRowQuantityInput(page, "Espionage Probe").fill("2");
         await page.getByPlaceholder("P").fill(String(moonAddress.slot));
         await page.getByPlaceholder("S").fill(String(moonAddress.system));
         await page.getByPlaceholder("G").fill(String(moonAddress.galaxy));
@@ -320,7 +320,7 @@ test.describe("Espionage", () =>
         await E2EHelper.login(page, scenario.attacker, PASSWORD);
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(scenario.attackerPlanet));
         await E2EHelper.goToView(page, "Fleets");
-        await E2EHelper.shipRowQuantityInput(page, "Espionage Probe").fill("1");
+        await E2EHelper.unitRowQuantityInput(page, "Espionage Probe").fill("1");
         await page.getByPlaceholder("P").fill(String(moonAddress.slot));
         await page.getByPlaceholder("S").fill(String(moonAddress.system));
         await page.getByPlaceholder("G").fill(String(moonAddress.galaxy));
@@ -339,7 +339,7 @@ test.describe("Espionage", () =>
 
         // The probe returned home and the report explains it found nothing to spy.
         expect(E2EHelper.getFleetsByOrigin(scenario.attackerPlanet.id, db).length).toBe(0);
-        expect(E2EHelper.getShipQuantityDb(scenario.attackerPlanet.id, GameType.ShipType.EspionageProbe, db)).toBe(1);
+        expect(E2EHelper.getUnitQuantityDb(scenario.attackerPlanet.id, GameType.UnitType.EspionageProbe, db)).toBe(1);
         const attackerMessages: DBType.MessageRow[] = E2EHelper.getMessageRowsForPlayer(scenario.attackerPlayerId, db);
         expect(attackerMessages.length).toBe(1);
         expect(attackerMessages[0].body).toMatch(/returning/i);
@@ -355,7 +355,7 @@ test.describe("Espionage", () =>
         await E2EHelper.login(page, scenario.attacker, PASSWORD);
         await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(scenario.attackerPlanet));
         await E2EHelper.goToView(page, "Fleets");
-        await E2EHelper.shipRowQuantityInput(page, "Espionage Probe").fill("1");
+        await E2EHelper.unitRowQuantityInput(page, "Espionage Probe").fill("1");
         await page.getByPlaceholder("P").fill(String(debrisAddress.slot));
         await page.getByPlaceholder("S").fill(String(debrisAddress.system));
         await page.getByPlaceholder("G").fill(String(debrisAddress.galaxy));

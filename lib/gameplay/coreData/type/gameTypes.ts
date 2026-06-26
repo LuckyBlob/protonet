@@ -141,8 +141,8 @@ export const CalculatedValueType =
 export type CalculatedValueType = typeof CalculatedValueType[keyof typeof CalculatedValueType];
 //#endregion
 
-//#region Ships
-export const ShipType =
+//#region Units
+export const UnitType =
 {
     SmallTransport: 1,
     LargeTransport: 2,
@@ -150,7 +150,7 @@ export const ShipType =
     Recycler: 4,
     EspionageProbe: 5,
 } as const;
-export type ShipType = typeof ShipType[keyof typeof ShipType];
+export type UnitType = typeof UnitType[keyof typeof UnitType];
 export type EngineTech =
 	| typeof ResearchType.CombustionDrive
 	| typeof ResearchType.ImpulseDrive
@@ -161,7 +161,7 @@ export type EngineTechData<TValue> =
 	researchLevel: number,
 	value: TValue,
 }
-export type ShipStats =
+export type UnitStats =
 {
 	displayName: string;
 	requirements?: RequirementType.Requirement[];

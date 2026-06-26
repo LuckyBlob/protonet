@@ -27,8 +27,8 @@ export function getResearchLevelMap(playerData: CoreType.PlayerData): Map<GameTy
     return ThingHelpers.getThingValues(playerData, null, CoreType.DataContext.ResearchLevels) as Map<GameType.ResearchType, number>;
 }
 
-// A ship's engine stat (fuel cost, speed) is tiered by engine-tech research: each entry unlocks once
-// the player reaches its research level on that engine tech. The ship uses the most advanced tier it
+// A unit's engine stat (fuel cost, speed) is tiered by engine-tech research: each entry unlocks once
+// the player reaches its research level on that engine tech. The unit uses the most advanced tier it
 // has unlocked, so we walk the entries (authored from base tier upward) and keep the last one the
 // player qualifies for. The base tier is authored at research level 0, so a match is always found.
 export function resolveEngineTechData<TValue>(playerData: CoreType.PlayerData, engineTechDatas: GameType.EngineTechData<TValue>[]): GameType.EngineTechData<TValue> | undefined

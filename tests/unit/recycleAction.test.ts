@@ -21,7 +21,7 @@ describe('resolveRecycleAction', () =>
                 started_at: 1_000_000,
                 duration_at_start_time: 10_000,
             },
-            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.ShipType.Recycler, ship_quantity: 3 })],
+            fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ unit_type: GameType.UnitType.Recycler, unit_quantity: 3 })],
         });
     }
 
@@ -36,15 +36,15 @@ describe('resolveRecycleAction', () =>
         expect(fleet.resolutionState).toBe(CoreType.FleetMovementResolution.Resolved);
     });
 
-    it('does not consume the fleet ships (send-only, harvest comes later)', () =>
+    it('does not consume the fleet units (send-only, harvest comes later)', () =>
     {
         const fleet: CoreType.FleetMovement = buildRecycleFleet();
         const originPlayerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: 1 } });
 
         RecycleAction.resolveRecycleAction(originPlayerData, null, fleet, CoreType.DefaultServerData);
 
-        expect(fleet.fleetMovementShipRows).toHaveLength(1);
-        expect(fleet.fleetMovementShipRows[0]!.ship_quantity).toBe(3);
+        expect(fleet.fleetMovementUnitRows).toHaveLength(1);
+        expect(fleet.fleetMovementUnitRows[0]!.unit_quantity).toBe(3);
     });
 
     it('produces an origin report message', () =>
@@ -74,7 +74,7 @@ describe('resolveRecycleAction', () =>
                 started_at: 1_000_000,
                 duration_at_start_time: 10_000,
             },
-            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.ShipType.Recycler, ship_quantity: 1 })],
+            fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ unit_type: GameType.UnitType.Recycler, unit_quantity: 1 })],
             fleetMovementResourceRows: [],
             fleetMovementFuelRows: [],
         });
@@ -122,7 +122,7 @@ describe('resolveRecycleAction', () =>
                 started_at: 1_000_000,
                 duration_at_start_time: 10_000,
             },
-            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.ShipType.Recycler, ship_quantity: 1 })],
+            fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ unit_type: GameType.UnitType.Recycler, unit_quantity: 1 })],
             fleetMovementResourceRows: [],
             fleetMovementFuelRows: [],
         });

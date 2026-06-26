@@ -11,7 +11,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ServerType from "@/lib/gameplay/coreData/type/serverTypes";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
-import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
+import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as ServerProgress from "@/lib/gameplay/progressUpdate/server/serverProgress";
 import * as Serialization from "@/lib/helper/serialization";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
@@ -23,7 +23,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleetMovementDurationFormulas";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
-import * as ShipConstructionData from "@/lib/gameplay/dynamicData/planet/shipConstructionData";
+import * as UnitConstructionData from "@/lib/gameplay/dynamicData/planet/unitConstructionData";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as BuildingDeconstructionData from "@/lib/gameplay/dynamicData/planet/buildingDeconstructionData";
 import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
@@ -710,9 +710,9 @@ function rescaleFleetMovementTimes(rescaleFactor: number, now: number): void
     rescaleActiveTimerRows("fleet_movement", rescaleFactor, now);
 }
 
-function rescaleShipConstructionTimes(rescaleFactor: number, now: number): void
+function rescaleUnitConstructionTimes(rescaleFactor: number, now: number): void
 {
-    rescaleActiveTimerRows("ship_construction", rescaleFactor, now);
+    rescaleActiveTimerRows("unit_construction", rescaleFactor, now);
 }
 
 //#endregion
@@ -1148,108 +1148,108 @@ export function tryUpgradeResearchLogic(playerId: number, serverData: CoreType.S
     return playerActionResult;
 }
 
-export function tryBuildShipsLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips>): PlayerActionResult
+export function tryBuildUnitsLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildUnits>): PlayerActionResult
 {
     const now: number = Date.now();
     const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
-    const requestedShipQuantities: Map<GameType.ShipType, number> = Serialization.deserializeNumberNumberMap(requestData.serializedShipQuantities) as Map<GameType.ShipType, number>;
+    const requestedUnitQuantities: Map<GameType.UnitType, number> = Serialization.deserializeNumberNumberMap(requestData.serializedUnitQuantities) as Map<GameType.UnitType, number>;
 
     const relevantPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.planetId);
     if (relevantPlanetData === null)
     {
-        return { success: false, failureReason: "Wrong planet to build ships.", playerStateResult: playerData };
+        return { success: false, failureReason: "Wrong planet to build units.", playerStateResult: playerData };
     }
 
-    if (requestedShipQuantities.size === 0)
+    if (requestedUnitQuantities.size === 0)
     {
-        return { success: false, failureReason: "No ships requested.", playerStateResult: playerData };
+        return { success: false, failureReason: "No units requested.", playerStateResult: playerData };
     }
 
-    for (const [shipType, shipQuantity] of requestedShipQuantities)
+    for (const [unitType, unitQuantity] of requestedUnitQuantities)
     {
-        if (Requirement.getFailedShipBuildRequirements(playerData, shipType, relevantPlanetData.planetRow.id).length > 0)
+        if (Requirement.getFailedUnitBuildRequirements(playerData, unitType, relevantPlanetData.planetRow.id).length > 0)
         {
-            return { success: false, failureReason: "A ship doesn't meet requirements.", playerStateResult: playerData };
+            return { success: false, failureReason: "A unit doesn't meet requirements.", playerStateResult: playerData };
         }
 
-        if (shipQuantity <= 0)
+        if (unitQuantity <= 0)
         {
-            return { success: false, failureReason: "Non-positive ship quantity.", playerStateResult: playerData };
+            return { success: false, failureReason: "Non-positive unit quantity.", playerStateResult: playerData };
         }
     }
 
-    const possibleRequestedShipQuantities: Map<GameType.ShipType, number> = ShipConstructionData.computeMaxAffordableShipQuantities(relevantPlanetData, requestedShipQuantities);
-    if (possibleRequestedShipQuantities.size === 0)
+    const possibleRequestedUnitQuantities: Map<GameType.UnitType, number> = UnitConstructionData.computeMaxAffordableUnitQuantities(relevantPlanetData, requestedUnitQuantities);
+    if (possibleRequestedUnitQuantities.size === 0)
     {
         return { success: false, failureReason: "Not enough resources.", playerStateResult: playerData };
     }
 
-    const shipConstructionDurationSeconds: number = ShipConstructionData.computeShipQuantitiesConstructionDurationSeconds(possibleRequestedShipQuantities, relevantPlanetData, serverData);
-    if (shipConstructionDurationSeconds <= 0)
+    const unitConstructionDurationSeconds: number = UnitConstructionData.computeUnitQuantitiesConstructionDurationSeconds(possibleRequestedUnitQuantities, relevantPlanetData, serverData);
+    if (unitConstructionDurationSeconds <= 0)
     {
-        return { success: false, failureReason: "Invalid ship construction duration.", playerStateResult: playerData };
+        return { success: false, failureReason: "Invalid unit construction duration.", playerStateResult: playerData };
     }
 
-    const totalCost: Map<GameType.ResourceType, number> = ShipConstructionData.computeShipConstructionCost(possibleRequestedShipQuantities);
+    const totalCost: Map<GameType.ResourceType, number> = UnitConstructionData.computeUnitConstructionCost(possibleRequestedUnitQuantities);
 
     if (ResourceData.hasResourceQuantities(relevantPlanetData, totalCost) === false)
     {
-        return { success: false, failureReason: "Not enough resources for ship construction.", playerStateResult: playerData };
+        return { success: false, failureReason: "Not enough resources for unit construction.", playerStateResult: playerData };
     }
 
     ResourceData.subtractPlanetResources(relevantPlanetData, totalCost);
 
-    const newShipConstructionShipRows: DBType.ShipConstructionShipRow[] = [];
-    for (const [shipType, shipQuantity] of possibleRequestedShipQuantities)
+    const newUnitConstructionUnitRows: DBType.UnitConstructionUnitRow[] = [];
+    for (const [unitType, unitQuantity] of possibleRequestedUnitQuantities)
     {
-        const newShipConstructionShipRow: DBType.ShipConstructionShipRow =
+        const newUnitConstructionUnitRow: DBType.UnitConstructionUnitRow =
         {
             id: -1,
-            ship_construction_id: -1,
-            ship_type: shipType,
-            ship_quantity: shipQuantity,
+            unit_construction_id: -1,
+            unit_type: unitType,
+            unit_quantity: unitQuantity,
         };
-        newShipConstructionShipRows.push(newShipConstructionShipRow);
+        newUnitConstructionUnitRows.push(newUnitConstructionUnitRow);
     }
-    const newShipConstructionRow: DBType.ShipConstructionRow = 
+    const newUnitConstructionRow: DBType.UnitConstructionRow = 
     {
         id: -1,
         planet_id: relevantPlanetData.planetRow.id,
         player_id: playerId,
         requested_at: now,
-        duration_at_request_time: shipConstructionDurationSeconds * 1000,
+        duration_at_request_time: unitConstructionDurationSeconds * 1000,
         duration_at_start_time: null,
         started_at: null,
-        current_ship_construction_ship_row_id: -1,
+        current_unit_construction_unit_row_id: -1,
     };
-    const newShipConstruction: CoreType.ShipConstruction =
+    const newUnitConstruction: CoreType.UnitConstruction =
     {
-        shipConstructionRow: newShipConstructionRow,
-        shipConstructionShipRows: newShipConstructionShipRows,
+        unitConstructionRow: newUnitConstructionRow,
+        unitConstructionUnitRows: newUnitConstructionUnitRows,
     };
 
-    //Sort the construction ship rows to start building shortest first.
-    ShipConstructionData.sortShipConstructionShipRowByConstructionTime(relevantPlanetData, newShipConstruction, serverData);
-    const firstConstructionShipRow: DBType.ShipConstructionShipRow = newShipConstruction.shipConstructionShipRows[0];
+    //Sort the construction unit rows to start building shortest first.
+    UnitConstructionData.sortUnitConstructionUnitRowByConstructionTime(relevantPlanetData, newUnitConstruction, serverData);
+    const firstConstructionUnitRow: DBType.UnitConstructionUnitRow = newUnitConstruction.unitConstructionUnitRows[0];
 
     // No constructions? Means we can start this one right away, otherwise it will be in queue and start when the previous ones are done.
-    if (relevantPlanetData.dynamicPlanetData.shipConstructions.length === 0)
+    if (relevantPlanetData.dynamicPlanetData.unitConstructions.length === 0)
     {
-        newShipConstruction.shipConstructionRow.started_at = now;
-        const firstConstructionTimeSeconds: number | null = ShipConstructionData.getShipConstructionDurationSeconds(firstConstructionShipRow.ship_type as GameType.ShipType, relevantPlanetData, serverData);
+        newUnitConstruction.unitConstructionRow.started_at = now;
+        const firstConstructionTimeSeconds: number | null = UnitConstructionData.getUnitConstructionDurationSeconds(firstConstructionUnitRow.unit_type as GameType.UnitType, relevantPlanetData, serverData);
         if (firstConstructionTimeSeconds === null)
         {
             throw new Error("First firstConstructionTime cant be null.");
         }
 
-        newShipConstruction.shipConstructionRow.duration_at_start_time = firstConstructionTimeSeconds * 1000;
+        newUnitConstruction.unitConstructionRow.duration_at_start_time = firstConstructionTimeSeconds * 1000;
     }
 
-    relevantPlanetData.dynamicPlanetData.shipConstructions.push(newShipConstruction);
+    relevantPlanetData.dynamicPlanetData.unitConstructions.push(newUnitConstruction);
     const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
         ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.ResourceQuantity, relevantPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.ShipConstruction, relevantPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.UnitConstruction, relevantPlanetData.dynamicPlanetData);
         
         const playerActionResult: PlayerActionResult =
         {
@@ -1418,7 +1418,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
 {
     const now: number = Date.now();
     const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
-    const shipQuantities: Map<GameType.ShipType, number> = Serialization.deserializeNumberNumberMap(requestData.serializedShipQuantities) as Map<GameType.ShipType, number>;
+    const unitQuantities: Map<GameType.UnitType, number> = Serialization.deserializeNumberNumberMap(requestData.serializedUnitQuantities) as Map<GameType.UnitType, number>;
     const transportedResourceQuantities: Map<GameType.ResourceType, number> = Serialization.deserializeNumberNumberMap(requestData.serializedResourceQuantities) as Map<GameType.ResourceType, number>;
 
     const originPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.originPlanetId);
@@ -1438,11 +1438,11 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     const targetPlanetData: CoreType.PlanetData | null = getPlanetDataByCoords(targetAddress.galaxy, targetAddress.system, targetAddress.slot, targetAddress.zone);
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
 
-    for (const shipQuantity of shipQuantities.values())
+    for (const unitQuantity of unitQuantities.values())
     {
-        if (shipQuantity <= 0)
+        if (unitQuantity <= 0)
         {
-            return { success: false, failureReason: "Non-positive ship quantity for fleet.", playerStateResult: playerData };
+            return { success: false, failureReason: "Non-positive unit quantity for fleet.", playerStateResult: playerData };
         }
     }
 
@@ -1451,7 +1451,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     const zoneAssociatedPlanetData: CoreType.PlanetData | null = getPlanetDataByCoords(targetAddress.galaxy, targetAddress.system, targetAddress.slot, GameType.PlanetZone.Planet);
     const zoneAssociatedPlanetOwnerPlayerId: number | null = zoneAssociatedPlanetData === null ? null : zoneAssociatedPlanetData.planetRow.owner_player_id;
 
-    if (Requirement.getFailedFleetMovementRequirements(playerData, requestData.fleetAction, originPlanetData.planetRow.id, shipQuantities, transportedResourceQuantities, targetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists).length > 0)
+    if (Requirement.getFailedFleetMovementRequirements(playerData, requestData.fleetAction, originPlanetData.planetRow.id, unitQuantities, transportedResourceQuantities, targetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists).length > 0)
     {
         return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
     }
@@ -1467,7 +1467,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     let fuelRequirements: Map<GameType.ResourceType, number>;
     try
     {
-        fuelRequirements = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, shipQuantities, serverData, speedPercentage);
+        fuelRequirements = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, unitQuantities, serverData, speedPercentage);
     }
     catch (error: unknown)
     {
@@ -1478,7 +1478,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     let fleetMovementDurationSeconds: number = 0;
     try
     {
-         fleetMovementDurationSeconds = FleetMovementDuration.computeFleetMovementDurationSecondsWithAddress(playerData, originAddress, targetAddress, shipQuantities, serverData, speedPercentage);
+         fleetMovementDurationSeconds = FleetMovementDuration.computeFleetMovementDurationSecondsWithAddress(playerData, originAddress, targetAddress, unitQuantities, serverData, speedPercentage);
     }
     catch (error: unknown)
     {
@@ -1496,36 +1496,36 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
             return { success: false, failureReason: `Not enough fuel.`, playerStateResult: playerData };
         }
 
-        const canStoreResources: boolean = FleetData.hasSpaceForResourceQuantities(shipQuantities, totalRequiredResourceQuantities);
+        const canStoreResources: boolean = FleetData.hasSpaceForResourceQuantities(unitQuantities, totalRequiredResourceQuantities);
         if (canStoreResources === false)
         {
             return { success: false, failureReason: `Not enough space for resources.`, playerStateResult: playerData };
         }
 
-        const hasShips: boolean = ShipData.hasShipQuantities(originPlanetData, shipQuantities);
-        if (hasShips === false)
+        const hasUnits: boolean = UnitData.hasUnitQuantities(originPlanetData, unitQuantities);
+        if (hasUnits === false)
         {
-            return { success: false, failureReason: `Not enough ships.`, playerStateResult: playerData };
+            return { success: false, failureReason: `Not enough units.`, playerStateResult: playerData };
         }
 
-        const actualTransportedResources: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>(FleetData.clampResoucesToAddToFleet(shipQuantities, fuelRequirements, transportedResourceQuantities));
+        const actualTransportedResources: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>(FleetData.clampResoucesToAddToFleet(unitQuantities, fuelRequirements, transportedResourceQuantities));
 
-        const fleetMovementShipRows: DBType.FleetMovementShipRow[] = [];
-        for (const [shipType, shipQuantity] of shipQuantities)
+        const fleetMovementUnitRows: DBType.FleetMovementUnitRow[] = [];
+        for (const [unitType, unitQuantity] of unitQuantities)
         {
-            if (shipQuantity === 0)
+            if (unitQuantity === 0)
             {
                 continue;
             }
 
-            ShipData.subtractPlanetShip(originPlanetData, shipType, shipQuantity);
-            const fleetMovementShipRow: DBType.FleetMovementShipRow =
+            UnitData.subtractPlanetUnit(originPlanetData, unitType, unitQuantity);
+            const fleetMovementUnitRow: DBType.FleetMovementUnitRow =
             {
                 fleet_id: -1, // will be set on the update
-                ship_type: shipType,
-                ship_quantity: shipQuantity,
+                unit_type: unitType,
+                unit_quantity: unitQuantity,
             };
-            fleetMovementShipRows.push(fleetMovementShipRow);
+            fleetMovementUnitRows.push(fleetMovementUnitRow);
         }
         
         ResourceData.subtractPlanetResources(originPlanetData, fuelRequirements);
@@ -1589,7 +1589,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         const newFleetMovement: CoreType.FleetMovement =
         {
             fleetMovementRow: fleetMovementRow,
-            fleetMovementShipRows: fleetMovementShipRows,
+            fleetMovementUnitRows: fleetMovementUnitRows,
             fleetMovementResourceRows: fleetMovementResourceRows,
             fleetMovementFuelRows: fleetMovementFuelRows,
             resolutionState: CoreType.FleetMovementResolution.Unresolved,
@@ -1599,7 +1599,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         originPlanetData.dynamicPlanetData.futureFleetArrivals.push(newFleetMovement);
 
         ServerDynamicData.serverUpdatePlanetDataContext(originPlanetData.planetRow.id, playerId, CoreType.DataContext.ResourceQuantity, originPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(originPlanetData.planetRow.id, playerId, CoreType.DataContext.ShipQuantity, originPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(originPlanetData.planetRow.id, playerId, CoreType.DataContext.UnitQuantity, originPlanetData.dynamicPlanetData);
         ServerDynamicData.serverUpdatePlanetDataContext(originPlanetData.planetRow.id, playerId, CoreType.DataContext.FutureFleetArrivals, originPlanetData.dynamicPlanetData);
 
         const playerActionResult: PlayerActionResult =
@@ -1706,7 +1706,7 @@ function applyProgressToAllPlayersAndRescaleEndTimes(): void
         }
 
         rescaleBuildingUpgradeTimes(rescaleFactor, now);
-        rescaleShipConstructionTimes(rescaleFactor, now);
+        rescaleUnitConstructionTimes(rescaleFactor, now);
         rescaleFleetMovementTimes(rescaleFactor, now);
     });
     transaction();

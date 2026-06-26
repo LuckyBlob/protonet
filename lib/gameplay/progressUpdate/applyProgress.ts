@@ -4,7 +4,7 @@ import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as BuildingDeconstruction from "@/lib/gameplay/progressUpdate/anchorEvent/buildingDeconstructionAnchorEvent"
-import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent"
+import * as UnitConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/unitConstructionAnchorEvent"
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
 import * as CurrentlyResearching from "@/lib/gameplay/progressUpdate/anchorEvent/currentlyResearchingAnchorEvent"
 import * as ResourceProduction from "@/lib/gameplay/progressUpdate/anchorEvent/resourceProductionAnchorEvent"
@@ -22,7 +22,7 @@ export abstract class PlayerProgressApplier
         const anchorEvents: (AnchorEvent.AnchorEvent | null)[] = [];
         anchorEvents.push(BuildingUpgrade.findNextAnchorEvent(playerData, serverData, this));
         anchorEvents.push(BuildingDeconstruction.findNextAnchorEvent(playerData, serverData, this));
-        anchorEvents.push(ShipConstruction.findNextAnchorEvent(playerData, serverData, this));
+        anchorEvents.push(UnitConstruction.findNextAnchorEvent(playerData, serverData, this));
         anchorEvents.push(FleetArrival.findNextAnchorEvent(playerData, serverData, this));
         anchorEvents.push(CurrentlyResearching.findNextAnchorEvent(playerData, serverData, this));
         anchorEvents.push(ResourceProduction.findNextAnchorEvent(playerData, serverData, this));
@@ -59,9 +59,9 @@ export abstract class PlayerProgressApplier
                 BuildingDeconstruction.resolveAnchorEvent(playerData, serverData, anchorEvent);
                 break;
             }
-            case AnchorEvent.AnchorEventType.ShipConstruction:
+            case AnchorEvent.AnchorEventType.UnitConstruction:
             {
-                ShipConstruction.resolveAnchorEvent(playerData, serverData, anchorEvent);
+                UnitConstruction.resolveAnchorEvent(playerData, serverData, anchorEvent);
                 break;
             }
             case AnchorEvent.AnchorEventType.FleetArrival:

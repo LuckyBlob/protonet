@@ -125,8 +125,8 @@ type SerializedDynamicPlanetData =
 	resourceQuantity: [number, number][];
 	buildingLevels: [number, number][];
 	buildingEnergySettings: [number, number][];
-	shipQuantity: [number, number][];
-	shipConstructions: CoreType.ShipConstruction[];
+	unitQuantity: [number, number][];
+	unitConstructions: CoreType.UnitConstruction[];
 	futureFleetArrivals: CoreType.FleetMovement[];
 	buildingUpgrades: CoreType.BuildingUpgrade[];
 	buildingDeconstructions: CoreType.BuildingDeconstruction[];
@@ -156,8 +156,8 @@ function serializeDynamicPlanetData(dynamicPlanetData: CoreType.DynamicPlanetDat
 		resourceQuantity: [...dynamicPlanetData.resourceQuantity],
 		buildingLevels: [...dynamicPlanetData.buildingLevels],
 		buildingEnergySettings: [...dynamicPlanetData.buildingEnergySettings],
-		shipQuantity: [...dynamicPlanetData.shipQuantity],
-		shipConstructions: [...dynamicPlanetData.shipConstructions],
+		unitQuantity: [...dynamicPlanetData.unitQuantity],
+		unitConstructions: [...dynamicPlanetData.unitConstructions],
 		futureFleetArrivals: [...dynamicPlanetData.futureFleetArrivals],
 		buildingUpgrades: [...dynamicPlanetData.buildingUpgrades],
 		buildingDeconstructions: [...dynamicPlanetData.buildingDeconstructions],
@@ -173,8 +173,8 @@ function deserializeDynamicPlanetData(serialized: SerializedDynamicPlanetData): 
 		resourceQuantity: new Map<number, number>(serialized.resourceQuantity) as Map<GameType.ResourceType, number>,
 		buildingLevels: new Map<number, number>(serialized.buildingLevels) as Map<GameType.BuildingType, number>,
 		buildingEnergySettings: new Map<number, number>(serialized.buildingEnergySettings) as Map<GameType.BuildingType, number>,
-		shipQuantity: new Map<number, number>(serialized.shipQuantity) as Map<GameType.ShipType, number>,
-		shipConstructions: serialized.shipConstructions,
+		unitQuantity: new Map<number, number>(serialized.unitQuantity) as Map<GameType.UnitType, number>,
+		unitConstructions: serialized.unitConstructions,
 		futureFleetArrivals: serialized.futureFleetArrivals,
 		buildingUpgrades: serialized.buildingUpgrades,
 		buildingDeconstructions: serialized.buildingDeconstructions,

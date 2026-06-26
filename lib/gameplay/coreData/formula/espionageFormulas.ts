@@ -17,7 +17,7 @@ export const ESPIONAGE_INFO_BLOCK_THRESHOLDS: ReadonlyMap<EspionageInfoBlock, nu
     [EspionageInfoBlock.Research, 5],
 ]);
 
-const COUNTER_ESPIONAGE_BASE_FACTOR: number = 0.0025; // 0.25% per probe per defending ship
+const COUNTER_ESPIONAGE_BASE_FACTOR: number = 0.0025; // 0.25% per probe per defending unit
 const COUNTER_ESPIONAGE_TECH_BASE: number = 2;
 
 export function computeEspionageReportLevel(probeCount: number, attackerEspionageTech: number, defenderEspionageTech: number): number

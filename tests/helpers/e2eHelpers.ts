@@ -262,12 +262,12 @@ export function setPlanetSize(planetId: number, size: number, db: Database.Datab
     db.prepare("UPDATE planet SET size = ? WHERE id = ?").run(size, planetId);
 }
 
-export function setShipQuantity(planetId: number, playerId: number, shipType: number, quantity: number, db: Database.Database): void
+export function setUnitQuantity(planetId: number, playerId: number, unitType: number, quantity: number, db: Database.Database): void
 {
     db.prepare(
-        `INSERT INTO planet_ship (planet_id, player_id, ship_type, ship_quantity) VALUES (?, ?, ?, ?)
-         ON CONFLICT (planet_id, ship_type) DO UPDATE SET ship_quantity = excluded.ship_quantity, player_id = excluded.player_id`
-    ).run(planetId, playerId, shipType, quantity);
+        `INSERT INTO planet_unit (planet_id, player_id, unit_type, unit_quantity) VALUES (?, ?, ?, ?)
+         ON CONFLICT (planet_id, unit_type) DO UPDATE SET unit_quantity = excluded.unit_quantity, player_id = excluded.player_id`
+    ).run(planetId, playerId, unitType, quantity);
 }
 
 // Research is player-level (keyed on player_id, not planet_id), so seeding a prerequisite research
@@ -296,13 +296,13 @@ export function getResourceQuantity(planetId: number, resourceType: number, db: 
     return row?.resource_quantity ?? 0;
 }
 
-export function getShipQuantityDb(planetId: number, shipType: number, db: Database.Database): number
+export function getUnitQuantityDb(planetId: number, unitType: number, db: Database.Database): number
 {
-    const row: { ship_quantity: number } | undefined = db.prepare(
-        "SELECT ship_quantity FROM planet_ship WHERE planet_id = ? AND ship_type = ?"
-    ).get(planetId, shipType) as { ship_quantity: number } | undefined;
+    const row: { unit_quantity: number } | undefined = db.prepare(
+        "SELECT unit_quantity FROM planet_unit WHERE planet_id = ? AND unit_type = ?"
+    ).get(planetId, unitType) as { unit_quantity: number } | undefined;
 
-    return row?.ship_quantity ?? 0;
+    return row?.unit_quantity ?? 0;
 }
 
 export function getBuildingLevelDb(planetId: number, buildingType: number, db: Database.Database): number
@@ -354,7 +354,7 @@ export function getResearchLevelDb(playerId: number, researchType: number, db: D
 export function getConstructionId(planetId: number, db: Database.Database): number
 {
     const row: { id: number } = db.prepare(
-        "SELECT id FROM ship_construction WHERE planet_id = ? ORDER BY id LIMIT 1"
+        "SELECT id FROM unit_construction WHERE planet_id = ? ORDER BY id LIMIT 1"
     ).get(planetId) as { id: number };
 
     return row.id;
@@ -452,9 +452,9 @@ export function getMessageCount(playerId: number, db: Database.Database): number
 //#endregion
 
 // Rewind a started_at so `legs` completions (each one single-leg duration long) are already in
-// the past — the server resolves them all on the next reload. legs=1 finishes one ship/upgrade
-// or a one-way trip; legs=2 finishes a round trip or the 2nd ship of a batch.
-export function forceComplete(table: "ship_construction" | "building_upgrade" | "building_deconstruction" | "fleet_movement" | "currently_researching", id: number, db: Database.Database, legs: number = 1): void
+// the past — the server resolves them all on the next reload. legs=1 finishes one unit/upgrade
+// or a one-way trip; legs=2 finishes a round trip or the 2nd unit of a batch.
+export function forceComplete(table: "unit_construction" | "building_upgrade" | "building_deconstruction" | "fleet_movement" | "currently_researching", id: number, db: Database.Database, legs: number = 1): void
 {
     const row: TimedRow | undefined = db.prepare(
         `SELECT id, duration_at_start_time FROM ${table} WHERE id = ?`
@@ -471,7 +471,7 @@ export function forceComplete(table: "ship_construction" | "building_upgrade" | 
 
 // Schedule single-leg completion `msFromNow` in the future so the server still reports it as
 // in-progress on reload, and the client animation tick resolves it locally afterwards.
-export function scheduleCompletionInMs(table: "ship_construction" | "building_upgrade" | "building_deconstruction" | "fleet_movement" | "currently_researching", id: number, msFromNow: number, db: Database.Database): void
+export function scheduleCompletionInMs(table: "unit_construction" | "building_upgrade" | "building_deconstruction" | "fleet_movement" | "currently_researching", id: number, msFromNow: number, db: Database.Database): void
 {
     const row: TimedRow | undefined = db.prepare(
         `SELECT id, duration_at_start_time FROM ${table} WHERE id = ?`
@@ -590,28 +590,28 @@ export function buildUpgradeButton(page: Page, buildingName: string): Locator
     return buildingCard(page, buildingName).getByRole("button", { name: /Build Upgrade/ });
 }
 
-// One quantity input lives in the build row that also shows the ship's name. Used in both the
+// One quantity input lives in the build row that also shows the unit's name. Used in both the
 // shipyard and the fleet views.
-export function shipRowQuantityInput(page: Page, shipName: string): Locator
+export function unitRowQuantityInput(page: Page, unitName: string): Locator
 {
     return page.locator("div.border")
-        .filter({ hasText: shipName })
+        .filter({ hasText: unitName })
         .filter({ has: page.locator("input[type=\"number\"]") })
         .locator("input[type=\"number\"]")
         .first();
 }
 
-export async function buildShips(page: Page, shipName: string, quantity: number): Promise<void>
+export async function buildUnits(page: Page, unitName: string, quantity: number): Promise<void>
 {
-    await shipRowQuantityInput(page, shipName).fill(String(quantity));
+    await unitRowQuantityInput(page, unitName).fill(String(quantity));
     await page.getByRole("button", { name: "Build all" }).click();
 }
 
-// "N owned" appears once per buildable ship row, so scope to the row carrying the ship name to
-// avoid matching another ship type that also shows "0 owned".
-export function shipOwned(page: Page, shipName: string, count: number): Locator
+// "N owned" appears once per buildable unit row, so scope to the row carrying the unit name to
+// avoid matching another unit type that also shows "0 owned".
+export function unitOwned(page: Page, unitName: string, count: number): Locator
 {
-    return page.locator("div.border").filter({ hasText: shipName }).getByText(`${count} owned`, { exact: true });
+    return page.locator("div.border").filter({ hasText: unitName }).getByText(`${count} owned`, { exact: true });
 }
 
 export function fleetActionSelect(page: Page): Locator
@@ -627,9 +627,9 @@ export function fleetActionSelect(page: Page): Locator
     return page.locator("select").filter({ has: page.getByRole("option", { name: actionNamePattern }) });
 }
 
-export async function sendFleet(page: Page, shipName: string, shipQuantity: number, target: PlanetRow, actionLabel: "Station" | "Collect" | "Colonize" | "Espionage"): Promise<void>
+export async function sendFleet(page: Page, unitName: string, unitQuantity: number, target: PlanetRow, actionLabel: "Station" | "Collect" | "Colonize" | "Espionage"): Promise<void>
 {
-    await shipRowQuantityInput(page, shipName).fill(String(shipQuantity));
+    await unitRowQuantityInput(page, unitName).fill(String(unitQuantity));
     await page.getByPlaceholder("P").fill(String(target.slot));
     await page.getByPlaceholder("S").fill(String(target.system));
     await page.getByPlaceholder("G").fill(String(target.galaxy));
@@ -647,18 +647,18 @@ export function fleetResourceQuantityInput(page: Page, resourceName: string): Lo
         .locator("input[type=\"number\"]");
 }
 
-// Drives the multi-ship + multi-resource colonize flow through the UI: fills each ship row,
+// Drives the multi-unit + multi-resource colonize flow through the UI: fills each unit row,
 // the target address, each resource row, picks "Colonize" from the action dropdown and sends.
 export async function sendColonizeFleet(
     page: Page,
     target: PlanetRow,
-    ships: { shipName: string, quantity: number }[],
+    units: { unitName: string, quantity: number }[],
     resources: { resourceName: string, quantity: number }[] = [],
 ): Promise<void>
 {
-    for (const ship of ships)
+    for (const unit of units)
     {
-        await shipRowQuantityInput(page, ship.shipName).fill(String(ship.quantity));
+        await unitRowQuantityInput(page, unit.unitName).fill(String(unit.quantity));
     }
 
     await page.getByPlaceholder("P").fill(String(target.slot));

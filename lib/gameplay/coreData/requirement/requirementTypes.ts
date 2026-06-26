@@ -20,7 +20,7 @@ export type RequirementContext =
 {
     playerData: CoreType.PlayerData;
     planetId: number;
-    shipQuantities?: Map<GameType.ShipType, number>;
+    unitQuantities?: Map<GameType.UnitType, number>;
     transportedResourceQuantities?: Map<GameType.ResourceType, number>;
     targetPlanetAddress?: GameType.PlanetAddress;
     zoneAssociatedPlanetOwnerPlayerId?: number | null;

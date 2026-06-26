@@ -10,14 +10,14 @@ import * as HelperElements from "@/components/helpers/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
-import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
+import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 
-const ONE_PROBE_SHIP_QUANTITIES: Map<GameType.ShipType, number> = new Map<GameType.ShipType, number>([[GameType.ShipType.EspionageProbe, 1]]);
+const ONE_PROBE_UNIT_QUANTITIES: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, 1]]);
 const NO_TRANSPORTED_RESOURCES: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 
 // One-line outcome of a galaxy-view spy click: the message to show and whether it was a failure.
@@ -55,7 +55,7 @@ function getPlayerUsername(ownerId: number, publicPlayerRows: DBType.PublicPlaye
 
 function canSendEspionageProbe(context: GalaxyViewContext, targetPlanetAddress: GameType.PlanetAddress, targetZoneExists: boolean, zoneAssociatedPlanetOwnerPlayerId: number | null): boolean
 {
-    if (ShipData.getShipQuantity(context.originPlanetData, GameType.ShipType.EspionageProbe) < 1)
+    if (UnitData.getUnitQuantity(context.originPlanetData, GameType.UnitType.EspionageProbe) < 1)
     {
         return false;
     }
@@ -66,13 +66,13 @@ function canSendEspionageProbe(context: GalaxyViewContext, targetPlanetAddress: 
         return false;
     }
 
-    const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(context.playerData, GameType.FleetActionType.Espionage, context.originPlanetData.planetRow.id, ONE_PROBE_SHIP_QUANTITIES, NO_TRANSPORTED_RESOURCES, targetPlanetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists);
+    const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(context.playerData, GameType.FleetActionType.Espionage, context.originPlanetData.planetRow.id, ONE_PROBE_UNIT_QUANTITIES, NO_TRANSPORTED_RESOURCES, targetPlanetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists);
     if (failedRequirements.length > 0)
     {
         return false;
     }
 
-    const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(context.playerData, originAddress, targetPlanetAddress, ONE_PROBE_SHIP_QUANTITIES, context.serverData);
+    const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(context.playerData, originAddress, targetPlanetAddress, ONE_PROBE_UNIT_QUANTITIES, context.serverData);
     if (ResourceData.hasResourceQuantities(context.originPlanetData, fuelRequirements) === false)
     {
         return false;
@@ -99,7 +99,7 @@ function renderEspionageIndicator(context: GalaxyViewContext, planetPublicPlanet
             return;
         }
 
-        const errorMessage: string | null = await ClientRequestFunctions.clientTrySendFleetRequest(context.psController, context.originPlanetData.planetRow.id, targetPlanetAddress, GameType.FleetActionType.Espionage, ONE_PROBE_SHIP_QUANTITIES, NO_TRANSPORTED_RESOURCES);
+        const errorMessage: string | null = await ClientRequestFunctions.clientTrySendFleetRequest(context.psController, context.originPlanetData.planetRow.id, targetPlanetAddress, GameType.FleetActionType.Espionage, ONE_PROBE_UNIT_QUANTITIES, NO_TRANSPORTED_RESOURCES);
 
         if (errorMessage === null)
         {

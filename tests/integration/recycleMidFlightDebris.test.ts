@@ -130,7 +130,7 @@ function persistRecycleFleet(scenario: ScenarioPlayer, targetOwnerId: number | n
             duration_at_start_time: OUTBOUND_DURATION_MS,
             started_at: startedAt,
         },
-        fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.ShipType.Recycler, ship_quantity: 1 })],
+        fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ unit_type: GameType.UnitType.Recycler, unit_quantity: 1 })],
         fleetMovementResourceRows: [],
         fleetMovementFuelRows: [],
     });

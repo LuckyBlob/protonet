@@ -45,7 +45,7 @@ describe("thingHelpers — getThingValues / setSpecificThingValue", () =>
     it("throws for contexts that have no valued specific things", () =>
     {
         const planetData: CoreType.PlanetData = TestDataBuilders.buildPlanetData();
-        expect(() => ThingHelpers.getThingValues(null, planetData, CoreType.DataContext.ShipConstruction)).toThrow();
+        expect(() => ThingHelpers.getThingValues(null, planetData, CoreType.DataContext.UnitConstruction)).toThrow();
         expect(() => ThingHelpers.getThingValues(null, planetData, CoreType.DataContext.Messages)).toThrow();
         expect(() => ThingHelpers.setSpecificThingValue(null, planetData, CoreType.DataContext.BuildingUpgrade, 1, 1)).toThrow();
     });

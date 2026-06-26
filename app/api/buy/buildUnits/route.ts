@@ -5,6 +5,6 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 
 export async function POST(request: Request): Promise<NextResponse>
 {
-    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips> = await request.json();
-    return ServerRequestFunctions.handlePlayerStateActionRequest((playerId: number, serverData: CoreType.ServerData) => ServerRequestFunctions.tryBuildShipsLogic(playerId, serverData, clientRequest));
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildUnits> = await request.json();
+    return ServerRequestFunctions.handlePlayerStateActionRequest((playerId: number, serverData: CoreType.ServerData) => ServerRequestFunctions.tryBuildUnitsLogic(playerId, serverData, clientRequest));
 }

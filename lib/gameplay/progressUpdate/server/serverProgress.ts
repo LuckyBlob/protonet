@@ -5,7 +5,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as BuildingDeconstruction from "@/lib/gameplay/progressUpdate/anchorEvent/buildingDeconstructionAnchorEvent"
-import * as ShipConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/shipConstructionAnchorEvent"
+import * as UnitConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/unitConstructionAnchorEvent"
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 import * as DB from "@/lib/db/db";
 import * as ServerRequestFunctions from "@/lib/networkRequests/server/serverRequestFunctions";
@@ -54,9 +54,9 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
                 resolveBuildingDeconstructionAnchorEventToDB(playerData, serverData, anchorEvent);
                 break;
             }
-            case AnchorEvent.AnchorEventType.ShipConstruction:
+            case AnchorEvent.AnchorEventType.UnitConstruction:
             {
-                resolveShipConstructionAnchorEventToDB(playerData, serverData, anchorEvent);
+                resolveUnitConstructionAnchorEventToDB(playerData, serverData, anchorEvent);
                 break;
             }
             case AnchorEvent.AnchorEventType.FleetArrival:
@@ -169,19 +169,19 @@ function resolveBuildingDeconstructionAnchorEventToDB(playerData: CoreType.Playe
     transaction();
 }
 
-function resolveShipConstructionAnchorEventToDB(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
+function resolveUnitConstructionAnchorEventToDB(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
 {
-    const shipConstructionAnchorEvent: ShipConstruction.ShipConstructionAnchorEvent = anchorEvent as ShipConstruction.ShipConstructionAnchorEvent;
-    const planetData: CoreType.PlanetData | null= CoreType.getPlanetDataForId(playerData.planetDatas, shipConstructionAnchorEvent.event.shipConstructionRow.planet_id);
+    const unitConstructionAnchorEvent: UnitConstruction.UnitConstructionAnchorEvent = anchorEvent as UnitConstruction.UnitConstructionAnchorEvent;
+    const planetData: CoreType.PlanetData | null= CoreType.getPlanetDataForId(playerData.planetDatas, unitConstructionAnchorEvent.event.unitConstructionRow.planet_id);
     if (planetData === null)
     {
-        throw new Error(`⚠️: Cant get full planet data for ship construction.`);
+        throw new Error(`⚠️: Cant get full planet data for unit construction.`);
     }
 
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.ShipConstruction, planetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.ShipQuantity, planetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.UnitConstruction, planetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.UnitQuantity, planetData.dynamicPlanetData);
     });
 
     transaction();

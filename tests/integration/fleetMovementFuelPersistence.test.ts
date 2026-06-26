@@ -6,13 +6,13 @@ import { tmpdir } from 'os';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as DBType from '@/lib/db/dbTypes';
-import * as ShipFuelConsumption from '@/lib/gameplay/coreData/formula/shipFuelConsumptionFormulas';
+import * as UnitFuelConsumption from '@/lib/gameplay/coreData/formula/unitFuelConsumptionFormulas';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
 // What this covers: a fleet send computes fuel, then writes the whole movement to the DB — including
 // the fleet_movement_fuel rows added by migration 016. The pure formula tests
-// (shipFuelConsumptionFormulas.test.ts) prove the *number* is right; this proves that number reaches
-// the DB intact alongside the ship and resource rows, and survives the read-back getter.
+// (unitFuelConsumptionFormulas.test.ts) prove the *number* is right; this proves that number reaches
+// the DB intact alongside the unit and resource rows, and survives the read-back getter.
 //
 // It drives the real server persistence path (ServerDynamicData.serverUpdatePlanetDataContext →
 // updateFutureFleetArrivals) against a throwaway on-disk SQLite DB. That path uses the app's singleton
@@ -20,7 +20,7 @@ import * as TestDataBuilders from '../helpers/testDataBuilders';
 // every app module that touches the DB is loaded dynamically in beforeAll, and only DB-free modules
 // (types, the pure fuel formula, builders) are imported statically up top.
 
-// A fixed speed (matching the pure shipFuelConsumptionFormulas.test.ts fixture) keeps the persisted
+// A fixed speed (matching the pure unitFuelConsumptionFormulas.test.ts fixture) keeps the persisted
 // number deterministic; the persistence path is identical whatever a live send's speed factor is.
 const FLEET_SPEED: number = 10;
 
@@ -72,12 +72,12 @@ afterAll((): void =>
     }
 });
 
-function computeFuel(shipQuantities: Map<GameType.ShipType, number>, distance: number): Map<GameType.ResourceType, number>
+function computeFuel(unitQuantities: Map<GameType.UnitType, number>, distance: number): Map<GameType.ResourceType, number>
 {
     const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
     const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
 
-    return ShipFuelConsumption.computeFuelConsumption(playerData, shipQuantities, distance, FLEET_SPEED, serverData);
+    return UnitFuelConsumption.computeFuelConsumption(playerData, unitQuantities, distance, FLEET_SPEED, serverData);
 }
 
 function buildFuelRows(fuelRequirements: Map<GameType.ResourceType, number>): DBType.FleetMovementFuelRow[]
@@ -97,15 +97,15 @@ function buildFuelRows(fuelRequirements: Map<GameType.ResourceType, number>): DB
     return fuelRows;
 }
 
-// Builds the movement exactly the way trySendFleetLogic does (ship rows from the fleet, fuel rows from
+// Builds the movement exactly the way trySendFleetLogic does (unit rows from the fleet, fuel rows from
 // the computed consumption, transported-resource rows), then persists it through the real server path
 // and returns the row id the DB assigned.
-function persistFleetMovement(planetOriginId: number, shipQuantities: Map<GameType.ShipType, number>, fuelRequirements: Map<GameType.ResourceType, number>, transportedResources: Map<GameType.ResourceType, number>): number
+function persistFleetMovement(planetOriginId: number, unitQuantities: Map<GameType.UnitType, number>, fuelRequirements: Map<GameType.ResourceType, number>, transportedResources: Map<GameType.ResourceType, number>): number
 {
-    const fleetMovementShipRows: DBType.FleetMovementShipRow[] = [];
-    for (const [shipType, shipQuantity] of shipQuantities)
+    const fleetMovementUnitRows: DBType.FleetMovementUnitRow[] = [];
+    for (const [unitType, unitQuantity] of unitQuantities)
     {
-        fleetMovementShipRows.push(TestDataBuilders.buildFleetMovementShipRow({ ship_type: shipType, ship_quantity: shipQuantity }));
+        fleetMovementUnitRows.push(TestDataBuilders.buildFleetMovementUnitRow({ unit_type: unitType, unit_quantity: unitQuantity }));
     }
 
     const fleetMovementResourceRows: DBType.FleetMovementResourceRow[] = [];
@@ -124,7 +124,7 @@ function persistFleetMovement(planetOriginId: number, shipQuantities: Map<GameTy
             planet_origin_id: planetOriginId,
             fleet_action_type: GameType.FleetActionType.Station,
         },
-        fleetMovementShipRows: fleetMovementShipRows,
+        fleetMovementUnitRows: fleetMovementUnitRows,
         fleetMovementResourceRows: fleetMovementResourceRows,
         fleetMovementFuelRows: buildFuelRows(fuelRequirements),
     });
@@ -136,7 +136,7 @@ function persistFleetMovement(planetOriginId: number, shipQuantities: Map<GameTy
 }
 
 type FuelRow = { resource_type: number; resource_quantity: number };
-type ShipRow = { ship_type: number; ship_quantity: number };
+type UnitRow = { unit_type: number; unit_quantity: number };
 type ResourceRow = { resource_type: number; resource_quantity: number };
 
 function readFuelRows(fleetId: number): FuelRow[]
@@ -146,11 +146,11 @@ function readFuelRows(fleetId: number): FuelRow[]
     ).all(fleetId) as FuelRow[];
 }
 
-function readShipRows(fleetId: number): ShipRow[]
+function readUnitRows(fleetId: number): UnitRow[]
 {
     return databaseConnection.prepare(
-        "SELECT ship_type, ship_quantity FROM fleet_movement_ship WHERE fleet_id = ? ORDER BY ship_type"
-    ).all(fleetId) as ShipRow[];
+        "SELECT unit_type, unit_quantity FROM fleet_movement_unit WHERE fleet_id = ? ORDER BY unit_type"
+    ).all(fleetId) as UnitRow[];
 }
 
 function readResourceRows(fleetId: number): ResourceRow[]
@@ -165,29 +165,29 @@ describe('fleet movement persistence — fuel rows', () =>
     it('writes the computed deuterium as a fleet_movement_fuel row (13 for one Small Transport over 35000)', () =>
     {
         const planetOriginId: number = 101;
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        const fuelRequirements: Map<GameType.ResourceType, number> = computeFuel(shipQuantities, 35_000);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
+        const fuelRequirements: Map<GameType.ResourceType, number> = computeFuel(unitQuantities, 35_000);
 
         // Pin to the same exact amount the pure formula test asserts, so a regression in either layer is caught.
         expect(fuelRequirements.get(GameType.ResourceType.Deuterium)).toBe(13);
 
-        const fleetId: number = persistFleetMovement(planetOriginId, shipQuantities, fuelRequirements, new Map());
+        const fleetId: number = persistFleetMovement(planetOriginId, unitQuantities, fuelRequirements, new Map());
 
         const fuelRows: FuelRow[] = readFuelRows(fleetId);
         expect(fuelRows).toEqual([{ resource_type: GameType.ResourceType.Deuterium, resource_quantity: 13 }]);
     });
 
-    it('writes the ship, fuel, and transported-resource rows together and reads them back through the getter', () =>
+    it('writes the unit, fuel, and transported-resource rows together and reads them back through the getter', () =>
     {
         const planetOriginId: number = 102;
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 2]]);
-        const fuelRequirements: Map<GameType.ResourceType, number> = computeFuel(shipQuantities, 35_000);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 2]]);
+        const fuelRequirements: Map<GameType.ResourceType, number> = computeFuel(unitQuantities, 35_000);
         const transportedResources: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 500]]);
 
-        const fleetId: number = persistFleetMovement(planetOriginId, shipQuantities, fuelRequirements, transportedResources);
+        const fleetId: number = persistFleetMovement(planetOriginId, unitQuantities, fuelRequirements, transportedResources);
 
-        // Raw rows: ships and transported resources land in their own tables, distinct from fuel.
-        expect(readShipRows(fleetId)).toEqual([{ ship_type: GameType.ShipType.SmallTransport, ship_quantity: 2 }]);
+        // Raw rows: units and transported resources land in their own tables, distinct from fuel.
+        expect(readUnitRows(fleetId)).toEqual([{ unit_type: GameType.UnitType.SmallTransport, unit_quantity: 2 }]);
         expect(readResourceRows(fleetId)).toEqual([{ resource_type: GameType.ResourceType.Metal, resource_quantity: 500 }]);
 
         const expectedDeuterium: number = fuelRequirements.get(GameType.ResourceType.Deuterium)!;
@@ -199,24 +199,24 @@ describe('fleet movement persistence — fuel rows', () =>
         const loadedFleet: CoreType.FleetMovement | undefined = loaded.find((fleet: CoreType.FleetMovement): boolean => fleet.fleetMovementRow.id === fleetId);
         expect(loadedFleet).toBeDefined();
         expect(loadedFleet!.fleetMovementFuelRows).toEqual([{ fleet_id: fleetId, resource_type: GameType.ResourceType.Deuterium, resource_quantity: expectedDeuterium }]);
-        expect(loadedFleet!.fleetMovementShipRows).toHaveLength(1);
-        expect(loadedFleet!.fleetMovementShipRows[0]!.ship_quantity).toBe(2);
+        expect(loadedFleet!.fleetMovementUnitRows).toHaveLength(1);
+        expect(loadedFleet!.fleetMovementUnitRows[0]!.unit_quantity).toBe(2);
     });
 
     it('replaces the prior movement on a re-send, leaving no orphaned fuel rows', () =>
     {
         const planetOriginId: number = 103;
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
 
-        const firstFuel: Map<GameType.ResourceType, number> = computeFuel(shipQuantities, 35_000);
-        const firstFleetId: number = persistFleetMovement(planetOriginId, shipQuantities, firstFuel, new Map());
+        const firstFuel: Map<GameType.ResourceType, number> = computeFuel(unitQuantities, 35_000);
+        const firstFleetId: number = persistFleetMovement(planetOriginId, unitQuantities, firstFuel, new Map());
         expect(readFuelRows(firstFleetId)).toHaveLength(1);
 
-        // A second send from the same origin DELETEs the prior fleet_movement row; the fuel/ship/resource
+        // A second send from the same origin DELETEs the prior fleet_movement row; the fuel/unit/resource
         // children must cascade away with it (fleet_movement_fuel is the newest child table — this proves
         // it is on the cascade).
-        const secondFuel: Map<GameType.ResourceType, number> = computeFuel(shipQuantities, 70_000);
-        const secondFleetId: number = persistFleetMovement(planetOriginId, shipQuantities, secondFuel, new Map());
+        const secondFuel: Map<GameType.ResourceType, number> = computeFuel(unitQuantities, 70_000);
+        const secondFleetId: number = persistFleetMovement(planetOriginId, unitQuantities, secondFuel, new Map());
 
         expect(readFuelRows(firstFleetId)).toHaveLength(0);
         expect(readFuelRows(secondFleetId)).toHaveLength(1);

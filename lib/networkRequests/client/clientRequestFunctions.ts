@@ -264,17 +264,17 @@ export async function clientTryUpgradeResearchRequest(psController: CoreType.PSC
     }
 }
 
-export async function clientTryBuildShipsRequest(psController: CoreType.PSController, planetId: number, shipQuantities: Map<GameType.ShipType, number>): Promise<void>
+export async function clientTryBuildUnitsRequest(psController: CoreType.PSController, planetId: number, unitQuantities: Map<GameType.UnitType, number>): Promise<void>
 {
-    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildShips> =
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BuildUnits> =
     {
         planetId: planetId,
-        serializedShipQuantities: Serialization.serializeNumberNumberMap(shipQuantities),
+        serializedUnitQuantities: Serialization.serializeNumberNumberMap(unitQuantities),
     };
 
     try
     {
-        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.BuildShips> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.BuildShips, clientRequest);
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.BuildUnits> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.BuildUnits, clientRequest);
         if (response.error !== null)
         {
             throw new Error(response.error);
@@ -282,7 +282,7 @@ export async function clientTryBuildShipsRequest(psController: CoreType.PSContro
         // Use != instead of !== here to catch everything that's very weird.
         if (response.serializedPlayerData == null)
         {
-            throw new Error(`Build ships failed for planetId ${planetId}: Invalid response from server.`);
+            throw new Error(`Build units failed for planetId ${planetId}: Invalid response from server.`);
         }
 
         const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
@@ -325,7 +325,7 @@ export async function clientTrySetBuildingEnergySettingRequest(psController: Cor
     }
 }
 
-export async function clientTrySendFleetRequest(psController: CoreType.PSController, originPlanetId: number, targetPlanetAddress: GameType.PlanetAddress, fleetAction: GameType.FleetActionType, shipQuantities: Map<GameType.ShipType, number>, resourceQuantities: Map<GameType.ResourceType, number>, speedPercentage?: number): Promise<string | null>
+export async function clientTrySendFleetRequest(psController: CoreType.PSController, originPlanetId: number, targetPlanetAddress: GameType.PlanetAddress, fleetAction: GameType.FleetActionType, unitQuantities: Map<GameType.UnitType, number>, resourceQuantities: Map<GameType.ResourceType, number>, speedPercentage?: number): Promise<string | null>
 {
     const effectiveSpeedPercentage: number = speedPercentage ?? 100;
 
@@ -337,7 +337,7 @@ export async function clientTrySendFleetRequest(psController: CoreType.PSControl
         targetPlanetPosition: targetPlanetAddress.slot,
         targetPlanetZone: targetPlanetAddress.zone,
         fleetAction: fleetAction,
-        serializedShipQuantities: Serialization.serializeNumberNumberMap(shipQuantities),
+        serializedUnitQuantities: Serialization.serializeNumberNumberMap(unitQuantities),
         serializedResourceQuantities: Serialization.serializeNumberNumberMap(resourceQuantities),
         speedPercentage: effectiveSpeedPercentage,
     };

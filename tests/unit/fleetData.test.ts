@@ -11,30 +11,30 @@ import * as StaticData from '@/lib/gameplay/coreData/static/staticData';
 import * as DBType from '@/lib/db/dbTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
-describe('calculateShipQuantitiesLowestMovementSpeed', () =>
+describe('calculateUnitQuantitiesLowestMovementSpeed', () =>
 {
-    it('returns the speed of the only ship type when only one is present', () =>
+    it('returns the speed of the only unit type when only one is present', () =>
     {
         // SMALL_TRANSPORT base (Combustion Drive) speed = 5000
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const quantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 3]]);
-        expect(FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, quantities)).toBe(5000);
+        const quantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 3]]);
+        expect(FleetData.calculateUnitQuantitiesLowestMovementSpeed(playerData, quantities)).toBe(5000);
     });
 
     it('returns the slowest speed in a mixed fleet', () =>
     {
         // SMALL_TRANSPORT speed = 5000, LARGE_TRANSPORT speed = 7500
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const quantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.LargeTransport, 5], [GameType.ShipType.SmallTransport, 1]]);
-        expect(FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, quantities)).toBe(5000);
+        const quantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.LargeTransport, 5], [GameType.UnitType.SmallTransport, 1]]);
+        expect(FleetData.calculateUnitQuantitiesLowestMovementSpeed(playerData, quantities)).toBe(5000);
     });
 
-    it('ignores ship types with quantity 0', () =>
+    it('ignores unit types with quantity 0', () =>
     {
         // The 0-quantity SMALL_TRANSPORT must not pin the speed to 5000
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const quantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 0], [GameType.ShipType.LargeTransport, 1]]);
-        expect(FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, quantities)).toBe(7500);
+        const quantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 0], [GameType.UnitType.LargeTransport, 1]]);
+        expect(FleetData.calculateUnitQuantitiesLowestMovementSpeed(playerData, quantities)).toBe(7500);
     });
 
     it('returns the faster engine-tech tier (with its research bonus) once the player has unlocked it', () =>
@@ -43,22 +43,22 @@ describe('calculateShipQuantitiesLowestMovementSpeed', () =>
         // Impulse level 5, and that tier carries the +20%/level Impulse bonus: 10000 * (1 + 0.20*5) = 20000.
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
         ResearchData.setResearchLevel(playerData, GameType.ResearchType.ImpulseDrive, 5);
-        const quantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 3]]);
-        expect(FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, quantities)).toBe(20000);
+        const quantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 3]]);
+        expect(FleetData.calculateUnitQuantitiesLowestMovementSpeed(playerData, quantities)).toBe(20000);
     });
 
-    it('throws when all ship types have quantity 0', () =>
+    it('throws when all unit types have quantity 0', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const quantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 0], [GameType.ShipType.LargeTransport, 0]]);
-        expect(() => FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, quantities)).toThrow();
+        const quantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 0], [GameType.UnitType.LargeTransport, 0]]);
+        expect(() => FleetData.calculateUnitQuantitiesLowestMovementSpeed(playerData, quantities)).toThrow();
     });
 
-    it('throws when an unknown ship type is provided', () =>
+    it('throws when an unknown unit type is provided', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const quantities: Map<GameType.ShipType, number> = new Map([[9999 as GameType.ShipType, 1]]);
-        expect(() => FleetData.calculateShipQuantitiesLowestMovementSpeed(playerData, quantities)).toThrow();
+        const quantities: Map<GameType.UnitType, number> = new Map([[9999 as GameType.UnitType, 1]]);
+        expect(() => FleetData.calculateUnitQuantitiesLowestMovementSpeed(playerData, quantities)).toThrow();
     });
 });
 
@@ -66,27 +66,27 @@ describe('calculateTotalFleetSpace', () =>
 {
     it('returns 0 for an empty fleet', () =>
     {
-        const empty: Map<GameType.ShipType, number> = new Map();
+        const empty: Map<GameType.UnitType, number> = new Map();
         expect(FleetData.calculateTotalFleetSpace(empty)).toBe(0);
     });
 
-    it('multiplies space by quantity for a single ship type', () =>
+    it('multiplies space by quantity for a single unit type', () =>
     {
         // SMALL_TRANSPORT space = 5000
-        const quantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 3]]);
+        const quantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 3]]);
         expect(FleetData.calculateTotalFleetSpace(quantities)).toBe(15000);
     });
 
-    it('aggregates space across ship types', () =>
+    it('aggregates space across unit types', () =>
     {
         // SMALL_TRANSPORT 5000 + LARGE_TRANSPORT 25000
-        const quantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1], [GameType.ShipType.LargeTransport, 1]]);
+        const quantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1], [GameType.UnitType.LargeTransport, 1]]);
         expect(FleetData.calculateTotalFleetSpace(quantities)).toBe(30000);
     });
 
-    it('throws when an unknown ship type is included', () =>
+    it('throws when an unknown unit type is included', () =>
     {
-        const quantities: Map<GameType.ShipType, number> = new Map([[9999 as GameType.ShipType, 1]]);
+        const quantities: Map<GameType.UnitType, number> = new Map([[9999 as GameType.UnitType, 1]]);
         expect(() => FleetData.calculateTotalFleetSpace(quantities)).toThrow();
     });
 });
@@ -95,24 +95,24 @@ describe('hasSpaceForResourceQuantities', () =>
 {
     it('returns true when fleet space exceeds requested resource total', () =>
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
         const resourceQuantities: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 100], [GameType.ResourceType.Crystal, 100]]);
-        expect(FleetData.hasSpaceForResourceQuantities(shipQuantities, resourceQuantities)).toBe(true);
+        expect(FleetData.hasSpaceForResourceQuantities(unitQuantities, resourceQuantities)).toBe(true);
     });
 
     it('returns false when resource total exceeds fleet space', () =>
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
         const resourceQuantities: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 10000]]);
-        expect(FleetData.hasSpaceForResourceQuantities(shipQuantities, resourceQuantities)).toBe(false);
+        expect(FleetData.hasSpaceForResourceQuantities(unitQuantities, resourceQuantities)).toBe(false);
     });
 
     it('returns true at exact equality (totalFuel === totalSpace)', () =>
     {
         // SMALL_TRANSPORT space = 5000 exactly
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
         const resourceQuantities: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 5000]]);
-        expect(FleetData.hasSpaceForResourceQuantities(shipQuantities, resourceQuantities)).toBe(true);
+        expect(FleetData.hasSpaceForResourceQuantities(unitQuantities, resourceQuantities)).toBe(true);
     });
 });
 
@@ -120,11 +120,11 @@ describe('clampResoucesToAddToFleet', () =>
 {
     it('returns input unchanged when fleet has more than enough free space', () =>
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
         const fuelRequirements: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Deuterium, 100]]);
         const transported: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 100]]);
 
-        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(shipQuantities, fuelRequirements, transported);
+        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(unitQuantities, fuelRequirements, transported);
         expect(result.get(GameType.ResourceType.Metal)).toBe(100);
     });
 
@@ -132,32 +132,32 @@ describe('clampResoucesToAddToFleet', () =>
     {
         // SMALL_TRANSPORT space = 5000, minus fuel 1000 → available = 4000
         // Transported total = 8000 → ratio = 0.5
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
         const fuelRequirements: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Deuterium, 1000]]);
         const transported: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 4000], [GameType.ResourceType.Crystal, 4000]]);
 
-        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(shipQuantities, fuelRequirements, transported);
+        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(unitQuantities, fuelRequirements, transported);
         expect(result.get(GameType.ResourceType.Metal)).toBe(2000);
         expect(result.get(GameType.ResourceType.Crystal)).toBe(2000);
     });
 
     it('returns all zeros when fuel consumes all space', () =>
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
         const fuelRequirements: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Deuterium, 5000]]);
         const transported: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 1000]]);
 
-        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(shipQuantities, fuelRequirements, transported);
+        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(unitQuantities, fuelRequirements, transported);
         expect(result.get(GameType.ResourceType.Metal)).toBe(0);
     });
 
     it('returns all zeros when fuel exceeds space (negative available, clamped to 0)', () =>
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
         const fuelRequirements: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Deuterium, 9999]]);
         const transported: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 1000]]);
 
-        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(shipQuantities, fuelRequirements, transported);
+        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(unitQuantities, fuelRequirements, transported);
         expect(result.get(GameType.ResourceType.Metal)).toBe(0);
     });
 });
@@ -171,10 +171,10 @@ describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
     const dummyTargetAddress: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
     const noResources: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 
-    function getFailed(player: CoreType.PlayerData, action: GameType.FleetActionType, shipQuantities: Map<GameType.ShipType, number>, targetOwnerPlayerId: number | null): RequirementType.Requirement[]
+    function getFailed(player: CoreType.PlayerData, action: GameType.FleetActionType, unitQuantities: Map<GameType.UnitType, number>, targetOwnerPlayerId: number | null): RequirementType.Requirement[]
     {
         const targetZoneExists: boolean = targetOwnerPlayerId !== null;
-        return Requirements.getFailedFleetMovementRequirements(player, action, PLANET_ID, shipQuantities, noResources, dummyTargetAddress, targetOwnerPlayerId, targetZoneExists);
+        return Requirements.getFailedFleetMovementRequirements(player, action, PLANET_ID, unitQuantities, noResources, dummyTargetAddress, targetOwnerPlayerId, targetZoneExists);
     }
 
     function buildPlayerWithPlanetCount(planetCount: number): CoreType.PlayerData
@@ -189,58 +189,58 @@ describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
 
     it('STATION fails for an unowned target (null ownerId)', () =>
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Station, shipQuantities, null);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Station, unitQuantities, null);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('STATION passes for an owned target', () =>
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Station, shipQuantities, 42);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Station, unitQuantities, 42);
         expect(failed).toHaveLength(0);
     });
 
     it('COLLECT fails for an unowned target', () =>
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Collect, shipQuantities, null);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Collect, unitQuantities, null);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('COLLECT passes for an owned target', () =>
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Collect, shipQuantities, 42);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Collect, unitQuantities, 42);
         expect(failed).toHaveLength(0);
     });
 
     it('COLONIZE fails when no colony ship is included', () =>
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Colonize, shipQuantities, null);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Colonize, unitQuantities, null);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('COLONIZE fails when the target is already owned', () =>
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
-        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Colonize, shipQuantities, 42);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.ColonyShip, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Colonize, unitQuantities, 42);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('COLONIZE fails when the player has reached MAX_ALLOWED_PLANETS', () =>
     {
         const playerAtCap: CoreType.PlayerData = buildPlayerWithPlanetCount(StaticData.MAX_ALLOWED_PLANETS);
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
-        const failed: RequirementType.Requirement[] = getFailed(playerAtCap, GameType.FleetActionType.Colonize, shipQuantities, null);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.ColonyShip, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(playerAtCap, GameType.FleetActionType.Colonize, unitQuantities, null);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('COLONIZE passes when colony ship present, target unclaimed, and under cap', () =>
     {
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
-        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Colonize, shipQuantities, null);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.ColonyShip, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(originPlayer, GameType.FleetActionType.Colonize, unitQuantities, null);
         expect(failed).toHaveLength(0);
     });
 
@@ -248,8 +248,8 @@ describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
     {
         // The colonize that lands here would be the 9th planet, which is still allowed.
         const playerOneBelowCap: CoreType.PlayerData = buildPlayerWithPlanetCount(StaticData.MAX_ALLOWED_PLANETS - 1);
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
-        const failed: RequirementType.Requirement[] = getFailed(playerOneBelowCap, GameType.FleetActionType.Colonize, shipQuantities, null);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.ColonyShip, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(playerOneBelowCap, GameType.FleetActionType.Colonize, unitQuantities, null);
         expect(failed).toHaveLength(0);
     });
 
@@ -257,8 +257,8 @@ describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
     {
         // The colonize that lands here would be the 10th planet, which is blocked.
         const playerAtCap: CoreType.PlayerData = buildPlayerWithPlanetCount(StaticData.MAX_ALLOWED_PLANETS);
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
-        const failed: RequirementType.Requirement[] = getFailed(playerAtCap, GameType.FleetActionType.Colonize, shipQuantities, null);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.ColonyShip, 1]]);
+        const failed: RequirementType.Requirement[] = getFailed(playerAtCap, GameType.FleetActionType.Colonize, unitQuantities, null);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -266,8 +266,8 @@ describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
     {
         // The action type is constrained by the FleetActionType enum / FLEET_ACTION_INFOS keys upstream;
         // an unknown action has no registered info, so the requirement lookup throws.
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
-        expect(() => getFailed(originPlayer, 9999 as GameType.FleetActionType, shipQuantities, 42)).toThrow();
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
+        expect(() => getFailed(originPlayer, 9999 as GameType.FleetActionType, unitQuantities, 42)).toThrow();
     });
 });
 
@@ -442,33 +442,33 @@ describe('buildResourcesListFromFleetMovement', () =>
     });
 });
 
-describe('buildShipsListFromFleetMovement', () =>
+describe('buildUnitsListFromFleetMovement', () =>
 {
-    it('returns "no ships" for an empty list', () =>
+    it('returns "no units" for an empty list', () =>
     {
-        expect(FleetData.buildShipsListFromFleetMovement([])).toBe("no ships");
+        expect(FleetData.buildUnitsListFromFleetMovement([])).toBe("no units");
     });
 
-    it('formats a single ship entry as "<quantity> <display name>"', () =>
+    it('formats a single unit entry as "<quantity> <display name>"', () =>
     {
-        const smallTransportName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(GameType.ShipType.SmallTransport));
-        const rows: DBType.FleetMovementShipRow[] =
+        const smallTransportName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(GameType.UnitType.SmallTransport));
+        const rows: DBType.FleetMovementUnitRow[] =
         [
-            TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.ShipType.SmallTransport, ship_quantity: 3 }),
+            TestDataBuilders.buildFleetMovementUnitRow({ unit_type: GameType.UnitType.SmallTransport, unit_quantity: 3 }),
         ];
-        expect(FleetData.buildShipsListFromFleetMovement(rows)).toBe(`3 ${smallTransportName}`);
+        expect(FleetData.buildUnitsListFromFleetMovement(rows)).toBe(`3 ${smallTransportName}`);
     });
 
-    it('joins multiple ship entries with commas', () =>
+    it('joins multiple unit entries with commas', () =>
     {
-        const smallTransportName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(GameType.ShipType.SmallTransport));
-        const largeTransportName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.ship(GameType.ShipType.LargeTransport));
-        const rows: DBType.FleetMovementShipRow[] =
+        const smallTransportName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(GameType.UnitType.SmallTransport));
+        const largeTransportName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(GameType.UnitType.LargeTransport));
+        const rows: DBType.FleetMovementUnitRow[] =
         [
-            TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.ShipType.SmallTransport, ship_quantity: 3 }),
-            TestDataBuilders.buildFleetMovementShipRow({ ship_type: GameType.ShipType.LargeTransport, ship_quantity: 1 }),
+            TestDataBuilders.buildFleetMovementUnitRow({ unit_type: GameType.UnitType.SmallTransport, unit_quantity: 3 }),
+            TestDataBuilders.buildFleetMovementUnitRow({ unit_type: GameType.UnitType.LargeTransport, unit_quantity: 1 }),
         ];
-        expect(FleetData.buildShipsListFromFleetMovement(rows)).toBe(`3 ${smallTransportName}, 1 ${largeTransportName}`);
+        expect(FleetData.buildUnitsListFromFleetMovement(rows)).toBe(`3 ${smallTransportName}, 1 ${largeTransportName}`);
     });
 });
 
@@ -480,9 +480,9 @@ describe('computeFleetFuelAndSpace', () =>
     it('returns positive totalFuel and a non-negative availableSpace', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.SmallTransport, 1]]);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
-        const result: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(playerData, origin, target, shipQuantities, serverData);
+        const result: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(playerData, origin, target, unitQuantities, serverData);
 
         expect(result.totalFuel).toBeGreaterThan(0);
         expect(result.availableSpace).toBeGreaterThanOrEqual(0);
@@ -492,10 +492,10 @@ describe('computeFleetFuelAndSpace', () =>
     {
         // Use a large fleet of colony ships across a galaxy boundary to drive fuel above its own space
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const shipQuantities: Map<GameType.ShipType, number> = new Map([[GameType.ShipType.ColonyShip, 1]]);
+        const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.ColonyShip, 1]]);
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
         const farTarget: GameType.PlanetAddress = { galaxy: 2, system: 20, slot: 5, zone: GameType.PlanetZone.Planet };
-        const result: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(playerData, origin, farTarget, shipQuantities, serverData);
+        const result: { totalFuel: number, availableSpace: number } = FleetData.computeFleetFuelAndSpace(playerData, origin, farTarget, unitQuantities, serverData);
 
         expect(result.availableSpace).toBeGreaterThanOrEqual(0);
     });

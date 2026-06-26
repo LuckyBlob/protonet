@@ -320,10 +320,10 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 ]);
 //#endregion
 
-//#region Ships
-export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = new Map<GameType.ShipType, GameType.ShipStats>
+//#region Units
+export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = new Map<GameType.UnitType, GameType.UnitStats>
 ([
-    [GameType.ShipType.SmallTransport, { displayName: "Small Transport",
+    [GameType.UnitType.SmallTransport, { displayName: "Small Transport",
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -346,7 +346,7 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 	}],
 
 
-    [GameType.ShipType.LargeTransport, { displayName: "Large Transport",
+    [GameType.UnitType.LargeTransport, { displayName: "Large Transport",
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -367,7 +367,7 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 	}],
 
 
-    [GameType.ShipType.ColonyShip, { displayName: "Colony Ship",
+    [GameType.UnitType.ColonyShip, { displayName: "Colony Ship",
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -387,7 +387,7 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 		baseFuelConsumption: [
 			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 1000]])},],
 	}],
-    [GameType.ShipType.Recycler, { displayName: "Recycler",
+    [GameType.UnitType.Recycler, { displayName: "Recycler",
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -412,7 +412,7 @@ export const SHIP_STATS: ReadonlyMap<GameType.ShipType, GameType.ShipStats> = ne
 			{ engineTech: GameType.ResearchType.HyperspaceDrive, researchLevel: 15, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 900]])},],
 		canTargetDebrisField: true,
 	}],
-	[GameType.ShipType.EspionageProbe, { displayName: "Espionage Probe",
+	[GameType.UnitType.EspionageProbe, { displayName: "Espionage Probe",
 		requirements:[
 			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -485,10 +485,10 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
-				specificThingType: GameType.ShipType.ColonyShip,
+				specificThingType: GameType.UnitType.ColonyShip,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 1,
-				valueGetter: RequirementValueGetters.shipQuantities(GameType.ShipType.ColonyShip),},},
+				valueGetter: RequirementValueGetters.unitQuantities(GameType.UnitType.ColonyShip),},},
 			{
 			hideDataWhenRequirementFailed: true,
 			thingRequirement:{
@@ -526,7 +526,7 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
-				valueGetter: RequirementValueGetters.allFleetShipsCanTargetDebrisField(),},},
+				valueGetter: RequirementValueGetters.allFleetUnitsCanTargetDebrisField(),},},
 			{
 			hideDataWhenRequirementFailed: true,
 			thingRequirement:{
@@ -548,17 +548,17 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
-				specificThingType: GameType.ShipType.EspionageProbe,
+				specificThingType: GameType.UnitType.EspionageProbe,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 1,
-				valueGetter: RequirementValueGetters.shipQuantities(GameType.ShipType.EspionageProbe),},},
+				valueGetter: RequirementValueGetters.unitQuantities(GameType.UnitType.EspionageProbe),},},
 			{
 			hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
-				valueGetter: RequirementValueGetters.allFleetShipsCanSpy(),},},
+				valueGetter: RequirementValueGetters.allFleetUnitsCanSpy(),},},
 			{
 			hideDataWhenRequirementFailed: true,
 			thingRequirement:{
@@ -717,7 +717,7 @@ export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requireme
 			operator: RequirementType.RequirementOperator.Equal,
 			value: false,
 			valueGetter: RequirementValueGetters.isAnyBuildingDeconstructionInProgress(),}}]],
-	[ThingType.Thing.ShipConstruction, [{
+	[ThingType.Thing.UnitConstruction, [{
 		hideDataWhenRequirementFailed: false,
 		thingRequirement: {
 			thingType: ThingType.Thing.BuildingUpgrade,

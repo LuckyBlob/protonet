@@ -1,5 +1,5 @@
 // Helpers that operate only on the Thing taxonomy (no game content). Because these are used by lower-layer
-// modules (buildingData, shipData, resourceData, researchData), this file must stay free of StaticData so it sits below it.
+// modules (buildingData, unitData, resourceData, researchData), this file must stay free of StaticData so it sits below it.
 // The value getters/setters are generic over both data levels: planet contexts read planetData.dynamicPlanetData,
 // player contexts read playerData.dynamicPlayerData. Each caller passes only the side its context lives on (the
 // other is null), and we dispatch on the context.
@@ -8,16 +8,16 @@ import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 
 export function resource(specificThing: ThingType.SpecificThing): ThingType.SpecificThingType { return { thingType: ThingType.Thing.Resource, specificThingType: specificThing }; }
 export function building(specificThing: ThingType.SpecificThing): ThingType.SpecificThingType { return { thingType: ThingType.Thing.Building, specificThingType: specificThing }; }
-export function ship(specificThing: ThingType.SpecificThing): ThingType.SpecificThingType { return { thingType: ThingType.Thing.Ship, specificThingType: specificThing }; }
+export function unit(specificThing: ThingType.SpecificThing): ThingType.SpecificThingType { return { thingType: ThingType.Thing.Unit, specificThingType: specificThing }; }
 export function fleetAction(specificThing: ThingType.SpecificThing): ThingType.SpecificThingType { return { thingType: ThingType.Thing.FleetMovement, specificThingType: specificThing }; }
 export function planetValue(specificThing: ThingType.SpecificThing): ThingType.SpecificThingType { return { thingType: ThingType.Thing.PlanetValue, specificThingType: specificThing }; }
 export function research(specificThing: ThingType.SpecificThing): ThingType.SpecificThingType { return { thingType: ThingType.Thing.Research, specificThingType: specificThing }; }
 
 export function getThingValues(playerData: CoreType.PlayerData | null, planetData: CoreType.PlanetData | null, dataContext: CoreType.DataContext): Map<ThingType.SpecificThing, number>
 {
-    if (dataContext === CoreType.DataContext.ShipConstruction)
+    if (dataContext === CoreType.DataContext.UnitConstruction)
     {
-        throw new Error("ShipConstruction context does not have specific things that have a value... yet.");
+        throw new Error("UnitConstruction context does not have specific things that have a value... yet.");
     }
 
     if (dataContext === CoreType.DataContext.FutureFleetArrivals)
@@ -65,9 +65,9 @@ export function getThingValues(playerData: CoreType.PlayerData | null, planetDat
 
 export function setSpecificThingValue(playerData: CoreType.PlayerData | null, planetData: CoreType.PlanetData | null, dataContext: CoreType.DataContext, specificThing: ThingType.SpecificThing, value: number): void
 {
-    if (dataContext === CoreType.DataContext.ShipConstruction)
+    if (dataContext === CoreType.DataContext.UnitConstruction)
     {
-        throw new Error("ShipConstruction context is not supported for type setters since it doesnt have specific things.");
+        throw new Error("UnitConstruction context is not supported for type setters since it doesnt have specific things.");
     }
 
     if (dataContext === CoreType.DataContext.FutureFleetArrivals)

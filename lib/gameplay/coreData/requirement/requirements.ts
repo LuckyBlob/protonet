@@ -30,14 +30,14 @@ export function getFailedBuildingDeconstructionRequirements(playerData: CoreType
     return getFailedRequirements(requirementContext, requirements);
 }
 
-export function getFailedShipBuildRequirements(playerData: CoreType.PlayerData, shipType: GameType.ShipType, planetId: number): RequirementType.Requirement[]
+export function getFailedUnitBuildRequirements(playerData: CoreType.PlayerData, unitType: GameType.UnitType, planetId: number): RequirementType.Requirement[]
 {
     const requirementContext: RequirementType.RequirementContext =
     {
         playerData: playerData,
         planetId: planetId,
     };
-    const requirements: RequirementType.Requirement[] = getShipRequirements(ThingType.Thing.ShipConstruction, shipType);
+    const requirements: RequirementType.Requirement[] = getUnitRequirements(ThingType.Thing.UnitConstruction, unitType);
     return getFailedRequirements(requirementContext, requirements);
 }
 
@@ -52,19 +52,19 @@ export function getFailedResearchRequirements(playerData: CoreType.PlayerData, r
     return getFailedRequirements(requirementContext, requirements);
 }
 
-export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerData, fleetActionType: GameType.FleetActionType, planetId: number, shipQuantities: Map<GameType.ShipType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>, targetPlanetAddress: GameType.PlanetAddress, zoneAssociatedPlanetOwnerPlayerId: number | null, targetZoneExists: boolean): RequirementType.Requirement[]
+export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerData, fleetActionType: GameType.FleetActionType, planetId: number, unitQuantities: Map<GameType.UnitType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>, targetPlanetAddress: GameType.PlanetAddress, zoneAssociatedPlanetOwnerPlayerId: number | null, targetZoneExists: boolean): RequirementType.Requirement[]
 {
     const requirementContext: RequirementType.RequirementContext =
     {
         playerData: playerData,
         planetId: planetId,
-        shipQuantities: shipQuantities,
+        unitQuantities: unitQuantities,
         transportedResourceQuantities: transportedResourceQuantities,
         targetPlanetAddress: targetPlanetAddress,
         zoneAssociatedPlanetOwnerPlayerId: zoneAssociatedPlanetOwnerPlayerId,
         targetZoneExists: targetZoneExists,
     };
-    const requirements: RequirementType.Requirement[] = getFleetActionRequirements(ThingType.Thing.FleetMovement, fleetActionType, shipQuantities, transportedResourceQuantities, targetPlanetAddress);
+    const requirements: RequirementType.Requirement[] = getFleetActionRequirements(ThingType.Thing.FleetMovement, fleetActionType, unitQuantities, transportedResourceQuantities, targetPlanetAddress);
     return getFailedRequirements(requirementContext, requirements);
 }
 
@@ -101,10 +101,10 @@ function getBuildingRequirements(thingType: ThingType.Thing, buildingType: GameT
     return [...globalRequirements, ...specificRequirements];
 }
 
-function getShipRequirements(thingType: ThingType.Thing, shipType: GameType.ShipType): RequirementType.Requirement[]
+function getUnitRequirements(thingType: ThingType.Thing, unitType: GameType.UnitType): RequirementType.Requirement[]
 {
     const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(thingType) ?? [];
-    const specificRequirements: RequirementType.Requirement[] = StaticDataHelper.getShipStats(shipType).requirements ?? [];
+    const specificRequirements: RequirementType.Requirement[] = StaticDataHelper.getUnitStats(unitType).requirements ?? [];
 
     return [...globalRequirements, ...specificRequirements];
 }
@@ -117,7 +117,7 @@ function getResearchRequirements(thingType: ThingType.Thing, researchType: GameT
     return [...globalRequirements, ...specificRequirements];
 }
 
-function getFleetActionRequirements(thingType: ThingType.Thing, fleetActionType: GameType.FleetActionType, shipQuantities: Map<GameType.ShipType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>, targetPlanetAddress: GameType.PlanetAddress): RequirementType.Requirement[]
+function getFleetActionRequirements(thingType: ThingType.Thing, fleetActionType: GameType.FleetActionType, unitQuantities: Map<GameType.UnitType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>, targetPlanetAddress: GameType.PlanetAddress): RequirementType.Requirement[]
 {
     const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(thingType) ?? [];
     const specificRequirements: RequirementType.Requirement[] = StaticDataHelper.getFleetActionInfo(fleetActionType).requirements ?? [];

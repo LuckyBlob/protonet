@@ -16,9 +16,9 @@ export function EmptyElement(): ReactElement
 	return emptyElement;
 }
 
-export function renderShipImage(shipType: GameType.ShipType): ReactElement
+export function renderUnitImage(unitType: GameType.UnitType): ReactElement
 {
-	const imagePath: string = getShipImagePath(shipType);
+	const imagePath: string = getUnitImagePath(unitType);
 	const element: ReactElement =
 	(
 		<div className="w-24 h-24 flex flex-col items-center justify-center text-center">
@@ -45,9 +45,9 @@ export function renderShipImage(shipType: GameType.ShipType): ReactElement
 	return element;
 }
 
-function getShipImagePath(shipType: GameType.ShipType): string
+function getUnitImagePath(unitType: GameType.UnitType): string
 {
-    return `/ships/${shipType}.png`;
+    return `/units/${unitType}.png`;
 }
 
 export type RequestedQuantitiesState<K extends number> =
@@ -60,17 +60,17 @@ export function useRequestedQuantities<K extends number>(): RequestedQuantitiesS
 {
 	const [requestedQuantities, setRequestedQuantitiesMap] = useState<Map<K, number>>(new Map<K, number>());
 
-	const setRequestedQuantity = (shipType: K, value: number): void =>
+	const setRequestedQuantity = (unitType: K, value: number): void =>
 	{
 		const updatedMap: Map<K, number> = new Map<K, number>(requestedQuantities);
 
 		if (value <= 0)
 		{
-			updatedMap.delete(shipType);
+			updatedMap.delete(unitType);
 		}
 		else
 		{
-			updatedMap.set(shipType, value);
+			updatedMap.set(unitType, value);
 		}
 
 		setRequestedQuantitiesMap(updatedMap);

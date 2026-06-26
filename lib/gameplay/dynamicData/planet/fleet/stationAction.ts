@@ -1,7 +1,7 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as ShipData from "@/lib/gameplay/dynamicData/planet/shipData";
+import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as DBType from "@/lib/db/dbTypes";
@@ -17,8 +17,8 @@ export function resolveStationAction(originPlayerData: CoreType.PlayerData | nul
         return;
     }
 
-    const shipQuantities: Map<GameType.ShipType, number> = FleetData.buildShipQuantitiesFromRows(fleetMovement.fleetMovementShipRows);
-    ShipData.addPlanetShips(targetPlanetData, shipQuantities);
+    const unitQuantities: Map<GameType.UnitType, number> = FleetData.buildUnitQuantitiesFromRows(fleetMovement.fleetMovementUnitRows);
+    UnitData.addPlanetUnits(targetPlanetData, unitQuantities);
 
     const resourceQuantities: Map<GameType.ResourceType, number> = FleetData.buildResourceQuantitiesFromRows(fleetMovement.fleetMovementResourceRows);
     ResourceData.addPlanetResources(targetPlanetData, resourceQuantities);
@@ -41,7 +41,7 @@ function addStationActionMessages(targetPlayerData: CoreType.PlayerData, fleetMo
     const targetPlayerName: string = StaticDataHelper.getPlayerName(publicPlayerRows, fleetRow.player_target_id);
     const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
-    const shipsList: string = FleetData.buildShipsListFromFleetMovement(fleetMovement.fleetMovementShipRows);
+    const unitsList: string = FleetData.buildUnitsListFromFleetMovement(fleetMovement.fleetMovementUnitRows);
     const resourcesList: string = FleetData.buildResourcesListFromFleetMovement(fleetMovement.fleetMovementResourceRows);
 
     fleetMovement.originMessageRow =
@@ -52,7 +52,7 @@ function addStationActionMessages(targetPlayerData: CoreType.PlayerData, fleetMo
         type: MessageData.MessageType.FleetAction,
         is_read: 0,
         title: "Station Fleet Action Report",
-        body: `Stationed ${shipsList} and ${resourcesList} at ${targetPlayerName}'s planet ${targetAddress}.`,
+        body: `Stationed ${unitsList} and ${resourcesList} at ${targetPlayerName}'s planet ${targetAddress}.`,
     };
 
     // Same-player station: don't double-message. The origin report covers it.
@@ -69,6 +69,6 @@ function addStationActionMessages(targetPlayerData: CoreType.PlayerData, fleetMo
         type: MessageData.MessageType.FleetAction,
         is_read: 0,
         title: "Station Fleet Action Report",
-        body: `${originPlayerName} stationed ${shipsList} and ${resourcesList} at your planet ${targetAddress}. What a nice guy!`,
+        body: `${originPlayerName} stationed ${unitsList} and ${resourcesList} at your planet ${targetAddress}. What a nice guy!`,
     };
 }

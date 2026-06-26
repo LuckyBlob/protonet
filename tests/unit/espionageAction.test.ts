@@ -10,7 +10,7 @@ const TARGET_PLAYER_ID: number = 2;
 const ORIGIN_PLANET_ID: number = 1;
 const TARGET_PLANET_ID: number = 2;
 
-// The target planet below carries 3 ships, so with 10 probes and equal tech the detection chance is
+// The target planet below carries 3 units, so with 10 probes and equal tech the detection chance is
 // 1 * 10 * 3 * 0.25% = 0.075. seededRandom(7) ≈ 0.012 sits below that (probes detected); seededRandom(2)
 // ≈ 0.734 sits above every chance used here (probes escape).
 const DETECTED_SEED: number = 7;
@@ -53,7 +53,7 @@ function setup(probeCount: number, seed: number, options: SetupOptions = {}): Se
             started_at: 1_000_000,
             duration_at_start_time: 30_000,
         },
-        fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 1, ship_type: GameType.ShipType.EspionageProbe, ship_quantity: probeCount })],
+        fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ fleet_id: 1, unit_type: GameType.UnitType.EspionageProbe, unit_quantity: probeCount })],
     });
 
     const originFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
@@ -70,7 +70,7 @@ function setup(probeCount: number, seed: number, options: SetupOptions = {}): Se
         dynamicPlanetData:
         {
             resourceQuantity: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Metal, 1234]]),
-            shipQuantity: new Map<GameType.ShipType, number>([[GameType.ShipType.SmallTransport, 3]]),
+            unitQuantity: new Map<GameType.UnitType, number>([[GameType.UnitType.SmallTransport, 3]]),
             buildingLevels: new Map<GameType.BuildingType, number>([[GameType.BuildingType.MetalMine, 7]]),
             futureFleetArrivals: [targetFleet],
         },

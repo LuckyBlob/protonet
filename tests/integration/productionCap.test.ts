@@ -3,7 +3,7 @@ import * as ApplyProgress from '@/lib/gameplay/progressUpdate/applyProgress';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as ResourceData from '@/lib/gameplay/dynamicData/planet/resourceData';
 import * as BuildingData from '@/lib/gameplay/dynamicData/planet/buildingData';
-import * as ShipData from '@/lib/gameplay/dynamicData/planet/shipData';
+import * as UnitData from '@/lib/gameplay/dynamicData/planet/unitData';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as ServerFleetData from '@/lib/gameplay/dynamicData/planet/fleet/serverFleetData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
@@ -81,7 +81,7 @@ describe('production cap — produce up to the cap, then stop', () =>
 
 describe('production cap — stays capped across multiple anchor events', () =>
 {
-    it('does not produce past the cap even as a building upgrade and a ship construction resolve', () =>
+    it('does not produce past the cap even as a building upgrade and a unit construction resolve', () =>
     {
         const buildingUpgradeBuildingRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine });
         const buildingUpgrade: CoreType.BuildingUpgrade =
@@ -97,18 +97,18 @@ describe('production cap — stays capped across multiple anchor events', () =>
             buildingUpgradeBuildingRows: [buildingUpgradeBuildingRow],
         };
 
-        const shipConstructionShipRow = TestDataBuilders.buildShipConstructionShipRow({ id: 1, ship_construction_id: 1, ship_type: GameType.ShipType.SmallTransport, ship_quantity: 1 });
-        const shipConstruction: CoreType.ShipConstruction =
+        const unitConstructionUnitRow = TestDataBuilders.buildUnitConstructionUnitRow({ id: 1, unit_construction_id: 1, unit_type: GameType.UnitType.SmallTransport, unit_quantity: 1 });
+        const unitConstruction: CoreType.UnitConstruction =
         {
-            shipConstructionRow: TestDataBuilders.buildShipConstructionRow(
+            unitConstructionRow: TestDataBuilders.buildUnitConstructionRow(
             {
                 id: 1,
                 planet_id: 1,
                 started_at: BASE_TIME,
                 duration_at_start_time: HOUR_MS / 2,
-                current_ship_construction_ship_row_id: 1,
+                current_unit_construction_unit_row_id: 1,
             }),
-            shipConstructionShipRows: [shipConstructionShipRow],
+            unitConstructionUnitRows: [unitConstructionUnitRow],
         };
 
         // Start exactly at the cap. Solar Plant level 2 keeps the energy ratio >= 1 after the mine reaches level 2.
@@ -121,7 +121,7 @@ describe('production cap — stays capped across multiple anchor events', () =>
                 [GameType.BuildingType.MetalStorage, 1],
             ]),
             buildingUpgrades: [buildingUpgrade],
-            shipConstructions: [shipConstruction],
+            unitConstructions: [unitConstruction],
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
         const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
@@ -131,7 +131,7 @@ describe('production cap — stays capped across multiple anchor events', () =>
 
         // Both anchor events resolved...
         expect(BuildingData.getBuildingLevel(result.planetDatas[0]!, GameType.BuildingType.MetalMine)).toBe(2);
-        expect(ShipData.getShipQuantity(result.planetDatas[0]!, GameType.ShipType.SmallTransport)).toBe(1);
+        expect(UnitData.getUnitQuantity(result.planetDatas[0]!, GameType.UnitType.SmallTransport)).toBe(1);
 
         // ...but Metal never crept above the cap.
         const metal: number = ResourceData.getResourceQuantity(result.planetDatas[0]!, GameType.ResourceType.Metal);
@@ -245,7 +245,7 @@ describe('production cap — losing resources via a fleet event drops us back un
         const PLAYER_ID: number = 1;
         const TARGET_PLANET_ID: number = 2;
 
-        // A Collect fleet arriving on this player's own planet. With no defending ships it succeeds and
+        // A Collect fleet arriving on this player's own planet. With no defending units it succeeds and
         // hauls away the planet's Metal. One Large Transport (space 25000) easily holds the whole cap.
         const collectFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement(
         {
@@ -266,7 +266,7 @@ describe('production cap — losing resources via a fleet event drops us back un
                 started_at: BASE_TIME,
                 duration_at_start_time: 100 * HOUR_MS,
             },
-            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 1, ship_type: GameType.ShipType.LargeTransport, ship_quantity: 1 })],
+            fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ fleet_id: 1, unit_type: GameType.UnitType.LargeTransport, unit_quantity: 1 })],
         });
 
         const targetPlanet: CoreType.PlanetData = buildCappedPlanet(METAL_CAP - 10, { futureFleetArrivals: [collectFleet] });

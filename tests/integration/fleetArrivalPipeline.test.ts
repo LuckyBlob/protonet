@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as ApplyProgress from '@/lib/gameplay/progressUpdate/applyProgress';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
-import * as ShipData from '@/lib/gameplay/dynamicData/planet/shipData';
+import * as UnitData from '@/lib/gameplay/dynamicData/planet/unitData';
 import * as ResourceData from '@/lib/gameplay/dynamicData/planet/resourceData';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as FleetData from '@/lib/gameplay/dynamicData/planet/fleet/fleetData';
@@ -39,7 +39,7 @@ class SingleOwnerFleetApplier extends TestProgressApplierHelper.TestProgressAppl
 
 describe('fleet arrival — same-player STATION through applyProgress', () =>
 {
-    it('moves ships into the target planet and clears the fleet at completion', () =>
+    it('moves units into the target planet and clears the fleet at completion', () =>
     {
         const PLAYER_ID: number = 1;
         const ORIGIN_PLANET_ID: number = 1;
@@ -57,7 +57,7 @@ describe('fleet arrival — same-player STATION through applyProgress', () =>
                 started_at: BASE_TIME,
                 duration_at_start_time: 30_000,
             },
-            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 1, ship_type: GameType.ShipType.SmallTransport, ship_quantity: 1 })],
+            fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ fleet_id: 1, unit_type: GameType.UnitType.SmallTransport, unit_quantity: 1 })],
         });
         const fleetOnOrigin: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
 
@@ -82,14 +82,14 @@ describe('fleet arrival — same-player STATION through applyProgress', () =>
         ServerFleetData.serverResolveFleetAction(playerData, playerData, fleetOnTarget, serverData);
 
         const resultTarget: CoreType.PlanetData = playerData.planetDatas[1]!;
-        expect(ShipData.getShipQuantity(resultTarget, GameType.ShipType.SmallTransport)).toBe(1);
+        expect(UnitData.getUnitQuantity(resultTarget, GameType.UnitType.SmallTransport)).toBe(1);
         expect(resultTarget.dynamicPlanetData.futureFleetArrivals).toHaveLength(0);
     });
 });
 
 describe('fleet arrival — return trip through applyProgress', () =>
 {
-    it('drops ships and resources back onto the origin planet at the return arrival', () =>
+    it('drops units and resources back onto the origin planet at the return arrival', () =>
     {
         const PLAYER_ID: number = 1;
         const ORIGIN_PLANET_ID: number = 1;
@@ -107,7 +107,7 @@ describe('fleet arrival — return trip through applyProgress', () =>
                 started_at: BASE_TIME,
                 duration_at_start_time: 30_000,
             },
-            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 1, ship_type: GameType.ShipType.SmallTransport, ship_quantity: 1 })],
+            fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ fleet_id: 1, unit_type: GameType.UnitType.SmallTransport, unit_quantity: 1 })],
             fleetMovementResourceRows: [TestDataBuilders.buildFleetMovementResourceRow({ fleet_id: 1, resource_type: GameType.ResourceType.Metal, resource_quantity: 200 })],
         });
 
@@ -128,7 +128,7 @@ describe('fleet arrival — return trip through applyProgress', () =>
         const result: CoreType.PlayerData = ApplyProgress.applyProgressToPlayerData(playerData, serverData, after, applier);
 
         const resultOrigin: CoreType.PlanetData = result.planetDatas[0]!;
-        expect(ShipData.getShipQuantity(resultOrigin, GameType.ShipType.SmallTransport)).toBe(1);
+        expect(UnitData.getUnitQuantity(resultOrigin, GameType.UnitType.SmallTransport)).toBe(1);
         expect(ResourceData.getResourceQuantity(resultOrigin, GameType.ResourceType.Metal)).toBe(2200);
         expect(resultOrigin.dynamicPlanetData.futureFleetArrivals).toHaveLength(0);
     });

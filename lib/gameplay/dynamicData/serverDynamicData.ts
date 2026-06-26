@@ -271,14 +271,14 @@ export function serverUpdatePlanetDataContext(planetId: number, playerId: number
                 updateResourceQuantities(planetId, playerId, dynamicPlanetData);
                 break;
             }
-            case CoreType.DataContext.ShipQuantity:
+            case CoreType.DataContext.UnitQuantity:
             {
-                updateShipQuantities(planetId, playerId, dynamicPlanetData);
+                updateUnitQuantities(planetId, playerId, dynamicPlanetData);
                 break;
             }
-            case CoreType.DataContext.ShipConstruction:
+            case CoreType.DataContext.UnitConstruction:
             {
-                updateShipConstructions(planetId, playerId, dynamicPlanetData);
+                updateUnitConstructions(planetId, playerId, dynamicPlanetData);
                 break;
             }
             case CoreType.DataContext.FutureFleetArrivals:
@@ -309,8 +309,8 @@ export function getDynamicPlanetData(planetId: number): CoreType.DynamicPlanetDa
         resourceQuantity: getDynamicPlanetResourceData(planetId),
         buildingLevels: getDynamicPlanetBuildingData(planetId),
         buildingEnergySettings: getDynamicPlanetBuildingEnergySettingData(planetId),
-        shipQuantity: getDynamicPlanetShipData(planetId),
-        shipConstructions: getDynamicPlanetShipConstructionData(planetId),
+        unitQuantity: getDynamicPlanetUnitData(planetId),
+        unitConstructions: getDynamicPlanetUnitConstructionData(planetId),
         futureFleetArrivals: getDynamicPlanetFutureFleetArrivalData(planetId),
         buildingUpgrades: getDynamicPlanetBuildingUpgradeData(planetId),
         buildingDeconstructions: getDynamicPlanetBuildingDeconstructionData(planetId),
@@ -357,44 +357,44 @@ export function getDynamicPlanetBuildingData(planetId: number): Map<GameType.Bui
     return buildingLevel;
 }
 
-export function getDynamicPlanetShipData(planetId: number): Map<GameType.ShipType, number>
+export function getDynamicPlanetUnitData(planetId: number): Map<GameType.UnitType, number>
 {
-    const shipRows: DBType.PlanetShipRow[] = DB.databaseConnection.prepare(
-        "SELECT * FROM planet_ship WHERE planet_id = ?"
-    ).all(planetId) as DBType.PlanetShipRow[];
-    const shipQuantities: Map<GameType.ShipType, number> = new Map<GameType.ShipType, number>();
-    for (const shipRow of shipRows)
+    const unitRows: DBType.PlanetUnitRow[] = DB.databaseConnection.prepare(
+        "SELECT * FROM planet_unit WHERE planet_id = ?"
+    ).all(planetId) as DBType.PlanetUnitRow[];
+    const unitQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();
+    for (const unitRow of unitRows)
     {
-        shipQuantities.set(shipRow.ship_type as GameType.ShipType, shipRow.ship_quantity);
+        unitQuantities.set(unitRow.unit_type as GameType.UnitType, unitRow.unit_quantity);
     }
-    return shipQuantities;
+    return unitQuantities;
 }
 
-export function getDynamicPlanetShipConstructionData(planetId: number): CoreType.ShipConstruction[]
+export function getDynamicPlanetUnitConstructionData(planetId: number): CoreType.UnitConstruction[]
 {
-    return DB.databaseConnection.transaction((): CoreType.ShipConstruction[] =>
+    return DB.databaseConnection.transaction((): CoreType.UnitConstruction[] =>
     {
-        const shipConstructions: CoreType.ShipConstruction[] = [];
+        const unitConstructions: CoreType.UnitConstruction[] = [];
 
-        const shipConstructionRows: DBType.ShipConstructionRow[] = DB.databaseConnection.prepare(
-            "SELECT * FROM ship_construction WHERE planet_id = ? ORDER BY id"
-        ).all(planetId) as DBType.ShipConstructionRow[];
+        const unitConstructionRows: DBType.UnitConstructionRow[] = DB.databaseConnection.prepare(
+            "SELECT * FROM unit_construction WHERE planet_id = ? ORDER BY id"
+        ).all(planetId) as DBType.UnitConstructionRow[];
 
-        for (const shipConstructionRow of shipConstructionRows)
+        for (const unitConstructionRow of unitConstructionRows)
         {
-            const shipConstructionShipRows: DBType.ShipConstructionShipRow[] = DB.databaseConnection.prepare(
-                "SELECT * FROM ship_construction_ship WHERE ship_construction_id = ?"
-            ).all(shipConstructionRow.id) as DBType.ShipConstructionShipRow[];
+            const unitConstructionUnitRows: DBType.UnitConstructionUnitRow[] = DB.databaseConnection.prepare(
+                "SELECT * FROM unit_construction_unit WHERE unit_construction_id = ?"
+            ).all(unitConstructionRow.id) as DBType.UnitConstructionUnitRow[];
 
-            const newShipConstruction: CoreType.ShipConstruction =
+            const newUnitConstruction: CoreType.UnitConstruction =
             {
-                shipConstructionRow: shipConstructionRow,
-                shipConstructionShipRows: shipConstructionShipRows,
+                unitConstructionRow: unitConstructionRow,
+                unitConstructionUnitRows: unitConstructionUnitRows,
             };
-            shipConstructions.push(newShipConstruction);
+            unitConstructions.push(newUnitConstruction);
         }
 
-        return shipConstructions;
+        return unitConstructions;
     })();
 }
 
@@ -474,9 +474,9 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): CoreTy
 
         for (const fleetMovementRow of fleetMovementRows)
         {
-            const fleetMovementShipRows: DBType.FleetMovementShipRow[] = DB.databaseConnection.prepare(
-                "SELECT * FROM fleet_movement_ship WHERE fleet_id = ?"
-            ).all(fleetMovementRow.id) as DBType.FleetMovementShipRow[];
+            const fleetMovementUnitRows: DBType.FleetMovementUnitRow[] = DB.databaseConnection.prepare(
+                "SELECT * FROM fleet_movement_unit WHERE fleet_id = ?"
+            ).all(fleetMovementRow.id) as DBType.FleetMovementUnitRow[];
 
             const fleetMovementResourceRows: DBType.FleetMovementResourceRow[] = DB.databaseConnection.prepare(
                 "SELECT * FROM fleet_movement_resource WHERE fleet_id = ?"
@@ -489,7 +489,7 @@ export function getDynamicPlanetFutureFleetArrivalData(planetId: number): CoreTy
             const newFleetMovement: CoreType.FleetMovement =
             {
                 fleetMovementRow: fleetMovementRow,
-                fleetMovementShipRows: fleetMovementShipRows,
+                fleetMovementUnitRows: fleetMovementUnitRows,
                 fleetMovementResourceRows: fleetMovementResourceRows,
                 fleetMovementFuelRows: fleetMovementFuelRows,
                 resolutionState: CoreType.FleetMovementResolution.Unresolved,
@@ -542,88 +542,88 @@ function updateBuildingLevels(planetId: number, playerId: number, dynamicPlanetD
     transaction();
 }
 
-function updateShipQuantities(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): void
+function updateUnitQuantities(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        DB.databaseConnection.prepare("DELETE FROM planet_ship WHERE planet_id = ?").run(planetId);
+        DB.databaseConnection.prepare("DELETE FROM planet_unit WHERE planet_id = ?").run(planetId);
         const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO planet_ship (planet_id, player_id, ship_type, ship_quantity) VALUES (?, ?, ?, ?)"
+            "INSERT INTO planet_unit (planet_id, player_id, unit_type, unit_quantity) VALUES (?, ?, ?, ?)"
         );
-        for (const [shipType, shipQuantity] of dynamicPlanetData.shipQuantity)
+        for (const [unitType, unitQuantity] of dynamicPlanetData.unitQuantity)
         {
-            insertStatement.run(planetId, playerId, shipType, shipQuantity);
+            insertStatement.run(planetId, playerId, unitType, unitQuantity);
         }
     });
     transaction();
 }
 
-function updateShipConstructions(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): void
+function updateUnitConstructions(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): void
 {
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        DB.databaseConnection.prepare("DELETE FROM ship_construction WHERE planet_id = ?").run(planetId);
-        // On delete cascade will delete ship_construction_ship rows
+        DB.databaseConnection.prepare("DELETE FROM unit_construction WHERE planet_id = ?").run(planetId);
+        // On delete cascade will delete unit_construction_unit rows
         const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO ship_construction (planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_ship_construction_ship_row_id) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
+            "INSERT INTO unit_construction (planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_unit_construction_unit_row_id) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
         );
-        const insertShipStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO ship_construction_ship (ship_construction_id, ship_type, ship_quantity) VALUES (?, ?, ?) RETURNING id"
+        const insertUnitStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO unit_construction_unit (unit_construction_id, unit_type, unit_quantity) VALUES (?, ?, ?) RETURNING id"
         );
 
-        if (dynamicPlanetData.shipConstructions.length === 0)
+        if (dynamicPlanetData.unitConstructions.length === 0)
         {
             return;
         }
 
         // Read and get all the new IDs.
-        for (const shipConstruction of dynamicPlanetData.shipConstructions)
+        for (const unitConstruction of dynamicPlanetData.unitConstructions)
         {
-            const shipConstructionRow: DBType.ShipConstructionRow = shipConstruction.shipConstructionRow;
+            const unitConstructionRow: DBType.UnitConstructionRow = unitConstruction.unitConstructionRow;
             const constructionIdResult: { id: number } = insertStatement.get(
                 planetId,
                 playerId,
-                shipConstructionRow.requested_at,
-                shipConstructionRow.duration_at_request_time,
-                shipConstructionRow.duration_at_start_time,
-                shipConstructionRow.started_at,
-                shipConstructionRow.current_ship_construction_ship_row_id,
+                unitConstructionRow.requested_at,
+                unitConstructionRow.duration_at_request_time,
+                unitConstructionRow.duration_at_start_time,
+                unitConstructionRow.started_at,
+                unitConstructionRow.current_unit_construction_unit_row_id,
             ) as { id: number };
 
-            shipConstructionRow.id = constructionIdResult.id;
+            unitConstructionRow.id = constructionIdResult.id;
 
-            let firstShipConstructionShipRowId: number | null = null;
-            for (const shipConstructionShipRow of shipConstruction.shipConstructionShipRows)
+            let firstUnitConstructionUnitRowId: number | null = null;
+            for (const unitConstructionUnitRow of unitConstruction.unitConstructionUnitRows)
             {
-                const shipRowIdResult: { id: number } = insertShipStatement.get(
-                    shipConstructionRow.id,
-                    shipConstructionShipRow.ship_type,
-                    shipConstructionShipRow.ship_quantity,
+                const unitRowIdResult: { id: number } = insertUnitStatement.get(
+                    unitConstructionRow.id,
+                    unitConstructionUnitRow.unit_type,
+                    unitConstructionUnitRow.unit_quantity,
                 ) as { id: number };
 
-                const oldShipRowId: number = shipConstructionShipRow.id;
-                shipConstructionShipRow.id = shipRowIdResult.id;
+                const oldUnitRowId: number = unitConstructionUnitRow.id;
+                unitConstructionUnitRow.id = unitRowIdResult.id;
 
-                if (oldShipRowId !== -1)
+                if (oldUnitRowId !== -1)
                 {
-                    // if we were pointing to the old ship row id, update to the new one
-                    if (shipConstructionRow.current_ship_construction_ship_row_id === oldShipRowId)
+                    // if we were pointing to the old unit row id, update to the new one
+                    if (unitConstructionRow.current_unit_construction_unit_row_id === oldUnitRowId)
                     {
-                        shipConstructionRow.current_ship_construction_ship_row_id = shipConstructionShipRow.id;
+                        unitConstructionRow.current_unit_construction_unit_row_id = unitConstructionUnitRow.id;
                         DB.databaseConnection.prepare(
-                            "UPDATE ship_construction SET current_ship_construction_ship_row_id = ? WHERE id = ?"
-                        ).run(shipConstructionShipRow.id, shipConstructionRow.id);
+                            "UPDATE unit_construction SET current_unit_construction_unit_row_id = ? WHERE id = ?"
+                        ).run(unitConstructionUnitRow.id, unitConstructionRow.id);
                     }
                 }
                 else
                 {
-                    if (firstShipConstructionShipRowId === null)
+                    if (firstUnitConstructionUnitRowId === null)
                     {
-                        firstShipConstructionShipRowId = shipConstructionShipRow.id;
-                        shipConstructionRow.current_ship_construction_ship_row_id = firstShipConstructionShipRowId;
+                        firstUnitConstructionUnitRowId = unitConstructionUnitRow.id;
+                        unitConstructionRow.current_unit_construction_unit_row_id = firstUnitConstructionUnitRowId;
                         DB.databaseConnection.prepare(
-                            "UPDATE ship_construction SET current_ship_construction_ship_row_id = ? WHERE id = ?"
-                        ).run(firstShipConstructionShipRowId, shipConstructionRow.id);
+                            "UPDATE unit_construction SET current_unit_construction_unit_row_id = ? WHERE id = ?"
+                        ).run(firstUnitConstructionUnitRowId, unitConstructionRow.id);
                     }
                 }
             }
@@ -785,12 +785,12 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: CoreType
             "DELETE FROM fleet_movement WHERE (planet_origin_id = ?)"
         ).run(planetId);
         
-        // On delete cascade will delete the ship rows and resource rows
+        // On delete cascade will delete the unit rows and resource rows
         const fleetMovementStatement: Database.Statement = DB.databaseConnection.prepare(
             "INSERT INTO fleet_movement (seed, player_origin_id, planet_origin_id, planet_origin_zone, planet_origin_slot, planet_origin_system, planet_origin_galaxy, player_target_id, planet_target_zone, planet_target_slot, planet_target_system, planet_target_galaxy, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id"
         );
-        const fleetMovementShipStatement: Database.Statement = DB.databaseConnection.prepare(
-            "INSERT INTO fleet_movement_ship VALUES (?, ?, ?)"
+        const fleetMovementUnitStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO fleet_movement_unit VALUES (?, ?, ?)"
         );
         const fleetMovementResourceStatement: Database.Statement = DB.databaseConnection.prepare(
             "INSERT INTO fleet_movement_resource VALUES (?, ?, ?)"
@@ -830,10 +830,10 @@ function updateFutureFleetArrivals(planetId: number, dynamicPlanetData: CoreType
 
             fleetMovement.fleetMovementRow.id = fleetIdResult.id;
             
-            for (const fleetMovementShipRow of fleetMovement.fleetMovementShipRows)
+            for (const fleetMovementUnitRow of fleetMovement.fleetMovementUnitRows)
             {
-                fleetMovementShipRow.fleet_id = fleetIdResult.id;
-                fleetMovementShipStatement.run(fleetMovementShipRow.fleet_id, fleetMovementShipRow.ship_type, fleetMovementShipRow.ship_quantity);
+                fleetMovementUnitRow.fleet_id = fleetIdResult.id;
+                fleetMovementUnitStatement.run(fleetMovementUnitRow.fleet_id, fleetMovementUnitRow.unit_type, fleetMovementUnitRow.unit_quantity);
             }
 
             for (const fleetMovementResourceRow of fleetMovement.fleetMovementResourceRows)

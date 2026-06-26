@@ -8,9 +8,9 @@ export const Thing =
 {
     Resource: 1,
     Building: 2,
-    Ship: 3,
+    Unit: 3,
     BuildingUpgrade: 4,
-    ShipConstruction: 5,
+    UnitConstruction: 5,
     FleetMovement: 6,
     PlanetValue: 7,
     Research: 8,

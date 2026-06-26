@@ -77,7 +77,7 @@ describe('colonize to a slot taken before arrival', () =>
                 started_at: 1_000_000,
                 duration_at_start_time: 60_000,
             },
-            fleetMovementShipRows: [TestDataBuilders.buildFleetMovementShipRow({ fleet_id: 50, ship_type: GameType.ShipType.ColonyShip, ship_quantity: 1 })],
+            fleetMovementUnitRows: [TestDataBuilders.buildFleetMovementUnitRow({ fleet_id: 50, unit_type: GameType.UnitType.ColonyShip, unit_quantity: 1 })],
         });
 
         ColonizeAction.resolveColonizeAction(originPlayer, fleet, TestDataBuilders.buildServerData());

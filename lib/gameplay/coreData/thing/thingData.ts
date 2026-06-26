@@ -8,9 +8,9 @@ export const THING_DISPLAY_NAMES: ReadonlyMap<ThingType.Thing, string> = new Map
 ([
     [ThingType.Thing.Resource, "Resource"],
     [ThingType.Thing.Building, "Building"],
-    [ThingType.Thing.Ship, "Ship"],
+    [ThingType.Thing.Unit, "Unit"],
     [ThingType.Thing.BuildingUpgrade, "BuildingUpgrade"],
-    [ThingType.Thing.ShipConstruction, "ShipConstruction"],
+    [ThingType.Thing.UnitConstruction, "UnitConstruction"],
     [ThingType.Thing.FleetMovement, "FleetMovement"],
     [ThingType.Thing.PlanetValue, "PlanetValue"],
     [ThingType.Thing.Research, "Research"],
@@ -32,11 +32,11 @@ export const THING_DEFINITIONS: ReadonlyMap<ThingType.Thing, ThingType.ThingDefi
             ([buildingType, buildingStats]) => [buildingType, buildingStats.displayName])),
         contexts: [CoreType.DataContext.BuildingLevel],
     }],
-    [ThingType.Thing.Ship,
+    [ThingType.Thing.Unit,
     {
-        specificThingDisplayNames: new Map<ThingType.SpecificThing, string>([...StaticData.SHIP_STATS].map(
-            ([shipType, shipTypeStats]) => [shipType, shipTypeStats.displayName])),
-        contexts: [CoreType.DataContext.ShipQuantity, CoreType.DataContext.ShipConstruction],
+        specificThingDisplayNames: new Map<ThingType.SpecificThing, string>([...StaticData.UNIT_STATS].map(
+            ([unitType, unitTypeStats]) => [unitType, unitTypeStats.displayName])),
+        contexts: [CoreType.DataContext.UnitQuantity, CoreType.DataContext.UnitConstruction],
     }],
     [ThingType.Thing.BuildingUpgrade,
     {
@@ -44,11 +44,11 @@ export const THING_DEFINITIONS: ReadonlyMap<ThingType.Thing, ThingType.ThingDefi
             ([buildingType, buildingStats]) => [buildingType, buildingStats.displayName])),
         contexts: [CoreType.DataContext.BuildingLevel],
     }],
-    [ThingType.Thing.ShipConstruction,
+    [ThingType.Thing.UnitConstruction,
     {
-        specificThingDisplayNames: new Map<ThingType.SpecificThing, string>([...StaticData.SHIP_STATS].map(
-            ([shipType, shipTypeStats]) => [shipType, shipTypeStats.displayName])),
-        contexts: [CoreType.DataContext.ShipConstruction],
+        specificThingDisplayNames: new Map<ThingType.SpecificThing, string>([...StaticData.UNIT_STATS].map(
+            ([unitType, unitTypeStats]) => [unitType, unitTypeStats.displayName])),
+        contexts: [CoreType.DataContext.UnitConstruction],
     }],
     [ThingType.Thing.FleetMovement,
     {
