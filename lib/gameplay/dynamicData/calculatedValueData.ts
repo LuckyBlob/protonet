@@ -5,11 +5,13 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as BuildingPlanetValueProduction from "@/lib/gameplay/coreData/formula/buildingPlanetValueProductionFormulas";
+import * as UnitPlanetValueProduction from "@/lib/gameplay/coreData/formula/unitPlanetValueProductionFormulas";
 import * as ResearchPlayerValueProduction from "@/lib/gameplay/coreData/formula/researchPlayerValueProductionFormulas";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
+import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 
@@ -177,6 +179,27 @@ function computePlanetBaseValues(planetData: CoreType.PlanetData): Map<GameType.
 function computeUnitPlanetValueDatas(planetData: CoreType.PlanetData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
 {
     const newUnitPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
+
+    const unitTypes: GameType.UnitType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Unit);
+    for (const unitType of unitTypes)
+    {
+        const unitQuantity: number = UnitData.getUnitQuantity(planetData, unitType);
+        if (unitQuantity <= 0)
+        {
+            continue;
+        }
+
+        const unitPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = UnitPlanetValueProduction.computeUnitPlanetValueProduction(unitType, unitQuantity, planetData);
+        if (unitPlanetValues === null)
+        {
+            continue;
+        }
+
+        for (const [planetValueType, planetValueAmounts] of unitPlanetValues)
+        {
+            addCalculatedValueData(newUnitPlanetValues, planetValueType, planetValueAmounts);
+        }
+    }
 
     return newUnitPlanetValues;
 }

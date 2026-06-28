@@ -24,6 +24,7 @@ import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelp
 import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleetMovementDurationFormulas";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as UnitConstructionData from "@/lib/gameplay/dynamicData/planet/unitConstructionData";
+import * as MissileSpaceData from "@/lib/gameplay/dynamicData/planet/missileSpaceData";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as BuildingDeconstructionData from "@/lib/gameplay/dynamicData/planet/buildingDeconstructionData";
 import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
@@ -889,10 +890,16 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
         started_at: null,
         current_building_upgrade_building_row_id: -1,
     };
+    const newBuildingUpgradeResourceRows: DBType.BuildingUpgradeResourceRow[] = [];
+    for (const [resourceType, resourceCost] of upgradeCost)
+    {
+        newBuildingUpgradeResourceRows.push({ building_upgrade_id: -1, resource_type: resourceType, resource_quantity: resourceCost });
+    }
     const newBuildingUpgrade: CoreType.BuildingUpgrade =
     {
         buildingUpgradeRow: newBuildingUpgradeRow,
         buildingUpgradeBuildingRows: newBuildingUpgradeBuildingRows,
+        buildingUpgradeResourceRows: newBuildingUpgradeResourceRows,
     };
 
     const index: number | null = BuildingUpgradeData.getNextBuildingUpgradeBuildingRowIndex(playerData, relevantPlanetData, newBuildingUpgrade, serverData);
@@ -1013,12 +1020,106 @@ export function tryDeconstructBuildingLogic(playerId: number, serverData: CoreTy
         started_at: now,
         current_building_deconstruction_building_row_id: -1,
     };
+    const newBuildingDeconstructionResourceRows: DBType.BuildingDeconstructionResourceRow[] = [];
+    for (const [resourceType, resourceCost] of deconstructionCost)
+    {
+        newBuildingDeconstructionResourceRows.push({ building_deconstruction_id: -1, resource_type: resourceType, resource_quantity: resourceCost });
+    }
     const newBuildingDeconstruction: CoreType.BuildingDeconstruction =
     {
         buildingDeconstructionRow: newBuildingDeconstructionRow,
         buildingDeconstructionBuildingRows: [newBuildingDeconstructionBuildingRow],
+        buildingDeconstructionResourceRows: newBuildingDeconstructionResourceRows,
     };
     relevantPlanetData.dynamicPlanetData.buildingDeconstructions.push(newBuildingDeconstruction);
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.ResourceQuantity, relevantPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.BuildingDeconstruction, relevantPlanetData.dynamicPlanetData);
+
+        const playerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        }
+        return playerActionResult;
+    })();
+
+    return playerActionResult;
+}
+
+export function tryCancelBuildingUpgradeLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.CancelBuildingUpgrade>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    const relevantPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.planetId);
+    if (relevantPlanetData === null)
+    {
+        return { success: false, failureReason: "Wrong planet to cancel building upgrade.", playerStateResult: playerData };
+    }
+
+    const buildingUpgrades: CoreType.BuildingUpgrade[] = relevantPlanetData.dynamicPlanetData.buildingUpgrades;
+    if (buildingUpgrades.length === 0)
+    {
+        return { success: false, failureReason: "No building upgrade to cancel.", playerStateResult: playerData };
+    }
+
+    for (const buildingUpgrade of buildingUpgrades)
+    {
+        for (const buildingUpgradeResourceRow of buildingUpgrade.buildingUpgradeResourceRows)
+        {
+            ResourceData.addPlanetResource(relevantPlanetData, buildingUpgradeResourceRow.resource_type as GameType.ResourceType, buildingUpgradeResourceRow.resource_quantity);
+        }
+    }
+
+    relevantPlanetData.dynamicPlanetData.buildingUpgrades = [];
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.ResourceQuantity, relevantPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.BuildingUpgrade, relevantPlanetData.dynamicPlanetData);
+
+        const playerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        }
+        return playerActionResult;
+    })();
+
+    return playerActionResult;
+}
+
+export function tryCancelBuildingDeconstructionLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.CancelBuildingDeconstruction>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    const relevantPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.planetId);
+    if (relevantPlanetData === null)
+    {
+        return { success: false, failureReason: "Wrong planet to cancel building deconstruction.", playerStateResult: playerData };
+    }
+
+    const buildingDeconstructions: CoreType.BuildingDeconstruction[] = relevantPlanetData.dynamicPlanetData.buildingDeconstructions;
+    if (buildingDeconstructions.length === 0)
+    {
+        return { success: false, failureReason: "No building deconstruction to cancel.", playerStateResult: playerData };
+    }
+
+    for (const buildingDeconstruction of buildingDeconstructions)
+    {
+        for (const buildingDeconstructionResourceRow of buildingDeconstruction.buildingDeconstructionResourceRows)
+        {
+            ResourceData.addPlanetResource(relevantPlanetData, buildingDeconstructionResourceRow.resource_type as GameType.ResourceType, buildingDeconstructionResourceRow.resource_quantity);
+        }
+    }
+
+    relevantPlanetData.dynamicPlanetData.buildingDeconstructions = [];
 
     const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
@@ -1178,20 +1279,14 @@ export function tryBuildUnitsLogic(playerId: number, serverData: CoreType.Server
         }
     }
 
-    const possibleRequestedUnitQuantities: Map<GameType.UnitType, number> = UnitConstructionData.computeMaxAffordableUnitQuantities(relevantPlanetData, requestedUnitQuantities);
-    if (possibleRequestedUnitQuantities.size === 0)
+    const affordableUnitQuantities: Map<GameType.UnitType, number> = UnitConstructionData.computeMaxAffordableUnitQuantities(relevantPlanetData, requestedUnitQuantities);
+    const buildableUnitQuantities: Map<GameType.UnitType, number> = capMissilesByStorage(relevantPlanetData, playerData, affordableUnitQuantities);
+    if (buildableUnitQuantities.size === 0)
     {
-        return { success: false, failureReason: "Not enough resources.", playerStateResult: playerData };
+        return { success: false, failureReason: "Not enough resources or storage.", playerStateResult: playerData };
     }
 
-    const unitConstructionDurationSeconds: number = UnitConstructionData.computeUnitQuantitiesConstructionDurationSeconds(possibleRequestedUnitQuantities, relevantPlanetData, serverData);
-    if (unitConstructionDurationSeconds <= 0)
-    {
-        return { success: false, failureReason: "Invalid unit construction duration.", playerStateResult: playerData };
-    }
-
-    const totalCost: Map<GameType.ResourceType, number> = UnitConstructionData.computeUnitConstructionCost(possibleRequestedUnitQuantities);
-
+    const totalCost: Map<GameType.ResourceType, number> = UnitConstructionData.computeUnitConstructionCost(buildableUnitQuantities);
     if (ResourceData.hasResourceQuantities(relevantPlanetData, totalCost) === false)
     {
         return { success: false, failureReason: "Not enough resources for unit construction.", playerStateResult: playerData };
@@ -1199,8 +1294,78 @@ export function tryBuildUnitsLogic(playerId: number, serverData: CoreType.Server
 
     ResourceData.subtractPlanetResources(relevantPlanetData, totalCost);
 
+    const unitQuantitiesByQueueType: Map<GameType.UnitConstructionQueueType | undefined, Map<GameType.UnitType, number>> = groupUnitQuantitiesByQueueType(buildableUnitQuantities);
+    for (const [queueType, queueUnitQuantities] of unitQuantitiesByQueueType)
+    {
+        addUnitConstruction(relevantPlanetData, playerId, queueType, queueUnitQuantities, now, serverData);
+    }
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.ResourceQuantity, relevantPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.UnitConstruction, relevantPlanetData.dynamicPlanetData);
+
+        const playerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        }
+        return playerActionResult;
+    })();
+
+    return playerActionResult;
+}
+
+function capMissilesByStorage(planetData: CoreType.PlanetData, playerData: CoreType.PlayerData, unitQuantities: Map<GameType.UnitType, number>): Map<GameType.UnitType, number>
+{
+    const storableMissileQuantities: Map<GameType.UnitType, number> = MissileSpaceData.computeMaxStorableMissileQuantities(planetData, playerData, unitQuantities);
+    const cappedUnitQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();
+
+    for (const [unitType, unitQuantity] of unitQuantities)
+    {
+        if (MissileSpaceData.getUnitMissileSpaceCost(unitType) > 0)
+        {
+            const storableQuantity: number = storableMissileQuantities.get(unitType) ?? 0;
+            if (storableQuantity > 0)
+            {
+                cappedUnitQuantities.set(unitType, storableQuantity);
+            }
+        }
+        else
+        {
+            cappedUnitQuantities.set(unitType, unitQuantity);
+        }
+    }
+
+    return cappedUnitQuantities;
+}
+
+function groupUnitQuantitiesByQueueType(unitQuantities: Map<GameType.UnitType, number>): Map<GameType.UnitConstructionQueueType | undefined, Map<GameType.UnitType, number>>
+{
+    const unitQuantitiesByQueueType: Map<GameType.UnitConstructionQueueType | undefined, Map<GameType.UnitType, number>> = new Map<GameType.UnitConstructionQueueType | undefined, Map<GameType.UnitType, number>>();
+
+    for (const [unitType, unitQuantity] of unitQuantities)
+    {
+        const queueType: GameType.UnitConstructionQueueType | undefined = StaticDataHelper.getUnitQueueType(unitType);
+        let queueUnitQuantities: Map<GameType.UnitType, number> | undefined = unitQuantitiesByQueueType.get(queueType);
+        if (queueUnitQuantities === undefined)
+        {
+            queueUnitQuantities = new Map<GameType.UnitType, number>();
+            unitQuantitiesByQueueType.set(queueType, queueUnitQuantities);
+        }
+        queueUnitQuantities.set(unitType, unitQuantity);
+    }
+
+    return unitQuantitiesByQueueType;
+}
+
+function addUnitConstruction(planetData: CoreType.PlanetData, playerId: number, queueType: GameType.UnitConstructionQueueType | undefined, queueUnitQuantities: Map<GameType.UnitType, number>, now: number, serverData: CoreType.ServerData): void
+{
+    const constructionDurationSeconds: number = UnitConstructionData.computeUnitQuantitiesConstructionDurationSeconds(queueUnitQuantities, planetData, serverData);
+
     const newUnitConstructionUnitRows: DBType.UnitConstructionUnitRow[] = [];
-    for (const [unitType, unitQuantity] of possibleRequestedUnitQuantities)
+    for (const [unitType, unitQuantity] of queueUnitQuantities)
     {
         const newUnitConstructionUnitRow: DBType.UnitConstructionUnitRow =
         {
@@ -1211,13 +1376,13 @@ export function tryBuildUnitsLogic(playerId: number, serverData: CoreType.Server
         };
         newUnitConstructionUnitRows.push(newUnitConstructionUnitRow);
     }
-    const newUnitConstructionRow: DBType.UnitConstructionRow = 
+    const newUnitConstructionRow: DBType.UnitConstructionRow =
     {
         id: -1,
-        planet_id: relevantPlanetData.planetRow.id,
+        planet_id: planetData.planetRow.id,
         player_id: playerId,
         requested_at: now,
-        duration_at_request_time: unitConstructionDurationSeconds * 1000,
+        duration_at_request_time: constructionDurationSeconds * 1000,
         duration_at_start_time: null,
         started_at: null,
         current_unit_construction_unit_row_id: -1,
@@ -1229,14 +1394,13 @@ export function tryBuildUnitsLogic(playerId: number, serverData: CoreType.Server
     };
 
     //Sort the construction unit rows to start building shortest first.
-    UnitConstructionData.sortUnitConstructionUnitRowByConstructionTime(relevantPlanetData, newUnitConstruction, serverData);
+    UnitConstructionData.sortUnitConstructionUnitRowByConstructionTime(planetData, newUnitConstruction, serverData);
     const firstConstructionUnitRow: DBType.UnitConstructionUnitRow = newUnitConstruction.unitConstructionUnitRows[0];
 
-    // No constructions? Means we can start this one right away, otherwise it will be in queue and start when the previous ones are done.
-    if (relevantPlanetData.dynamicPlanetData.unitConstructions.length === 0)
+    if (UnitConstructionData.getStartedUnitConstructionForQueueType(planetData, queueType) === null)
     {
         newUnitConstruction.unitConstructionRow.started_at = now;
-        const firstConstructionTimeSeconds: number | null = UnitConstructionData.getUnitConstructionDurationSeconds(firstConstructionUnitRow.unit_type as GameType.UnitType, relevantPlanetData, serverData);
+        const firstConstructionTimeSeconds: number | null = UnitConstructionData.getUnitConstructionDurationSeconds(firstConstructionUnitRow.unit_type as GameType.UnitType, planetData, serverData);
         if (firstConstructionTimeSeconds === null)
         {
             throw new Error("First firstConstructionTime cant be null.");
@@ -1245,12 +1409,62 @@ export function tryBuildUnitsLogic(playerId: number, serverData: CoreType.Server
         newUnitConstruction.unitConstructionRow.duration_at_start_time = firstConstructionTimeSeconds * 1000;
     }
 
-    relevantPlanetData.dynamicPlanetData.unitConstructions.push(newUnitConstruction);
+    planetData.dynamicPlanetData.unitConstructions.push(newUnitConstruction);
+}
+
+export function tryDestroyMissilesLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.DestroyMissiles>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+    const requestedUnitQuantities: Map<GameType.UnitType, number> = Serialization.deserializeNumberNumberMap(requestData.serializedUnitQuantities) as Map<GameType.UnitType, number>;
+
+    const relevantPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.planetId);
+    if (relevantPlanetData === null)
+    {
+        return { success: false, failureReason: "Wrong planet to destroy missiles.", playerStateResult: playerData };
+    }
+
+    if (requestedUnitQuantities.size === 0)
+    {
+        return { success: false, failureReason: "No missiles to destroy.", playerStateResult: playerData };
+    }
+
+    for (const unitType of requestedUnitQuantities.keys())
+    {
+        if (StaticDataHelper.getUnitCategory(unitType) !== GameType.UnitCategory.Missile)
+        {
+            return { success: false, failureReason: "Only missiles can be destroyed.", playerStateResult: playerData };
+        }
+    }
+
+    let destroyedAnyMissile: boolean = false;
+    for (const [unitType, requestedQuantity] of requestedUnitQuantities)
+    {
+        if (requestedQuantity <= 0)
+        {
+            continue;
+        }
+
+        const ownedQuantity: number = UnitData.getUnitQuantity(relevantPlanetData, unitType);
+        const quantityToDestroy: number = Math.min(requestedQuantity, ownedQuantity);
+        if (quantityToDestroy <= 0)
+        {
+            continue;
+        }
+
+        UnitData.subtractPlanetUnit(relevantPlanetData, unitType, quantityToDestroy);
+        destroyedAnyMissile = true;
+    }
+
+    if (destroyedAnyMissile === false)
+    {
+        return { success: false, failureReason: "No missiles available to destroy.", playerStateResult: playerData };
+    }
+
     const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
     {
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.ResourceQuantity, relevantPlanetData.dynamicPlanetData);
-        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.UnitConstruction, relevantPlanetData.dynamicPlanetData);
-        
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.UnitQuantity, relevantPlanetData.dynamicPlanetData);
+
         const playerActionResult: PlayerActionResult =
         {
             success: true,
@@ -1438,8 +1652,13 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     const targetPlanetData: CoreType.PlanetData | null = getPlanetDataByCoords(targetAddress.galaxy, targetAddress.system, targetAddress.slot, targetAddress.zone);
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
 
-    for (const unitQuantity of unitQuantities.values())
+    for (const [unitType, unitQuantity] of unitQuantities)
     {
+        if (StaticDataHelper.getUnitCategory(unitType) !== GameType.UnitCategory.Ship)
+        {
+            return { success: false, failureReason: "Only ships can be sent in a fleet.", playerStateResult: playerData };
+        }
+
         if (unitQuantity <= 0)
         {
             return { success: false, failureReason: "Non-positive unit quantity for fleet.", playerStateResult: playerData };

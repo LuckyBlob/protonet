@@ -7,6 +7,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
+import * as RequirementValueGetters from "@/lib/gameplay/coreData/requirement/requirementValueGetters";
 
 export function getFailedBuildingUpgradeRequirements(playerData: CoreType.PlayerData, buildingType: GameType.BuildingType, planetId: number): RequirementType.Requirement[]
 {
@@ -37,7 +38,7 @@ export function getFailedUnitBuildRequirements(playerData: CoreType.PlayerData, 
         playerData: playerData,
         planetId: planetId,
     };
-    const requirements: RequirementType.Requirement[] = getUnitRequirements(ThingType.Thing.UnitConstruction, unitType);
+    const requirements: RequirementType.Requirement[] = getUnitRequirements(unitType);
     return getFailedRequirements(requirementContext, requirements);
 }
 
@@ -101,12 +102,28 @@ function getBuildingRequirements(thingType: ThingType.Thing, buildingType: GameT
     return [...globalRequirements, ...specificRequirements];
 }
 
-function getUnitRequirements(thingType: ThingType.Thing, unitType: GameType.UnitType): RequirementType.Requirement[]
+function getUnitRequirements(unitType: GameType.UnitType): RequirementType.Requirement[]
 {
-    const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(thingType) ?? [];
+    const shipyardRequirements: RequirementType.Requirement[] = getShipyardNotUpgradingRequirements();
     const specificRequirements: RequirementType.Requirement[] = StaticDataHelper.getUnitStats(unitType).requirements ?? [];
 
-    return [...globalRequirements, ...specificRequirements];
+    return [...shipyardRequirements, ...specificRequirements];
+}
+
+function getShipyardNotUpgradingRequirements(): RequirementType.Requirement[]
+{
+    const shipyardNotUpgradingRequirement: RequirementType.Requirement =
+    {
+        hideDataWhenRequirementFailed: false,
+        thingRequirement: {
+            thingType: ThingType.Thing.BuildingUpgrade,
+            operator: RequirementType.RequirementOperator.Equal,
+            value: false,
+            valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.Shipyard),
+        },
+    };
+
+    return [shipyardNotUpgradingRequirement];
 }
 
 function getResearchRequirements(thingType: ThingType.Thing, researchType: GameType.ResearchType): RequirementType.Requirement[]
@@ -259,6 +276,11 @@ function describeSingleRequirement(requirementContext: RequirementType.Requireme
         }
 
         if (thingRequirement.thingType === ThingType.Thing.ResearchingResearch)
+        {
+            return null;
+        }
+
+        if (thingRequirement.thingType === ThingType.Thing.UnitConstruction)
         {
             return null;
         }

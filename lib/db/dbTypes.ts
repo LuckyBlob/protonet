@@ -115,6 +115,13 @@ export type BuildingUpgradeBuildingRow =
     building_type: number;
 };
 
+export type BuildingUpgradeResourceRow =
+{
+    building_upgrade_id: number;
+    resource_type: number;
+    resource_quantity: number;
+};
+
 export type BuildingDeconstructionRow =
 {
     id: number;
@@ -132,6 +139,13 @@ export type BuildingDeconstructionBuildingRow =
     id: number;
     building_deconstruction_id: number;
     building_type: number;
+};
+
+export type BuildingDeconstructionResourceRow =
+{
+    building_deconstruction_id: number;
+    resource_type: number;
+    resource_quantity: number;
 };
 
 export type PlayerResearchRow =

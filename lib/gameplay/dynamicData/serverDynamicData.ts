@@ -414,10 +414,15 @@ export function getDynamicPlanetBuildingUpgradeData(planetId: number): CoreType.
                 "SELECT * FROM building_upgrade_building WHERE building_upgrade_id = ?"
             ).all(buildingUpgradeRow.id) as DBType.BuildingUpgradeBuildingRow[];
 
+            const buildingUpgradeResourceRows: DBType.BuildingUpgradeResourceRow[] = DB.databaseConnection.prepare(
+                "SELECT * FROM building_upgrade_resource WHERE building_upgrade_id = ?"
+            ).all(buildingUpgradeRow.id) as DBType.BuildingUpgradeResourceRow[];
+
             const newBuildingUpgrade: CoreType.BuildingUpgrade =
             {
                 buildingUpgradeRow: buildingUpgradeRow,
                 buildingUpgradeBuildingRows: buildingUpgradeBuildingRows,
+                buildingUpgradeResourceRows: buildingUpgradeResourceRows,
             };
 
             buildingUpgrades.push(newBuildingUpgrade);
@@ -443,10 +448,15 @@ export function getDynamicPlanetBuildingDeconstructionData(planetId: number): Co
                 "SELECT * FROM building_deconstruction_building WHERE building_deconstruction_id = ?"
             ).all(buildingDeconstructionRow.id) as DBType.BuildingDeconstructionBuildingRow[];
 
+            const buildingDeconstructionResourceRows: DBType.BuildingDeconstructionResourceRow[] = DB.databaseConnection.prepare(
+                "SELECT * FROM building_deconstruction_resource WHERE building_deconstruction_id = ?"
+            ).all(buildingDeconstructionRow.id) as DBType.BuildingDeconstructionResourceRow[];
+
             const newBuildingDeconstruction: CoreType.BuildingDeconstruction =
             {
                 buildingDeconstructionRow: buildingDeconstructionRow,
                 buildingDeconstructionBuildingRows: buildingDeconstructionBuildingRows,
+                buildingDeconstructionResourceRows: buildingDeconstructionResourceRows,
             };
 
             buildingDeconstructions.push(newBuildingDeconstruction);
@@ -644,6 +654,9 @@ function updateBuildingUpgrades(planetId: number, playerId: number, dynamicPlane
         const insertBuildingStatement: Database.Statement = DB.databaseConnection.prepare(
             "INSERT INTO building_upgrade_building (building_upgrade_id, building_type) VALUES (?, ?) RETURNING id"
         );
+        const insertResourceStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO building_upgrade_resource (building_upgrade_id, resource_type, resource_quantity) VALUES (?, ?, ?)"
+        );
 
         if (dynamicPlanetData.buildingUpgrades.length === 0)
         {
@@ -699,6 +712,12 @@ function updateBuildingUpgrades(planetId: number, playerId: number, dynamicPlane
                     }
                 }
             }
+
+            for (const buildingUpgradeResourceRow of buildingUpgrade.buildingUpgradeResourceRows)
+            {
+                buildingUpgradeResourceRow.building_upgrade_id = buildingUpgradeRow.id;
+                insertResourceStatement.run(buildingUpgradeRow.id, buildingUpgradeResourceRow.resource_type, buildingUpgradeResourceRow.resource_quantity);
+            }
         }
     });
     transaction();
@@ -715,6 +734,9 @@ function updateBuildingDeconstructions(planetId: number, playerId: number, dynam
         );
         const insertBuildingStatement: Database.Statement = DB.databaseConnection.prepare(
             "INSERT INTO building_deconstruction_building (building_deconstruction_id, building_type) VALUES (?, ?) RETURNING id"
+        );
+        const insertResourceStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO building_deconstruction_resource (building_deconstruction_id, resource_type, resource_quantity) VALUES (?, ?, ?)"
         );
 
         if (dynamicPlanetData.buildingDeconstructions.length === 0)
@@ -770,6 +792,12 @@ function updateBuildingDeconstructions(planetId: number, playerId: number, dynam
                         ).run(firstBuildingDeconstructionBuildingRowId, buildingDeconstructionRow.id);
                     }
                 }
+            }
+
+            for (const buildingDeconstructionResourceRow of buildingDeconstruction.buildingDeconstructionResourceRows)
+            {
+                buildingDeconstructionResourceRow.building_deconstruction_id = buildingDeconstructionRow.id;
+                insertResourceStatement.run(buildingDeconstructionRow.id, buildingDeconstructionResourceRow.resource_type, buildingDeconstructionResourceRow.resource_quantity);
             }
         }
     });

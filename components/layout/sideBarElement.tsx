@@ -5,7 +5,11 @@ import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
+import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
+import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
+import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 
 type SideBarProps =
 {
@@ -43,30 +47,43 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	    <>Messages{unreadBadge}</>
 	);
 
+	const buildingSubItems: NavItem[] =
+	[
+	    { view: "buildings", label: "Upgrade", subItems: [] },
+	    { view: "buildingsDeconstruct", label: "Deconstruct", subItems: [] },
+	];
+
+	const selectedPlanetMissileSiloLevel: number = getSelectedPlanetBuildingLevel(props.clientDataStateResult, GameType.BuildingType.MissileSilo);
+	if (selectedPlanetMissileSiloLevel >= 1)
+	{
+	    buildingSubItems.push({ view: "missileSilo", label: "Missile Silo", subItems: [] });
+	}
+
+	const fleetSubItems: NavItem[] =
+	[
+	    { view: "fleets", label: "Ships", subItems: [] },
+	];
+
+	const selectedPlanetMissileQuantity: number = getSelectedPlanetCategoryUnitQuantity(props.clientDataStateResult, GameType.UnitCategory.Missile);
+	if (selectedPlanetMissileQuantity >= 1)
+	{
+	    fleetSubItems.push({ view: "fleetsMissiles", label: "Missiles", subItems: [] });
+	}
+
+	const planetSubItems: NavItem[] =
+	[
+	    { view: "planets", label: "Galaxy", subItems: [] },
+	    { view: "currentPlanet", label: "Current Planet", subItems: [] },
+	];
+
 	const navItems: NavItem[] =
 	[
 	    { view: "game", label: "Game", subItems: [] },
-	    {
-	        view: "buildings",
-	        label: "Buildings",
-	        subItems:
-	        [
-	            { view: "buildings", label: "Upgrade", subItems: [] },
-	            { view: "buildingsDeconstruct", label: "Deconstruct", subItems: [] },
-	        ],
-	    },
+	    { view: "buildings", label: "Buildings", subItems: buildingSubItems },
 	    { view: "research", label: "Research", subItems: [] },
 	    { view: "shipyard", label: "Shipyard", subItems: [] },
-	    { view: "fleets", label: "Fleets", subItems: [] },
-	    {
-	        view: "planets",
-	        label: "Planets",
-	        subItems:
-	        [
-	            { view: "planets", label: "Galaxy", subItems: [] },
-	            { view: "currentPlanet", label: "Current Planet", subItems: [] },
-	        ],
-	    },
+	    { view: "fleets", label: "Fleets", subItems: fleetSubItems },
+	    { view: "planets", label: "Planets", subItems: planetSubItems },
 	    { view: "messages", label: messagesLabel, subItems: [] },
 	    { view: "stats", label: "Stats", subItems: [] },
 	    { view: "account", label: "Account", subItems: [] },
@@ -110,6 +127,32 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	);
 
 	return sideBarElement;
+}
+
+function getSelectedPlanetBuildingLevel(clientDataStateResult: UseClientDataState.ClientDataStateResult, buildingType: GameType.BuildingType): number
+{
+	try
+	{
+		const selectedPlanetData: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(clientDataStateResult.psController[0]);
+		return BuildingData.getBuildingLevel(selectedPlanetData, buildingType);
+	}
+	catch (error: unknown)
+	{
+		return 0;
+	}
+}
+
+function getSelectedPlanetCategoryUnitQuantity(clientDataStateResult: UseClientDataState.ClientDataStateResult, unitCategory: GameType.UnitCategory): number
+{
+	try
+	{
+		const selectedPlanetData: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(clientDataStateResult.psController[0]);
+		return UnitData.getCategoryUnitQuantity(selectedPlanetData, unitCategory);
+	}
+	catch (error: unknown)
+	{
+		return 0;
+	}
 }
 
 function renderNavItem(navItem: NavItem, currentView: string, setCurrentView: (value: string) => void): ReactElement

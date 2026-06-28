@@ -29,6 +29,7 @@ function buildDeconstructionOnPlanet(planetId: number, startedAt: number, durati
             current_building_deconstruction_building_row_id: 1,
         }),
         buildingDeconstructionBuildingRows: [buildingRow],
+        buildingDeconstructionResourceRows: [],
     };
 
     return deconstruction;

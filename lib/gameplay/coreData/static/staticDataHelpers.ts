@@ -31,6 +31,48 @@ export function getUnitStats(unitType: GameType.UnitType): GameType.UnitStats
     return unitStats;
 }
 
+export function getUnitCategory(unitType: GameType.UnitType): GameType.UnitCategory
+{
+    return getUnitStats(unitType).category;
+}
+
+export function getUnitCategoryInfo(unitCategory: GameType.UnitCategory): GameType.UnitCategoryInfo
+{
+    const unitCategoryInfo: GameType.UnitCategoryInfo | undefined = StaticData.UNIT_CATEGORY_INFOS.get(unitCategory);
+    if (unitCategoryInfo === undefined)
+    {
+        throw new Error(`No UnitCategoryInfo for unitCategory ${unitCategory}.`);
+    }
+
+    return unitCategoryInfo;
+}
+
+export function getUnitCategoryDisplayName(unitCategory: GameType.UnitCategory): string
+{
+    return getUnitCategoryInfo(unitCategory).displayName;
+}
+
+export function getUnitsByCategory(unitCategory: GameType.UnitCategory): GameType.UnitType[]
+{
+    return getAllSpecificThings(ThingType.Thing.Unit).filter((unitType: GameType.UnitType): boolean =>
+    {
+        return getUnitCategory(unitType) === unitCategory;
+    });
+}
+
+export function getUnitQueueType(unitType: GameType.UnitType): GameType.UnitConstructionQueueType | undefined
+{
+    return getUnitStats(unitType).queueType;
+}
+
+export function getUnitsByQueueType(queueType: GameType.UnitConstructionQueueType): GameType.UnitType[]
+{
+    return getAllSpecificThings(ThingType.Thing.Unit).filter((unitType: GameType.UnitType): boolean =>
+    {
+        return getUnitQueueType(unitType) === queueType;
+    });
+}
+
 export function canUnitTargetDebrisField(unitType: GameType.UnitType): boolean
 {
     return getUnitStats(unitType).canTargetDebrisField === true;

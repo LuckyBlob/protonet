@@ -17,6 +17,7 @@ function makeUpgrade(planetId: number, startedAt: number, durationMs: number): C
             current_building_upgrade_building_row_id: 1,
         }),
         buildingUpgradeBuildingRows: [TestDataBuilders.buildBuildingUpgradeBuildingRow()],
+        buildingUpgradeResourceRows: [],
     };
 }
 
@@ -94,6 +95,7 @@ describe('findNextAnchorEvent (generic helper)', () =>
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ started_at: null, duration_at_start_time: null }),
             buildingUpgradeBuildingRows: [TestDataBuilders.buildBuildingUpgradeBuildingRow()],
+            buildingUpgradeResourceRows: [],
         };
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({

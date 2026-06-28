@@ -11,9 +11,12 @@ export const ActionRequest =
     Logout:   { endpoint: "authentication/logout",   name: "Logout" },
     RefreshServer:   { endpoint: "refreshServerData",   name: "RefreshServer" },
     UpgradeBuilding:   { endpoint: "buy/upgradeBuilding",   name: "UpgradeBuilding" },
+    CancelBuildingUpgrade:   { endpoint: "buy/cancelBuildingUpgrade",   name: "CancelBuildingUpgrade" },
     DeconstructBuilding:   { endpoint: "buy/deconstructBuilding",   name: "DeconstructBuilding" },
+    CancelBuildingDeconstruction:   { endpoint: "buy/cancelBuildingDeconstruction",   name: "CancelBuildingDeconstruction" },
     UpgradeResearch:   { endpoint: "buy/upgradeResearch",   name: "UpgradeResearch" },
     BuildUnits:   { endpoint: "buy/buildUnits",   name: "BuildUnits" },
+    DestroyMissiles:   { endpoint: "buy/destroyMissiles",   name: "DestroyMissiles" },
     SetBuildingEnergySetting:   { endpoint: "buildings/setEnergySetting",   name: "SetBuildingEnergySetting" },
     SendFleet:   { endpoint: "buy/sendFleet",   name: "SendFleet" },
     RecallFleet:   { endpoint: "buy/recallFleet",   name: "RecallFleet" },
@@ -30,9 +33,12 @@ export type ActionRequestMap =
     Logout: null;
     RefreshServer: null;
     UpgradeBuilding: RequestType.BuildingUpgrade_ClientRequest;
+    CancelBuildingUpgrade: RequestType.CancelBuildingUpgrade_ClientRequest;
     DeconstructBuilding: RequestType.BuildingDeconstruction_ClientRequest;
+    CancelBuildingDeconstruction: RequestType.CancelBuildingDeconstruction_ClientRequest;
     UpgradeResearch: RequestType.Research_ClientRequest;
     BuildUnits: RequestType.BuildUnits_ClientRequest;
+    DestroyMissiles: RequestType.DestroyMissiles_ClientRequest;
     SetBuildingEnergySetting: RequestType.SetBuildingEnergySetting_ClientRequest;
     SendFleet: RequestType.SendFleet_ClientRequest;
     RecallFleet: RequestType.RecallFleet_ClientRequest;
@@ -49,9 +55,12 @@ export type ActionResponseMap =
     Logout: RequestType.BaseAuthenticationServerResponse;
     RefreshServer: RequestType.RefreshServer_ServerResponse;
     UpgradeBuilding: RequestType.BuildingUpgrade_ServerResponse;
+    CancelBuildingUpgrade: RequestType.CancelBuildingUpgrade_ServerResponse;
     DeconstructBuilding: RequestType.BuildingDeconstruction_ServerResponse;
+    CancelBuildingDeconstruction: RequestType.CancelBuildingDeconstruction_ServerResponse;
     UpgradeResearch: RequestType.Research_ServerResponse;
     BuildUnits: RequestType.BuildUnits_ServerResponse;
+    DestroyMissiles: RequestType.DestroyMissiles_ServerResponse;
     SetBuildingEnergySetting: RequestType.SetBuildingEnergySetting_ServerResponse;
     SendFleet: RequestType.SendFleet_ServerResponse;
     RecallFleet: RequestType.RecallFleet_ServerResponse;

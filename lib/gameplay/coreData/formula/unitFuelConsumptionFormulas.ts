@@ -45,7 +45,7 @@ function computeFuelConsumption_Base(playerData: CoreType.PlayerData, unitQuanti
 
 		const unitStats: GameType.UnitStats = StaticDataHelper.getUnitStats(unitType);
 
-		if (unitStats.baseFuelConsumption === undefined)
+		if (unitStats.baseFuelConsumption === undefined || unitStats.speed === undefined)
 		{
 			return new Map<GameType.ResourceType, number>();
 		}

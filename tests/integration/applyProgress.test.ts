@@ -114,6 +114,7 @@ describe('applyProgressToPlayerData — building upgrade resolution', () =>
                 current_building_upgrade_building_row_id: 1,
             }),
             buildingUpgradeBuildingRows: [buildingUpgradeBuildingRow],
+            buildingUpgradeResourceRows: [],
         };
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
@@ -145,6 +146,7 @@ describe('applyProgressToPlayerData — building upgrade resolution', () =>
                 current_building_upgrade_building_row_id: 1,
             }),
             buildingUpgradeBuildingRows: [buildingUpgradeBuildingRow],
+            buildingUpgradeResourceRows: [],
         };
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
@@ -181,6 +183,7 @@ describe('applyProgressToPlayerData — building upgrade resolution', () =>
                 current_building_upgrade_building_row_id: 1,
             }),
             buildingUpgradeBuildingRows: [buildingUpgradeBuildingRow],
+            buildingUpgradeResourceRows: [],
         };
 
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(

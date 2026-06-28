@@ -43,6 +43,11 @@ function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewPro
 		ClientRequestFunctions.clientTryDeconstructBuildingRequest(props.clientDataStateResult.psController, planetId, buildingType);
 	};
 
+	const handleCancelDeconstruct: () => void = () =>
+	{
+		ClientRequestFunctions.clientTryCancelBuildingDeconstructionRequest(props.clientDataStateResult.psController, planetId);
+	};
+
 	const levelLine: ReactElement = isThisBuildingDeconstructing === true
 		? <div className="text-sm">{"Level"} {currentLevel} {"->"} {"Level"} {currentLevel - 1}</div>
 		: <div className="text-sm">Level {currentLevel}</div>;
@@ -52,6 +57,7 @@ function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewPro
 			<div className="w-full px-4 py-2 bg-orange-700 text-white rounded text-center">
 				<div className="font-bold">Deconstructing</div>
 				<div className="text-xs">Time: {TimeFormat.formatRemainingTimeMs(remainingMs)}</div>
+					<button type="button" onClick={handleCancelDeconstruct} className="block mx-auto mt-1 text-xs underline hover:text-gray-200">Cancel</button>
 			</div>
 		)
 		: (failedRequirementsBox !== null)

@@ -6,7 +6,9 @@ import * as BuildingView from "@/components/views/buildingView";
 import * as BuildingDeconstructionView from "@/components/views/buildingDeconstructionView";
 import * as ResearchView from "@/components/views/researchView";
 import * as ShipyardView from "@/components/views/shipyardView";
+import * as MissileSiloView from "@/components/views/missileSiloView";
 import * as FleetView from "@/components/views/fleetView";
+import * as MissileFleetView from "@/components/views/missileFleetView";
 import * as PlanetView from "@/components/views/planetView";
 import * as CurrentPlanetView from "@/components/views/currentPlanetView";
 import * as MessagesView from "@/components/views/messagesView";
@@ -49,9 +51,19 @@ export function MainWindowElement(props: MainWindowProps): ReactElement
 		return <ShipyardView.ShipyardView clientDataStateResult={props.clientDataStateResult} />;
 	}
 
+	if (props.cvController[0] === "missileSilo")
+	{
+		return <MissileSiloView.MissileSiloView clientDataStateResult={props.clientDataStateResult} />;
+	}
+
 	if (props.cvController[0] === "fleets")
 	{
 		return <FleetView.FleetView clientDataStateResult={props.clientDataStateResult} />;
+	}
+
+	if (props.cvController[0] === "fleetsMissiles")
+	{
+		return <MissileFleetView.MissileFleetView clientDataStateResult={props.clientDataStateResult} />;
 	}
 
 	if (props.cvController[0] === "stats")

@@ -63,6 +63,7 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
                 current_building_upgrade_building_row_id: 1,
             }),
             buildingUpgradeBuildingRows: [upgradeBuildingRow],
+            buildingUpgradeResourceRows: [],
         };
 
         const planet1: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
@@ -129,6 +130,7 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
                 id: 1, planet_id: 1, started_at: BASE_TIME, duration_at_start_time: 10_000, current_building_upgrade_building_row_id: 1,
             }),
             buildingUpgradeBuildingRows: [buildingRowA],
+            buildingUpgradeResourceRows: [],
         };
         const buildingRowB = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 2, building_type: GameType.BuildingType.CrystalGrower });
         const upgradeLate: CoreType.BuildingUpgrade =
@@ -138,6 +140,7 @@ describe('applyProgressToPlayerData — multi-planet isolation', () =>
                 id: 2, planet_id: 2, started_at: BASE_TIME, duration_at_start_time: 20_000, current_building_upgrade_building_row_id: 2,
             }),
             buildingUpgradeBuildingRows: [buildingRowB],
+            buildingUpgradeResourceRows: [],
         };
 
         const planet1: CoreType.PlanetData = TestDataBuilders.buildPlanetData(

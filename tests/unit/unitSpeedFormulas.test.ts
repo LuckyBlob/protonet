@@ -20,6 +20,11 @@ function buildPlayerWithResearch(researchLevels: [GameType.ResearchType, number]
 function getUnitSpeedDatas(unitType: GameType.UnitType): GameType.EngineTechData<number>[]
 {
     const unitStats: GameType.UnitStats = StaticDataHelper.getUnitStats(unitType);
+    if (unitStats.speed === undefined)
+    {
+        throw new Error(`Unit type ${unitType} has no speed.`);
+    }
+
     return unitStats.speed;
 }
 

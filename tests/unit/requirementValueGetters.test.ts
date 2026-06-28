@@ -20,6 +20,7 @@ describe('isAnyBuildingUpgradeInProgress', () =>
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow(),
             buildingUpgradeBuildingRows: [TestDataBuilders.buildBuildingUpgradeBuildingRow()],
+            buildingUpgradeResourceRows: [],
         };
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
@@ -147,6 +148,7 @@ describe('isSpecificBuildingBeingUpgraded', () =>
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 7 }),
             buildingUpgradeBuildingRows: [shipyardRow],
+            buildingUpgradeResourceRows: [],
         };
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
@@ -165,6 +167,7 @@ describe('isSpecificBuildingBeingUpgraded', () =>
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 7 }),
             buildingUpgradeBuildingRows: [metalMineRow],
+            buildingUpgradeResourceRows: [],
         };
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {

@@ -360,6 +360,50 @@ export function getConstructionId(planetId: number, db: Database.Database): numb
     return row.id;
 }
 
+// Seed a building upgrade that is in progress NOW (started, completing an hour out, so applyPlayerUpdate
+// won't resolve it). Used to assert the build-while-building requirement gates server-side.
+export function seedBuildingUpgradeInProgress(planetId: number, playerId: number, buildingType: number, db: Database.Database): void
+{
+    const now: number = Date.now();
+    const oneHourMs: number = 3_600_000;
+    const upgrade: { id: number } = db.prepare(
+        "INSERT INTO building_upgrade (planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_building_upgrade_building_row_id) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
+    ).get(planetId, playerId, now, oneHourMs, oneHourMs, now, -1) as { id: number };
+    const building: { id: number } = db.prepare(
+        "INSERT INTO building_upgrade_building (building_upgrade_id, building_type) VALUES (?, ?) RETURNING id"
+    ).get(upgrade.id, buildingType) as { id: number };
+    db.prepare("UPDATE building_upgrade SET current_building_upgrade_building_row_id = ? WHERE id = ?").run(building.id, upgrade.id);
+}
+
+// Same as seedBuildingUpgradeInProgress but for a deconstruction. Neither seeds building_*_resource rows,
+// so the job looks like a "legacy" pre-026 job whose cancel should refund nothing.
+export function seedBuildingDeconstructionInProgress(planetId: number, playerId: number, buildingType: number, db: Database.Database): void
+{
+    const now: number = Date.now();
+    const oneHourMs: number = 3_600_000;
+    const deconstruction: { id: number } = db.prepare(
+        "INSERT INTO building_deconstruction (planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_building_deconstruction_building_row_id) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id"
+    ).get(planetId, playerId, now, oneHourMs, oneHourMs, now, -1) as { id: number };
+    const building: { id: number } = db.prepare(
+        "INSERT INTO building_deconstruction_building (building_deconstruction_id, building_type) VALUES (?, ?) RETURNING id"
+    ).get(deconstruction.id, buildingType) as { id: number };
+    db.prepare("UPDATE building_deconstruction SET current_building_deconstruction_building_row_id = ? WHERE id = ?").run(building.id, deconstruction.id);
+}
+
+// Missiles build through the unified unit_construction table now; the missile vs shipyard queue is
+// derived from the unit type, so find the construction carrying a missile unit.
+export function getMissileConstructionId(planetId: number, db: Database.Database): number
+{
+    const row: { id: number } = db.prepare(
+        `SELECT uc.id AS id FROM unit_construction uc
+         JOIN unit_construction_unit ucu ON ucu.unit_construction_id = uc.id
+         WHERE uc.planet_id = ? AND ucu.unit_type IN (?, ?)
+         ORDER BY uc.id LIMIT 1`
+    ).get(planetId, GameType.UnitType.InterceptorMissile, GameType.UnitType.InterplanetaryMissile) as { id: number };
+
+    return row.id;
+}
+
 export function getFleetByOrigin(planetOriginId: number, db: Database.Database): FleetRow
 {
     const row: FleetRow = db.prepare(
@@ -525,10 +569,12 @@ export async function selectedPlanetAddress(page: Page): Promise<string>
 }
 
 // Buildings and Research both render as a row: image | info | action, the row carrying the unique
-// flex-row signature. Filtering by the building/research display name scopes to the single row.
+// flex-row signature. Scope to the row whose NAME node is exactly buildingName — a substring match
+// would also catch rows that merely mention the building in a requirement line (e.g. the Missile Silo
+// card showing "Shipyard >= 1 (current: 0)" would otherwise collide with the Shipyard card).
 export function buildingCard(page: Page, buildingName: string): Locator
 {
-    return page.locator("div.flex.flex-row.items-center.gap-4").filter({ hasText: buildingName });
+    return page.locator("div.flex.flex-row.items-center.gap-4").filter({ has: page.getByText(buildingName, { exact: true }) });
 }
 
 export function researchRow(page: Page, researchName: string): Locator

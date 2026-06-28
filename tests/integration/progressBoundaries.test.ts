@@ -23,6 +23,7 @@ function buildPlayerWithMetalMineAndUpgrade(buildingLevel: number, durationMs: n
             current_building_upgrade_building_row_id: 1,
         }),
         buildingUpgradeBuildingRows: [upgradeBuildingRow],
+        buildingUpgradeResourceRows: [],
     };
 
     const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(

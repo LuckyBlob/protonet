@@ -204,6 +204,64 @@ export async function clientTryUpgradeBuildingRequest(psController: CoreType.PSC
     }
 }
 
+export async function clientTryCancelBuildingUpgradeRequest(psController: CoreType.PSController, planetId: number): Promise<void>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.CancelBuildingUpgrade> =
+    {
+        planetId: planetId,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.CancelBuildingUpgrade> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.CancelBuildingUpgrade, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Cancel building upgrade failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
+}
+
+export async function clientTryCancelBuildingDeconstructionRequest(psController: CoreType.PSController, planetId: number): Promise<void>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.CancelBuildingDeconstruction> =
+    {
+        planetId: planetId,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.CancelBuildingDeconstruction> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.CancelBuildingDeconstruction, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Cancel building deconstruction failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
+}
+
 export async function clientTryDeconstructBuildingRequest(psController: CoreType.PSController, planetId: number, buildingType: GameType.BuildingType): Promise<void>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.DeconstructBuilding> =
@@ -283,6 +341,36 @@ export async function clientTryBuildUnitsRequest(psController: CoreType.PSContro
         if (response.serializedPlayerData == null)
         {
             throw new Error(`Build units failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
+}
+
+export async function clientTryDestroyMissilesRequest(psController: CoreType.PSController, planetId: number, unitQuantities: Map<GameType.UnitType, number>): Promise<void>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.DestroyMissiles> =
+    {
+        planetId: planetId,
+        serializedUnitQuantities: Serialization.serializeNumberNumberMap(unitQuantities),
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.DestroyMissiles> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.DestroyMissiles, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Destroy missiles failed for planetId ${planetId}: Invalid response from server.`);
         }
 
         const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);

@@ -148,12 +148,14 @@ export type BuildingUpgrade =
 {
 	buildingUpgradeRow: DBType.BuildingUpgradeRow;
 	buildingUpgradeBuildingRows: DBType.BuildingUpgradeBuildingRow[];
+	buildingUpgradeResourceRows: DBType.BuildingUpgradeResourceRow[];
 };
 
 export type BuildingDeconstruction =
 {
 	buildingDeconstructionRow: DBType.BuildingDeconstructionRow;
 	buildingDeconstructionBuildingRows: DBType.BuildingDeconstructionBuildingRow[];
+	buildingDeconstructionResourceRows: DBType.BuildingDeconstructionResourceRow[];
 };
 
 export type CurrentlyResearching =

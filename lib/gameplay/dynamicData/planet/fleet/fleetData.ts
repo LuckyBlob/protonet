@@ -36,6 +36,10 @@ export function calculateUnitQuantitiesLowestMovementSpeed(playerData: CoreType.
 		}
 
 		const unitStats: GameType.UnitStats = StaticDataHelper.getUnitStats(unitType);
+		if (unitStats.speed === undefined)
+		{
+			throw new Error(`⚠️: Unit type ${unitType} has no speed and cannot be in a fleet.`);
+		}
 
 		const unitSpeed: number | undefined = UnitSpeed.computeUnitSpeed(playerData, unitStats.speed);
 		if (unitSpeed === undefined)
@@ -72,6 +76,10 @@ export function calculateTotalFleetSpace(unitQuantities: Map<GameType.UnitType, 
 	for (const [unitType, unitQuantity] of unitQuantities)
 	{
 		const unitStats: GameType.UnitStats = StaticDataHelper.getUnitStats(unitType);
+		if (unitStats.space === undefined)
+		{
+			throw new Error(`⚠️: Unit type ${unitType} has no cargo space and cannot be in a fleet.`);
+		}
 
 		totalSpace += unitStats.space * unitQuantity;
 	}

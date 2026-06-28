@@ -31,6 +31,7 @@ export const BuildingType =
     FusionReactor: 12,
     Terraformer: 13,
     LunarBase: 14,
+    MissileSilo: 15,
 } as const;
 export type BuildingType = typeof BuildingType[keyof typeof BuildingType];
 export type BuildingStats =
@@ -100,6 +101,7 @@ export const PlanetValueType =
     DeuteriumStorage: 4,
     Size: 6,
     Temperature: 7,
+    MissileSpace: 8,
 } as const;
 export type PlanetValueType = typeof PlanetValueType[keyof typeof PlanetValueType];
 export type PlanetValueInfo =
@@ -149,8 +151,25 @@ export const UnitType =
     ColonyShip: 3,
     Recycler: 4,
     EspionageProbe: 5,
+    RocketLauncher: 6,
+    SolarSatellite: 7,
+    InterplanetaryMissile: 8,
+    InterceptorMissile: 9,
 } as const;
 export type UnitType = typeof UnitType[keyof typeof UnitType];
+
+export const UnitCategory =
+{
+    Ship: 1,
+    Defense: 2,
+    Satellite: 3,
+    Missile: 4,
+} as const;
+export type UnitCategory = typeof UnitCategory[keyof typeof UnitCategory];
+export type UnitCategoryInfo =
+{
+	displayName: string;
+}
 export type EngineTech =
 	| typeof ResearchType.CombustionDrive
 	| typeof ResearchType.ImpulseDrive
@@ -161,17 +180,41 @@ export type EngineTechData<TValue> =
 	researchLevel: number,
 	value: TValue,
 }
+export const UnitPlanetValueProductionFormulasType =
+{
+    TemperatureScaled: 1,
+    FixedPerUnit: 2,
+} as const;
+export type UnitPlanetValueProductionFormulasType = typeof UnitPlanetValueProductionFormulasType[keyof typeof UnitPlanetValueProductionFormulasType];
+export type UnitPlanetValueStats =
+{
+	unitPlanetValueProductionFormulasType: UnitPlanetValueProductionFormulasType;
+	basePlanetValueFactor: Map<PlanetValueType, number>;
+	temperatureOffset?: number;
+	temperatureDivider?: number;
+};
+
+export const UnitConstructionQueueType =
+{
+    Shipyard: 1,
+    MissileSilo: 2,
+} as const;
+export type UnitConstructionQueueType = typeof UnitConstructionQueueType[keyof typeof UnitConstructionQueueType];
+
 export type UnitStats =
 {
 	displayName: string;
+	category: UnitCategory;
+	queueType?: UnitConstructionQueueType;
 	requirements?: RequirementType.Requirement[];
 	costMap: Map<ResourceType, number>;
 	maxHealth: number;
-	speed: EngineTechData<number>[];
-	space: number;
+	speed?: EngineTechData<number>[];
+	space?: number;
 	baseFuelConsumption?: EngineTechData<Map<ResourceType, number>>[];
 	canTargetDebrisField?: boolean;
 	canSpy?: boolean;
+	unitPlanetValueStats?: UnitPlanetValueStats[];
 };
 //#endregion
 

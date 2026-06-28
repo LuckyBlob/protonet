@@ -22,6 +22,7 @@ function buildUpgradeAt(planetId: number, completionTime: number): CoreType.Buil
             current_building_upgrade_building_row_id: 1,
         }),
         buildingUpgradeBuildingRows: [TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1 })],
+        buildingUpgradeResourceRows: [],
     };
 }
 

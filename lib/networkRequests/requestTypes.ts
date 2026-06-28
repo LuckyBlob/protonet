@@ -76,6 +76,24 @@ export type BuildingDeconstruction_ServerResponse = BaseServerResponse &
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
 
+export type CancelBuildingUpgrade_ClientRequest = BaseClientRequest &
+{
+	planetId: number;
+};
+export type CancelBuildingUpgrade_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
+export type CancelBuildingDeconstruction_ClientRequest = BaseClientRequest &
+{
+	planetId: number;
+};
+export type CancelBuildingDeconstruction_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
 export type Research_ClientRequest = BaseClientRequest &
 {
 	researchType: GameType.ResearchType;
@@ -92,6 +110,16 @@ export type BuildUnits_ClientRequest = BaseClientRequest &
 	serializedUnitQuantities: Serialization.SerializedNumberNumberMap;
 };
 export type BuildUnits_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
+export type DestroyMissiles_ClientRequest = BaseClientRequest &
+{
+	planetId: number;
+	serializedUnitQuantities: Serialization.SerializedNumberNumberMap;
+};
+export type DestroyMissiles_ServerResponse = BaseServerResponse &
 {
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };

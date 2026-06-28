@@ -102,6 +102,11 @@ function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selecte
 		ClientRequestFunctions.clientTryUpgradeBuildingRequest(props.clientDataStateResult.psController, planetId, buildingType);
 	};
 
+	const handleCancelUpgrade: () => void = () =>
+	{
+		ClientRequestFunctions.clientTryCancelBuildingUpgradeRequest(props.clientDataStateResult.psController, planetId);
+	};
+
 	const levelLine: ReactElement = isThisBuildingUpgrading === true
 		? <div className="text-sm">{"Level"} {currentLevel} {"->"} {"Level"} {currentLevel + 1}</div>
 		: <div className="text-sm">Level {currentLevel}</div>;
@@ -111,6 +116,7 @@ function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selecte
 			<div className="w-full px-4 py-2 bg-yellow-600 text-white rounded text-center">
 				<div className="font-bold">Building</div>
 				<div className="text-xs">Time: {TimeFormat.formatRemainingTimeMs(remainingMs)}</div>
+					<button type="button" onClick={handleCancelUpgrade} className="block mx-auto mt-1 text-xs underline hover:text-gray-200">Cancel</button>
 			</div>
 		)
 		: (failedRequirementsBox !== null)

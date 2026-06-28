@@ -95,6 +95,7 @@ describe('production cap — stays capped across multiple anchor events', () =>
                 current_building_upgrade_building_row_id: 1,
             }),
             buildingUpgradeBuildingRows: [buildingUpgradeBuildingRow],
+            buildingUpgradeResourceRows: [],
         };
 
         const unitConstructionUnitRow = TestDataBuilders.buildUnitConstructionUnitRow({ id: 1, unit_construction_id: 1, unit_type: GameType.UnitType.SmallTransport, unit_quantity: 1 });

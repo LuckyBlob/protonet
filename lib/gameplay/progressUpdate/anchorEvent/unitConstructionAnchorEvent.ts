@@ -80,7 +80,8 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
     }
 
     const currentUnitConstructionUnitRow: DBType.UnitConstructionUnitRow = finishedUnitConstruction.unitConstructionUnitRows[nextUnitConstructionUnitRowIndex];
-    
+    const completedQueueType: GameType.UnitConstructionQueueType | undefined = UnitConstructionData.getUnitConstructionQueueType(finishedUnitConstruction);
+
     // Apply the change
     UnitData.addPlanetUnit(planetData, currentUnitConstructionUnitRow.unit_type as GameType.UnitType, 1);
     currentUnitConstructionUnitRow.unit_quantity -= 1;
@@ -111,7 +112,7 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
 
     if (nextUnitConstruction === null)
     {
-        nextUnitConstruction = UnitConstructionData.getNextUnitConstruction(planetData);
+        nextUnitConstruction = UnitConstructionData.getNextUnitConstruction(planetData, completedQueueType);
     }
 
     if (nextUnitConstruction === null)

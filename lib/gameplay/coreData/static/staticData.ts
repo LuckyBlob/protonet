@@ -174,7 +174,14 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 2,
 				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.RoboticFactory),},},
-			LUNAR_BASE_REQUIREMENT,],
+			LUNAR_BASE_REQUIREMENT,
+			{
+			hideDataWhenRequirementFailed: false,
+			thingRequirement: {
+				thingType: ThingType.Thing.UnitConstruction,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: false,
+				valueGetter: RequirementValueGetters.isAnyUnitBeingConstructed(),},},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -317,6 +324,31 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.PlanetValueType.Size, 3],]),
 			basePlanetValueExponent: 1,}],
 	},],
+
+	[GameType.BuildingType.MissileSilo, { displayName: "Missile Silo",
+		buildableZones: [GameType.PlanetZone.Planet],
+		upgradeRequirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.Shipyard,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 1,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 20000],
+				[GameType.ResourceType.Crystal, 20000],
+				[GameType.ResourceType.Deuterium, 1000],]),},
+
+		planetValueStats: [{
+			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
+			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
+				[GameType.PlanetValueType.MissileSpace, 10],]),
+			basePlanetValueExponent: 1,}],
+	},],
 ]);
 //#endregion
 
@@ -324,6 +356,8 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = new Map<GameType.UnitType, GameType.UnitStats>
 ([
     [GameType.UnitType.SmallTransport, { displayName: "Small Transport",
+		category: GameType.UnitCategory.Ship,
+		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -347,6 +381,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 
 
     [GameType.UnitType.LargeTransport, { displayName: "Large Transport",
+		category: GameType.UnitCategory.Ship,
+		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -368,6 +404,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 
 
     [GameType.UnitType.ColonyShip, { displayName: "Colony Ship",
+		category: GameType.UnitCategory.Ship,
+		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -388,6 +426,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 1000]])},],
 	}],
     [GameType.UnitType.Recycler, { displayName: "Recycler",
+		category: GameType.UnitCategory.Ship,
+		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[{
 			hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -413,6 +453,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		canTargetDebrisField: true,
 	}],
 	[GameType.UnitType.EspionageProbe, { displayName: "Espionage Probe",
+		category: GameType.UnitCategory.Ship,
+		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[
 			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -438,6 +480,120 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 1]])},],
 		canSpy: true,
 	}],
+	[GameType.UnitType.RocketLauncher, { displayName: "Rocket Launcher",
+		category: GameType.UnitCategory.Defense,
+		queueType: GameType.UnitConstructionQueueType.Shipyard,
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.Shipyard,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 1,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+		costMap: new Map<GameType.ResourceType, number>([
+			[GameType.ResourceType.Metal, 2000],]),
+		maxHealth: 2000,
+	}],
+
+	[GameType.UnitType.SolarSatellite, { displayName: "Solar Satellite",
+		category: GameType.UnitCategory.Satellite,
+		queueType: GameType.UnitConstructionQueueType.Shipyard,
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.Shipyard,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 1,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+		costMap: new Map<GameType.ResourceType, number>([
+			[GameType.ResourceType.Crystal, 2000],
+			[GameType.ResourceType.Deuterium, 500],]),
+		maxHealth: 2000,
+		unitPlanetValueStats: [{
+			unitPlanetValueProductionFormulasType: GameType.UnitPlanetValueProductionFormulasType.TemperatureScaled,
+			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
+				[GameType.PlanetValueType.Energy, 1],]),
+			temperatureOffset: 160,
+			temperatureDivider: 6,}],
+	}],
+
+	[GameType.UnitType.InterplanetaryMissile, { displayName: "Interplanetary Missile",
+		category: GameType.UnitCategory.Missile,
+		queueType: GameType.UnitConstructionQueueType.MissileSilo,
+		requirements:[
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.MissileSilo,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 4,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.MissileSilo),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.ImpulseDrive,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 1,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ImpulseDrive),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.PlanetValue,
+				specificThingType: GameType.PlanetValueType.MissileSpace,
+				operator: RequirementType.RequirementOperator.GreaterThan,
+				value: 0,
+				valueGetter: RequirementValueGetters.freeMissileSpace(),},},],
+		costMap: new Map<GameType.ResourceType, number>([
+			[GameType.ResourceType.Metal, 12500],
+			[GameType.ResourceType.Crystal, 2500],
+			[GameType.ResourceType.Deuterium, 10000],]),
+		maxHealth: 15000,
+		unitPlanetValueStats: [{
+			unitPlanetValueProductionFormulasType: GameType.UnitPlanetValueProductionFormulasType.FixedPerUnit,
+			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
+				[GameType.PlanetValueType.MissileSpace, -2],]),}],
+	}],
+
+	[GameType.UnitType.InterceptorMissile, { displayName: "Interceptor Missile",
+		category: GameType.UnitCategory.Missile,
+		queueType: GameType.UnitConstructionQueueType.MissileSilo,
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.MissileSilo,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 2,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.MissileSilo),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.PlanetValue,
+				specificThingType: GameType.PlanetValueType.MissileSpace,
+				operator: RequirementType.RequirementOperator.GreaterThan,
+				value: 0,
+				valueGetter: RequirementValueGetters.freeMissileSpace(),},},],
+		costMap: new Map<GameType.ResourceType, number>([
+			[GameType.ResourceType.Metal, 8000],
+			[GameType.ResourceType.Deuterium, 2000],]),
+		maxHealth: 8000,
+		unitPlanetValueStats: [{
+			unitPlanetValueProductionFormulasType: GameType.UnitPlanetValueProductionFormulasType.FixedPerUnit,
+			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
+				[GameType.PlanetValueType.MissileSpace, -1],]),}],
+	}],
+]);
+
+export const UNIT_CATEGORY_INFOS: ReadonlyMap<GameType.UnitCategory, GameType.UnitCategoryInfo> = new Map<GameType.UnitCategory, GameType.UnitCategoryInfo>
+([
+	[GameType.UnitCategory.Ship, {
+		displayName: "Ships",}],
+	[GameType.UnitCategory.Defense, {
+		displayName: "Defenses",}],
+	[GameType.UnitCategory.Satellite, {
+		displayName: "Satellites",}],
+	[GameType.UnitCategory.Missile, {
+		displayName: "Missiles",}],
 ]);
 //#endregion
 
@@ -597,6 +753,9 @@ export const PLANET_VALUE_INFOS: ReadonlyMap<GameType.PlanetValueType, GameType.
 	[GameType.PlanetValueType.Temperature, {
 		displayName: "Temperature",
 		showInTopBar: false,}],
+	[GameType.PlanetValueType.MissileSpace, {
+		displayName: "Missile Space",
+		showInTopBar: false,}],
 ]);
 //#endregion
 
@@ -717,13 +876,6 @@ export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requireme
 			operator: RequirementType.RequirementOperator.Equal,
 			value: false,
 			valueGetter: RequirementValueGetters.isAnyBuildingDeconstructionInProgress(),}}]],
-	[ThingType.Thing.UnitConstruction, [{
-		hideDataWhenRequirementFailed: false,
-		thingRequirement: {
-			thingType: ThingType.Thing.BuildingUpgrade,
-			operator: RequirementType.RequirementOperator.Equal,
-			value: false,
-			valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.Shipyard),}}]],
 	[ThingType.Thing.ResearchingResearch, [{
 		hideDataWhenRequirementFailed: false,
 		thingRequirement: {

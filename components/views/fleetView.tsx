@@ -161,7 +161,7 @@ function renderFleetMovementsSection(props: FleetViewProps): ReactElement
 
 function renderFleetUnitRows(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const unitTypes: GameType.UnitType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Unit);
+    const unitTypes: GameType.UnitType[] = StaticDataHelper.getUnitsByCategory(GameType.UnitCategory.Ship);
 
     const rowElements: (ReactElement | null)[] = unitTypes.map((unitType: GameType.UnitType) =>
     {

@@ -21,6 +21,7 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow(),
             buildingUpgradeBuildingRows: [TestDataBuilders.buildBuildingUpgradeBuildingRow()],
+            buildingUpgradeResourceRows: [],
         };
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
@@ -129,6 +130,7 @@ describe('no building can be queued while another upgrade is already in progress
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 1 }),
             buildingUpgradeBuildingRows: [TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.MetalMine })],
+            buildingUpgradeResourceRows: [],
         };
 
         return TestDataBuilders.buildPlanetData(
@@ -195,6 +197,7 @@ describe('getFailedUnitBuildRequirements', () =>
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 1 }),
             buildingUpgradeBuildingRows: [shipyardUpgradeRow],
+            buildingUpgradeResourceRows: [],
         };
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
@@ -217,6 +220,7 @@ describe('getFailedUnitBuildRequirements', () =>
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 1 }),
             buildingUpgradeBuildingRows: [metalMineUpgradeRow],
+            buildingUpgradeResourceRows: [],
         };
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {
@@ -304,6 +308,7 @@ describe('no unit can be started while the Shipyard is being built', () =>
         {
             buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 1 }),
             buildingUpgradeBuildingRows: [shipyardUpgradeRow],
+            buildingUpgradeResourceRows: [],
         };
 
         return TestDataBuilders.buildPlanetData(

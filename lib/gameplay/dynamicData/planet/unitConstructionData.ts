@@ -8,12 +8,46 @@ import * as MathHelp from "@/lib/helper/mathHelp";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
-export function getNextUnitConstruction(planetData: CoreType.PlanetData): CoreType.UnitConstruction | null
+export function getUnitConstructionQueueType(unitConstruction: CoreType.UnitConstruction): GameType.UnitConstructionQueueType | undefined
 {
+    const firstUnitRow: DBType.UnitConstructionUnitRow | undefined = unitConstruction.unitConstructionUnitRows[0];
+    if (firstUnitRow === undefined)
+    {
+        return undefined;
+    }
+
+    return StaticDataHelper.getUnitQueueType(firstUnitRow.unit_type as GameType.UnitType);
+}
+
+export function getNextUnitConstruction(planetData: CoreType.PlanetData, queueType: GameType.UnitConstructionQueueType | undefined): CoreType.UnitConstruction | null
+{
+    const queuedConstructions: CoreType.UnitConstruction[] = planetData.dynamicPlanetData.unitConstructions.filter((construction: CoreType.UnitConstruction): boolean =>
+    {
+        return construction.unitConstructionRow.started_at === null && getUnitConstructionQueueType(construction) === queueType;
+    });
+
     return MathHelp.getEarliestByRequestedAt(
-        planetData.dynamicPlanetData.unitConstructions,
+        queuedConstructions,
         (construction: CoreType.UnitConstruction): number => construction.unitConstructionRow.requested_at
     );
+}
+
+export function getStartedUnitConstructionForQueueType(planetData: CoreType.PlanetData, queueType: GameType.UnitConstructionQueueType | undefined): CoreType.UnitConstruction | null
+{
+    if (queueType === undefined)
+    {
+        return null;
+    }
+
+    for (const unitConstruction of planetData.dynamicPlanetData.unitConstructions)
+    {
+        if (unitConstruction.unitConstructionRow.started_at !== null && getUnitConstructionQueueType(unitConstruction) === queueType)
+        {
+            return unitConstruction;
+        }
+    }
+
+    return null;
 }
 
 export function sortUnitConstructionUnitRowByConstructionTime(planetData: CoreType.PlanetData, unitConstruction: CoreType.UnitConstruction, serverData: CoreType.ServerData): void
@@ -23,7 +57,6 @@ export function sortUnitConstructionUnitRowByConstructionTime(planetData: CoreTy
         return;
     }
 
-    // sort shortest duration first
     unitConstruction.unitConstructionUnitRows.sort((row1: DBType.UnitConstructionUnitRow, row2: DBType.UnitConstructionUnitRow): number =>
     {
         const unitConstructionTime1: number | null = getUnitConstructionDurationSeconds(row1.unit_type as GameType.UnitType, planetData, serverData);
@@ -43,16 +76,16 @@ export function sortUnitConstructionUnitRowByConstructionTime(planetData: CoreTy
 
 export function getUnitConstructionDurationSeconds(unitType: GameType.UnitType, planetData: CoreType.PlanetData, serverData: CoreType.ServerData): number | null
 {
-    const currentShipyardLevel: number = BuildingData.getBuildingLevel(planetData, GameType.BuildingType.Shipyard);
+    const shipyardLevel: number = BuildingData.getBuildingLevel(planetData, GameType.BuildingType.Shipyard);
     const naniteFactoryLevel: number = BuildingData.getBuildingLevel(planetData, GameType.BuildingType.NaniteFactory);
-    return UnitConstruction.computeConstructionDurationSeconds(unitType, currentShipyardLevel, naniteFactoryLevel, serverData);
+    return UnitConstruction.computeConstructionDurationSeconds(unitType, shipyardLevel, naniteFactoryLevel, serverData);
 }
 
-export function getUnitConstructionRemainingMs(planetData: CoreType.PlanetData): number | null
+export function getUnitConstructionRemainingMs(planetData: CoreType.PlanetData, queueType: GameType.UnitConstructionQueueType | undefined): number | null
 {
     for (const unitConstruction of planetData.dynamicPlanetData.unitConstructions)
     {
-        if (unitConstruction.unitConstructionRow.started_at !== null)
+        if (unitConstruction.unitConstructionRow.started_at !== null && getUnitConstructionQueueType(unitConstruction) === queueType)
         {
             return (unitConstruction.unitConstructionRow.started_at + unitConstruction.unitConstructionRow.duration_at_start_time!) - Date.now();
         }

@@ -18,6 +18,7 @@ function buildUpgrade(id: number, planetId: number, buildingType: number, starte
             id, planet_id: planetId, started_at: startedAt, duration_at_start_time: durationMs, current_building_upgrade_building_row_id: id,
         }),
         buildingUpgradeBuildingRows: [upgradeBuildingRow],
+        buildingUpgradeResourceRows: [],
     };
 }
 
@@ -70,6 +71,7 @@ describe('building upgrade queue — single-upgrade invariant', () =>
                 id: 1, planet_id: 1, started_at: null, duration_at_start_time: null, current_building_upgrade_building_row_id: 1,
             }),
             buildingUpgradeBuildingRows: [TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1 })],
+            buildingUpgradeResourceRows: [],
         };
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
         {

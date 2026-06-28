@@ -5,6 +5,7 @@ import * as RequirementType from "@/lib/gameplay/coreData/requirement/requiremen
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
+import * as MissileSpaceData from "@/lib/gameplay/dynamicData/planet/missileSpaceData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 function getPlanetData(playerData: CoreType.PlayerData, planetId: number): CoreType.PlanetData
@@ -32,6 +33,15 @@ export function isAnyBuildingDeconstructionInProgress(): RequirementType.ThingVa
     {
         const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
         return planetData.dynamicPlanetData.buildingDeconstructions.length > 0 ? 1 : 0;
+    };
+}
+
+export function isAnyUnitBeingConstructed(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
+        return planetData.dynamicPlanetData.unitConstructions.length > 0 ? 1 : 0;
     };
 }
 
@@ -117,6 +127,15 @@ export function hasFreeFleetSlot(): RequirementType.ThingValueGetter
         }
 
         return activeFleetIds.size < maximumFleetSlots ? 1 : 0;
+    };
+}
+
+export function freeMissileSpace(): RequirementType.SpecificThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
+        return MissileSpaceData.computeFreeMissileSpace(planetData, context.playerData);
     };
 }
 

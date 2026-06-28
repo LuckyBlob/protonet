@@ -2,6 +2,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as MathHelp from "@/lib/helper/mathHelp";
+import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 // #region Unit Management
 export function setUnitQuantity(planetData: CoreType.PlanetData, unitType: GameType.UnitType, value: number): void
@@ -13,6 +14,18 @@ export function getUnitQuantity(planetData: CoreType.PlanetData, unitType: GameT
 {
 	const unitQuantities: Map<GameType.UnitType, number> = ThingHelpers.getThingValues(null, planetData, CoreType.DataContext.UnitQuantity) as Map<GameType.UnitType, number>;
 	return unitQuantities.get(unitType) ?? 0;
+}
+
+export function getCategoryUnitQuantity(planetData: CoreType.PlanetData, unitCategory: GameType.UnitCategory): number
+{
+	const categoryUnitTypes: GameType.UnitType[] = StaticDataHelper.getUnitsByCategory(unitCategory);
+	let totalCategoryUnitQuantity: number = 0;
+	for (const unitType of categoryUnitTypes)
+	{
+		totalCategoryUnitQuantity += getUnitQuantity(planetData, unitType);
+	}
+
+	return totalCategoryUnitQuantity;
 }
 
 export function hasUnitQuantities(planetData: CoreType.PlanetData, unitQuantities: Map<GameType.UnitType, number>): boolean
