@@ -3,6 +3,7 @@ import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as DBType from "@/lib/db/dbTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 
 export function getBuildingStats(buildingType: GameType.BuildingType): GameType.BuildingStats
 {
@@ -108,6 +109,35 @@ export function getFleetActionInfo(fleetActionType: GameType.FleetActionType): G
     }
 
     return fleetActionInfo;
+}
+
+export function getSpecificThingRequirements(specificThing: ThingType.SpecificThingType): RequirementType.Requirement[]
+{
+    switch (specificThing.thingType)
+    {
+        case ThingType.Thing.BuildingUpgrade:
+        {
+            return getBuildingStats(specificThing.specificThingType as GameType.BuildingType).upgradeRequirements ?? [];
+        }
+        case ThingType.Thing.BuildingDeconstruction:
+        {
+            return getBuildingStats(specificThing.specificThingType as GameType.BuildingType).deconstructRequirements ?? [];
+        }
+        case ThingType.Thing.UnitConstruction:
+        {
+            return getUnitStats(specificThing.specificThingType as GameType.UnitType).requirements ?? [];
+        }
+        case ThingType.Thing.ResearchingResearch:
+        {
+            return getResearchInfo(specificThing.specificThingType as GameType.ResearchType).requirements ?? [];
+        }
+        case ThingType.Thing.FleetMovement:
+        {
+            return getFleetActionInfo(specificThing.specificThingType as GameType.FleetActionType).requirements ?? [];
+        }
+        default:
+            throw new Error(`UNREACHABLE: No specific requirements lookup for Thing ${specificThing.thingType}`);
+    }
 }
 
 export function getPlanetZoneInfo(zone: GameType.PlanetZone): GameType.PlanetZoneInfo

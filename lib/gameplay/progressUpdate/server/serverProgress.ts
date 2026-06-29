@@ -6,6 +6,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buildingUpgradeAnchorEvent"
 import * as BuildingDeconstruction from "@/lib/gameplay/progressUpdate/anchorEvent/buildingDeconstructionAnchorEvent"
 import * as UnitConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/unitConstructionAnchorEvent"
+import * as ResourceProduction from "@/lib/gameplay/progressUpdate/anchorEvent/resourceProductionAnchorEvent"
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 import * as DB from "@/lib/db/db";
 import * as ServerRequestFunctions from "@/lib/networkRequests/server/serverRequestFunctions";
@@ -211,10 +212,17 @@ function resolveCurrentlyResearchingAnchorEventToDB(playerData: CoreType.PlayerD
 
 function resolveResourceProductionAnchorEventToDB(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
 {
+    const resourceProductionAnchorEvent: ResourceProduction.ResourceProductionAnchorEvent = anchorEvent as ResourceProduction.ResourceProductionAnchorEvent;
+    const planetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, resourceProductionAnchorEvent.planetId);
+    if (planetData === null)
+    {
+        throw new Error(`⚠️: Cant get full planet data for resource production.`);
+    }
+
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
-        ServerDynamicData.serverUpdatePlayerDataContext(playerData.playerRow.id, CoreType.DataContext.ResourceQuantity, playerData.dynamicPlayerData);
-        ServerDynamicData.serverUpdatePlayerDataContext(playerData.playerRow.id, CoreType.DataContext.BuildingLevel, playerData.dynamicPlayerData);
+        ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.BuildingLevel, planetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.ResourceQuantity, planetData.dynamicPlanetData);
     });
 
     transaction();

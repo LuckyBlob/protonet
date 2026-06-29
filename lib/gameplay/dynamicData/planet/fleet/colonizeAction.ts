@@ -28,9 +28,9 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | nu
     // Too many planets (moons don't count toward the colony cap)
     if (CoreType.getOwnedPlanets(originPlayerData.planetDatas).length >= StaticData.MAX_ALLOWED_PLANETS)
     {
+        addTooManyPlanetsFailureMessage(fleetMovement);
         FleetData.setFleetReturnTrip(null, fleetMovement);
         fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
-        addTooManyPlanetsFailureMessage(fleetMovement);
         return null;
     }
 
@@ -45,9 +45,9 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | nu
     // if that address is now owned → return trip + failure message, like the too-many-planets branch
     if (addressIsTaken(targetAddress))
     {
+        addColonizeFailedTargetTakenMessage(fleetMovement);
         FleetData.setFleetReturnTrip(null, fleetMovement);
         fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
-        addColonizeFailedTargetTakenMessage(fleetMovement);
         return null;
     }
     

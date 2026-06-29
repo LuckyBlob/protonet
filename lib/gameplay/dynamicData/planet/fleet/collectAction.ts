@@ -19,43 +19,59 @@ export function resolveCollectAction(originPlayerData: CoreType.PlayerData | nul
 	// They caught you!
     if (UnitData.hasUnits(targetPlanetData))
     {
+        addCollectActionFailureMessage(targetPlayerData, fleetMovement);
         FleetData.setFleetReturnTrip(targetPlanetData, fleetMovement);
         fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
-        addCollectActionFailureMessage(targetPlayerData, fleetMovement);
         return;
     }
 
-	const availableSpace: number = FleetData.computeRemainingFleetCargoSpace(fleetMovement);
+    const collectedResourceQuantities: Map<GameType.ResourceType, number> = collectResourcesIntoFleet(targetPlanetData, fleetMovement);
 
-	if (availableSpace > 0)
-	{
-        const targetResourceQuantities: Map<GameType.ResourceType, number> = ResourceData.getResourceQuantities(targetPlanetData);
-        const collectedResourceQuantities: Map<GameType.ResourceType, number> = ResourceData.computeCollectedResources(targetResourceQuantities, availableSpace);
-        
-        //Remove resources
-        ResourceData.subtractPlanetResources(targetPlanetData, collectedResourceQuantities);
-        
-        //Add resources to our fleet
-        fleetMovement.fleetMovementResourceRows = [];
-        for (const [collectedResourceType, collectedResourceQuantity] of collectedResourceQuantities)
-        {
-            const newMovementResourceRow: DBType.FleetMovementResourceRow =
-            {
-                fleet_id: fleetMovement.fleetMovementRow.id,
-                resource_type: collectedResourceType,
-                resource_quantity: collectedResourceQuantity,
-            }
-            fleetMovement.fleetMovementResourceRows.push(newMovementResourceRow);
-        }
-	}
-
-	FleetData.setFleetReturnTrip(targetPlanetData, fleetMovement);
-	fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
-
-    addCollectActionSuccessMessage(targetPlayerData, fleetMovement);
+    addCollectActionSuccessMessage(targetPlayerData, fleetMovement, collectedResourceQuantities);
+    FleetData.setFleetReturnTrip(targetPlanetData, fleetMovement);
+    fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
 }
 
-function addCollectActionSuccessMessage(targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement): void
+function collectResourcesIntoFleet(targetPlanetData: CoreType.PlanetData, fleetMovement: CoreType.FleetMovement): Map<GameType.ResourceType, number>
+{
+    const availableSpace: number = FleetData.computeRemainingFleetCargoSpace(fleetMovement);
+    if (availableSpace <= 0)
+    {
+        return new Map<GameType.ResourceType, number>();
+    }
+
+    const targetResourceQuantities: Map<GameType.ResourceType, number> = ResourceData.getResourceQuantities(targetPlanetData);
+    const collectedResourceQuantities: Map<GameType.ResourceType, number> = ResourceData.computeCollectedResources(targetResourceQuantities, availableSpace);
+
+    ResourceData.subtractPlanetResources(targetPlanetData, collectedResourceQuantities);
+
+    for (const [collectedResourceType, collectedResourceQuantity] of collectedResourceQuantities)
+    {
+        if (collectedResourceQuantity <= 0)
+        {
+            continue;
+        }
+
+        const existingResourceRow: DBType.FleetMovementResourceRow | undefined = fleetMovement.fleetMovementResourceRows.find((resourceRow: DBType.FleetMovementResourceRow): boolean => resourceRow.resource_type === collectedResourceType);
+        if (existingResourceRow !== undefined)
+        {
+            existingResourceRow.resource_quantity += collectedResourceQuantity;
+            continue;
+        }
+
+        const newMovementResourceRow: DBType.FleetMovementResourceRow =
+        {
+            fleet_id: fleetMovement.fleetMovementRow.id,
+            resource_type: collectedResourceType,
+            resource_quantity: collectedResourceQuantity,
+        };
+        fleetMovement.fleetMovementResourceRows.push(newMovementResourceRow);
+    }
+
+    return collectedResourceQuantities;
+}
+
+function addCollectActionSuccessMessage(targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, collectedResourceQuantities: Map<GameType.ResourceType, number>): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
     const publicPlayerRows: DBType.PublicPlayerRow[] = targetPlayerData.publicPlayerRows;
@@ -63,7 +79,7 @@ function addCollectActionSuccessMessage(targetPlayerData: CoreType.PlayerData, f
     const targetPlayerName: string = StaticDataHelper.getPlayerName(publicPlayerRows, fleetRow.player_target_id);
     const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
-    const collectedResourcesList: string = FleetData.buildResourcesListFromFleetMovement(fleetMovement.fleetMovementResourceRows);
+    const collectedResourcesList: string = FleetData.buildResourceQuantitiesList(collectedResourceQuantities);
 
     fleetMovement.originMessageRow =
     {

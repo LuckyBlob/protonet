@@ -153,6 +153,16 @@ describe('build-while-building concurrency rules', () =>
         const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, PLANET_ID);
         expect(failed.length).toBeGreaterThan(0);
     });
+
+    it('blocks building a unit while the NANITE FACTORY is upgrading (nanite locks all construction)', () =>
+    {
+        const playerData: CoreType.PlayerData = buildPlayer({
+            buildingLevels: new Map([[GameType.BuildingType.Shipyard, 2]]),
+            buildingUpgrades: [buildingUpgradeInProgress(GameType.BuildingType.NaniteFactory)],
+        });
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, PLANET_ID);
+        expect(failed.length).toBeGreaterThan(0);
+    });
 });
 
 // The other half of the bidirectional rule: the shipyard can't be upgraded while it has units queued.
@@ -185,13 +195,37 @@ describe('Shipyard upgrade is blocked while units are in the build queue', () =>
         expect(failed).toHaveLength(0);
     });
 
-    it('does not block a non-Shipyard upgrade while a unit is in construction (only the shipyard is busy)', () =>
+    it('does not block a non-Shipyard upgrade while a unit is in construction (a Metal Mine is unaffected)', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer({
             buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 2]]),
             unitConstructions: [unitConstructionInProgress()],
         });
         const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalMine, PLANET_ID);
+        expect(failed).toHaveLength(0);
+    });
+});
+
+const NANITE_PREREQUISITE_RESEARCH: Map<GameType.ResearchType, number> = new Map([[GameType.ResearchType.ComputerTech, 10]]);
+
+describe('Nanite Factory upgrade is blocked while units are in the build queue', () =>
+{
+    it('blocks a Nanite Factory upgrade while a unit is in construction', () =>
+    {
+        const playerData: CoreType.PlayerData = buildPlayer({
+            buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 10]]),
+            unitConstructions: [unitConstructionInProgress()],
+        }, NANITE_PREREQUISITE_RESEARCH);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.NaniteFactory, PLANET_ID);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('allows a Nanite Factory upgrade when the unit queue is empty', () =>
+    {
+        const playerData: CoreType.PlayerData = buildPlayer({
+            buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 10]]),
+        }, NANITE_PREREQUISITE_RESEARCH);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.NaniteFactory, PLANET_ID);
         expect(failed).toHaveLength(0);
     });
 });

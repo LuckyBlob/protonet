@@ -231,7 +231,14 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				specificThingType: GameType.ResearchType.ComputerTech,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 10,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ComputerTech),},},],
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ComputerTech),},},
+			{
+			hideDataWhenRequirementFailed: false,
+			thingRequirement: {
+				thingType: ThingType.Thing.UnitConstruction,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: false,
+				valueGetter: RequirementValueGetters.isAnyUnitBeingConstructed(),},},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -897,6 +904,19 @@ export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requireme
 			operator: RequirementType.RequirementOperator.Equal,
 			value: true,
 			valueGetter: RequirementValueGetters.hasFreeFleetSlot(),}}]],
+	[ThingType.Thing.UnitConstruction, [{
+		hideDataWhenRequirementFailed: false,
+		thingRequirement: {
+			thingType: ThingType.Thing.BuildingUpgrade,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,
+			valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.Shipyard),}},
+		{hideDataWhenRequirementFailed: false,
+		thingRequirement: {
+			thingType: ThingType.Thing.BuildingUpgrade,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,
+			valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.NaniteFactory),}}]],
 ]);
 //#endregion
 

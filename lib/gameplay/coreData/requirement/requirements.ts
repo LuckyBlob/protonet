@@ -7,7 +7,6 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
-import * as RequirementValueGetters from "@/lib/gameplay/coreData/requirement/requirementValueGetters";
 
 export function getFailedBuildingUpgradeRequirements(playerData: CoreType.PlayerData, buildingType: GameType.BuildingType, planetId: number): RequirementType.Requirement[]
 {
@@ -16,7 +15,7 @@ export function getFailedBuildingUpgradeRequirements(playerData: CoreType.Player
         playerData: playerData,
         planetId: planetId,
     };
-    const requirements: RequirementType.Requirement[] = getBuildingRequirements(ThingType.Thing.BuildingUpgrade, buildingType);
+    const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.BuildingUpgrade, specificThingType: buildingType });
     return getFailedRequirements(requirementContext, requirements);
 }
 
@@ -27,7 +26,7 @@ export function getFailedBuildingDeconstructionRequirements(playerData: CoreType
         playerData: playerData,
         planetId: planetId,
     };
-    const requirements: RequirementType.Requirement[] = getBuildingRequirements(ThingType.Thing.BuildingDeconstruction, buildingType);
+    const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.BuildingDeconstruction, specificThingType: buildingType });
     return getFailedRequirements(requirementContext, requirements);
 }
 
@@ -38,7 +37,7 @@ export function getFailedUnitBuildRequirements(playerData: CoreType.PlayerData, 
         playerData: playerData,
         planetId: planetId,
     };
-    const requirements: RequirementType.Requirement[] = getUnitRequirements(unitType);
+    const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.UnitConstruction, specificThingType: unitType });
     return getFailedRequirements(requirementContext, requirements);
 }
 
@@ -49,7 +48,7 @@ export function getFailedResearchRequirements(playerData: CoreType.PlayerData, r
         playerData: playerData,
         planetId: planetId,
     };
-    const requirements: RequirementType.Requirement[] = getResearchRequirements(ThingType.Thing.ResearchingResearch, researchType);
+    const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.ResearchingResearch, specificThingType: researchType });
     return getFailedRequirements(requirementContext, requirements);
 }
 
@@ -65,7 +64,7 @@ export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerDa
         zoneAssociatedPlanetOwnerPlayerId: zoneAssociatedPlanetOwnerPlayerId,
         targetZoneExists: targetZoneExists,
     };
-    const requirements: RequirementType.Requirement[] = getFleetActionRequirements(ThingType.Thing.FleetMovement, fleetActionType, unitQuantities, transportedResourceQuantities, targetPlanetAddress);
+    const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.FleetMovement, specificThingType: fleetActionType });
     return getFailedRequirements(requirementContext, requirements);
 }
 
@@ -91,53 +90,10 @@ export function getRequirementDescriptions(failedRequirements: RequirementType.R
 }
 
 // --- internals ---
-function getBuildingRequirements(thingType: ThingType.Thing, buildingType: GameType.BuildingType): RequirementType.Requirement[]
+function getRequirements(specificThing: ThingType.SpecificThingType): RequirementType.Requirement[]
 {
-    const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(thingType) ?? [];
-    const buildingStats: GameType.BuildingStats = StaticDataHelper.getBuildingStats(buildingType);
-    const specificRequirements: RequirementType.Requirement[] = (thingType === ThingType.Thing.BuildingDeconstruction)
-        ? (buildingStats.deconstructRequirements ?? [])
-        : (buildingStats.upgradeRequirements ?? []);
-
-    return [...globalRequirements, ...specificRequirements];
-}
-
-function getUnitRequirements(unitType: GameType.UnitType): RequirementType.Requirement[]
-{
-    const shipyardRequirements: RequirementType.Requirement[] = getShipyardNotUpgradingRequirements();
-    const specificRequirements: RequirementType.Requirement[] = StaticDataHelper.getUnitStats(unitType).requirements ?? [];
-
-    return [...shipyardRequirements, ...specificRequirements];
-}
-
-function getShipyardNotUpgradingRequirements(): RequirementType.Requirement[]
-{
-    const shipyardNotUpgradingRequirement: RequirementType.Requirement =
-    {
-        hideDataWhenRequirementFailed: false,
-        thingRequirement: {
-            thingType: ThingType.Thing.BuildingUpgrade,
-            operator: RequirementType.RequirementOperator.Equal,
-            value: false,
-            valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.Shipyard),
-        },
-    };
-
-    return [shipyardNotUpgradingRequirement];
-}
-
-function getResearchRequirements(thingType: ThingType.Thing, researchType: GameType.ResearchType): RequirementType.Requirement[]
-{
-    const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(thingType) ?? [];
-    const specificRequirements: RequirementType.Requirement[] = StaticDataHelper.getResearchInfo(researchType).requirements ?? [];
-
-    return [...globalRequirements, ...specificRequirements];
-}
-
-function getFleetActionRequirements(thingType: ThingType.Thing, fleetActionType: GameType.FleetActionType, unitQuantities: Map<GameType.UnitType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>, targetPlanetAddress: GameType.PlanetAddress): RequirementType.Requirement[]
-{
-    const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(thingType) ?? [];
-    const specificRequirements: RequirementType.Requirement[] = StaticDataHelper.getFleetActionInfo(fleetActionType).requirements ?? [];
+    const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(specificThing.thingType) ?? [];
+    const specificRequirements: RequirementType.Requirement[] = StaticDataHelper.getSpecificThingRequirements(specificThing);
 
     return [...globalRequirements, ...specificRequirements];
 }

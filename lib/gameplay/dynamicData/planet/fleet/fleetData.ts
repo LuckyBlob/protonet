@@ -156,9 +156,9 @@ function addFleetMessageToPlayerData(playerData: CoreType.PlayerData, messageRow
 // existing target.
 export function bounceFleetForMissingTarget(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement): void
 {
+	addMissingTargetFleetActionMessage(originPlayerData, fleetMovement);
 	setFleetReturnTrip(null, fleetMovement);
 	fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
-	addMissingTargetFleetActionMessage(originPlayerData, fleetMovement);
 }
 
 function addMissingTargetFleetActionMessage(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement): void
@@ -337,6 +337,23 @@ export function buildResourcesListFromFleetMovement(fleetMovementResourceRows: D
 		parts.push(`${fleetMovementResourceRow.resource_quantity} ${resourceName}`);
 	}
 	return parts.join(", ");
+}
+
+export function buildResourceQuantitiesList(resourceQuantities: Map<GameType.ResourceType, number>): string
+{
+	const resourceRows: DBType.FleetMovementResourceRow[] = [];
+	for (const [resourceType, resourceQuantity] of resourceQuantities)
+	{
+		const resourceRow: DBType.FleetMovementResourceRow =
+		{
+			fleet_id: -1,
+			resource_type: resourceType,
+			resource_quantity: resourceQuantity,
+		};
+		resourceRows.push(resourceRow);
+	}
+
+	return buildResourcesListFromFleetMovement(resourceRows);
 }
 
 // Fleet rows carry unit/resource types as plain DB numbers, narrowed to their enum at this boundary.

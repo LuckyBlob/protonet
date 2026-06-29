@@ -380,4 +380,38 @@ test.describe("Server-side enforcement", () =>
         expect(response.status()).toBe(200);
         expect(queuedMissileQuantity(seed.planet.id, GameType.UnitType.InterceptorMissile)).toBe(1);
     });
+
+    test("blocks a missile build server-side while the Nanite Factory is upgrading (nanite locks all construction)", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("EnN");
+        await E2EHelper.register(page, username, PASSWORD);
+        const seed: { playerId: number, planet: E2EHelper.PlanetRow } = await seedMissilePlayer(page, username, 2);
+        E2EHelper.seedBuildingUpgradeInProgress(seed.planet.id, seed.playerId, GameType.BuildingType.NaniteFactory, db);
+
+        const response = await page.request.post("/api/buy/buildUnits", {
+            data: { planetId: seed.planet.id, serializedUnitQuantities: { serializedMap: [[GameType.UnitType.InterceptorMissile, 1]] } },
+        });
+        expect(response.status()).toBe(400);
+        expect((await response.json()).error).toContain("doesn't meet requirements");
+    });
+
+    test("blocks a Nanite Factory upgrade server-side while a unit is in construction", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("EnNU");
+        await E2EHelper.register(page, username, PASSWORD);
+        const seed: { playerId: number, planet: E2EHelper.PlanetRow } = await seedMissilePlayer(page, username, 2);
+        E2EHelper.setBuildingLevel(seed.planet.id, seed.playerId, GameType.BuildingType.RoboticFactory, 10, db);
+        E2EHelper.setResearchLevel(seed.playerId, GameType.ResearchType.ComputerTech, 10, db);
+
+        const buildResponse = await page.request.post("/api/buy/buildUnits", {
+            data: { planetId: seed.planet.id, serializedUnitQuantities: { serializedMap: [[GameType.UnitType.InterceptorMissile, 1]] } },
+        });
+        expect(buildResponse.status()).toBe(200);
+
+        const upgradeResponse = await page.request.post("/api/buy/upgradeBuilding", {
+            data: { buildingType: GameType.BuildingType.NaniteFactory, planetId: seed.planet.id },
+        });
+        expect(upgradeResponse.status()).toBe(400);
+        expect((await upgradeResponse.json()).error).toContain("doesnt meet requirements");
+    });
 });

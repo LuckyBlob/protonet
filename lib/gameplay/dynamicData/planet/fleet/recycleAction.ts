@@ -14,10 +14,10 @@ export function resolveRecycleAction(originPlayerData: CoreType.PlayerData | nul
 
 	const harvestedResourceQuantities: Map<GameType.ResourceType, number> = harvestDebrisIntoFleet(targetPlanetData, fleetMovement);
 
+	addRecycleActionMessage(fleetMovement, harvestedResourceQuantities);
+
 	FleetData.setFleetReturnTrip(null, fleetMovement);
 	fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
-
-	addRecycleActionMessage(fleetMovement, harvestedResourceQuantities);
 }
 
 function harvestDebrisIntoFleet(targetPlanetData: CoreType.PlanetData | null, fleetMovement: CoreType.FleetMovement): Map<GameType.ResourceType, number>
@@ -62,7 +62,7 @@ function addRecycleActionMessage(fleetMovement: CoreType.FleetMovement, harveste
 	const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
 	const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
 	const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
-	const harvestedResourcesList: string = buildHarvestedResourcesList(harvestedResourceQuantities);
+	const harvestedResourcesList: string = FleetData.buildResourceQuantitiesList(harvestedResourceQuantities);
 
 	fleetMovement.originMessageRow =
 	{
@@ -74,26 +74,4 @@ function addRecycleActionMessage(fleetMovement: CoreType.FleetMovement, harveste
 		title: "Recycle Fleet Action Report",
 		body: `Recycled ${harvestedResourcesList} from the debris field at ${targetAddress}, fleet returning.`,
 	};
-}
-
-function buildHarvestedResourcesList(harvestedResourceQuantities: Map<GameType.ResourceType, number>): string
-{
-	const harvestedResourceRows: DBType.FleetMovementResourceRow[] = [];
-	for (const [resourceType, resourceQuantity] of harvestedResourceQuantities)
-	{
-		const harvestedResourceRow: DBType.FleetMovementResourceRow =
-		{
-			fleet_id: -1,
-			resource_type: resourceType,
-			resource_quantity: resourceQuantity,
-		};
-		harvestedResourceRows.push(harvestedResourceRow);
-	}
-
-	if (harvestedResourceRows.length === 0)
-	{
-		return "0 resources";
-	}
-
-	return FleetData.buildResourcesListFromFleetMovement(harvestedResourceRows);
 }
