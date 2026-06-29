@@ -6,7 +6,11 @@ import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/building
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 import * as MissileSpaceData from "@/lib/gameplay/dynamicData/planet/missileSpaceData";
+import * as ScoreData from "@/lib/gameplay/dynamicData/player/scoreData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
+
+const SCORE_TARGET_PROTECTION_THRESHOLD: number = 500000;
+const MAX_ATTACKER_TO_TARGET_SCORE_RATIO: number = 5;
 
 function getPlanetData(playerData: CoreType.PlayerData, planetId: number): CoreType.PlanetData
 {
@@ -255,5 +259,32 @@ export function allFleetUnitsCanSpy(): RequirementType.ThingValueGetter
         }
 
         return 1;
+    };
+}
+
+export function canTargetPlayerByScore(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.zoneAssociatedPlanetOwnerPlayerId === undefined)
+        {
+            throw new Error(`canTargetPlayerByScore requirement evaluated without zone-associated planet ownership info.`);
+        }
+
+        const targetOwnerPlayerId: number | null = context.zoneAssociatedPlanetOwnerPlayerId;
+
+        if (targetOwnerPlayerId === null || targetOwnerPlayerId === context.playerData.playerRow.id)
+        {
+            return 1;
+        }
+
+        const targetScore: number = ScoreData.getPublicPlayerScore(context.playerData.publicPlayerRows, targetOwnerPlayerId);
+        if (targetScore >= SCORE_TARGET_PROTECTION_THRESHOLD)
+        {
+            return 1;
+        }
+
+        const attackerScore: number = ScoreData.getPublicPlayerScore(context.playerData.publicPlayerRows, context.playerData.playerRow.id);
+        return attackerScore < targetScore * MAX_ATTACKER_TO_TARGET_SCORE_RATIO ? 1 : 0;
     };
 }

@@ -15,6 +15,7 @@ export function buildPlayerRow(overrides?: Partial<DBType.PlayerRow>): DBType.Pl
         upgrade_level: 0,
         building_upgrade_completes_at: 0,
         last_updated: 1_000_000,
+        invested_value: 0,
         ...overrides,
     };
 
@@ -344,6 +345,7 @@ export function buildPublicPlayerRow(overrides?: Partial<DBType.PublicPlayerRow>
     {
         id: 1,
         username: "Player1",
+        score: 0,
         ...overrides,
     };
 

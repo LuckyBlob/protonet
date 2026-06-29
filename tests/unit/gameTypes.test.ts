@@ -235,13 +235,13 @@ describe('getPlayerName', () =>
 
     it('returns "Unknown" when playerId is not in the public rows', () =>
     {
-        const rows = [{ id: 1, username: "Alice" }];
+        const rows = [{ id: 1, username: "Alice", score: 0 }];
         expect(StaticDataHelper.getPlayerName(rows, 42)).toBe("Unknown");
     });
 
     it('returns the matching username when a public row exists', () =>
     {
-        const rows = [{ id: 1, username: "Alice" }, { id: 2, username: "Bob" }];
+        const rows = [{ id: 1, username: "Alice", score: 0 }, { id: 2, username: "Bob", score: 0 }];
         expect(StaticDataHelper.getPlayerName(rows, 2)).toBe("Bob");
     });
 });

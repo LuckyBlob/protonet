@@ -36,6 +36,9 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
                 last_updated: planetData.planetRow.last_updated,
             });
         }
+
+        ServerRequestFunctions.serverUpdatePlayerScore(updatedTargetPlayerData);
+
         return updatedTargetPlayerData;
     }
 

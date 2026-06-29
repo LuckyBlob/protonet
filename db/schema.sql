@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS player
   upgrade_level INTEGER NOT NULL DEFAULT 0,
   last_updated INTEGER NOT NULL DEFAULT 0,
   building_upgrade_completes_at INTEGER NOT NULL DEFAULT 0,
+  invested_value INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

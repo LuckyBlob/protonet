@@ -29,6 +29,7 @@ import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/building
 import * as BuildingDeconstructionData from "@/lib/gameplay/dynamicData/planet/buildingDeconstructionData";
 import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
+import * as ScoreData from "@/lib/gameplay/dynamicData/player/scoreData";
 import * as ResearchCost from "@/lib/gameplay/coreData/formula/researchCostFormulas";
 import * as ResearchDuration from "@/lib/gameplay/coreData/formula/researchDurationFormulas";
 import * as MathHelp from "@/lib/helper/mathHelp";
@@ -461,9 +462,23 @@ export function serverGetPlayerRow(playerId: number): DBType.PlayerRow
 
 export function serverGetPublicPlayerRows(): DBType.PublicPlayerRow[]
 {
-    const publicPlayerRows: DBType.PublicPlayerRow[] = DB.databaseConnection.prepare(
-        "SELECT player.id, users.username FROM player JOIN users ON player.user_id = users.id"
-    ).all() as DBType.PublicPlayerRow[];
+    type PublicPlayerRowProjection = { id: number; username: string; invested_value: number };
+    const projections: PublicPlayerRowProjection[] = DB.databaseConnection.prepare(
+        "SELECT player.id, users.username, player.invested_value FROM player JOIN users ON player.user_id = users.id"
+    ).all() as PublicPlayerRowProjection[];
+
+    const publicPlayerRows: DBType.PublicPlayerRow[] = projections.map((projection: PublicPlayerRowProjection): DBType.PublicPlayerRow =>
+    {
+        const publicPlayerRow: DBType.PublicPlayerRow =
+        {
+            id: projection.id,
+            username: projection.username,
+            score: ScoreData.computeScoreFromInvestedValue(projection.invested_value),
+        };
+
+        return publicPlayerRow;
+    });
+
     return publicPlayerRows;
 }
 
@@ -479,6 +494,25 @@ export function serverGetPlayerData(playerId: number): CoreType.PlayerData
         publicPlanetDatas: serverFindAllPlanetsPublic(),
         publicPlayerRows: serverGetPublicPlayerRows(),
     };
+    return playerData;
+}
+
+export function serverUpdatePlayerScore(playerData: CoreType.PlayerData): void
+{
+    const investedValue: number = ScoreData.computePlayerInvestedValue(playerData);
+    playerData.playerRow = serverUpdatePlayerColumns(playerData.playerRow.id, { invested_value: investedValue });
+
+    const selfPublicPlayerRow: DBType.PublicPlayerRow | undefined = playerData.publicPlayerRows.find((row: DBType.PublicPlayerRow): boolean => row.id === playerData.playerRow.id);
+    if (selfPublicPlayerRow !== undefined)
+    {
+        selfPublicPlayerRow.score = ScoreData.computeScoreFromInvestedValue(investedValue);
+    }
+}
+
+export function serverGetPublicPlayerData(playerId: number): CoreType.PlayerData
+{
+    const playerData: CoreType.PlayerData = serverGetPlayerData(playerId);
+    serverUpdatePlayerScore(playerData);
     return playerData;
 }
 
@@ -500,7 +534,7 @@ export function serverGetPlanetData(planetId: number): CoreType.PlanetData
 }
 
 const PLAYER_ROW_ALLOWED_COLUMNS: ReadonlySet<string> = new Set<string>([
-    "user_id", "last_updated",
+    "user_id", "last_updated", "invested_value",
 ]);
 
 export function serverUpdatePlayerColumns(playerId: number, columnUpdates: Partial<DBType.PlayerRow>): DBType.PlayerRow
@@ -807,7 +841,7 @@ export function trySetBuildingEnergySettingLogic(playerId: number, serverData: C
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPlayerData(playerId),
+            playerStateResult: serverGetPublicPlayerData(playerId),
         };
 
         return playerActionResult;
@@ -935,7 +969,7 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPlayerData(playerId),
+            playerStateResult: serverGetPublicPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1042,7 +1076,7 @@ export function tryDeconstructBuildingLogic(playerId: number, serverData: CoreTy
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPlayerData(playerId),
+            playerStateResult: serverGetPublicPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1086,7 +1120,7 @@ export function tryCancelBuildingUpgradeLogic(playerId: number, serverData: Core
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPlayerData(playerId),
+            playerStateResult: serverGetPublicPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1130,7 +1164,7 @@ export function tryCancelBuildingDeconstructionLogic(playerId: number, serverDat
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPlayerData(playerId),
+            playerStateResult: serverGetPublicPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1241,7 +1275,7 @@ export function tryUpgradeResearchLogic(playerId: number, serverData: CoreType.S
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPlayerData(playerId),
+            playerStateResult: serverGetPublicPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1309,7 +1343,7 @@ export function tryBuildUnitsLogic(playerId: number, serverData: CoreType.Server
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPlayerData(playerId),
+            playerStateResult: serverGetPublicPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1469,7 +1503,7 @@ export function tryDestroyMissilesLogic(playerId: number, serverData: CoreType.S
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPlayerData(playerId),
+            playerStateResult: serverGetPublicPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1514,7 +1548,7 @@ export function tryDeleteMessageLogic(playerId: number, serverData: CoreType.Ser
     {
         success: true,
         failureReason: null,
-        playerStateResult: serverGetPlayerData(playerId),
+        playerStateResult: serverGetPublicPlayerData(playerId),
     }
 
     return playerActionResult;
@@ -1557,7 +1591,7 @@ export function tryMarkMessageReadLogic(playerId: number, serverData: CoreType.S
     {
         success: true,
         failureReason: null,
-        playerStateResult: serverGetPlayerData(playerId),
+        playerStateResult: serverGetPublicPlayerData(playerId),
     }
 
     return playerActionResult;
@@ -1596,7 +1630,7 @@ export function tryAbandonPlanetLogic(playerId: number, serverData: CoreType.Ser
     {
         success: true,
         failureReason: null,
-        playerStateResult: serverGetPlayerData(playerId),
+        playerStateResult: serverGetPublicPlayerData(playerId),
     }
 
     return playerActionResult;
@@ -1622,7 +1656,7 @@ export function tryRenamePlanetLogic(playerId: number, serverData: CoreType.Serv
     {
         success: true,
         failureReason: null,
-        playerStateResult: serverGetPlayerData(playerId),
+        playerStateResult: serverGetPublicPlayerData(playerId),
     }
 
     return playerActionResult;
@@ -1825,7 +1859,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPlayerData(playerId),
+            playerStateResult: serverGetPublicPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1898,7 +1932,7 @@ export function tryRecallFleetLogic(playerId: number, serverData: CoreType.Serve
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPlayerData(playerId),
+            playerStateResult: serverGetPublicPlayerData(playerId),
         }
         return playerActionResult;
     })();

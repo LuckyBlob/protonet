@@ -1,0 +1,1 @@
+ALTER TABLE player ADD COLUMN invested_value INTEGER NOT NULL DEFAULT 0;

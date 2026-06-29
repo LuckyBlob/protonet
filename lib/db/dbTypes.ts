@@ -6,6 +6,7 @@ export type PlayerRow =
 	upgrade_level: number;
 	building_upgrade_completes_at: number;
 	last_updated: number;
+	invested_value: number;
 };
 
 export type UserRow =
@@ -66,6 +67,7 @@ export type PublicPlayerRow =
 {
 	id: number;
 	username: string;
+	score: number;
 };
 
 export type PlanetUnitRow =

@@ -351,6 +351,20 @@ export function getResearchLevelDb(playerId: number, researchType: number, db: D
     return row?.research_level ?? 0;
 }
 
+export function setPlayerInvestedValue(playerId: number, investedValue: number, db: Database.Database): void
+{
+    db.prepare("UPDATE player SET invested_value = ? WHERE id = ?").run(investedValue, playerId);
+}
+
+export function getPlayerInvestedValue(playerId: number, db: Database.Database): number
+{
+    const row: { invested_value: number } | undefined = db.prepare(
+        "SELECT invested_value FROM player WHERE id = ?"
+    ).get(playerId) as { invested_value: number } | undefined;
+
+    return row?.invested_value ?? 0;
+}
+
 export function getConstructionId(planetId: number, db: Database.Database): number
 {
     const row: { id: number } = db.prepare(

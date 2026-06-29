@@ -631,7 +631,14 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
-				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},],}],
+				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
+
 	[GameType.FleetActionType.Collect, {
 		displayName: "Collect",
 			requirements:[{
@@ -640,7 +647,14 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
-				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},],}],
+				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
+
 	[GameType.FleetActionType.Colonize, {
 		displayName: "Colonize",
 			requirements:[
@@ -652,83 +666,81 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 1,
 				valueGetter: RequirementValueGetters.unitQuantities(GameType.UnitType.ColonyShip),},},
-			{
-			hideDataWhenRequirementFailed: true,
+			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: false,
 				valueGetter: RequirementValueGetters.isZoneAssociatedPlanetOwned(),},},
-			{
-			hideDataWhenRequirementFailed: true,
+			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: GameType.PlanetZone.Planet,
 				valueGetter: RequirementValueGetters.getTargetPlanetZone(),},},
-			{
-			hideDataWhenRequirementFailed: true,
+			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.LesserThan,
 				value: MAX_ALLOWED_PLANETS,
 				valueGetter: RequirementValueGetters.playerPlanetCount(),},},],}],
+
 	[GameType.FleetActionType.Recycle, {
 		displayName: "Recycle",
 			requirements:[
-			{
-			hideDataWhenRequirementFailed: true,
+			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: GameType.PlanetZone.DebrisField,
 				valueGetter: RequirementValueGetters.getTargetPlanetZone(),},},
-			{
-			hideDataWhenRequirementFailed: true,
+			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
 				valueGetter: RequirementValueGetters.allFleetUnitsCanTargetDebrisField(),},},
-			{
-			hideDataWhenRequirementFailed: true,
+			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
 				valueGetter: RequirementValueGetters.isZoneAssociatedPlanetOwned(),},},],}],
+				
 	[GameType.FleetActionType.Espionage, {
 		displayName: "Espionage",
 			requirements:[
-			{
-			hideDataWhenRequirementFailed: true,
+			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
 				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
-			{
-			hideDataWhenRequirementFailed: true,
+			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				specificThingType: GameType.UnitType.EspionageProbe,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 1,
 				valueGetter: RequirementValueGetters.unitQuantities(GameType.UnitType.EspionageProbe),},},
-			{
-			hideDataWhenRequirementFailed: true,
+			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
 				valueGetter: RequirementValueGetters.allFleetUnitsCanSpy(),},},
-			{
-			hideDataWhenRequirementFailed: true,
+			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
-				valueGetter: RequirementValueGetters.isTargetPlanetZoneSpyable(),},},],}],
+				valueGetter: RequirementValueGetters.isTargetPlanetZoneSpyable(),},},
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
 ]);
 //#endregion
 
