@@ -27,17 +27,6 @@ export async function verifyPassword(plainPassword: string, passwordHash: string
 	return passwordIsValid;
 }
 
-export function createUser(username: string, passwordHash: string): DBType.UserRow
-{
-	const receivedAt: number = Date.now();
-
-	const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-		"INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?) RETURNING *"
-	);
-	const userRow: DBType.UserRow = insertStatement.get(username, passwordHash, receivedAt) as DBType.UserRow;
-	return userRow;
-}
-
 export function deleteUser(userId: number): void
 {
 	const deleteStatement: Database.Statement = DB.databaseConnection.prepare(
@@ -112,6 +101,11 @@ export function deleteSession(token: string): void
 		"DELETE FROM sessions WHERE token = ?"
 	);
 	deleteStatement.run(token);
+}
+
+export function deleteSessionsForUser(userId: number): void
+{
+	DB.databaseConnection.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
 }
 
 export async function getCurrentUser(): Promise<DBType.UserRow | null>

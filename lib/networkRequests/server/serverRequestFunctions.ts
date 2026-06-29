@@ -168,7 +168,7 @@ export async function serverTryLoginRequest(request: Request): Promise<NextRespo
 
     try
     {
-        const user: DBType.UserRow | null = Auth.findUserByUsernameOrEmail(clientRequest.identifier);
+        const user: DBType.UserRow | null = Auth.findUserByUsernameOrEmail(clientRequest.identifier.trim());
         if (user === null)
         {
             errorResponse.error = "Invalid username/email or password.";
@@ -219,21 +219,23 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
 
     try
     {
-        if ((clientRequest.username.length < 3) || (clientRequest.password.length < 6))
+        const trimmedUsername: string = clientRequest.username.trim();
+        const normalizedEmail: string = Auth.normalizeEmail(clientRequest.email);
+
+        if ((trimmedUsername.length < 3) || (clientRequest.password.length < 6))
         {
             errorResponse.error = "Username must be 3+ chars, password 6+ chars.";
             return NextResponse.json(errorResponse, { status: 400 });
         }
 
-        if (Auth.isValidEmail(clientRequest.email) === false)
+        if (Auth.isValidEmail(normalizedEmail) === false)
         {
             errorResponse.error = "Please enter a valid email address.";
             return NextResponse.json(errorResponse, { status: 400 });
         }
 
-        const normalizedEmail: string = Auth.normalizeEmail(clientRequest.email);
         const userByEmail: DBType.UserRow | null = Auth.findUserByEmail(normalizedEmail);
-        const userByUsername: DBType.UserRow | null = Auth.findUserByUsername(clientRequest.username);
+        const userByUsername: DBType.UserRow | null = Auth.findUserByUsername(trimmedUsername);
 
         if (userByEmail !== null && userByEmail.email_verified === 1)
         {
@@ -253,20 +255,20 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
         let targetUserId: number;
         if (userByEmail !== null)
         {
-            Auth.updateUnverifiedUser(userByEmail.id, clientRequest.username, passwordHash);
+            Auth.updateUnverifiedUser(userByEmail.id, trimmedUsername, passwordHash);
             targetUserId = userByEmail.id;
         }
         else
         {
-            targetUserId = Auth.createUnverifiedUser(clientRequest.username, normalizedEmail, passwordHash).id;
+            targetUserId = Auth.createUnverifiedUser(trimmedUsername, normalizedEmail, passwordHash).id;
         }
 
         const verifyToken: string = Auth.createVerifyToken(targetUserId);
         const verifyUrl: string = Mailer.buildAppUrl(`/verify?token=${verifyToken}`);
-        await Mailer.sendMail(
+        await Mailer.trySendMail(
             normalizedEmail,
             "Activez votre compte Protonet",
-            `Bonjour ${clientRequest.username},\n\nCliquez sur ce lien pour activer votre compte et commencer à jouer :\n${verifyUrl}`
+            `Bonjour ${trimmedUsername},\n\nCliquez sur ce lien pour activer votre compte et commencer à jouer :\n${verifyUrl}`
         );
 
         const session: DBType.SessionRow = Auth.createSession(targetUserId);
@@ -316,14 +318,18 @@ export async function serverTryVerifyEmailRequest(request: Request): Promise<Nex
             return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.VerifyEmail>>({ error: null }, { status: 200 });
         }
 
-        try
+        const existingPlayer: DBType.PlayerRow | null = serverFindPlayerByUserId(userRow.id);
+        if (existingPlayer === null)
         {
-            createPlayer(userRow.id);
-        }
-        catch (error: unknown)
-        {
-            errorResponse.error = error instanceof Error ? error.message : String(error);
-            return NextResponse.json(errorResponse, { status: 400 });
+            try
+            {
+                createPlayer(userRow.id);
+            }
+            catch (error: unknown)
+            {
+                errorResponse.error = error instanceof Error ? error.message : String(error);
+                return NextResponse.json(errorResponse, { status: 400 });
+            }
         }
 
         Auth.setUserEmailVerified(userRow.id);
@@ -390,7 +396,7 @@ export async function serverTryRequestPasswordResetRequest(request: Request): Pr
 
     try
     {
-        const user: DBType.UserRow | null = Auth.findUserByUsernameOrEmail(clientRequest.identifier);
+        const user: DBType.UserRow | null = Auth.findUserByUsernameOrEmail(clientRequest.identifier.trim());
 
         if (user !== null && user.email !== null && user.email_verified === 1)
         {
@@ -437,6 +443,7 @@ export async function serverTryResetPasswordRequest(request: Request): Promise<N
         const passwordHash: string = await Auth.hashPassword(clientRequest.password);
         Auth.updateUserPassword(userRow.id, passwordHash);
         Auth.clearResetToken(userRow.id);
+        Auth.deleteSessionsForUser(userRow.id);
     }
     catch (error: unknown)
     {
@@ -465,13 +472,21 @@ export async function serverTryChangeEmailRequest(request: Request): Promise<Nex
             return NextResponse.json(errorResponse, { status: 401 });
         }
 
-        if (Auth.isValidEmail(clientRequest.email) === false)
+        const normalizedEmail: string = Auth.normalizeEmail(clientRequest.email);
+
+        if (Auth.isValidEmail(normalizedEmail) === false)
         {
             errorResponse.error = "Please enter a valid email address.";
             return NextResponse.json(errorResponse, { status: 400 });
         }
 
-        const normalizedEmail: string = Auth.normalizeEmail(clientRequest.email);
+        if (currentUser.email === normalizedEmail)
+        {
+            errorResponse.error = null;
+            errorResponse.userRow = { ...currentUser, password_hash: "" };
+            return NextResponse.json(errorResponse, { status: 200 });
+        }
+
         const userWithEmail: DBType.UserRow | null = Auth.findUserByEmail(normalizedEmail);
         if (userWithEmail !== null && userWithEmail.id !== currentUser.id)
         {
@@ -482,15 +497,15 @@ export async function serverTryChangeEmailRequest(request: Request): Promise<Nex
         const previousEmail: string | null = currentUser.email;
         Auth.updateUserEmail(currentUser.id, normalizedEmail);
 
-        await Mailer.sendMail(
+        await Mailer.trySendMail(
             normalizedEmail,
             "Votre adresse e-mail Protonet",
-            `Bonjour ${currentUser.username},\n\nCette adresse e-mail est désormais associée à votre compte Protonet.`
+            `Bonjour ${currentUser.username},\n\nCette adresse e-mail est désormais associée à votre compte Lawstrom.net.`
         );
 
         if (previousEmail !== null)
         {
-            await Mailer.sendMail(
+            await Mailer.trySendMail(
                 previousEmail,
                 "Votre adresse e-mail Protonet a été modifiée",
                 `Bonjour ${currentUser.username},\n\nL'adresse e-mail de votre compte a été modifiée. Si vous n'êtes pas à l'origine de ce changement, contactez-nous.`
@@ -534,6 +549,13 @@ export async function serverTryChangeUsernameRequest(request: Request): Promise<
             return NextResponse.json(errorResponse, { status: 400 });
         }
 
+        if (currentUser.username === trimmedUsername)
+        {
+            errorResponse.error = null;
+            errorResponse.userRow = { ...currentUser, password_hash: "" };
+            return NextResponse.json(errorResponse, { status: 200 });
+        }
+
         const userWithUsername: DBType.UserRow | null = Auth.findUserByUsername(trimmedUsername);
         if (userWithUsername !== null && userWithUsername.id !== currentUser.id)
         {
@@ -545,7 +567,7 @@ export async function serverTryChangeUsernameRequest(request: Request): Promise<
 
         if (currentUser.email !== null)
         {
-            await Mailer.sendMail(
+            await Mailer.trySendMail(
                 currentUser.email,
                 "Votre nom de compte Protonet a été modifié",
                 `Bonjour,\n\nLe nom de votre compte est désormais "${trimmedUsername}". Si vous n'êtes pas à l'origine de ce changement, contactez-nous.`

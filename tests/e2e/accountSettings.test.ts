@@ -47,6 +47,20 @@ function readVerifyTokenForEmail(email: string): string
     return tokenRow.token;
 }
 
+function readResetTokenForEmail(email: string): string
+{
+    const tokenRow: { token: string | null } | undefined = db.prepare(
+        "SELECT reset_token AS token FROM users WHERE email = ?"
+    ).get(email) as { token: string | null } | undefined;
+
+    if (tokenRow === undefined || tokenRow.token === null)
+    {
+        throw new Error(`No reset token for ${email}.`);
+    }
+
+    return tokenRow.token;
+}
+
 test.describe("Account settings", () =>
 {
     test("a new account must verify its email before a player exists", async ({ page }) =>
@@ -133,5 +147,108 @@ test.describe("Account settings", () =>
             const row: { probes_per_send: number } = db.prepare("SELECT probes_per_send FROM player_settings WHERE player_id = ?").get(playerId) as { probes_per_send: number };
             return row.probes_per_send;
         }).toBe(5);
+    });
+
+    test("registering with an already-taken username is rejected", async ({ page }) =>
+    {
+        const existingUsername: string = E2EHelper.uniqueUsername("DupName");
+        await E2EHelper.register(page, existingUsername, PASSWORD);
+
+        const freshEmail: string = E2EHelper.emailForUsername(E2EHelper.uniqueUsername("OtherEmail"));
+
+        await page.goto("/register");
+        await page.getByPlaceholder("Username (3+ chars)").fill(existingUsername);
+        await page.getByPlaceholder("Email").fill(freshEmail);
+        await page.getByPlaceholder("Password (6+ chars)").fill(PASSWORD);
+        await page.getByRole("button", { name: "Register" }).click();
+
+        await expect(page.getByText("Username already taken.")).toBeVisible();
+    });
+
+    test("registering with an already-used email is rejected", async ({ page }) =>
+    {
+        const existingUsername: string = E2EHelper.uniqueUsername("DupEmail");
+        await E2EHelper.register(page, existingUsername, PASSWORD);
+        const existingEmail: string = E2EHelper.emailForUsername(existingUsername);
+
+        await page.goto("/register");
+        await page.getByPlaceholder("Username (3+ chars)").fill(E2EHelper.uniqueUsername("OtherName"));
+        await page.getByPlaceholder("Email").fill(existingEmail);
+        await page.getByPlaceholder("Password (6+ chars)").fill(PASSWORD);
+        await page.getByRole("button", { name: "Register" }).click();
+
+        await expect(page.getByText("Email already in use.")).toBeVisible();
+    });
+
+    test("changing the username to one already taken is rejected", async ({ page }) =>
+    {
+        const takenUsername: string = E2EHelper.uniqueUsername("TakenName");
+        await E2EHelper.register(page, takenUsername, PASSWORD);
+        await E2EHelper.logout(page);
+
+        const changerUsername: string = E2EHelper.uniqueUsername("ChangerName");
+        await E2EHelper.register(page, changerUsername, PASSWORD);
+
+        await E2EHelper.goToView(page, "Player Settings");
+        const usernameEditor = page.locator("div").filter({ has: page.getByText("Username:", { exact: true }) }).last();
+        await usernameEditor.getByRole("textbox").fill(takenUsername);
+        await usernameEditor.getByRole("button", { name: "Save" }).click();
+
+        await expect(page.getByText("Username already taken.")).toBeVisible();
+
+        const stillChanger: { count: number } = db.prepare("SELECT COUNT(*) AS count FROM users WHERE username = ?").get(changerUsername) as { count: number };
+        expect(stillChanger.count).toBe(1);
+    });
+
+    test("changing the email to one already in use is rejected", async ({ page }) =>
+    {
+        const takenUsername: string = E2EHelper.uniqueUsername("TakenEmail");
+        await E2EHelper.register(page, takenUsername, PASSWORD);
+        const takenEmail: string = E2EHelper.emailForUsername(takenUsername);
+        await E2EHelper.logout(page);
+
+        const changerUsername: string = E2EHelper.uniqueUsername("ChangerEmail");
+        await E2EHelper.register(page, changerUsername, PASSWORD);
+
+        await E2EHelper.goToView(page, "Player Settings");
+        const emailEditor = page.locator("div").filter({ has: page.getByText("Email:", { exact: true }) }).last();
+        await emailEditor.getByRole("textbox").fill(takenEmail);
+        await emailEditor.getByRole("button", { name: "Save" }).click();
+
+        await expect(page.getByText("Email already in use.")).toBeVisible();
+
+        const changerRow: { email: string | null } | undefined = db.prepare("SELECT email FROM users WHERE username = ?").get(changerUsername) as { email: string | null } | undefined;
+        expect(changerRow?.email).toBe(E2EHelper.emailForUsername(changerUsername));
+    });
+
+    test("forgot-password resets the password and lets you log in with the new one", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("ResetPw");
+        await E2EHelper.register(page, username, PASSWORD);
+        const email: string = E2EHelper.emailForUsername(username);
+        const newPassword: string = "222222";
+
+        await page.goto("/login");
+        await page.getByPlaceholder("Username or email").fill(email);
+        await page.getByRole("button", { name: "Forgot password?" }).click();
+        await page.getByRole("button", { name: "Send reset link" }).click();
+        await expect(page.getByText(/password reset link has been sent/i)).toBeVisible();
+
+        const resetToken: string = readResetTokenForEmail(email);
+        await page.goto(`/reset-password?token=${resetToken}`);
+        await page.getByPlaceholder("New password (6+ chars)").fill(newPassword);
+        await page.getByRole("button", { name: "Reset password" }).click();
+        await expect(page.getByText("Password updated")).toBeVisible();
+
+        await page.goto("/login");
+        await page.getByPlaceholder("Username or email").fill(username);
+        await page.getByPlaceholder("Password").fill(newPassword);
+        await page.getByRole("button", { name: "Log in" }).click();
+        await expect(page.getByRole("button", { name: E2EHelper.PLANET_BUTTON_PATTERN })).toBeVisible();
+
+        // The tracked password is now stale (reset), so afterEach can't log in to clean up — delete here.
+        await E2EHelper.goToView(page, "Player Settings");
+        await page.getByRole("button", { name: "Delete account" }).click();
+        await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
     });
 });

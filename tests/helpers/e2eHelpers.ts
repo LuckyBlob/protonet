@@ -103,6 +103,7 @@ export async function register(page: Page, username: string, password: string): 
     await page.getByPlaceholder('Email').fill(email)
     await page.getByPlaceholder('Password (6+ chars)').fill(password)
     await page.getByRole('button', { name: 'Register' }).click()
+    await expect(page.getByText('Verify your account')).toBeVisible()
 
     const verifyToken: string = readLatestVerifyToken(email)
     await page.goto(`/verify?token=${verifyToken}`)
@@ -160,6 +161,7 @@ export async function registerExpectingNoRoom(page: Page, username: string, pass
     await page.getByPlaceholder('Email').fill(email)
     await page.getByPlaceholder('Password (6+ chars)').fill(password)
     await page.getByRole('button', { name: 'Register' }).click()
+    await expect(page.getByText('Verify your account')).toBeVisible()
 
     const verifyToken: string = readLatestVerifyToken(email)
     await page.goto(`/verify?token=${verifyToken}`)

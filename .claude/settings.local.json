@@ -88,7 +88,14 @@
       "PowerShell(npx tsc --noEmit -p tsconfig.json 2>&1 | Where-Object { $_ -notmatch 'validator\\\\.ts' } | Select-Object -First 25; \"EXIT-DONE\")",
       "PowerShell(pnpm test:e2e 2>&1 | Tee-Object -FilePath \"$env:TEMP\\\\protonet-e2e-out.log\")",
       "PowerShell(pnpm test:e2e 2>&1 | Tee-Object -FilePath \"$env:TEMP\\\\protonet-e2e-out2.log\")",
-      "WebFetch(domain:sidian.app)"
+      "WebFetch(domain:sidian.app)",
+      "Bash(grep -niE 'env' .gitignore)",
+      "Bash(ls -la .env*)",
+      "Bash(ls -la data/*.db)",
+      "Bash(find . -maxdepth 3 -name \"*.db\" -not -path \"*/node_modules/*\")",
+      "Bash(nslookup lawstrom.net)",
+      "Bash(curl -sS -m 15 -I https://lawstrom.net)",
+      "Bash(curl -sS -m 15 https://lawstrom.net)"
     ]
   },
   "hooks": {

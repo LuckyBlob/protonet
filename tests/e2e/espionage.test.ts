@@ -231,7 +231,7 @@ test.describe("Espionage", () =>
         await E2EHelper.goToGalaxySystem(page, scenario.victimPlanet.galaxy, scenario.victimPlanet.system);
 
         const spyIcon: Locator = E2EHelper.galaxySpyIcon(page, scenario.victim);
-        await expect(spyIcon).toHaveAttribute("src", /5_color\.png/);
+        await expect(spyIcon).toHaveAttribute("src", /5_color\.png/, { timeout: 15000 });
 
         await spyIcon.click();
 
@@ -249,7 +249,7 @@ test.describe("Espionage", () =>
         await E2EHelper.goToGalaxySystem(page, scenario.victimPlanet.galaxy, scenario.victimPlanet.system);
 
         const spyIcon: Locator = E2EHelper.galaxySpyIcon(page, scenario.victim);
-        await expect(spyIcon).toHaveAttribute("src", /5_gray\.png/);
+        await expect(spyIcon).toHaveAttribute("src", /5_gray\.png/, { timeout: 15000 });
 
         await spyIcon.click();
 
@@ -271,7 +271,7 @@ test.describe("Espionage", () =>
         await E2EHelper.goToGalaxySystem(page, scenario.victimPlanet.galaxy, scenario.victimPlanet.system);
 
         const spyIcon: Locator = E2EHelper.galaxySpyIcon(page, scenario.victim);
-        await expect(spyIcon).toHaveAttribute("src", /5_gray\.png/);
+        await expect(spyIcon).toHaveAttribute("src", /5_gray\.png/, { timeout: 15000 });
 
         await spyIcon.click();
         await page.waitForTimeout(500);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { ReactElement } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
@@ -18,6 +19,14 @@ type PlayerSettingsViewProps =
 	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 	cuController: UseCurrentUser.CUController;
 };
+
+type AccountFeedback =
+{
+	message: string;
+	isError: boolean;
+};
+
+type AccountFeedbackController = [AccountFeedback | null, (value: AccountFeedback | null) => void];
 
 //#region rendering helpers
 
@@ -53,11 +62,14 @@ function renderGameSection(props: PlayerSettingsViewProps): ReactElement
 	return element;
 }
 
-function renderAccountSection(props: PlayerSettingsViewProps, router: ReturnType<typeof useRouter>): ReactElement
+function renderAccountSection(props: PlayerSettingsViewProps, router: ReturnType<typeof useRouter>, feedbackController: AccountFeedbackController): ReactElement
 {
 	const user: DBType.UserRow | null = props.cuController[0].user;
 	const currentEmail: string = user?.email ?? "";
 	const currentUsername: string = user?.username ?? "";
+
+	const feedback: AccountFeedback | null = feedbackController[0];
+	const setFeedback: (value: AccountFeedback | null) => void = feedbackController[1];
 
 	const applyUpdatedUser = (updatedUser: DBType.UserRow | null): void =>
 	{
@@ -80,10 +92,11 @@ function renderAccountSection(props: PlayerSettingsViewProps, router: ReturnType
 		{
 			const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ChangeEmail> = await ClientRequestFunctions.clientTryChangeEmailRequest(value);
 			applyUpdatedUser(response.userRow);
+			setFeedback({ message: "Email updated.", isError: false });
 		}
 		catch (error: unknown)
 		{
-			console.error("⚠️:", error);
+			setFeedback({ message: error instanceof Error ? error.message : "Could not change email.", isError: true });
 		}
 	};
 
@@ -93,12 +106,17 @@ function renderAccountSection(props: PlayerSettingsViewProps, router: ReturnType
 		{
 			const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ChangeUsername> = await ClientRequestFunctions.clientTryChangeUsernameRequest(value);
 			applyUpdatedUser(response.userRow);
+			setFeedback({ message: "Username updated.", isError: false });
 		}
 		catch (error: unknown)
 		{
-			console.error("⚠️:", error);
+			setFeedback({ message: error instanceof Error ? error.message : "Could not change username.", isError: true });
 		}
 	};
+
+	const feedbackElement: ReactElement | null = feedback === null
+		? null
+		: <div className={`text-sm ${feedback.isError === true ? "text-red-500" : "text-green-500"}`}>{feedback.message}</div>;
 
 	const element: ReactElement =
 	(
@@ -122,6 +140,7 @@ function renderAccountSection(props: PlayerSettingsViewProps, router: ReturnType
 				inputType="text"
 				onSave={handleSaveUsername}
 			/>
+			{feedbackElement}
 			{renderDeleteAccountButton(router)}
 		</section>
 	);
@@ -163,6 +182,7 @@ function renderDeleteAccountButton(router: ReturnType<typeof useRouter>): ReactE
 export function PlayerSettingsView(props: PlayerSettingsViewProps): ReactElement
 {
 	const router: ReturnType<typeof useRouter> = useRouter();
+	const feedbackController: AccountFeedbackController = useState<AccountFeedback | null>(null);
 
 	try
 	{
@@ -170,7 +190,7 @@ export function PlayerSettingsView(props: PlayerSettingsViewProps): ReactElement
 		(
 			<div className="flex flex-col items-center gap-8 pt-4">
 				{renderGameSection(props)}
-				{renderAccountSection(props, router)}
+				{renderAccountSection(props, router, feedbackController)}
 			</div>
 		);
 
