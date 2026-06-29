@@ -74,7 +74,13 @@ describe('Espionage fleet requirements', () =>
     function buildSpyingPlayer(): CoreType.PlayerData
     {
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { id: 1 } });
-        return TestDataBuilders.buildPlayerData({ playerRow: { id: 1 }, planetDatas: [planet] });
+        const player: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: 1 }, planetDatas: [planet] });
+        player.publicPlayerRows =
+        [
+            TestDataBuilders.buildPublicPlayerRow({ id: 1, score: 0 }),
+            TestDataBuilders.buildPublicPlayerRow({ id: targetOwnerId, score: 1_000_000 }),
+        ];
+        return player;
     }
 
     const probeFleet: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, 1]]);

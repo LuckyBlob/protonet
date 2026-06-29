@@ -13,6 +13,8 @@ import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 export const PLANET_BUTTON_PATTERN: RegExp = /^Planet /;
 
+export const TARGETABLE_INVESTED_VALUE: number = 1_000_000_000;
+
 //#region shared DB connection + types
 
 export type PlanetRow =

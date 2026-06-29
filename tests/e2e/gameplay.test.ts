@@ -814,6 +814,7 @@ test.describe("Fleets", () =>
 
         const attackerPlayerId: number = E2EHelper.getPlayerId(attacker, db);
         const victimPlayerId: number = E2EHelper.getPlayerId(victim, db);
+        E2EHelper.setPlayerInvestedValue(victimPlayerId, E2EHelper.TARGETABLE_INVESTED_VALUE, db);
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
@@ -961,6 +962,7 @@ test.describe("Fleets", () =>
 
         const attackerPlayerId: number = E2EHelper.getPlayerId(attacker, db);
         const victimPlayerId: number = E2EHelper.getPlayerId(victim, db);
+        E2EHelper.setPlayerInvestedValue(victimPlayerId, E2EHelper.TARGETABLE_INVESTED_VALUE, db);
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
@@ -1038,6 +1040,7 @@ test.describe("Fleets", () =>
 
         const attackerPlayerId: number = E2EHelper.getPlayerId(attacker, db);
         const victimPlayerId: number = E2EHelper.getPlayerId(victim, db);
+        E2EHelper.setPlayerInvestedValue(victimPlayerId, E2EHelper.TARGETABLE_INVESTED_VALUE, db);
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(victim, db);
         const victimTarget: E2EHelper.PlanetRow = victimPlanets[0];
@@ -1102,6 +1105,7 @@ test.describe("Fleets", () =>
 
         const attackerPlayerId: number = E2EHelper.getPlayerId(attacker, db);
         const victimPlayerId: number = E2EHelper.getPlayerId(victim, db);
+        E2EHelper.setPlayerInvestedValue(victimPlayerId, E2EHelper.TARGETABLE_INVESTED_VALUE, db);
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(victim, db);
         const victimTarget: E2EHelper.PlanetRow = victimPlanets[0];
@@ -1214,6 +1218,7 @@ test.describe("Fleets", () =>
 
         const attackerPlayerId: number = E2EHelper.getPlayerId(attacker, db);
         const victimPlayerId: number = E2EHelper.getPlayerId(victim, db);
+        E2EHelper.setPlayerInvestedValue(victimPlayerId, E2EHelper.TARGETABLE_INVESTED_VALUE, db);
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
@@ -1275,6 +1280,7 @@ test.describe("Fleets", () =>
 
         const attackerPlayerId: number = E2EHelper.getPlayerId(attacker, db);
         const victimPlayerId: number = E2EHelper.getPlayerId(victim, db);
+        E2EHelper.setPlayerInvestedValue(victimPlayerId, E2EHelper.TARGETABLE_INVESTED_VALUE, db);
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(victim, db);
         const victimPlanet1: E2EHelper.PlanetRow = victimPlanets[0];
@@ -1347,6 +1353,7 @@ test.describe("Fleets", () =>
 
         const attackerPlayerId: number = E2EHelper.getPlayerId(attacker, db);
         const victimPlayerId: number = E2EHelper.getPlayerId(victim, db);
+        E2EHelper.setPlayerInvestedValue(victimPlayerId, E2EHelper.TARGETABLE_INVESTED_VALUE, db);
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
@@ -1452,6 +1459,7 @@ test.describe("Colonize", () =>
         const colonizerPlayerId: number = E2EHelper.getPlayerId(colonizer, db);
         const colonizerOrigin: E2EHelper.PlanetRow = E2EHelper.getPlanets(colonizer, db)[0];
         const otherPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(other, db)[0];
+        E2EHelper.setPlayerInvestedValue(E2EHelper.getPlayerId(other, db), E2EHelper.TARGETABLE_INVESTED_VALUE, db);
 
         E2EHelper.setBuildingLevel(colonizerOrigin.id, colonizerPlayerId, GameType.BuildingType.Shipyard, 4, db);
         E2EHelper.setUnitQuantity(colonizerOrigin.id, colonizerPlayerId, GameType.UnitType.ColonyShip, 1, db);
@@ -1582,6 +1590,7 @@ test.describe("Bug probes", () =>
         const attackerPlayerId: number = E2EHelper.getPlayerId(attacker, db);
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
+        E2EHelper.setPlayerInvestedValue(E2EHelper.getPlayerId(victim, db), E2EHelper.TARGETABLE_INVESTED_VALUE, db);
 
         E2EHelper.setUnitQuantity(attackerPlanet.id, attackerPlayerId, GameType.UnitType.SmallTransport, 4, db);
         E2EHelper.setAllResources(attackerPlanet.id, attackerPlayerId, PLENTY, db);
@@ -1617,6 +1626,7 @@ test.describe("Bug probes", () =>
 
         const attackerPlayerId: number = E2EHelper.getPlayerId(attacker, db);
         const victimPlayerId: number = E2EHelper.getPlayerId(victim, db);
+        E2EHelper.setPlayerInvestedValue(victimPlayerId, E2EHelper.TARGETABLE_INVESTED_VALUE, db);
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 
@@ -1658,6 +1668,7 @@ test.describe("Bug probes", () =>
 
         const attackerPlayerId: number = E2EHelper.getPlayerId(attacker, db);
         const victimPlayerId: number = E2EHelper.getPlayerId(victim, db);
+        E2EHelper.setPlayerInvestedValue(victimPlayerId, E2EHelper.TARGETABLE_INVESTED_VALUE, db);
         const attackerPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(attacker, db)[0];
         const victimPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(victim, db)[0];
 

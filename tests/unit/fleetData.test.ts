@@ -168,6 +168,11 @@ describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
     // expressed as requirements on FLEET_ACTION_INFOS and evaluated through the requirement system.
     const PLANET_ID: number = 1;
     const originPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+    originPlayer.publicPlayerRows =
+    [
+        TestDataBuilders.buildPublicPlayerRow({ id: originPlayer.playerRow.id, score: 0 }),
+        TestDataBuilders.buildPublicPlayerRow({ id: 42, score: 1_000_000 }),
+    ];
     const dummyTargetAddress: GameType.PlanetAddress = { galaxy: 1, system: 1, slot: 1, zone: GameType.PlanetZone.Planet };
     const noResources: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 

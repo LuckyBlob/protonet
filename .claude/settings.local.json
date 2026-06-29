@@ -85,7 +85,9 @@
       "PowerShell(npx tsc --noEmit -p tsconfig.json 2>&1 | Where-Object { $_ -notmatch 'validator\\\\.ts' } | Select-Object -First 30; \"EXIT-DONE\")",
       "PowerShell(npx tsc --noEmit -p tsconfig.json 2>&1 | Where-Object { $_ -notmatch 'validator\\\\.ts' } | Select-Object -First 20; \"EXIT-DONE\")",
       "PowerShell(npx tsc --noEmit -p tsconfig.json 2>&1 | Where-Object { $_ -notmatch 'validator\\\\.ts' } | Select-Object -First 15; \"EXIT-DONE\")",
-      "PowerShell(npx tsc --noEmit -p tsconfig.json 2>&1 | Where-Object { $_ -notmatch 'validator\\\\.ts' } | Select-Object -First 25; \"EXIT-DONE\")"
+      "PowerShell(npx tsc --noEmit -p tsconfig.json 2>&1 | Where-Object { $_ -notmatch 'validator\\\\.ts' } | Select-Object -First 25; \"EXIT-DONE\")",
+      "PowerShell(pnpm test:e2e 2>&1 | Tee-Object -FilePath \"$env:TEMP\\\\protonet-e2e-out.log\")",
+      "PowerShell(pnpm test:e2e 2>&1 | Tee-Object -FilePath \"$env:TEMP\\\\protonet-e2e-out2.log\")"
     ]
   },
   "hooks": {

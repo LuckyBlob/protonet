@@ -87,6 +87,7 @@ async function setupSpyScenario(page: Page, probeCount: number, attackerEspionag
     E2EHelper.setResource(victimPlanet.id, victimPlayerId, GameType.ResourceType.Metal, 4321, db);
     E2EHelper.setUnitQuantity(victimPlanet.id, victimPlayerId, GameType.UnitType.SmallTransport, victimFleetSize, db);
     E2EHelper.setBuildingLevel(victimPlanet.id, victimPlayerId, GameType.BuildingType.MetalMine, 5, db);
+    E2EHelper.setPlayerInvestedValue(victimPlayerId, E2EHelper.TARGETABLE_INVESTED_VALUE, db);
     E2EHelper.touchPlanet(victimPlanet.id, Date.now(), db);
 
     return { attacker, victim, attackerPlayerId, victimPlayerId, attackerPlanet, victimPlanet };
