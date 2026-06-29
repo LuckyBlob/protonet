@@ -206,6 +206,20 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.ResearchLab, { displayName: "Research Lab",
 		buildableZones: [GameType.PlanetZone.Planet],
+		upgradeRequirements:[{
+			hideDataWhenRequirementFailed: false,
+			thingRequirement: {
+				thingType: ThingType.Thing.ResearchingResearch,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: false,
+				valueGetter: RequirementValueGetters.isAnyResearchInProgress(),},},],
+		deconstructRequirements:[{
+			hideDataWhenRequirementFailed: false,
+			thingRequirement: {
+				thingType: ThingType.Thing.ResearchingResearch,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: false,
+				valueGetter: RequirementValueGetters.isAnyResearchInProgress(),},},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -372,7 +386,14 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 				specificThingType: GameType.BuildingType.Shipyard,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 2,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.CombustionDrive,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 2,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.CombustionDrive),},},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 2000],
 			[GameType.ResourceType.Crystal, 2000],]),
@@ -397,7 +418,14 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 				specificThingType: GameType.BuildingType.Shipyard,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 6,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.CombustionDrive,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 6,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.CombustionDrive),},},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 6000],
 			[GameType.ResourceType.Crystal, 6000],]),
@@ -420,7 +448,14 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 				specificThingType: GameType.BuildingType.Shipyard,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 4,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.ImpulseDrive,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 3,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ImpulseDrive),},},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 10000],
 			[GameType.ResourceType.Crystal, 20000],
@@ -442,7 +477,14 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 				specificThingType: GameType.BuildingType.Shipyard,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 4,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.CombustionDrive,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 6,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.CombustionDrive),},},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 10000],
 			[GameType.ResourceType.Crystal, 6000],
@@ -476,7 +518,14 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 				specificThingType: GameType.ResearchType.EspionageTech,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 1,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EspionageTech),},},],
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EspionageTech),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.CombustionDrive,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 3,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.CombustionDrive),},},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Crystal, 1000],]),
 		maxHealth: 1000,
@@ -654,6 +703,22 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
 				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
+
+	[GameType.FleetActionType.Transport, {
+		displayName: "Transport",
+			requirements:[{
+			hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.GreaterThan,
+				value: 0,
+				valueGetter: RequirementValueGetters.transportedResourceTotal(),},},],}],
 
 	[GameType.FleetActionType.Colonize, {
 		displayName: "Colonize",
@@ -902,6 +967,18 @@ export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requireme
 			operator: RequirementType.RequirementOperator.Equal,
 			value: false,
 			valueGetter: RequirementValueGetters.isAnyResearchInProgress(),}},
+		{hideDataWhenRequirementFailed: false,
+		thingRequirement: {
+			thingType: ThingType.Thing.BuildingUpgrade,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,
+			valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.ResearchLab),}},
+		{hideDataWhenRequirementFailed: false,
+		thingRequirement: {
+			thingType: ThingType.Thing.BuildingDeconstruction,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,
+			valueGetter: RequirementValueGetters.isSpecificBuildingBeingDeconstructed(GameType.BuildingType.ResearchLab),}},
 		{hideDataWhenRequirementFailed: false,
 		specificThingRequirement: {
 			thingType: ThingType.Thing.Building,

@@ -435,6 +435,7 @@ test.describe("Units", () =>
             E2EHelper.setAllResources(planet.id, playerId, PLENTY, db);
             E2EHelper.touchPlanet(planet.id, Date.now(), db);
         }
+        E2EHelper.setResearchLevel(playerId, GameType.ResearchType.CombustionDrive, 2, db);
 
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Shipyard");
@@ -1165,6 +1166,52 @@ test.describe("Fleets", () =>
         // survive the planet abandon — they are only cascaded by user/player deletion.
         expect(E2EHelper.getMessageCount(attackerPlayerId, db)).toBe(1);
         expect(E2EHelper.getMessageCount(victimPlayerId, db)).toBe(1);
+    });
+
+    test("transport delivers resources to the target and brings the empty fleet home", async ({ page }) =>
+    {
+        const username: string = E2EHelper.uniqueUsername("Trn");
+        await E2EHelper.register(page, username, PASSWORD);
+
+        const playerId: number = E2EHelper.getPlayerId(username, db);
+        const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
+        const origin: E2EHelper.PlanetRow = planets[0];
+        const target: E2EHelper.PlanetRow = planets[1];
+
+        E2EHelper.setUnitQuantity(origin.id, playerId, GameType.UnitType.SmallTransport, 3, db);
+        E2EHelper.setAllResources(origin.id, playerId, PLENTY, db);
+        E2EHelper.setResource(target.id, playerId, GameType.ResourceType.Metal, 0, db);
+        E2EHelper.touchPlanet(origin.id, Date.now(), db);
+        E2EHelper.touchPlanet(target.id, Date.now(), db);
+
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
+        await E2EHelper.goToView(page, "Fleets");
+        await E2EHelper.sendTransportFleet(page, target, [{ unitName: "Small Transport", quantity: 3 }], [{ resourceName: "Metal", quantity: 1000 }]);
+        await expect(E2EHelper.fleetMovementRow(page, origin, target)).toBeVisible();
+
+        const fleet: E2EHelper.FleetRow = E2EHelper.getFleetByOrigin(origin.id, db);
+
+        // Resolve the outbound leg: the 1000 metal lands on the target, an empty return trip is in flight.
+        E2EHelper.forceComplete("fleet_movement", fleet.id, db, 1);
+        await E2EHelper.reloadGame(page);
+        const targetMetal: number = E2EHelper.getResourceQuantity(target.id, GameType.ResourceType.Metal, db);
+        expect(targetMetal).toBeGreaterThanOrEqual(1000);
+        expect(targetMetal).toBeLessThan(1000 + 5000);
+        // Self-transport: one origin report, no target report (same player), so a single message.
+        expect(E2EHelper.getMessageCount(playerId, db)).toBe(1);
+
+        // Resolve the return leg: the units come back to the origin, no resources follow them.
+        const returnFleet: E2EHelper.FleetRow = E2EHelper.getFleetByOrigin(origin.id, db);
+        E2EHelper.forceComplete("fleet_movement", returnFleet.id, db, 1);
+        await E2EHelper.reloadGame(page);
+        await E2EHelper.selectPlanetByAddress(page, E2EHelper.planetAddress(origin));
+        await E2EHelper.goToView(page, "Fleets");
+        await expect(page.getByText("No fleet movements.")).toBeVisible();
+
+        expect(E2EHelper.getUnitQuantityDb(origin.id, GameType.UnitType.SmallTransport, db)).toBe(3);
+        // The delivered metal stayed on the target — the return leg did not haul it back.
+        expect(E2EHelper.getResourceQuantity(target.id, GameType.ResourceType.Metal, db)).toBeGreaterThanOrEqual(1000);
     });
 
     test("deleting the origin account makes all of its fleets vanish", async ({ page }) =>

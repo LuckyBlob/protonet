@@ -80,11 +80,11 @@ export async function deleteAccount(page: Page): Promise<void>
     await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible()
 }
 
-// Abandon the currently selected planet. The Abandon button also moved onto the Account view; callers
+// Abandon the currently selected planet. The Abandon button lives on the Current Planet view; callers
 // assert the resulting state themselves (top-bar selection change, or the button disabling at 1 planet).
 export async function abandonSelectedPlanet(page: Page): Promise<void>
 {
-    await goToView(page, "Account")
+    await goToView(page, "Current Planet")
     await page.getByRole('button', { name: 'Abandon planet' }).click()
 }
 
@@ -709,13 +709,16 @@ export function fleetResourceQuantityInput(page: Page, resourceName: string): Lo
         .locator("input[type=\"number\"]");
 }
 
-// Drives the multi-unit + multi-resource colonize flow through the UI: fills each unit row,
-// the target address, each resource row, picks "Colonize" from the action dropdown and sends.
-export async function sendColonizeFleet(
+// Drives the multi-unit + multi-resource fleet flow through the UI: fills each unit row, the target
+// address, each resource row, picks the action from the dropdown and sends. Resources are filled before
+// the action is selected because some actions (e.g. Transport) only become a valid dropdown option once
+// cargo is loaded.
+async function fillAndSendFleet(
     page: Page,
     target: PlanetRow,
     units: { unitName: string, quantity: number }[],
-    resources: { resourceName: string, quantity: number }[] = [],
+    resources: { resourceName: string, quantity: number }[],
+    actionLabel: "Station" | "Collect" | "Colonize" | "Espionage" | "Transport",
 ): Promise<void>
 {
     for (const unit of units)
@@ -732,8 +735,28 @@ export async function sendColonizeFleet(
         await fleetResourceQuantityInput(page, resource.resourceName).fill(String(resource.quantity));
     }
 
-    await fleetActionSelect(page).selectOption({ label: "Colonize" });
+    await fleetActionSelect(page).selectOption({ label: actionLabel });
     await page.getByRole("button", { name: "Send fleet" }).click();
+}
+
+export async function sendColonizeFleet(
+    page: Page,
+    target: PlanetRow,
+    units: { unitName: string, quantity: number }[],
+    resources: { resourceName: string, quantity: number }[] = [],
+): Promise<void>
+{
+    await fillAndSendFleet(page, target, units, resources, "Colonize");
+}
+
+export async function sendTransportFleet(
+    page: Page,
+    target: PlanetRow,
+    units: { unitName: string, quantity: number }[],
+    resources: { resourceName: string, quantity: number }[],
+): Promise<void>
+{
+    await fillAndSendFleet(page, target, units, resources, "Transport");
 }
 
 // The fleet row renders origin/arrow/target as separate spans with a zone-marker icon after each

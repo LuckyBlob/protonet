@@ -78,6 +78,7 @@ test.describe("Player score calculation", () =>
         const origin: E2EHelper.PlanetRow = E2EHelper.getPlanets(username, db)[0];
 
         E2EHelper.setBuildingLevel(origin.id, playerId, GameType.BuildingType.Shipyard, 4, db);
+        E2EHelper.setResearchLevel(playerId, GameType.ResearchType.CombustionDrive, 2, db);
         E2EHelper.setAllResources(origin.id, playerId, PLENTY, db);
         E2EHelper.touchPlanet(origin.id, Date.now(), db);
 

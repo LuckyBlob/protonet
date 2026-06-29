@@ -25,6 +25,7 @@ function buildPlayer(planetOverrides: Partial<CoreType.DynamicPlanetData>, resea
 }
 
 const IMPULSE_1: Map<GameType.ResearchType, number> = new Map([[GameType.ResearchType.ImpulseDrive, 1]]);
+const COMBUSTION_2: Map<GameType.ResearchType, number> = new Map([[GameType.ResearchType.CombustionDrive, 2]]);
 
 describe('getFailedUnitBuildRequirements — Interceptor Missile (needs Missile Silo >= 2)', () =>
 {
@@ -139,7 +140,7 @@ describe('build-while-building concurrency rules', () =>
         const playerData: CoreType.PlayerData = buildPlayer({
             buildingLevels: new Map([[GameType.BuildingType.Shipyard, 2]]),
             buildingUpgrades: [buildingUpgradeInProgress(GameType.BuildingType.MissileSilo)],
-        });
+        }, COMBUSTION_2);
         const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, PLANET_ID);
         expect(failed).toHaveLength(0);
     });

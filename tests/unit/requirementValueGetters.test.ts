@@ -187,6 +187,92 @@ describe('isSpecificBuildingBeingUpgraded', () =>
     });
 });
 
+describe('isSpecificBuildingBeingDeconstructed', () =>
+{
+    it('returns 1 when the specified building is being deconstructed', () =>
+    {
+        const researchLabRow = TestDataBuilders.buildBuildingDeconstructionBuildingRow({ id: 7, building_type: GameType.BuildingType.ResearchLab });
+        const deconstruction: CoreType.BuildingDeconstruction =
+        {
+            buildingDeconstructionRow: TestDataBuilders.buildBuildingDeconstructionRow({ current_building_deconstruction_building_row_id: 7 }),
+            buildingDeconstructionBuildingRows: [researchLabRow],
+            buildingDeconstructionResourceRows: [],
+        };
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData: { buildingDeconstructions: [deconstruction] },
+        });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.isSpecificBuildingBeingDeconstructed(GameType.BuildingType.ResearchLab);
+        expect(getter({ playerData: playerData, planetId: 1 })).toBe(1);
+    });
+
+    it('returns 0 when a different building is being deconstructed', () =>
+    {
+        const metalMineRow = TestDataBuilders.buildBuildingDeconstructionBuildingRow({ id: 7, building_type: GameType.BuildingType.MetalMine });
+        const deconstruction: CoreType.BuildingDeconstruction =
+        {
+            buildingDeconstructionRow: TestDataBuilders.buildBuildingDeconstructionRow({ current_building_deconstruction_building_row_id: 7 }),
+            buildingDeconstructionBuildingRows: [metalMineRow],
+            buildingDeconstructionResourceRows: [],
+        };
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData: { buildingDeconstructions: [deconstruction] },
+        });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.isSpecificBuildingBeingDeconstructed(GameType.BuildingType.ResearchLab);
+        expect(getter({ playerData: playerData, planetId: 1 })).toBe(0);
+    });
+
+    it('returns 0 when no deconstruction is in progress at all', () =>
+    {
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.isSpecificBuildingBeingDeconstructed(GameType.BuildingType.ResearchLab);
+        expect(getter({ playerData: playerData, planetId: 1 })).toBe(0);
+    });
+});
+
+describe('transportedResourceTotal', () =>
+{
+    it('sums the transported resource quantities from the context', () =>
+    {
+        const context: RequirementType.RequirementContext =
+        {
+            playerData: TestDataBuilders.buildPlayerData(),
+            planetId: 1,
+            transportedResourceQuantities: new Map<GameType.ResourceType, number>([
+                [GameType.ResourceType.Metal, 750],
+                [GameType.ResourceType.Crystal, 250],
+            ]),
+        };
+
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.transportedResourceTotal();
+        expect(getter(context)).toBe(1000);
+    });
+
+    it('returns 0 when no resources are carried', () =>
+    {
+        const context: RequirementType.RequirementContext =
+        {
+            playerData: TestDataBuilders.buildPlayerData(),
+            planetId: 1,
+            transportedResourceQuantities: new Map<GameType.ResourceType, number>(),
+        };
+
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.transportedResourceTotal();
+        expect(getter(context)).toBe(0);
+    });
+
+    it('throws when transported resource quantities were not threaded in', () =>
+    {
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.transportedResourceTotal();
+        expect(() => getter({ playerData: TestDataBuilders.buildPlayerData(), planetId: 1 })).toThrow();
+    });
+});
+
 describe('unitQuantities', () =>
 {
     it('returns the requested unit quantity from the context', () =>

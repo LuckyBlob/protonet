@@ -184,10 +184,33 @@ describe('getFailedUnitBuildRequirements', () =>
                 buildingLevels: new Map([[GameType.BuildingType.Shipyard, 2]]),
             },
         });
-        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
+        {
+            planetDatas: [planet],
+            dynamicPlayerData: TestDataBuilders.buildDynamicPlayerData(
+            {
+                researchLevels: new Map([[GameType.ResearchType.CombustionDrive, 2]]),
+            }),
+        });
 
         const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
         expect(failed).toHaveLength(0);
+    });
+
+    it('blocks Small Transport when Combustion Drive is below 2 even with the Shipyard met', () =>
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map([[GameType.BuildingType.Shipyard, 2]]),
+            },
+        });
+        // Shipyard requirement met, but no Combustion Drive researched yet.
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
+        expect(failed.length).toBeGreaterThan(0);
     });
 
     it('blocks Small Transport when Shipyard is currently being upgraded', () =>
@@ -230,7 +253,14 @@ describe('getFailedUnitBuildRequirements', () =>
                 buildingUpgrades: [ongoingUpgrade],
             },
         });
-        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
+        {
+            planetDatas: [planet],
+            dynamicPlayerData: TestDataBuilders.buildDynamicPlayerData(
+            {
+                researchLevels: new Map([[GameType.ResearchType.CombustionDrive, 2]]),
+            }),
+        });
 
         const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
         expect(failed).toHaveLength(0);
@@ -260,7 +290,14 @@ describe('getFailedUnitBuildRequirements', () =>
                 buildingLevels: new Map([[GameType.BuildingType.Shipyard, 6]]),
             },
         });
-        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
+        {
+            planetDatas: [planet],
+            dynamicPlayerData: TestDataBuilders.buildDynamicPlayerData(
+            {
+                researchLevels: new Map([[GameType.ResearchType.CombustionDrive, 6]]),
+            }),
+        });
 
         const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.LargeTransport, 1);
         expect(failed).toHaveLength(0);
@@ -290,9 +327,93 @@ describe('getFailedUnitBuildRequirements', () =>
                 buildingLevels: new Map([[GameType.BuildingType.Shipyard, 4]]),
             },
         });
-        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData(
+        {
+            planetDatas: [planet],
+            dynamicPlayerData: TestDataBuilders.buildDynamicPlayerData(
+            {
+                researchLevels: new Map([[GameType.ResearchType.ImpulseDrive, 3]]),
+            }),
+        });
 
         const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.ColonyShip, 1);
+        expect(failed).toHaveLength(0);
+    });
+});
+
+describe('unit engine-drive build requirements (OGame prerequisites)', () =>
+{
+    const NO_RESEARCH: Map<GameType.ResearchType, number> = new Map<GameType.ResearchType, number>();
+
+    function buildPlayer(shipyardLevel: number, researchLevels: Map<GameType.ResearchType, number>): CoreType.PlayerData
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map<GameType.BuildingType, number>([[GameType.BuildingType.Shipyard, shipyardLevel]]),
+            },
+        });
+        return TestDataBuilders.buildPlayerData(
+        {
+            planetDatas: [planet],
+            dynamicPlayerData: TestDataBuilders.buildDynamicPlayerData({ researchLevels: researchLevels }),
+        });
+    }
+
+    it('blocks Large Transport without Combustion Drive 6 even with the Shipyard met', () =>
+    {
+        const playerData: CoreType.PlayerData = buildPlayer(6, NO_RESEARCH);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.LargeTransport, 1);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('allows Large Transport once Combustion Drive 6 is researched', () =>
+    {
+        const playerData: CoreType.PlayerData = buildPlayer(6, new Map<GameType.ResearchType, number>([[GameType.ResearchType.CombustionDrive, 6]]));
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.LargeTransport, 1);
+        expect(failed).toHaveLength(0);
+    });
+
+    it('blocks Colony Ship without Impulse Drive 3 even with the Shipyard met', () =>
+    {
+        const playerData: CoreType.PlayerData = buildPlayer(4, NO_RESEARCH);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.ColonyShip, 1);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('allows Colony Ship once Impulse Drive 3 is researched', () =>
+    {
+        const playerData: CoreType.PlayerData = buildPlayer(4, new Map<GameType.ResearchType, number>([[GameType.ResearchType.ImpulseDrive, 3]]));
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.ColonyShip, 1);
+        expect(failed).toHaveLength(0);
+    });
+
+    it('blocks Recycler without Combustion Drive 6 even with the Shipyard met', () =>
+    {
+        const playerData: CoreType.PlayerData = buildPlayer(4, NO_RESEARCH);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.Recycler, 1);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('allows Recycler once Combustion Drive 6 is researched', () =>
+    {
+        const playerData: CoreType.PlayerData = buildPlayer(4, new Map<GameType.ResearchType, number>([[GameType.ResearchType.CombustionDrive, 6]]));
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.Recycler, 1);
+        expect(failed).toHaveLength(0);
+    });
+
+    it('blocks Espionage Probe without Combustion Drive 3 even with the Shipyard and Espionage Tech met', () =>
+    {
+        const playerData: CoreType.PlayerData = buildPlayer(3, new Map<GameType.ResearchType, number>([[GameType.ResearchType.EspionageTech, 1]]));
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.EspionageProbe, 1);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('allows Espionage Probe once Combustion Drive 3 (with Espionage Tech 1) is researched', () =>
+    {
+        const playerData: CoreType.PlayerData = buildPlayer(3, new Map<GameType.ResearchType, number>([[GameType.ResearchType.EspionageTech, 1], [GameType.ResearchType.CombustionDrive, 3]]));
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.EspionageProbe, 1);
         expect(failed).toHaveLength(0);
     });
 });
@@ -384,6 +505,103 @@ describe('getFailedResearchRequirements', () =>
 
         const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.ImpulseDrive, 1);
         expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('blocks research while the Research Lab is being upgraded on the research planet', () =>
+    {
+        const researchLabUpgradeRow = TestDataBuilders.buildBuildingUpgradeBuildingRow({ id: 1, building_type: GameType.BuildingType.ResearchLab });
+        const ongoingUpgrade: CoreType.BuildingUpgrade =
+        {
+            buildingUpgradeRow: TestDataBuilders.buildBuildingUpgradeRow({ current_building_upgrade_building_row_id: 1 }),
+            buildingUpgradeBuildingRows: [researchLabUpgradeRow],
+            buildingUpgradeResourceRows: [],
+        };
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map([[GameType.BuildingType.ResearchLab, 1]]),
+                buildingUpgrades: [ongoingUpgrade],
+            },
+        });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.EnergyTech, planet.planetRow.id);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('blocks research while the Research Lab is being deconstructed on the research planet', () =>
+    {
+        const researchLabDeconstructRow = TestDataBuilders.buildBuildingDeconstructionBuildingRow({ id: 1, building_type: GameType.BuildingType.ResearchLab });
+        const ongoingDeconstruction: CoreType.BuildingDeconstruction =
+        {
+            buildingDeconstructionRow: TestDataBuilders.buildBuildingDeconstructionRow({ current_building_deconstruction_building_row_id: 1 }),
+            buildingDeconstructionBuildingRows: [researchLabDeconstructRow],
+            buildingDeconstructionResourceRows: [],
+        };
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map([[GameType.BuildingType.ResearchLab, 1]]),
+                buildingDeconstructions: [ongoingDeconstruction],
+            },
+        });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.EnergyTech, planet.planetRow.id);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+});
+
+describe('Research Lab build gate while researching', () =>
+{
+    function buildResearchingPlayerData(): CoreType.PlayerData
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map([[GameType.BuildingType.ResearchLab, 1]]),
+            },
+        });
+        const inProgress: CoreType.CurrentlyResearching = TestDataBuilders.buildCurrentlyResearching();
+        return TestDataBuilders.buildPlayerData(
+        {
+            planetDatas: [planet],
+            dynamicPlayerData: TestDataBuilders.buildDynamicPlayerData({ currentlyResearchings: [inProgress] }),
+        });
+    }
+
+    it('blocks upgrading the Research Lab while a research is in progress', () =>
+    {
+        const playerData: CoreType.PlayerData = buildResearchingPlayerData();
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.ResearchLab, playerData.planetDatas[0].planetRow.id);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('blocks deconstructing the Research Lab while a research is in progress', () =>
+    {
+        const playerData: CoreType.PlayerData = buildResearchingPlayerData();
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingDeconstructionRequirements(playerData, GameType.BuildingType.ResearchLab, playerData.planetDatas[0].planetRow.id);
+        expect(failed.length).toBeGreaterThan(0);
+    });
+
+    it('allows upgrading the Research Lab when no research is in progress', () =>
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map([[GameType.BuildingType.ResearchLab, 1]]),
+            },
+        });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.ResearchLab, planet.planetRow.id);
+        expect(failed).toHaveLength(0);
     });
 });
 

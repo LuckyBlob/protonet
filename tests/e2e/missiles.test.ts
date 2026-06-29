@@ -58,6 +58,7 @@ async function seedMissilePlayer(page: Page, username: string, missileSiloLevel:
         E2EHelper.touchPlanet(planet.id, Date.now(), db);
     }
     E2EHelper.setResearchLevel(playerId, GameType.ResearchType.ImpulseDrive, 1, db);
+    E2EHelper.setResearchLevel(playerId, GameType.ResearchType.CombustionDrive, 2, db);
 
     const selectedAddress: string = await E2EHelper.selectedPlanetAddress(page);
     const selectedPlanet: E2EHelper.PlanetRow = planets.find((planet: E2EHelper.PlanetRow): boolean => E2EHelper.planetAddress(planet) === selectedAddress)!;

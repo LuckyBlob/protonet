@@ -226,6 +226,7 @@ export const FleetActionType =
     Colonize: 3,
     Recycle: 4,
     Espionage: 5,
+    Transport: 6,
 } as const;
 export type FleetActionType = typeof FleetActionType[keyof typeof FleetActionType];
 export type FleetActionInfo =

@@ -11,6 +11,7 @@ import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
+import * as AbandonPlanetButton from "@/components/helpers/abandonPlanetButton";
 
 type CurrentPlanetViewProps =
 {
@@ -87,6 +88,7 @@ function renderBody(props: CurrentPlanetViewProps, planetData: CoreType.PlanetDa
         <div className="w-full flex flex-col items-center pt-4 gap-4">
             {renderNameEditor(props, planetData, nameInput, setNameInput)}
             {renderPlanetStats(planetData, playerData)}
+            <AbandonPlanetButton.AbandonPlanetButton clientDataStateResult={props.clientDataStateResult} />
         </div>
     );
 

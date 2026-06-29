@@ -3,6 +3,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
+import * as BuildingDeconstructionData from "@/lib/gameplay/dynamicData/planet/buildingDeconstructionData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 import * as MissileSpaceData from "@/lib/gameplay/dynamicData/planet/missileSpaceData";
@@ -83,6 +84,16 @@ export function isSpecificBuildingBeingUpgraded(buildingType: GameType.BuildingT
         ;
         const isUpgrading: boolean = BuildingUpgradeData.isBuildingTypeCurrentlyUpgrading(planetData, buildingType);
         return isUpgrading ? 1 : 0;
+    };
+}
+
+export function isSpecificBuildingBeingDeconstructed(buildingType: GameType.BuildingType): RequirementType.SpecificThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
+        const isDeconstructing: boolean = BuildingDeconstructionData.isBuildingTypeCurrentlyDeconstructing(planetData, buildingType);
+        return isDeconstructing ? 1 : 0;
     };
 }
 
@@ -207,6 +218,25 @@ export function doesTargetZoneExist(): RequirementType.ThingValueGetter
         }
 
         return context.targetZoneExists === true ? 1 : 0;
+    };
+}
+
+export function transportedResourceTotal(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.transportedResourceQuantities === undefined)
+        {
+            throw new Error(`transportedResourceTotal requirement evaluated without transported resource quantities.`);
+        }
+
+        let totalTransportedResources: number = 0;
+        for (const [, transportedResourceQuantity] of context.transportedResourceQuantities)
+        {
+            totalTransportedResources += transportedResourceQuantity;
+        }
+
+        return totalTransportedResources;
     };
 }
 
