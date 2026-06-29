@@ -245,17 +245,17 @@ function injectSyntheticPlanet(databaseConnection: Database.Database, playerId: 
     }
 
     databaseConnection.prepare(
-        "INSERT INTO planet_ship (planet_id, player_id, ship_type, ship_quantity) VALUES (?, ?, ?, 5)"
+        "INSERT INTO planet_unit (planet_id, player_id, unit_type, unit_quantity) VALUES (?, ?, ?, 5)"
     ).run(planetId, playerId, GameType.UnitType.SmallTransport);
 
     injectBuildingUpgrade(databaseConnection, planetId, playerId, cohort, now);
-    injectShipConstructionQueue(databaseConnection, planetId, playerId, cohort, now);
+    injectUnitConstructionQueue(databaseConnection, planetId, playerId, cohort, now);
     injectFleetMovements(databaseConnection, planetId, playerId, slot, system, now);
 }
 
 // Building upgrades do NOT queue — exactly one building_upgrade (with a single building_upgrade_building row)
 // per planet. The game enforces this (buildingUpgradeAnchorEvent.ts throws if more than one is pending), and
-// the multi-building-row shape exists only for symmetry with ship construction, so we inject just one.
+// the multi-building-row shape exists only for symmetry with unit construction, so we inject just one.
 function injectBuildingUpgrade(databaseConnection: Database.Database, planetId: number, playerId: number, cohort: Cohort, now: number): void
 {
     const startedAt: number = startedActionStartedAt(cohort, now);
@@ -274,16 +274,16 @@ function injectBuildingUpgrade(databaseConnection: Database.Database, planetId: 
     ).run(buildingInsert.id, upgradeInsert.id);
 }
 
-function injectShipConstructionQueue(databaseConnection: Database.Database, planetId: number, playerId: number, cohort: Cohort, now: number): void
+function injectUnitConstructionQueue(databaseConnection: Database.Database, planetId: number, playerId: number, cohort: Cohort, now: number): void
 {
     const insertConstruction: Database.Statement = databaseConnection.prepare(
-        "INSERT INTO ship_construction (planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_ship_construction_ship_row_id) VALUES (?, ?, ?, ?, ?, ?, -1) RETURNING id"
+        "INSERT INTO unit_construction (planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_unit_construction_unit_row_id) VALUES (?, ?, ?, ?, ?, ?, -1) RETURNING id"
     );
-    const insertShip: Database.Statement = databaseConnection.prepare(
-        "INSERT INTO ship_construction_ship (ship_construction_id, ship_type, ship_quantity) VALUES (?, ?, 3) RETURNING id"
+    const insertUnit: Database.Statement = databaseConnection.prepare(
+        "INSERT INTO unit_construction_unit (unit_construction_id, unit_type, unit_quantity) VALUES (?, ?, 3) RETURNING id"
     );
     const updateCurrent: Database.Statement = databaseConnection.prepare(
-        "UPDATE ship_construction SET current_ship_construction_ship_row_id = ? WHERE id = ?"
+        "UPDATE unit_construction SET current_unit_construction_unit_row_id = ? WHERE id = ?"
     );
 
     for (let actionIndex: number = 0; actionIndex < SYNTHETIC_ACTIONS_PER_PLANET; actionIndex = actionIndex + 1)
@@ -293,8 +293,8 @@ function injectShipConstructionQueue(databaseConnection: Database.Database, plan
         const durationAtStart: number | null = isStarted ? startedActionDurationMs(cohort) : null;
 
         const constructionInsert: { id: number } = insertConstruction.get(planetId, playerId, now - ONE_DAY_MS, ONE_DAY_MS, durationAtStart, startedAt) as { id: number };
-        const shipInsert: { id: number } = insertShip.get(constructionInsert.id, GameType.UnitType.SmallTransport) as { id: number };
-        updateCurrent.run(shipInsert.id, constructionInsert.id);
+        const unitInsert: { id: number } = insertUnit.get(constructionInsert.id, GameType.UnitType.SmallTransport) as { id: number };
+        updateCurrent.run(unitInsert.id, constructionInsert.id);
     }
 }
 
@@ -306,8 +306,8 @@ function injectFleetMovements(databaseConnection: Database.Database, planetId: n
     const insertFleet: Database.Statement = databaseConnection.prepare(
         "INSERT INTO fleet_movement (seed, player_origin_id, planet_origin_id, planet_origin_slot, planet_origin_system, planet_origin_galaxy, player_target_id, planet_target_slot, planet_target_system, planet_target_galaxy, is_return_trip, fleet_action_type, requested_at, duration_at_request_time, duration_at_start_time, started_at) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, 0, 1, ?, ?, ?, ?) RETURNING id"
     );
-    const insertFleetShip: Database.Statement = databaseConnection.prepare(
-        "INSERT INTO fleet_movement_ship (fleet_id, ship_type, ship_quantity) VALUES (?, ?, 2)"
+    const insertFleetUnit: Database.Statement = databaseConnection.prepare(
+        "INSERT INTO fleet_movement_unit (fleet_id, unit_type, unit_quantity) VALUES (?, ?, 2)"
     );
     // Cargo + fuel children: these ride along with the fleet. They are not rebuilt by 018, but seeding
     // them keeps the fixture shaped like a real in-flight fleet and lets the value-preservation check
@@ -322,7 +322,7 @@ function injectFleetMovements(databaseConnection: Database.Database, planetId: n
     for (let actionIndex: number = 0; actionIndex < SYNTHETIC_ACTIONS_PER_PLANET; actionIndex = actionIndex + 1)
     {
         const fleetInsert: { id: number } = insertFleet.get(12345 + actionIndex, playerId, planetId, slot, system, SYNTHETIC_GALAXY, slot + 1, system, SYNTHETIC_GALAXY, now, FAR_FUTURE_MS, FAR_FUTURE_MS, now) as { id: number };
-        insertFleetShip.run(fleetInsert.id, GameType.UnitType.SmallTransport);
+        insertFleetUnit.run(fleetInsert.id, GameType.UnitType.SmallTransport);
         insertFleetResource.run(fleetInsert.id, GameType.ResourceType.Metal);
         insertFleetFuel.run(fleetInsert.id, GameType.ResourceType.Deuterium);
     }
@@ -339,11 +339,6 @@ function injectFleetMovements(databaseConnection: Database.Database, planetId: n
 // byte-for-byte AFTER migrate + transfer. Scoped to synthetic players because their building / ship /
 // resource / fleet-action types are renumber-STABLE, so db:transfer's 003 renumber can't confound the
 // diff; the real copied rows are covered by the load checks.
-//
-// Migration 024 renames the ship_* tables/columns to unit_* in place. The synthetic rows are injected in
-// the pre-migration (ship_*) schema, so the BEFORE snapshot reads ship_* and the AFTER snapshot reads the
-// renamed unit_* tables, aliasing each renamed column back to its old ship_* key so the byte-for-byte
-// JSON compare still lines up (a pure RENAME can't shift values; this only keeps the keys identical).
 
 type TableSnapshot =
 {
@@ -380,27 +375,21 @@ function captureSyntheticSnapshot(connection: Database.Database, syntheticPlayer
             ).all() as Record<string, unknown>[],
         },
         {
-            label: "planet_ship",
+            label: "planet_unit",
             rows: connection.prepare(
-                postMigration === true
-                    ? `SELECT planet_id, player_id, unit_type AS ship_type, unit_quantity AS ship_quantity FROM planet_unit WHERE player_id IN (${idList}) ORDER BY planet_id, unit_type`
-                    : `SELECT planet_id, player_id, ship_type, ship_quantity FROM planet_ship WHERE player_id IN (${idList}) ORDER BY planet_id, ship_type`
+                `SELECT planet_id, player_id, unit_type, unit_quantity FROM planet_unit WHERE player_id IN (${idList}) ORDER BY planet_id, unit_type`
             ).all() as Record<string, unknown>[],
         },
         {
-            label: "ship_construction",
+            label: "unit_construction",
             rows: connection.prepare(
-                postMigration === true
-                    ? `SELECT id, planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_unit_construction_unit_row_id AS current_ship_construction_ship_row_id FROM unit_construction WHERE player_id IN (${idList}) ORDER BY id`
-                    : `SELECT id, planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_ship_construction_ship_row_id FROM ship_construction WHERE player_id IN (${idList}) ORDER BY id`
+                `SELECT id, planet_id, player_id, requested_at, duration_at_request_time, duration_at_start_time, started_at, current_unit_construction_unit_row_id FROM unit_construction WHERE player_id IN (${idList}) ORDER BY id`
             ).all() as Record<string, unknown>[],
         },
         {
-            label: "ship_construction_ship",
+            label: "unit_construction_unit",
             rows: connection.prepare(
-                postMigration === true
-                    ? `SELECT id, unit_construction_id AS ship_construction_id, unit_type AS ship_type, unit_quantity AS ship_quantity FROM unit_construction_unit WHERE unit_construction_id IN (SELECT id FROM unit_construction WHERE player_id IN (${idList})) ORDER BY id`
-                    : `SELECT id, ship_construction_id, ship_type, ship_quantity FROM ship_construction_ship WHERE ship_construction_id IN (SELECT id FROM ship_construction WHERE player_id IN (${idList})) ORDER BY id`
+                `SELECT id, unit_construction_id, unit_type, unit_quantity FROM unit_construction_unit WHERE unit_construction_id IN (SELECT id FROM unit_construction WHERE player_id IN (${idList})) ORDER BY id`
             ).all() as Record<string, unknown>[],
         },
         {
@@ -422,11 +411,9 @@ function captureSyntheticSnapshot(connection: Database.Database, syntheticPlayer
             ).all() as Record<string, unknown>[],
         },
         {
-            label: "fleet_movement_ship",
+            label: "fleet_movement_unit",
             rows: connection.prepare(
-                postMigration === true
-                    ? `SELECT fleet_id, unit_type AS ship_type, unit_quantity AS ship_quantity FROM fleet_movement_unit WHERE fleet_id IN (SELECT id FROM fleet_movement WHERE player_origin_id IN (${idList})) ORDER BY fleet_id, unit_type`
-                    : `SELECT fleet_id, ship_type, ship_quantity FROM fleet_movement_ship WHERE fleet_id IN (SELECT id FROM fleet_movement WHERE player_origin_id IN (${idList})) ORDER BY fleet_id, ship_type`
+                `SELECT fleet_id, unit_type, unit_quantity FROM fleet_movement_unit WHERE fleet_id IN (SELECT id FROM fleet_movement WHERE player_origin_id IN (${idList})) ORDER BY fleet_id, unit_type`
             ).all() as Record<string, unknown>[],
         },
         {
@@ -573,7 +560,7 @@ async function main(): Promise<void>
         console.error("⚠️:", `Migration safety test: source DB at ${SOURCE_DATABASE_PATH} has no pending migrations — running load checks anyway (migrate step will be a no-op). On dev, this also means your data/game.db may already be migrated.`);
     }
 
-    console.log(`--- Injecting synthetic pending actions: ${SYNTHETIC_PLAYER_COHORTS.length} players x ${SYNTHETIC_PLANETS_PER_PLAYER} planets, each planet 1 building upgrade + ${SYNTHETIC_ACTIONS_PER_PLANET} ship constructions + ${SYNTHETIC_ACTIONS_PER_PLANET} fleets (${pendingMigrationFilenames.length} pending migration(s)) ---`);
+    console.log(`--- Injecting synthetic pending actions: ${SYNTHETIC_PLAYER_COHORTS.length} players x ${SYNTHETIC_PLANETS_PER_PLAYER} planets, each planet 1 building upgrade + ${SYNTHETIC_ACTIONS_PER_PLANET} unit constructions + ${SYNTHETIC_ACTIONS_PER_PLANET} fleets (${pendingMigrationFilenames.length} pending migration(s)) ---`);
     const injectedPlayerIds: Set<number> = injectSyntheticPlayers(injectionConnection);
     for (const injectedPlayerId of injectedPlayerIds)
     {
