@@ -14,8 +14,18 @@ export type UserRow =
 	id: number;
 	username: string;
 	password_hash: string;
+	email: string | null;
+	email_verified: number;
+	verify_token: string | null;
+	reset_token: string | null;
 	admin_level: number;
 	created_at: number;
+};
+
+export type PlayerSettingsRow =
+{
+	player_id: number;
+	probes_per_send: number;
 };
 
 export type SessionRow =

@@ -60,11 +60,11 @@ export async function clientTryServerConfigRequest(sdsController: CoreType.SDSCo
 
 //#region Action requests
 
-export async function clientTryLoginRequest(username: string, password: string): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Login>>
+export async function clientTryLoginRequest(identifier: string, password: string): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Login>>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Login> =
     {
-        username: username,
+        identifier: identifier,
         password: password,
     };
     const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Login> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Login, clientRequest);
@@ -76,16 +76,17 @@ export async function clientTryLoginRequest(username: string, password: string):
     // Use != instead of !== here to catch everything that's very weird.
     if (response.username == null)
     {
-        throw new Error(`Logout server failed: Invalid player data.`);
+        throw new Error(`Login server failed: Invalid player data.`);
     }
     return response;
 }
 
-export async function clientTryRegisterRequest(username: string, password: string): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register>>
+export async function clientTryRegisterRequest(username: string, email: string, password: string): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register>>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Register> =
     {
         username: username,
+        email: email,
         password: password,
     };
 
@@ -99,7 +100,99 @@ export async function clientTryRegisterRequest(username: string, password: strin
     // Use != instead of !== here to catch everything that's very weird.
     if (response.username == null)
     {
-        throw new Error(`Logout server failed: Invalid player data.`);
+        throw new Error(`Register server failed: Invalid player data.`);
+    }
+
+    return response;
+}
+
+export async function clientTryVerifyEmailRequest(token: string): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.VerifyEmail>>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.VerifyEmail> =
+    {
+        token: token,
+    };
+
+    const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.VerifyEmail> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.VerifyEmail, clientRequest);
+    if (response.error !== null)
+    {
+        throw new Error(response.error);
+    }
+
+    return response;
+}
+
+export async function clientTryResendVerificationRequest(): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ResendVerification>>
+{
+    const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ResendVerification> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.ResendVerification, null);
+    if (response.error !== null)
+    {
+        throw new Error(response.error);
+    }
+
+    return response;
+}
+
+export async function clientTryRequestPasswordResetRequest(identifier: string): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RequestPasswordReset>>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.RequestPasswordReset> =
+    {
+        identifier: identifier,
+    };
+
+    const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RequestPasswordReset> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.RequestPasswordReset, clientRequest);
+    if (response.error !== null)
+    {
+        throw new Error(response.error);
+    }
+
+    return response;
+}
+
+export async function clientTryResetPasswordRequest(token: string, password: string): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ResetPassword>>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.ResetPassword> =
+    {
+        token: token,
+        password: password,
+    };
+
+    const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ResetPassword> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.ResetPassword, clientRequest);
+    if (response.error !== null)
+    {
+        throw new Error(response.error);
+    }
+
+    return response;
+}
+
+export async function clientTryChangeEmailRequest(email: string): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ChangeEmail>>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.ChangeEmail> =
+    {
+        email: email,
+    };
+
+    const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ChangeEmail> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.ChangeEmail, clientRequest);
+    if (response.error !== null)
+    {
+        throw new Error(response.error);
+    }
+
+    return response;
+}
+
+export async function clientTryChangeUsernameRequest(username: string): Promise<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ChangeUsername>>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.ChangeUsername> =
+    {
+        username: username,
+    };
+
+    const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ChangeUsername> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.ChangeUsername, clientRequest);
+    if (response.error !== null)
+    {
+        throw new Error(response.error);
     }
 
     return response;
@@ -627,6 +720,41 @@ export async function clientTryRenamePlanetRequest(psController: CoreType.PSCont
         if (response.serializedPlayerData == null)
         {
             throw new Error(`Rename planet failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+        return null;
+    }
+    catch (error: unknown)
+    {
+        if (error instanceof Error)
+        {
+            return error.message;
+        }
+
+        return String(error);
+    }
+}
+
+export async function clientTryUpdatePlayerSettingsRequest(psController: CoreType.PSController, probesPerSend: number): Promise<string | null>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpdatePlayerSettings> =
+    {
+        probesPerSend: probesPerSend,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.UpdatePlayerSettings> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.UpdatePlayerSettings, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Update player settings failed: Invalid response from server.`);
         }
 
         const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);

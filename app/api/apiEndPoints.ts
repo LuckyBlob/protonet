@@ -9,6 +9,13 @@ export const ActionRequest =
     Register: { endpoint: "authentication/register", name: "Register" },
     DeleteUser: { endpoint: "authentication/deleteUser", name: "DeleteUser" },
     Logout:   { endpoint: "authentication/logout",   name: "Logout" },
+    VerifyEmail: { endpoint: "authentication/verify", name: "VerifyEmail" },
+    ResendVerification: { endpoint: "authentication/resendVerification", name: "ResendVerification" },
+    RequestPasswordReset: { endpoint: "authentication/requestPasswordReset", name: "RequestPasswordReset" },
+    ResetPassword: { endpoint: "authentication/resetPassword", name: "ResetPassword" },
+    ChangeEmail: { endpoint: "authentication/changeEmail", name: "ChangeEmail" },
+    ChangeUsername: { endpoint: "authentication/changeUsername", name: "ChangeUsername" },
+    UpdatePlayerSettings: { endpoint: "settings/update", name: "UpdatePlayerSettings" },
     RefreshServer:   { endpoint: "refreshServerData",   name: "RefreshServer" },
     UpgradeBuilding:   { endpoint: "buy/upgradeBuilding",   name: "UpgradeBuilding" },
     CancelBuildingUpgrade:   { endpoint: "buy/cancelBuildingUpgrade",   name: "CancelBuildingUpgrade" },
@@ -27,10 +34,17 @@ export const ActionRequest =
 } as const satisfies Record<string, validEndpoint>;
 export type ActionRequestMap =
 {
-    Login: RequestType.BaseAuthenticationClientRequest;
-    Register: RequestType.BaseAuthenticationClientRequest;
+    Login: RequestType.Login_ClientRequest;
+    Register: RequestType.Register_ClientRequest;
     DeleteUser: RequestType.BaseClientRequest;
     Logout: null;
+    VerifyEmail: RequestType.VerifyEmail_ClientRequest;
+    ResendVerification: null;
+    RequestPasswordReset: RequestType.RequestPasswordReset_ClientRequest;
+    ResetPassword: RequestType.ResetPassword_ClientRequest;
+    ChangeEmail: RequestType.ChangeEmail_ClientRequest;
+    ChangeUsername: RequestType.ChangeUsername_ClientRequest;
+    UpdatePlayerSettings: RequestType.UpdatePlayerSettings_ClientRequest;
     RefreshServer: null;
     UpgradeBuilding: RequestType.BuildingUpgrade_ClientRequest;
     CancelBuildingUpgrade: RequestType.CancelBuildingUpgrade_ClientRequest;
@@ -53,6 +67,13 @@ export type ActionResponseMap =
     Register: RequestType.BaseAuthenticationServerResponse;
     DeleteUser: RequestType.BaseServerResponse;
     Logout: RequestType.BaseAuthenticationServerResponse;
+    VerifyEmail: RequestType.VerifyEmail_ServerResponse;
+    ResendVerification: RequestType.ResendVerification_ServerResponse;
+    RequestPasswordReset: RequestType.RequestPasswordReset_ServerResponse;
+    ResetPassword: RequestType.ResetPassword_ServerResponse;
+    ChangeEmail: RequestType.ChangeEmail_ServerResponse;
+    ChangeUsername: RequestType.ChangeUsername_ServerResponse;
+    UpdatePlayerSettings: RequestType.UpdatePlayerSettings_ServerResponse;
     RefreshServer: RequestType.RefreshServer_ServerResponse;
     UpgradeBuilding: RequestType.BuildingUpgrade_ServerResponse;
     CancelBuildingUpgrade: RequestType.CancelBuildingUpgrade_ServerResponse;

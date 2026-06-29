@@ -11,13 +11,13 @@ import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
+import * as PlayerSettings from "@/lib/gameplay/dynamicData/player/playerSettingsData";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 
-const ONE_PROBE_UNIT_QUANTITIES: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, 1]]);
 const NO_TRANSPORTED_RESOURCES: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 
 // One-line outcome of a galaxy-view spy click: the message to show and whether it was a failure.
@@ -53,6 +53,15 @@ function getPlayerUsername(ownerId: number, publicPlayerRows: DBType.PublicPlaye
     return publicPlayerRow?.username ?? `Player #${ownerId}`;
 }
 
+function getEspionageProbeQuantities(context: GalaxyViewContext): Map<GameType.UnitType, number>
+{
+    const availableProbes: number = UnitData.getUnitQuantity(context.originPlanetData, GameType.UnitType.EspionageProbe);
+    const configuredProbesPerSend: number = PlayerSettings.getProbesPerSend(context.playerData);
+    const probesToSend: number = Math.max(1, Math.min(configuredProbesPerSend, availableProbes));
+
+    return new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, probesToSend]]);
+}
+
 function canSendEspionageProbe(context: GalaxyViewContext, targetPlanetAddress: GameType.PlanetAddress, targetZoneExists: boolean, zoneAssociatedPlanetOwnerPlayerId: number | null): boolean
 {
     if (UnitData.getUnitQuantity(context.originPlanetData, GameType.UnitType.EspionageProbe) < 1)
@@ -66,13 +75,15 @@ function canSendEspionageProbe(context: GalaxyViewContext, targetPlanetAddress: 
         return false;
     }
 
-    const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(context.playerData, GameType.FleetActionType.Espionage, context.originPlanetData.planetRow.id, ONE_PROBE_UNIT_QUANTITIES, NO_TRANSPORTED_RESOURCES, targetPlanetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists);
+    const probeQuantities: Map<GameType.UnitType, number> = getEspionageProbeQuantities(context);
+
+    const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(context.playerData, GameType.FleetActionType.Espionage, context.originPlanetData.planetRow.id, probeQuantities, NO_TRANSPORTED_RESOURCES, targetPlanetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists);
     if (failedRequirements.length > 0)
     {
         return false;
     }
 
-    const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(context.playerData, originAddress, targetPlanetAddress, ONE_PROBE_UNIT_QUANTITIES, context.serverData);
+    const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(context.playerData, originAddress, targetPlanetAddress, probeQuantities, context.serverData);
     if (ResourceData.hasResourceQuantities(context.originPlanetData, fuelRequirements) === false)
     {
         return false;
@@ -89,8 +100,10 @@ function renderEspionageIndicator(context: GalaxyViewContext, planetPublicPlanet
     }
 
     const canSpy: boolean = canSendEspionageProbe(context, targetPlanetAddress, true, planetPublicPlanetData.owner_player_id);
+    const probeQuantities: Map<GameType.UnitType, number> = getEspionageProbeQuantities(context);
+    const probesToSend: number = probeQuantities.get(GameType.UnitType.EspionageProbe) ?? 1;
     const variant: string = canSpy === true ? "color" : "gray";
-    const title: string = canSpy === true ? "Send 1 espionage probe" : "Cannot send an espionage probe here";
+    const title: string = canSpy === true ? `Send ${probesToSend} espionage probe(s)` : "Cannot send an espionage probe here";
 
     const handleSpyClick = async (): Promise<void> =>
     {
@@ -99,12 +112,12 @@ function renderEspionageIndicator(context: GalaxyViewContext, planetPublicPlanet
             return;
         }
 
-        const errorMessage: string | null = await ClientRequestFunctions.clientTrySendFleetRequest(context.psController, context.originPlanetData.planetRow.id, targetPlanetAddress, GameType.FleetActionType.Espionage, ONE_PROBE_UNIT_QUANTITIES, NO_TRANSPORTED_RESOURCES);
+        const errorMessage: string | null = await ClientRequestFunctions.clientTrySendFleetRequest(context.psController, context.originPlanetData.planetRow.id, targetPlanetAddress, GameType.FleetActionType.Espionage, probeQuantities, NO_TRANSPORTED_RESOURCES);
 
         if (errorMessage === null)
         {
             const targetAddressLabel: string = StaticDataHelper.formatPlanetAddress(targetPlanetAddress.galaxy, targetPlanetAddress.system, targetPlanetAddress.slot, targetPlanetAddress.zone);
-            context.setSendFeedback({ message: `Espionage probe sent to ${targetAddressLabel}.`, isError: false });
+            context.setSendFeedback({ message: `${probesToSend} espionage probe(s) sent to ${targetAddressLabel}.`, isError: false });
             return;
         }
 

@@ -14,6 +14,9 @@ export default function RegisterPage()
 	const usernameState: [string, (value: string) => void] = useState<string>("");
 	const setUsername: (value: string) => void = usernameState[1];
 
+	const emailState: [string, (value: string) => void] = useState<string>("");
+	const setEmail: (value: string) => void = emailState[1];
+
 	const passwordState: [string, (value: string) => void] = useState<string>("");
 	const setPassword: (value: string) => void = passwordState[1];
 
@@ -24,7 +27,7 @@ export default function RegisterPage()
 	{
 		try
 		{
-			const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register> | null = await ClientRequestFunctions.clientTryRegisterRequest(usernameState[0], passwordState[0]);
+			const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Register> | null = await ClientRequestFunctions.clientTryRegisterRequest(usernameState[0], emailState[0], passwordState[0]);
 			router.push("/");
 		}
 		catch (error: unknown)
@@ -54,6 +57,13 @@ export default function RegisterPage()
 				placeholder="Username (3+ chars)"
 				value={usernameState[0]}
 				onChange={(e) => setUsername(e.target.value)}
+				className="border border-gray-400 px-2 py-1 rounded bg-white text-black placeholder:text-gray-400"
+			/>
+			<input
+				type="email"
+				placeholder="Email"
+				value={emailState[0]}
+				onChange={(e) => setEmail(e.target.value)}
 				className="border border-gray-400 px-2 py-1 rounded bg-white text-black placeholder:text-gray-400"
 			/>
 			<input

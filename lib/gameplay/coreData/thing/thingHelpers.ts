@@ -45,6 +45,11 @@ export function getThingValues(playerData: CoreType.PlayerData | null, planetDat
         throw new Error("CurrentlyResearching context does not have specific things that have a value... yet.");
     }
 
+    if (dataContext === CoreType.DataContext.PlayerSettings)
+    {
+        throw new Error("PlayerSettings context does not have specific things that have a value.");
+    }
+
     if (CoreType.isPlayerDataContext(dataContext))
     {
         if (playerData === null)
@@ -93,6 +98,11 @@ export function setSpecificThingValue(playerData: CoreType.PlayerData | null, pl
     if (dataContext === CoreType.DataContext.CurrentlyResearching)
     {
         throw new Error("CurrentlyResearching context is not supported for type setters since it doesnt have specific things.");
+    }
+
+    if (dataContext === CoreType.DataContext.PlayerSettings)
+    {
+        throw new Error("PlayerSettings context is not supported for type setters since it doesnt have specific things.");
     }
 
     if (CoreType.isPlayerDataContext(dataContext))

@@ -86,7 +86,7 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	    { view: "planets", label: "Planets", subItems: planetSubItems },
 	    { view: "messages", label: messagesLabel, subItems: [] },
 	    { view: "stats", label: "Stats", subItems: [] },
-	    { view: "account", label: "Account", subItems: [] },
+	    { view: "settings", label: "Player Settings", subItems: [] },
 	];
 
 	const adminSection: ReactElement | null = props.cuController[0].user!.admin_level === 0

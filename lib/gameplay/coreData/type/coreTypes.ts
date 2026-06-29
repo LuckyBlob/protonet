@@ -32,6 +32,7 @@ export type DynamicPlayerData =
 	researchLevels: Map<GameType.ResearchType, number>;
 	currentlyResearchings: CurrentlyResearching[];
 	messageDatas: MessageData[];
+	playerSettings: DBType.PlayerSettingsRow;
 };
 
 export type PSController  = [PlayerState, (value: PlayerState | ((prev: PlayerState) => PlayerState)) => void];
@@ -101,6 +102,7 @@ export const PlayerDataContext =
 	Messages: 7,
 	ResearchLevels: 8,
 	CurrentlyResearching: 9,
+	PlayerSettings: 11,
 } as const;
 export type PlayerDataContext = typeof PlayerDataContext[keyof typeof PlayerDataContext];
 
@@ -125,6 +127,7 @@ export const PlayerDataContextToVariableNameMap =
     [PlayerDataContext.Messages]: "messages",
     [PlayerDataContext.ResearchLevels]: "researchLevels",
     [PlayerDataContext.CurrentlyResearching]: "currentlyResearchings",
+    [PlayerDataContext.PlayerSettings]: "playerSettings",
 } as const;
 export const DataContextToVariableNameMap =
 {

@@ -91,6 +91,7 @@ type SerializedDynamicPlayerData =
 	researchLevels: [number, number][];
 	currentlyResearchings: CoreType.CurrentlyResearching[];
 	messageDatas: CoreType.MessageData[];
+	playerSettings: DBType.PlayerSettingsRow;
 };
 
 function serializeDynamicPlayerData(dynamicPlayerData: CoreType.DynamicPlayerData): SerializedDynamicPlayerData
@@ -100,6 +101,7 @@ function serializeDynamicPlayerData(dynamicPlayerData: CoreType.DynamicPlayerDat
 		researchLevels: [...dynamicPlayerData.researchLevels],
 		currentlyResearchings: [...dynamicPlayerData.currentlyResearchings],
 		messageDatas: [...dynamicPlayerData.messageDatas],
+		playerSettings: dynamicPlayerData.playerSettings,
 	};
 
 	return serialized;
@@ -113,6 +115,7 @@ function deserializeDynamicPlayerData(serialized: SerializedDynamicPlayerData): 
 		researchLevels: new Map<number, number>(serialized.researchLevels) as Map<GameType.ResearchType, number>,
 		currentlyResearchings: serialized.currentlyResearchings ?? [],
 		messageDatas: serialized.messageDatas ?? [],
+		playerSettings: serialized.playerSettings,
 	};
 
 	return dynamicPlayerData;

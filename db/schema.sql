@@ -3,10 +3,17 @@ CREATE TABLE IF NOT EXISTS users
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
+  email TEXT,
+-- New accounts must verify their email before a player is created; legacy accounts are grandfathered verified.
+  email_verified INTEGER NOT NULL DEFAULT 0,
+  verify_token TEXT,
+  reset_token TEXT,
 --admin_levels are: 0 Power admin, 1 normal, 2+ increasing admin powers. This can ONLY be set by hand in the DB
   admin_level INTEGER NOT NULL DEFAULT 1,
   created_at INTEGER NOT NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS sessions
 (
@@ -28,6 +35,13 @@ CREATE TABLE IF NOT EXISTS player
   building_upgrade_completes_at INTEGER NOT NULL DEFAULT 0,
   invested_value INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS player_settings
+(
+  player_id INTEGER PRIMARY KEY,
+  probes_per_send INTEGER NOT NULL DEFAULT 1,
+  FOREIGN KEY (player_id) REFERENCES player(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS server_config

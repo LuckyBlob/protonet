@@ -27,6 +27,11 @@ export function serverUpdatePlayerDataContext(playerId: number, dataContext: Cor
                 updateCurrentlyResearchings(playerId, dynamicPlayerData);
                 break;
             }
+            case CoreType.DataContext.PlayerSettings:
+            {
+                updatePlayerSettings(playerId, dynamicPlayerData);
+                break;
+            }
             default:
                 throw new Error(`UNREACHABLE: Dynamic data update function undefined for data context ${dataContext}.`);
         }
@@ -40,7 +45,21 @@ export function getDynamicPlayerData(playerId: number): CoreType.DynamicPlayerDa
         researchLevels: getDynamicPlayerResearchData(playerId),
         currentlyResearchings: getDynamicPlayerCurrentlyResearchingData(playerId),
         messageDatas: getDynamicMessageData(playerId),
+        playerSettings: getDynamicPlayerSettingsData(playerId),
     };
+}
+
+export function getDynamicPlayerSettingsData(playerId: number): DBType.PlayerSettingsRow
+{
+    DB.databaseConnection.prepare(
+        "INSERT OR IGNORE INTO player_settings (player_id) VALUES (?)"
+    ).run(playerId);
+
+    const playerSettingsRow: DBType.PlayerSettingsRow = DB.databaseConnection.prepare(
+        "SELECT * FROM player_settings WHERE player_id = ?"
+    ).get(playerId) as DBType.PlayerSettingsRow;
+
+    return playerSettingsRow;
 }
 
 export function getDynamicMessageData(playerId: number): CoreType.MessageData[]
@@ -167,6 +186,13 @@ function updateResearchLevels(playerId: number, dynamicPlayerData: CoreType.Dyna
         }
     });
     transaction();
+}
+
+function updatePlayerSettings(playerId: number, dynamicPlayerData: CoreType.DynamicPlayerData): void
+{
+    DB.databaseConnection.prepare(
+        "INSERT INTO player_settings (player_id, probes_per_send) VALUES (?, ?) ON CONFLICT(player_id) DO UPDATE SET probes_per_send = excluded.probes_per_send"
+    ).run(playerId, dynamicPlayerData.playerSettings.probes_per_send);
 }
 
 function updateCurrentlyResearchings(playerId: number, dynamicPlayerData: CoreType.DynamicPlayerData): void

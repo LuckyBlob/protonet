@@ -57,6 +57,15 @@ export function findUserByUsername(username: string): DBType.UserRow | null
 	return userRow ?? null;
 }
 
+export function findUserById(userId: number): DBType.UserRow | null
+{
+	const selectStatement: Database.Statement = DB.databaseConnection.prepare(
+		"SELECT * FROM users WHERE id = ?"
+	);
+	const userRow: DBType.UserRow | undefined = selectStatement.get(userId) as DBType.UserRow | undefined;
+	return userRow ?? null;
+}
+
 export function createSession(userId: number): DBType.SessionRow
 {
 	const sessionToken: string = crypto.randomBytes(32).toString("hex");
@@ -138,4 +147,123 @@ export async function getCurrentAdminLevel(): Promise<number | null>
 	}
 
 	return user.admin_level;
+}
+
+function generateToken(): string
+{
+	return crypto.randomBytes(32).toString("hex");
+}
+
+export function createVerifyToken(userId: number): string
+{
+	const token: string = generateToken();
+	DB.databaseConnection.prepare("UPDATE users SET verify_token = ? WHERE id = ?").run(token, userId);
+	return token;
+}
+
+export function createResetToken(userId: number): string
+{
+	const token: string = generateToken();
+	DB.databaseConnection.prepare("UPDATE users SET reset_token = ? WHERE id = ?").run(token, userId);
+	return token;
+}
+
+export function findUserByVerifyToken(token: string): DBType.UserRow | null
+{
+	const userRow: DBType.UserRow | undefined = DB.databaseConnection.prepare(
+		"SELECT * FROM users WHERE verify_token = ?"
+	).get(token) as DBType.UserRow | undefined;
+	return userRow ?? null;
+}
+
+export function findUserByResetToken(token: string): DBType.UserRow | null
+{
+	const userRow: DBType.UserRow | undefined = DB.databaseConnection.prepare(
+		"SELECT * FROM users WHERE reset_token = ?"
+	).get(token) as DBType.UserRow | undefined;
+	return userRow ?? null;
+}
+
+export function clearVerifyToken(userId: number): void
+{
+	DB.databaseConnection.prepare("UPDATE users SET verify_token = NULL WHERE id = ?").run(userId);
+}
+
+export function clearResetToken(userId: number): void
+{
+	DB.databaseConnection.prepare("UPDATE users SET reset_token = NULL WHERE id = ?").run(userId);
+}
+
+export function normalizeEmail(email: string): string
+{
+	return email.trim().toLowerCase();
+}
+
+export function isValidEmail(email: string): boolean
+{
+	const emailPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	return emailPattern.test(email);
+}
+
+export function findUserByEmail(email: string): DBType.UserRow | null
+{
+	const normalizedEmail: string = normalizeEmail(email);
+
+	const userRow: DBType.UserRow | undefined = DB.databaseConnection.prepare(
+		"SELECT * FROM users WHERE email = ?"
+	).get(normalizedEmail) as DBType.UserRow | undefined;
+
+	return userRow ?? null;
+}
+
+export function findUserByUsernameOrEmail(identifier: string): DBType.UserRow | null
+{
+	const userByUsername: DBType.UserRow | null = findUserByUsername(identifier);
+
+	if (userByUsername !== null)
+	{
+		return userByUsername;
+	}
+
+	return findUserByEmail(identifier);
+}
+
+export function createUnverifiedUser(username: string, email: string, passwordHash: string): DBType.UserRow
+{
+	const normalizedEmail: string = normalizeEmail(email);
+	const createdAt: number = Date.now();
+
+	const insertStatement: Database.Statement = DB.databaseConnection.prepare(
+		"INSERT INTO users (username, password_hash, email, email_verified, created_at) VALUES (?, ?, ?, 0, ?) RETURNING *"
+	);
+	const userRow: DBType.UserRow = insertStatement.get(username, passwordHash, normalizedEmail, createdAt) as DBType.UserRow;
+	return userRow;
+}
+
+export function updateUnverifiedUser(userId: number, username: string, passwordHash: string): void
+{
+	DB.databaseConnection.prepare(
+		"UPDATE users SET username = ?, password_hash = ? WHERE id = ? AND email_verified = 0"
+	).run(username, passwordHash, userId);
+}
+
+export function setUserEmailVerified(userId: number): void
+{
+	DB.databaseConnection.prepare("UPDATE users SET email_verified = 1 WHERE id = ?").run(userId);
+}
+
+export function updateUserEmail(userId: number, email: string): void
+{
+	const normalizedEmail: string = normalizeEmail(email);
+	DB.databaseConnection.prepare("UPDATE users SET email = ? WHERE id = ?").run(normalizedEmail, userId);
+}
+
+export function updateUserUsername(userId: number, username: string): void
+{
+	DB.databaseConnection.prepare("UPDATE users SET username = ? WHERE id = ?").run(username, userId);
+}
+
+export function updateUserPassword(userId: number, passwordHash: string): void
+{
+	DB.databaseConnection.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(passwordHash, userId);
 }

@@ -39,14 +39,70 @@ export type OwnedPlanetDataRequest = BaseServerResponse &
 
 //#region Action requests
 //#region Authentication
-export type BaseAuthenticationClientRequest = BaseClientRequest &
-{
-	username: string,
-	password: string,
-}
 export type BaseAuthenticationServerResponse = BaseServerResponse &
 {
 	username: string,
+}
+
+export type Register_ClientRequest = BaseClientRequest &
+{
+	username: string,
+	email: string,
+	password: string,
+}
+
+export type Login_ClientRequest = BaseClientRequest &
+{
+	identifier: string,
+	password: string,
+}
+
+export type VerifyEmail_ClientRequest = BaseClientRequest &
+{
+	token: string,
+}
+export type VerifyEmail_ServerResponse = BaseServerResponse;
+
+export type ResendVerification_ServerResponse = BaseServerResponse;
+
+export type RequestPasswordReset_ClientRequest = BaseClientRequest &
+{
+	identifier: string,
+}
+export type RequestPasswordReset_ServerResponse = BaseServerResponse;
+
+export type ResetPassword_ClientRequest = BaseClientRequest &
+{
+	token: string,
+	password: string,
+}
+export type ResetPassword_ServerResponse = BaseServerResponse;
+
+export type ChangeEmail_ClientRequest = BaseClientRequest &
+{
+	email: string,
+}
+export type ChangeEmail_ServerResponse = BaseServerResponse &
+{
+	userRow: DBType.UserRow | null,
+}
+
+export type ChangeUsername_ClientRequest = BaseClientRequest &
+{
+	username: string,
+}
+export type ChangeUsername_ServerResponse = BaseServerResponse &
+{
+	userRow: DBType.UserRow | null,
+}
+
+export type UpdatePlayerSettings_ClientRequest = BaseClientRequest &
+{
+	probesPerSend: number,
+}
+export type UpdatePlayerSettings_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null,
 }
 //#endregion
 

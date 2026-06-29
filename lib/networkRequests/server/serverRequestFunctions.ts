@@ -5,6 +5,7 @@ import { RequestCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
 import * as Auth from "@/lib/authentication/auth";
+import * as Mailer from "@/lib/mail/mailer";
 import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
@@ -30,6 +31,7 @@ import * as BuildingDeconstructionData from "@/lib/gameplay/dynamicData/planet/b
 import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 import * as ScoreData from "@/lib/gameplay/dynamicData/player/scoreData";
+import * as PlayerSettings from "@/lib/gameplay/dynamicData/player/playerSettingsData";
 import * as ResearchCost from "@/lib/gameplay/coreData/formula/researchCostFormulas";
 import * as ResearchDuration from "@/lib/gameplay/coreData/formula/researchDurationFormulas";
 import * as MathHelp from "@/lib/helper/mathHelp";
@@ -159,24 +161,28 @@ export async function serverTryLoginRequest(request: Request): Promise<NextRespo
     const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Login> =
     {
         error: "Unknown error.",
-        username: clientRequest.username,
+        username: clientRequest.identifier,
     };
+
+    let resolvedUsername: string = clientRequest.identifier;
 
     try
     {
-        const user: DBType.UserRow | null = Auth.findUserByUsername(clientRequest.username);
+        const user: DBType.UserRow | null = Auth.findUserByUsernameOrEmail(clientRequest.identifier);
         if (user === null)
         {
-            errorResponse.error = "Invalid username or password.";
+            errorResponse.error = "Invalid username/email or password.";
             return NextResponse.json(errorResponse, { status: 401 });
         }
 
         const passwordIsValid: boolean = await Auth.verifyPassword(clientRequest.password, user.password_hash);
         if (passwordIsValid === false)
         {
-            errorResponse.error = "Invalid username or password.";
+            errorResponse.error = "Invalid username/email or password.";
             return NextResponse.json(errorResponse, { status: 401 });
         }
+
+        resolvedUsername = user.username;
 
         const session: DBType.SessionRow = Auth.createSession(user.id);
         const cookieStore: ReadonlyRequestCookies = await cookies();
@@ -198,7 +204,7 @@ export async function serverTryLoginRequest(request: Request): Promise<NextRespo
     return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Login>>(
     {
         error: null,
-        username: clientRequest.username,
+        username: resolvedUsername,
     }, { status: 200 });
 }
 
@@ -219,30 +225,51 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
             return NextResponse.json(errorResponse, { status: 400 });
         }
 
-        const existingUser: DBType.UserRow | null = Auth.findUserByUsername(clientRequest.username);
-        if (existingUser !== null)
+        if (Auth.isValidEmail(clientRequest.email) === false)
+        {
+            errorResponse.error = "Please enter a valid email address.";
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        const normalizedEmail: string = Auth.normalizeEmail(clientRequest.email);
+        const userByEmail: DBType.UserRow | null = Auth.findUserByEmail(normalizedEmail);
+        const userByUsername: DBType.UserRow | null = Auth.findUserByUsername(clientRequest.username);
+
+        if (userByEmail !== null && userByEmail.email_verified === 1)
+        {
+            errorResponse.error = "Email already in use.";
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        const usernameTakenByOtherAccount: boolean = userByUsername !== null && (userByEmail === null || userByUsername.id !== userByEmail.id);
+        if (usernameTakenByOtherAccount === true)
         {
             errorResponse.error = "Username already taken.";
             return NextResponse.json(errorResponse, { status: 400 });
         }
 
         const passwordHash: string = await Auth.hashPassword(clientRequest.password);
-        const newUser: DBType.UserRow = Auth.createUser(clientRequest.username, passwordHash);
 
-        try
+        let targetUserId: number;
+        if (userByEmail !== null)
         {
-            createPlayer(newUser.id);
+            Auth.updateUnverifiedUser(userByEmail.id, clientRequest.username, passwordHash);
+            targetUserId = userByEmail.id;
         }
-        catch (error: unknown)
+        else
         {
-            // The player couldn't be created (e.g. no free starting slots). Roll back the user row
-            // we just made and surface the real reason instead of a generic message.
-            Auth.deleteUser(newUser.id);
-            errorResponse.error = error instanceof Error ? error.message : String(error);
-            return NextResponse.json(errorResponse, { status: 500 });
+            targetUserId = Auth.createUnverifiedUser(clientRequest.username, normalizedEmail, passwordHash).id;
         }
 
-        const session: DBType.SessionRow = Auth.createSession(newUser.id);
+        const verifyToken: string = Auth.createVerifyToken(targetUserId);
+        const verifyUrl: string = Mailer.buildAppUrl(`/verify?token=${verifyToken}`);
+        await Mailer.sendMail(
+            normalizedEmail,
+            "Activez votre compte Protonet",
+            `Bonjour ${clientRequest.username},\n\nCliquez sur ce lien pour activer votre compte et commencer à jouer :\n${verifyUrl}`
+        );
+
+        const session: DBType.SessionRow = Auth.createSession(targetUserId);
         const cookieStore: ReadonlyRequestCookies = await cookies();
         cookieStore.set(Auth.sessionCookieName, session.token,
         {
@@ -264,6 +291,277 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
         error: null,
         username: clientRequest.username,
     }, { status: 200 });
+}
+
+export async function serverTryVerifyEmailRequest(request: Request): Promise<NextResponse>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.VerifyEmail> = await request.json();
+    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.VerifyEmail> =
+    {
+        error: "Unknown error.",
+    };
+
+    try
+    {
+        const userRow: DBType.UserRow | null = Auth.findUserByVerifyToken(clientRequest.token);
+        if (userRow === null)
+        {
+            errorResponse.error = "This verification link is invalid.";
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        if (userRow.email_verified === 1)
+        {
+            Auth.clearVerifyToken(userRow.id);
+            return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.VerifyEmail>>({ error: null }, { status: 200 });
+        }
+
+        try
+        {
+            createPlayer(userRow.id);
+        }
+        catch (error: unknown)
+        {
+            errorResponse.error = error instanceof Error ? error.message : String(error);
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        Auth.setUserEmailVerified(userRow.id);
+        Auth.clearVerifyToken(userRow.id);
+    }
+    catch (error: unknown)
+    {
+        errorResponse.error = error instanceof Error ? error.message : String(error);
+        return NextResponse.json(errorResponse, { status: 500 });
+    }
+
+    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.VerifyEmail>>({ error: null }, { status: 200 });
+}
+
+export async function serverTryResendVerificationRequest(): Promise<NextResponse>
+{
+    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ResendVerification> =
+    {
+        error: "Unknown error.",
+    };
+
+    try
+    {
+        const currentUser: DBType.UserRow | null = await Auth.getCurrentUser();
+        if (currentUser === null)
+        {
+            errorResponse.error = "Not logged in.";
+            return NextResponse.json(errorResponse, { status: 401 });
+        }
+
+        if (currentUser.email_verified === 1)
+        {
+            errorResponse.error = "This account is already verified.";
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        if (currentUser.email === null)
+        {
+            errorResponse.error = "This account has no email to verify.";
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        const verifyToken: string = Auth.createVerifyToken(currentUser.id);
+        const verifyUrl: string = Mailer.buildAppUrl(`/verify?token=${verifyToken}`);
+        await Mailer.sendMail(
+            currentUser.email,
+            "Activez votre compte Protonet",
+            `Bonjour ${currentUser.username},\n\nCliquez sur ce lien pour activer votre compte et commencer à jouer :\n${verifyUrl}`
+        );
+    }
+    catch (error: unknown)
+    {
+        errorResponse.error = error instanceof Error ? error.message : String(error);
+        return NextResponse.json(errorResponse, { status: 500 });
+    }
+
+    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ResendVerification>>({ error: null }, { status: 200 });
+}
+
+// Always succeeds even when no account matches, so the endpoint can't be used to enumerate accounts.
+export async function serverTryRequestPasswordResetRequest(request: Request): Promise<NextResponse>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.RequestPasswordReset> = await request.json();
+
+    try
+    {
+        const user: DBType.UserRow | null = Auth.findUserByUsernameOrEmail(clientRequest.identifier);
+
+        if (user !== null && user.email !== null && user.email_verified === 1)
+        {
+            const resetToken: string = Auth.createResetToken(user.id);
+            const resetUrl: string = Mailer.buildAppUrl(`/reset-password?token=${resetToken}`);
+            await Mailer.sendMail(
+                user.email,
+                "Réinitialisation de votre mot de passe Protonet",
+                `Bonjour ${user.username},\n\nCliquez sur ce lien pour choisir un nouveau mot de passe :\n${resetUrl}\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez ce message.`
+            );
+        }
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
+
+    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.RequestPasswordReset>>({ error: null }, { status: 200 });
+}
+
+export async function serverTryResetPasswordRequest(request: Request): Promise<NextResponse>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.ResetPassword> = await request.json();
+    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ResetPassword> =
+    {
+        error: "Unknown error.",
+    };
+
+    try
+    {
+        if (clientRequest.password.length < 6)
+        {
+            errorResponse.error = "Password must be 6+ chars.";
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        const userRow: DBType.UserRow | null = Auth.findUserByResetToken(clientRequest.token);
+        if (userRow === null)
+        {
+            errorResponse.error = "This reset link is invalid.";
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        const passwordHash: string = await Auth.hashPassword(clientRequest.password);
+        Auth.updateUserPassword(userRow.id, passwordHash);
+        Auth.clearResetToken(userRow.id);
+    }
+    catch (error: unknown)
+    {
+        errorResponse.error = error instanceof Error ? error.message : String(error);
+        return NextResponse.json(errorResponse, { status: 500 });
+    }
+
+    return NextResponse.json<APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ResetPassword>>({ error: null }, { status: 200 });
+}
+
+export async function serverTryChangeEmailRequest(request: Request): Promise<NextResponse>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.ChangeEmail> = await request.json();
+    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ChangeEmail> =
+    {
+        error: "Unknown error.",
+        userRow: null,
+    };
+
+    try
+    {
+        const currentUser: DBType.UserRow | null = await Auth.getCurrentUser();
+        if (currentUser === null)
+        {
+            errorResponse.error = "Not logged in.";
+            return NextResponse.json(errorResponse, { status: 401 });
+        }
+
+        if (Auth.isValidEmail(clientRequest.email) === false)
+        {
+            errorResponse.error = "Please enter a valid email address.";
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        const normalizedEmail: string = Auth.normalizeEmail(clientRequest.email);
+        const userWithEmail: DBType.UserRow | null = Auth.findUserByEmail(normalizedEmail);
+        if (userWithEmail !== null && userWithEmail.id !== currentUser.id)
+        {
+            errorResponse.error = "Email already in use.";
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        const previousEmail: string | null = currentUser.email;
+        Auth.updateUserEmail(currentUser.id, normalizedEmail);
+
+        await Mailer.sendMail(
+            normalizedEmail,
+            "Votre adresse e-mail Protonet",
+            `Bonjour ${currentUser.username},\n\nCette adresse e-mail est désormais associée à votre compte Protonet.`
+        );
+
+        if (previousEmail !== null)
+        {
+            await Mailer.sendMail(
+                previousEmail,
+                "Votre adresse e-mail Protonet a été modifiée",
+                `Bonjour ${currentUser.username},\n\nL'adresse e-mail de votre compte a été modifiée. Si vous n'êtes pas à l'origine de ce changement, contactez-nous.`
+            );
+        }
+
+        const updatedUser: DBType.UserRow | null = Auth.findUserById(currentUser.id);
+        errorResponse.error = null;
+        errorResponse.userRow = updatedUser === null ? null : { ...updatedUser, password_hash: "" };
+        return NextResponse.json(errorResponse, { status: 200 });
+    }
+    catch (error: unknown)
+    {
+        errorResponse.error = error instanceof Error ? error.message : String(error);
+        return NextResponse.json(errorResponse, { status: 500 });
+    }
+}
+
+export async function serverTryChangeUsernameRequest(request: Request): Promise<NextResponse>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.ChangeUsername> = await request.json();
+    const errorResponse: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ChangeUsername> =
+    {
+        error: "Unknown error.",
+        userRow: null,
+    };
+
+    try
+    {
+        const currentUser: DBType.UserRow | null = await Auth.getCurrentUser();
+        if (currentUser === null)
+        {
+            errorResponse.error = "Not logged in.";
+            return NextResponse.json(errorResponse, { status: 401 });
+        }
+
+        const trimmedUsername: string = clientRequest.username.trim();
+        if (trimmedUsername.length < 3)
+        {
+            errorResponse.error = "Username must be 3+ chars.";
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        const userWithUsername: DBType.UserRow | null = Auth.findUserByUsername(trimmedUsername);
+        if (userWithUsername !== null && userWithUsername.id !== currentUser.id)
+        {
+            errorResponse.error = "Username already taken.";
+            return NextResponse.json(errorResponse, { status: 400 });
+        }
+
+        Auth.updateUserUsername(currentUser.id, trimmedUsername);
+
+        if (currentUser.email !== null)
+        {
+            await Mailer.sendMail(
+                currentUser.email,
+                "Votre nom de compte Protonet a été modifié",
+                `Bonjour,\n\nLe nom de votre compte est désormais "${trimmedUsername}". Si vous n'êtes pas à l'origine de ce changement, contactez-nous.`
+            );
+        }
+
+        const updatedUser: DBType.UserRow | null = Auth.findUserById(currentUser.id);
+        errorResponse.error = null;
+        errorResponse.userRow = updatedUser === null ? null : { ...updatedUser, password_hash: "" };
+        return NextResponse.json(errorResponse, { status: 200 });
+    }
+    catch (error: unknown)
+    {
+        errorResponse.error = error instanceof Error ? error.message : String(error);
+        return NextResponse.json(errorResponse, { status: 500 });
+    }
 }
 
 export async function serverTryDeleteUserRequest(request: Request): Promise<NextResponse>
@@ -1658,6 +1956,24 @@ export function tryRenamePlanetLogic(playerId: number, serverData: CoreType.Serv
         failureReason: null,
         playerStateResult: serverGetPublicPlayerData(playerId),
     }
+
+    return playerActionResult;
+}
+
+export function tryUpdatePlayerSettingsLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.UpdatePlayerSettings>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    PlayerSettings.setProbesPerSend(playerData, requestData.probesPerSend);
+    ServerDynamicData.serverUpdatePlayerDataContext(playerId, CoreType.DataContext.PlayerSettings, playerData.dynamicPlayerData);
+
+    const playerActionResult: PlayerActionResult =
+    {
+        success: true,
+        failureReason: null,
+        playerStateResult: serverGetPublicPlayerData(playerId),
+    };
 
     return playerActionResult;
 }

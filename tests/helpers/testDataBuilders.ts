@@ -22,6 +22,18 @@ export function buildPlayerRow(overrides?: Partial<DBType.PlayerRow>): DBType.Pl
     return playerRow;
 }
 
+export function buildPlayerSettingsRow(overrides?: Partial<DBType.PlayerSettingsRow>): DBType.PlayerSettingsRow
+{
+    const playerSettingsRow: DBType.PlayerSettingsRow =
+    {
+        player_id: 1,
+        probes_per_send: 1,
+        ...overrides,
+    };
+
+    return playerSettingsRow;
+}
+
 export function buildPlanetRow(overrides?: Partial<DBType.PlanetRow>): DBType.PlanetRow
 {
     const planetRow: DBType.PlanetRow =
@@ -77,6 +89,7 @@ export function buildDynamicPlayerData(overrides?: Partial<CoreType.DynamicPlaye
         researchLevels: new Map<GameType.ResearchType, number>(),
         currentlyResearchings: [],
         messageDatas: [],
+        playerSettings: buildPlayerSettingsRow(),
         ...overrides,
     };
 

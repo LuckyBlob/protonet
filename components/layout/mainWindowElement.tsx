@@ -12,7 +12,7 @@ import * as MissileFleetView from "@/components/views/missileFleetView";
 import * as PlanetView from "@/components/views/planetView";
 import * as CurrentPlanetView from "@/components/views/currentPlanetView";
 import * as MessagesView from "@/components/views/messagesView";
-import * as AccountView from "@/components/views/accountView";
+import * as PlayerSettingsView from "@/components/views/playerSettingsView";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentView from "@/lib/use/useCurrentView";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser";
@@ -86,9 +86,9 @@ export function MainWindowElement(props: MainWindowProps): ReactElement
 		return <MessagesView.MessagesView clientDataStateResult={props.clientDataStateResult} />;
 	}
 
-	if (props.cvController[0] === "account")
+	if (props.cvController[0] === "settings")
 	{
-		return <AccountView.AccountView clientDataStateResult={props.clientDataStateResult} cuController={props.cuController} />;
+		return <PlayerSettingsView.PlayerSettingsView clientDataStateResult={props.clientDataStateResult} cuController={props.cuController} />;
 	}
 
 	return <div>Unknown view</div>;

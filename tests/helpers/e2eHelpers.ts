@@ -1,6 +1,8 @@
 
 import { test, expect, Page, Locator } from "@playwright/test";
 import Database from "better-sqlite3";
+import { tmpdir } from "os";
+import { join } from "path";
 
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
@@ -12,6 +14,8 @@ import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelp
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 export const PLANET_BUTTON_PATTERN: RegExp = /^Planet /;
+
+const TEST_DB_PATH: string = join(tmpdir(), "protonet-e2e-test.db");
 
 export const TARGETABLE_INVESTED_VALUE: number = 1_000_000_000;
 
@@ -61,21 +65,56 @@ type TestCredentials =
 
 let registeredTestUsers: TestCredentials[] = [];
 
+export function emailForUsername(username: string): string
+{
+    return `${username.toLowerCase()}@e2e.test`;
+}
+
+function readLatestVerifyToken(email: string): string
+{
+    const database: Database.Database = new Database(TEST_DB_PATH);
+    database.pragma("busy_timeout = 8000");
+
+    try
+    {
+        const tokenRow: { token: string | null } | undefined = database.prepare(
+            "SELECT verify_token AS token FROM users WHERE email = ?"
+        ).get(email) as { token: string | null } | undefined;
+
+        if (tokenRow === undefined || tokenRow.token === null)
+        {
+            throw new Error(`No verification token found for ${email}.`);
+        }
+
+        return tokenRow.token;
+    }
+    finally
+    {
+        database.close();
+    }
+}
+
 export async function register(page: Page, username: string, password: string): Promise<void>
 {
+    const email: string = emailForUsername(username);
+
     await page.goto('/register')
     await page.getByPlaceholder('Username (3+ chars)').fill(username)
+    await page.getByPlaceholder('Email').fill(email)
     await page.getByPlaceholder('Password (6+ chars)').fill(password)
     await page.getByRole('button', { name: 'Register' }).click()
+
+    const verifyToken: string = readLatestVerifyToken(email)
+    await page.goto(`/verify?token=${verifyToken}`)
+
     await expect(page.getByRole('button', { name: PLANET_BUTTON_PATTERN })).toBeVisible()
 
     registeredTestUsers.push({ username: username, password: password });
 }
 
-// The Delete-account button moved from the top bar onto the Account view, so navigate there first.
 export async function deleteAccount(page: Page): Promise<void>
 {
-    await goToView(page, "Account")
+    await goToView(page, "Player Settings")
     await page.getByRole('button', { name: 'Delete account' }).click()
     await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible()
 }
@@ -112,15 +151,18 @@ export async function cleanupRegisteredUsers(page: Page): Promise<void>
     }
 }
 
-// Attempts a registration expected to fail because the universe has no free starting slots left,
-// asserting the real "no room" reason surfaces to the user. Does not track the account: the server
-// rolls the half-created user back, so nothing persists to clean up.
 export async function registerExpectingNoRoom(page: Page, username: string, password: string): Promise<void>
 {
+    const email: string = emailForUsername(username)
+
     await page.goto('/register')
     await page.getByPlaceholder('Username (3+ chars)').fill(username)
+    await page.getByPlaceholder('Email').fill(email)
     await page.getByPlaceholder('Password (6+ chars)').fill(password)
     await page.getByRole('button', { name: 'Register' }).click()
+
+    const verifyToken: string = readLatestVerifyToken(email)
+    await page.goto(`/verify?token=${verifyToken}`)
     await expect(page.getByText('No more planets for new player.')).toBeVisible()
 }
 
@@ -142,7 +184,7 @@ export function countFreeStartingSlots(db: Database.Database): number
 export async function login(page: Page, username: string, password: string): Promise<void>
 {
     await page.goto('/login')
-    await page.getByPlaceholder('Username').fill(username)
+    await page.getByPlaceholder('Username or email').fill(username)
     await page.getByPlaceholder('Password').fill(password)
     await page.getByRole('button', { name: 'Log in' }).click()
     await expect(page.getByRole('button', { name: PLANET_BUTTON_PATTERN })).toBeVisible()
@@ -556,7 +598,7 @@ export async function reloadGame(page: Page): Promise<void>
     await expect(page.getByRole("button", { name: PLANET_BUTTON_PATTERN })).toBeVisible();
 }
 
-export async function goToView(page: Page, view: "Game" | "Buildings" | "Research" | "Shipyard" | "Fleets" | "Current Planet" | "Planets" | "Messages" | "Stats" | "Account"): Promise<void>
+export async function goToView(page: Page, view: "Game" | "Buildings" | "Research" | "Shipyard" | "Fleets" | "Current Planet" | "Planets" | "Messages" | "Stats" | "Player Settings"): Promise<void>
 {
     // The sidebar's Messages button accessible name is "Messages" when there are no unread, and
     // "Messages(N)" once the unread badge appears, so we can't rely on an exact name match here.
