@@ -123,11 +123,15 @@ describe('BUILDING_STATS moon-buildable set', () =>
             GameType.BuildingType.CrystalContainement,
             GameType.BuildingType.DeuteriumTank,
             GameType.BuildingType.LunarBase,
+            GameType.BuildingType.SensorPhalanx,
+            GameType.BuildingType.JumpGate,
         ];
 
         const moonOnly: GameType.BuildingType[] =
         [
             GameType.BuildingType.LunarBase,
+            GameType.BuildingType.SensorPhalanx,
+            GameType.BuildingType.JumpGate,
         ];
 
         for (const buildingType of StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building))

@@ -475,6 +475,81 @@ export async function clientTryDestroyMissilesRequest(psController: CoreType.PSC
     }
 }
 
+export async function clientTryScanRequest(psController: CoreType.PSController, sourceMoonPlanetId: number, targetGalaxy: number, targetSystem: number, targetSlot: number): Promise<string | null>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Scan> =
+    {
+        sourceMoonPlanetId: sourceMoonPlanetId,
+        targetGalaxy: targetGalaxy,
+        targetSystem: targetSystem,
+        targetSlot: targetSlot,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.Scan> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.Scan, clientRequest);
+        if (response.error !== null)
+        {
+            return response.error;
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            return `Scan failed for moon ${sourceMoonPlanetId}: Invalid response from server.`;
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+        return null;
+    }
+    catch (error: unknown)
+    {
+        if (error instanceof Error)
+        {
+            return error.message;
+        }
+
+        return String(error);
+    }
+}
+
+export async function clientTryJumpGateRequest(psController: CoreType.PSController, sourceMoonPlanetId: number, destinationMoonPlanetId: number, unitQuantities: Map<GameType.UnitType, number>): Promise<string | null>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.JumpGate> =
+    {
+        sourceMoonPlanetId: sourceMoonPlanetId,
+        destinationMoonPlanetId: destinationMoonPlanetId,
+        serializedUnitQuantities: Serialization.serializeNumberNumberMap(unitQuantities),
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.JumpGate> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.JumpGate, clientRequest);
+        if (response.error !== null)
+        {
+            return response.error;
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            return `Jump failed for moon ${sourceMoonPlanetId}: Invalid response from server.`;
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+        return null;
+    }
+    catch (error: unknown)
+    {
+        if (error instanceof Error)
+        {
+            return error.message;
+        }
+
+        return String(error);
+    }
+}
+
 export async function clientTrySetBuildingEnergySettingRequest(psController: CoreType.PSController, planetId: number, buildingType: GameType.BuildingType, energyPercentage: number): Promise<void>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.SetBuildingEnergySetting> =

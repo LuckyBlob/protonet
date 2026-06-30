@@ -370,6 +370,39 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.PlanetValueType.MissileSpace, 10],]),
 			basePlanetValueExponent: 1,}],
 	},],
+
+	[GameType.BuildingType.SensorPhalanx, { displayName: "Sensor Phalanx",
+		buildableZones: [GameType.PlanetZone.Moon],
+		upgradeRequirements:[LUNAR_BASE_REQUIREMENT],
+		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 20000],
+				[GameType.ResourceType.Crystal, 40000],
+				[GameType.ResourceType.Deuterium, 20000],]),},
+	},],
+
+	[GameType.BuildingType.JumpGate, { displayName: "Jump Gate",
+		buildableZones: [GameType.PlanetZone.Moon],
+		upgradeRequirements:[
+			LUNAR_BASE_REQUIREMENT,
+			{
+				hideDataWhenRequirementFailed: true,
+				specificThingRequirement:{
+					thingType: ThingType.Thing.Research,
+					specificThingType: GameType.ResearchType.HyperspaceDrive,
+					operator: RequirementType.RequirementOperator.GreaterOrEqual,
+					value: 7,
+					valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceDrive),},},],
+		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 2000000],
+				[GameType.ResourceType.Crystal, 4000000],
+				[GameType.ResourceType.Deuterium, 2000000],]),},
+	},],
 ]);
 //#endregion
 
@@ -690,6 +723,7 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 
 	[GameType.FleetActionType.Collect, {
 		displayName: "Collect",
+			returnsToOrigin: true,
 			requirements:[{
 			hideDataWhenRequirementFailed: true,
 			thingRequirement:{
@@ -706,6 +740,7 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 
 	[GameType.FleetActionType.Transport, {
 		displayName: "Transport",
+			returnsToOrigin: true,
 			requirements:[{
 			hideDataWhenRequirementFailed: true,
 			thingRequirement:{
@@ -752,6 +787,7 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 
 	[GameType.FleetActionType.Recycle, {
 		displayName: "Recycle",
+			returnsToOrigin: true,
 			requirements:[
 			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
@@ -774,6 +810,7 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				
 	[GameType.FleetActionType.Espionage, {
 		displayName: "Espionage",
+			returnsToOrigin: true,
 			requirements:[
 			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{

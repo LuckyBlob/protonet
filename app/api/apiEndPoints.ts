@@ -24,6 +24,8 @@ export const ActionRequest =
     UpgradeResearch:   { endpoint: "buy/upgradeResearch",   name: "UpgradeResearch" },
     BuildUnits:   { endpoint: "buy/buildUnits",   name: "BuildUnits" },
     DestroyMissiles:   { endpoint: "buy/destroyMissiles",   name: "DestroyMissiles" },
+    Scan:   { endpoint: "buy/scan",   name: "Scan" },
+    JumpGate:   { endpoint: "buy/jumpGate",   name: "JumpGate" },
     SetBuildingEnergySetting:   { endpoint: "buildings/setEnergySetting",   name: "SetBuildingEnergySetting" },
     SendFleet:   { endpoint: "buy/sendFleet",   name: "SendFleet" },
     RecallFleet:   { endpoint: "buy/recallFleet",   name: "RecallFleet" },
@@ -53,6 +55,8 @@ export type ActionRequestMap =
     UpgradeResearch: RequestType.Research_ClientRequest;
     BuildUnits: RequestType.BuildUnits_ClientRequest;
     DestroyMissiles: RequestType.DestroyMissiles_ClientRequest;
+    Scan: RequestType.Scan_ClientRequest;
+    JumpGate: RequestType.JumpGate_ClientRequest;
     SetBuildingEnergySetting: RequestType.SetBuildingEnergySetting_ClientRequest;
     SendFleet: RequestType.SendFleet_ClientRequest;
     RecallFleet: RequestType.RecallFleet_ClientRequest;
@@ -82,6 +86,8 @@ export type ActionResponseMap =
     UpgradeResearch: RequestType.Research_ServerResponse;
     BuildUnits: RequestType.BuildUnits_ServerResponse;
     DestroyMissiles: RequestType.DestroyMissiles_ServerResponse;
+    Scan: RequestType.Scan_ServerResponse;
+    JumpGate: RequestType.JumpGate_ServerResponse;
     SetBuildingEnergySetting: RequestType.SetBuildingEnergySetting_ServerResponse;
     SendFleet: RequestType.SendFleet_ServerResponse;
     RecallFleet: RequestType.RecallFleet_ServerResponse;

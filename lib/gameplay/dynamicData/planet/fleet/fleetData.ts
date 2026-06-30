@@ -120,35 +120,12 @@ export function addFleetMessagesToPlayerData(playerData: CoreType.PlayerData, fl
 {
     if (fleetMovement.originMessageRow !== null && playerData.playerRow.id === fleetMovement.fleetMovementRow.player_origin_id)
     {
-        addFleetMessageToPlayerData(playerData, fleetMovement.originMessageRow);
+        MessageData.addMessageRowToPlayerData(playerData, fleetMovement.originMessageRow);
     }
     else if (fleetMovement.targetMessageRow !== null && playerData.playerRow.id === fleetMovement.fleetMovementRow.player_target_id)
     {
-        addFleetMessageToPlayerData(playerData, fleetMovement.targetMessageRow);
+        MessageData.addMessageRowToPlayerData(playerData, fleetMovement.targetMessageRow);
     }
-}
-
-function addFleetMessageToPlayerData(playerData: CoreType.PlayerData, messageRow: DBType.MessageRow | null): void
-{
-    if (messageRow === null)
-    {
-        return;
-    }
-
-    const newMessagePreview: CoreType.MessagePreview =
-    {
-        messageRowId: messageRow.id, // -1 sentinel for now
-        receivedAt: messageRow.received_at,
-        title: messageRow.title,
-        isRead: messageRow.is_read,
-        type: messageRow.type,
-    };
-    const newMessageData: CoreType.MessageData =
-    {
-        messagePreview: newMessagePreview,
-        messageRow: messageRow, // already loaded — no fetch needed on click
-    };
-    playerData.dynamicPlayerData.messageDatas.push(newMessageData);
 }
 
 // Generic missing-target bounce: a fleet action whose target no longer exists at the destination

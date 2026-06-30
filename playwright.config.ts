@@ -21,6 +21,7 @@ export default defineConfig({
 		reuseExistingServer: false,
 		env: {
 			DATABASE_PATH: TEST_DB_PATH,
+			MAIL_DISABLED: 'true',
 		},
 	},
 })

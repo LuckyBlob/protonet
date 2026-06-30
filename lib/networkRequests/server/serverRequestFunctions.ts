@@ -37,6 +37,12 @@ import * as ResearchDuration from "@/lib/gameplay/coreData/formula/researchDurat
 import * as MathHelp from "@/lib/helper/mathHelp";
 import * as ServerPlanetManagement from "@/lib/gameplay/progressUpdate/server/serverPlanetManagement";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as SensorPhalanx from "@/lib/gameplay/coreData/formula/sensorPhalanxFormulas";
+import * as JumpGate from "@/lib/gameplay/coreData/formula/jumpGateFormulas";
+import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
+import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
+import * as TimeFormat from "@/lib/helper/timeFormat";
 //#region Types
 
 type PlayerActionResult =
@@ -931,7 +937,7 @@ export function serverFindAllPlanetsPublic(): CoreType.PublicPlanetData[]
 }
 
 const PLANET_ROW_ALLOWED_COLUMNS: ReadonlySet<string> = new Set<string>([
-    "slot", "system", "galaxy", "size", "temperature", "name", "owner_player_id", "claimed_at", "last_updated",
+    "slot", "system", "galaxy", "size", "temperature", "name", "owner_player_id", "claimed_at", "last_updated", "jump_gate_ready_at",
 ]);
 
 export function serverUpdatePlanetRow(planetId: number, columnUpdates: Partial<DBType.PlanetRow>): DBType.PlanetRow
@@ -1825,6 +1831,256 @@ export function tryDestroyMissilesLogic(playerId: number, serverData: CoreType.S
             failureReason: null,
             playerStateResult: serverGetPublicPlayerData(playerId),
         }
+        return playerActionResult;
+    })();
+
+    return playerActionResult;
+}
+
+function buildScanFleetComposition(fleetId: number): string
+{
+    const fleetMovementUnitRows: DBType.FleetMovementUnitRow[] = DB.databaseConnection.prepare(
+        "SELECT * FROM fleet_movement_unit WHERE fleet_id = ?"
+    ).all(fleetId) as DBType.FleetMovementUnitRow[];
+
+    const compositionParts: string[] = [];
+    for (const fleetMovementUnitRow of fleetMovementUnitRows)
+    {
+        if (fleetMovementUnitRow.unit_quantity <= 0)
+        {
+            continue;
+        }
+
+        const unitName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(fleetMovementUnitRow.unit_type as GameType.UnitType));
+        compositionParts.push(`${fleetMovementUnitRow.unit_quantity} ${unitName}`);
+    }
+
+    if (compositionParts.length === 0)
+    {
+        return "no units";
+    }
+
+    return compositionParts.join(", ");
+}
+
+function isPlanetZoneAtCoords(zone: number, galaxy: number, system: number, slot: number, targetGalaxy: number, targetSystem: number, targetSlot: number): boolean
+{
+    return zone === GameType.PlanetZone.Planet && galaxy === targetGalaxy && system === targetSystem && slot === targetSlot;
+}
+
+function buildScanFleetLine(playerData: CoreType.PlayerData, fleetMovementRow: DBType.FleetMovementRow, now: number, scannedGalaxy: number, scannedSystem: number, scannedSlot: number): string
+{
+    const legDurationMs: number = fleetMovementRow.duration_at_start_time!;
+    const currentLegArrival: number = fleetMovementRow.started_at! + legDurationMs;
+    const isReturnTrip: boolean = fleetMovementRow.is_return_trip === 1;
+
+    const originIsScannedPlanet: boolean = isPlanetZoneAtCoords(fleetMovementRow.planet_origin_zone, fleetMovementRow.planet_origin_galaxy, fleetMovementRow.planet_origin_system, fleetMovementRow.planet_origin_slot, scannedGalaxy, scannedSystem, scannedSlot);
+    const targetIsScannedPlanet: boolean = isPlanetZoneAtCoords(fleetMovementRow.planet_target_zone, fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot, scannedGalaxy, scannedSystem, scannedSlot);
+    const currentDestinationIsScanned: boolean = isReturnTrip === true ? originIsScannedPlanet : targetIsScannedPlanet;
+
+    const ownerName: string = StaticDataHelper.getPlayerName(playerData.publicPlayerRows, fleetMovementRow.player_origin_id);
+    const originAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_origin_galaxy, fleetMovementRow.planet_origin_system, fleetMovementRow.planet_origin_slot, fleetMovementRow.planet_origin_zone as GameType.PlanetZone);
+    const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot, fleetMovementRow.planet_target_zone as GameType.PlanetZone);
+    const actionName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.fleetAction(fleetMovementRow.fleet_action_type as GameType.FleetActionType));
+    const composition: string = buildScanFleetComposition(fleetMovementRow.id);
+    const returnsToOrigin: boolean = StaticDataHelper.getFleetActionInfo(fleetMovementRow.fleet_action_type as GameType.FleetActionType).returnsToOrigin === true;
+
+    if (currentDestinationIsScanned === true)
+    {
+        const fromAddress: string = isReturnTrip === true ? targetAddress : originAddress;
+        return `Incoming • ${actionName} • from ${fromAddress} • ${ownerName} • ${composition} • arrives in ${TimeFormat.formatRemainingTimeMs(currentLegArrival - now)}`;
+    }
+
+    if (originIsScannedPlanet === true && isReturnTrip === false && returnsToOrigin === true)
+    {
+        const returnArrival: number = currentLegArrival + legDurationMs;
+        return `Outgoing • ${actionName} • to ${targetAddress} • ${ownerName} • ${composition} • returns in ${TimeFormat.formatRemainingTimeMs(returnArrival - now)}`;
+    }
+
+    const headingToAddress: string = isReturnTrip === true ? originAddress : targetAddress;
+    return `Outgoing • ${actionName} • to ${headingToAddress} • ${ownerName} • ${composition} • arrives in ${TimeFormat.formatRemainingTimeMs(currentLegArrival - now)}`;
+}
+
+function buildScanReportBody(playerData: CoreType.PlayerData, galaxy: number, system: number, slot: number, now: number): string
+{
+    const fleetMovementRows: DBType.FleetMovementRow[] = DB.databaseConnection.prepare(
+        "SELECT * FROM fleet_movement WHERE started_at IS NOT NULL AND ("
+        + "(planet_target_galaxy = ? AND planet_target_system = ? AND planet_target_slot = ? AND planet_target_zone = ?)"
+        + " OR (planet_origin_galaxy = ? AND planet_origin_system = ? AND planet_origin_slot = ? AND planet_origin_zone = ?))"
+    ).all(galaxy, system, slot, GameType.PlanetZone.Planet, galaxy, system, slot, GameType.PlanetZone.Planet) as DBType.FleetMovementRow[];
+
+    const reportLines: string[] = [];
+    for (const fleetMovementRow of fleetMovementRows)
+    {
+        const currentLegArrival: number = fleetMovementRow.started_at! + fleetMovementRow.duration_at_start_time!;
+        if (currentLegArrival <= now)
+        {
+            continue;
+        }
+
+        reportLines.push(buildScanFleetLine(playerData, fleetMovementRow, now, galaxy, system, slot));
+    }
+
+    if (reportLines.length === 0)
+    {
+        return "No fleet movements detected.";
+    }
+
+    return reportLines.join("\n");
+}
+
+export function tryScanLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Scan>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    const sourceMoonData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.sourceMoonPlanetId);
+    if (sourceMoonData === null)
+    {
+        return { success: false, failureReason: "Scanner moon not found.", playerStateResult: playerData };
+    }
+
+    if (sourceMoonData.planetRow.zone !== GameType.PlanetZone.Moon)
+    {
+        return { success: false, failureReason: "A scan can only be run from a moon.", playerStateResult: playerData };
+    }
+
+    const sensorPhalanxLevel: number = BuildingData.getBuildingLevel(sourceMoonData, GameType.BuildingType.SensorPhalanx);
+    if (sensorPhalanxLevel < 1)
+    {
+        return { success: false, failureReason: "No Sensor Phalanx on this moon.", playerStateResult: playerData };
+    }
+
+    if (sourceMoonData.planetRow.galaxy !== requestData.targetGalaxy)
+    {
+        return { success: false, failureReason: "A scan cannot cross galaxies.", playerStateResult: playerData };
+    }
+
+    const scanRangeSystems: number = SensorPhalanx.computeScanRangeSystems(sensorPhalanxLevel);
+    const systemDistance: number = Math.abs(sourceMoonData.planetRow.system - requestData.targetSystem);
+    if (systemDistance > scanRangeSystems)
+    {
+        return { success: false, failureReason: "Target is out of scan range.", playerStateResult: playerData };
+    }
+
+    const availableDeuterium: number = ResourceData.getResourceQuantity(sourceMoonData, GameType.ResourceType.Deuterium);
+    if (availableDeuterium < SensorPhalanx.SCAN_DEUTERIUM_COST)
+    {
+        return { success: false, failureReason: "Not enough deuterium to scan.", playerStateResult: playerData };
+    }
+
+    ResourceData.subtractPlanetResource(sourceMoonData, GameType.ResourceType.Deuterium, SensorPhalanx.SCAN_DEUTERIUM_COST);
+
+    const targetAddressLabel: string = StaticDataHelper.formatPlanetAddress(requestData.targetGalaxy, requestData.targetSystem, requestData.targetSlot, GameType.PlanetZone.Planet);
+    const reportBody: string = buildScanReportBody(playerData, requestData.targetGalaxy, requestData.targetSystem, requestData.targetSlot, now);
+
+    const scanMessageRow: DBType.MessageRow =
+    {
+        id: -1,
+        player_id: playerId,
+        received_at: now,
+        type: MessageData.MessageType.Scan,
+        is_read: 0,
+        title: `Sensor Phalanx scan of ${targetAddressLabel}`,
+        body: `Sensor Phalanx scan of ${targetAddressLabel}.\n${reportBody}`,
+    };
+    MessageData.addMessageRowToPlayerData(playerData, scanMessageRow);
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
+        ServerDynamicData.serverUpdatePlanetDataContext(sourceMoonData.planetRow.id, playerId, CoreType.DataContext.ResourceQuantity, sourceMoonData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlayerDataContext(playerId, CoreType.DataContext.Messages, playerData.dynamicPlayerData);
+
+        const playerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPublicPlayerData(playerId),
+        };
+        return playerActionResult;
+    })();
+
+    return playerActionResult;
+}
+
+export function tryJumpGateLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.JumpGate>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+    const requestedUnitQuantities: Map<GameType.UnitType, number> = Serialization.deserializeNumberNumberMap(requestData.serializedUnitQuantities) as Map<GameType.UnitType, number>;
+
+    if (requestData.sourceMoonPlanetId === requestData.destinationMoonPlanetId)
+    {
+        return { success: false, failureReason: "Jump source and destination must be different moons.", playerStateResult: playerData };
+    }
+
+    const sourceMoonData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.sourceMoonPlanetId);
+    const destinationMoonData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.destinationMoonPlanetId);
+
+    if (sourceMoonData === null || destinationMoonData === null)
+    {
+        return { success: false, failureReason: "Jump source or destination moon not found.", playerStateResult: playerData };
+    }
+
+    if (sourceMoonData.planetRow.zone !== GameType.PlanetZone.Moon || destinationMoonData.planetRow.zone !== GameType.PlanetZone.Moon)
+    {
+        return { success: false, failureReason: "A jump can only happen between two moons.", playerStateResult: playerData };
+    }
+
+    const sourceJumpGateLevel: number = BuildingData.getBuildingLevel(sourceMoonData, GameType.BuildingType.JumpGate);
+    const destinationJumpGateLevel: number = BuildingData.getBuildingLevel(destinationMoonData, GameType.BuildingType.JumpGate);
+    if (sourceJumpGateLevel < 1 || destinationJumpGateLevel < 1)
+    {
+        return { success: false, failureReason: "Both moons need a Jump Gate.", playerStateResult: playerData };
+    }
+
+    if (now < sourceMoonData.planetRow.jump_gate_ready_at || now < destinationMoonData.planetRow.jump_gate_ready_at)
+    {
+        return { success: false, failureReason: "A Jump Gate is still on cooldown.", playerStateResult: playerData };
+    }
+
+    let jumpedAnyUnit: boolean = false;
+    for (const [unitType, requestedQuantity] of requestedUnitQuantities)
+    {
+        if (requestedQuantity <= 0)
+        {
+            continue;
+        }
+
+        const availableQuantity: number = UnitData.getUnitQuantity(sourceMoonData, unitType);
+        const quantityToJump: number = Math.min(requestedQuantity, availableQuantity);
+        if (quantityToJump <= 0)
+        {
+            continue;
+        }
+
+        UnitData.subtractPlanetUnit(sourceMoonData, unitType, quantityToJump);
+        UnitData.addPlanetUnit(destinationMoonData, unitType, quantityToJump);
+        jumpedAnyUnit = true;
+    }
+
+    if (jumpedAnyUnit === false)
+    {
+        return { success: false, failureReason: "No units available to jump.", playerStateResult: playerData };
+    }
+
+    const timeMultiplier: number = serverData.config.time_multiplier;
+    const sourceReadyAt: number = now + Math.floor(JumpGate.computeJumpGateCooldownSeconds(sourceJumpGateLevel) * 1000 / timeMultiplier);
+    const destinationReadyAt: number = now + Math.floor(JumpGate.computeJumpGateCooldownSeconds(destinationJumpGateLevel) * 1000 / timeMultiplier);
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
+        ServerDynamicData.serverUpdatePlanetDataContext(sourceMoonData.planetRow.id, playerId, CoreType.DataContext.UnitQuantity, sourceMoonData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(destinationMoonData.planetRow.id, playerId, CoreType.DataContext.UnitQuantity, destinationMoonData.dynamicPlanetData);
+        serverUpdatePlanetRow(sourceMoonData.planetRow.id, { jump_gate_ready_at: sourceReadyAt });
+        serverUpdatePlanetRow(destinationMoonData.planetRow.id, { jump_gate_ready_at: destinationReadyAt });
+
+        const playerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPublicPlayerData(playerId),
+        };
         return playerActionResult;
     })();
 

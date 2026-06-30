@@ -49,6 +49,7 @@ export function buildPlanetRow(overrides?: Partial<DBType.PlanetRow>): DBType.Pl
         owner_player_id: 1,
         claimed_at: 0,
         last_updated: 1_000_000,
+        jump_gate_ready_at: 0,
         ...overrides,
     };
 

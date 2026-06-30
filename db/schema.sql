@@ -65,6 +65,7 @@ CREATE TABLE planet
 	owner_player_id INTEGER,
  	claimed_at INTEGER NOT NULL DEFAULT 0,
 	last_updated INTEGER NOT NULL DEFAULT 0,
+	jump_gate_ready_at INTEGER NOT NULL DEFAULT 0,
 	UNIQUE (slot, system, galaxy, zone),
 	FOREIGN KEY (owner_player_id) REFERENCES player(id) ON DELETE SET NULL
 );

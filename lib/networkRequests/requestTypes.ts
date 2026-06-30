@@ -180,6 +180,29 @@ export type DestroyMissiles_ServerResponse = BaseServerResponse &
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
 
+export type Scan_ClientRequest = BaseClientRequest &
+{
+	sourceMoonPlanetId: number;
+	targetGalaxy: number;
+	targetSystem: number;
+	targetSlot: number;
+};
+export type Scan_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
+export type JumpGate_ClientRequest = BaseClientRequest &
+{
+	sourceMoonPlanetId: number;
+	destinationMoonPlanetId: number;
+	serializedUnitQuantities: Serialization.SerializedNumberNumberMap;
+};
+export type JumpGate_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
 export type SetBuildingEnergySetting_ClientRequest = BaseClientRequest &
 {
 	planetId: number;

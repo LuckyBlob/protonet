@@ -32,6 +32,8 @@ export const BuildingType =
     Terraformer: 13,
     LunarBase: 14,
     MissileSilo: 15,
+    SensorPhalanx: 16,
+    JumpGate: 17,
 } as const;
 export type BuildingType = typeof BuildingType[keyof typeof BuildingType];
 export type BuildingStats =
@@ -233,6 +235,7 @@ export type FleetActionInfo =
 {
 	displayName: string;
 	requirements?: RequirementType.Requirement[];
+	returnsToOrigin?: boolean;
 };
 //#endregion
 

@@ -1,4 +1,5 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
+import * as DBType from "@/lib/db/dbTypes";
 
 //#region base vars
 export const MAX_VISIBLE_MESSAGES: number = 50;
@@ -11,6 +12,7 @@ export const MessageType =
     Admin: 1,
     FleetAction: 2,
     Espionage: 3,
+    Scan: 4,
 } as const;
 
 //#region message helpers
@@ -67,5 +69,28 @@ export function findMessageDataByMessageRowId(messageDatas: CoreType.MessageData
     }
 
     return matchingMessageData;
+}
+
+export function addMessageRowToPlayerData(playerData: CoreType.PlayerData, messageRow: DBType.MessageRow | null): void
+{
+    if (messageRow === null)
+    {
+        return;
+    }
+
+    const newMessagePreview: CoreType.MessagePreview =
+    {
+        messageRowId: messageRow.id,
+        receivedAt: messageRow.received_at,
+        title: messageRow.title,
+        isRead: messageRow.is_read,
+        type: messageRow.type,
+    };
+    const newMessageData: CoreType.MessageData =
+    {
+        messagePreview: newMessagePreview,
+        messageRow: messageRow,
+    };
+    playerData.dynamicPlayerData.messageDatas.push(newMessageData);
 }
 //#endregion

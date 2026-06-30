@@ -71,6 +71,7 @@ export type PlanetRow =
 	owner_player_id: number | null;
 	claimed_at: number;
 	last_updated: number;
+	jump_gate_ready_at: number;
 };
 
 export type PublicPlayerRow =

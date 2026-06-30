@@ -95,7 +95,13 @@
       "Bash(find . -maxdepth 3 -name \"*.db\" -not -path \"*/node_modules/*\")",
       "Bash(nslookup lawstrom.net)",
       "Bash(curl -sS -m 15 -I https://lawstrom.net)",
-      "Bash(curl -sS -m 15 https://lawstrom.net)"
+      "Bash(curl -sS -m 15 https://lawstrom.net)",
+      "Bash(curl -sS -m 15 -o /dev/null -w \"login HTTP %{http_code}\\\\n\" https://lawstrom.net/login)",
+      "Bash(curl -sS -m 15 https://lawstrom.net/login)",
+      "PowerShell($conns = Get-NetTCPConnection -LocalPort 3101 -State Listen -ErrorAction SilentlyContinue; if \\($conns\\) { $conns | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Write-Output \"Killing PID $_\"; Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue } } else { Write-Output \"Nothing listening on 3101\" })",
+      "Bash(SMTP_HOST=smtp.invalid.test SMTP_USER=x SMTP_PASS=y MAIL_DISABLED=true npx tsx _verifyMail.ts)",
+      "Bash(SMTP_HOST=smtp.invalid.test SMTP_USER=x SMTP_PASS=y DATABASE_PATH=/tmp/protonet-e2e-test.db npx tsx _verifyMail.ts)",
+      "PowerShell($conns = Get-NetTCPConnection -LocalPort 3101 -State Listen -ErrorAction SilentlyContinue; if \\($conns\\) { $conns | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Write-Output \"Killing PID $_\"; Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue } } else { Write-Output \"Nothing on 3101\" }; Start-Sleep -Seconds 1; if \\(Get-NetTCPConnection -LocalPort 3101 -State Listen -ErrorAction SilentlyContinue\\) { Write-Output \"STILL OCCUPIED\" } else { Write-Output \"3101 free\" })"
     ]
   },
   "hooks": {

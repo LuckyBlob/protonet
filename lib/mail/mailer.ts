@@ -1,14 +1,31 @@
 import nodemailer from "nodemailer";
 
-// Real delivery turns on when the SMTP_* env vars are set; until then sendMail() just logs the message
-// (link included) to the server console. Required env: SMTP_HOST, SMTP_USER, SMTP_PASS. Optional:
-// SMTP_PORT (default 465), MAIL_FROM (default SMTP_USER), APP_BASE_URL (the public origin for email links).
+// Real delivery turns on when the SMTP_* env vars are set and MAIL_DISABLED is not "true"; otherwise
+// sendMail() logs the message to the console. Required: SMTP_HOST/USER/PASS. Optional: SMTP_PORT (465),
+// MAIL_FROM, APP_BASE_URL, MAIL_DISABLED=true (e2e forces log-only so tests never consume mail quota).
 
 const APP_BASE_URL_FALLBACK: string = "http://localhost:3001";
 const DEFAULT_SMTP_PORT: number = 465;
+const E2E_DATABASE_MARKER: string = "protonet-e2e-test";
+
+function isRealMailDisabled(): boolean
+{
+    if (process.env.MAIL_DISABLED === "true")
+    {
+        return true;
+    }
+
+    const databasePath: string | undefined = process.env.DATABASE_PATH;
+    return databasePath !== undefined && databasePath.includes(E2E_DATABASE_MARKER);
+}
 
 function buildTransporter(): nodemailer.Transporter | null
 {
+    if (isRealMailDisabled() === true)
+    {
+        return null;
+    }
+
     const smtpHost: string | undefined = process.env.SMTP_HOST;
     const smtpUser: string | undefined = process.env.SMTP_USER;
     const smtpPassword: string | undefined = process.env.SMTP_PASS;

@@ -59,6 +59,18 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	    buildingSubItems.push({ view: "missileSilo", label: "Missile Silo", subItems: [] });
 	}
 
+	const selectedPlanetSensorPhalanxLevel: number = getSelectedPlanetBuildingLevel(props.clientDataStateResult, GameType.BuildingType.SensorPhalanx);
+	if (selectedPlanetSensorPhalanxLevel >= 1)
+	{
+	    buildingSubItems.push({ view: "sensorPhalanx", label: "Sensor Phalanx", subItems: [] });
+	}
+
+	const selectedPlanetJumpGateLevel: number = getSelectedPlanetBuildingLevel(props.clientDataStateResult, GameType.BuildingType.JumpGate);
+	if (selectedPlanetJumpGateLevel >= 1)
+	{
+	    buildingSubItems.push({ view: "jumpGate", label: "Jump Gate", subItems: [] });
+	}
+
 	const fleetSubItems: NavItem[] =
 	[
 	    { view: "fleets", label: "Ships", subItems: [] },

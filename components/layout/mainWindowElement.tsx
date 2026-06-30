@@ -7,6 +7,8 @@ import * as BuildingDeconstructionView from "@/components/views/buildingDeconstr
 import * as ResearchView from "@/components/views/researchView";
 import * as ShipyardView from "@/components/views/shipyardView";
 import * as MissileSiloView from "@/components/views/missileSiloView";
+import * as SensorPhalanxView from "@/components/views/sensorPhalanxView";
+import * as JumpGateView from "@/components/views/jumpGateView";
 import * as FleetView from "@/components/views/fleetView";
 import * as MissileFleetView from "@/components/views/missileFleetView";
 import * as PlanetView from "@/components/views/planetView";
@@ -54,6 +56,16 @@ export function MainWindowElement(props: MainWindowProps): ReactElement
 	if (props.cvController[0] === "missileSilo")
 	{
 		return <MissileSiloView.MissileSiloView clientDataStateResult={props.clientDataStateResult} />;
+	}
+
+	if (props.cvController[0] === "sensorPhalanx")
+	{
+		return <SensorPhalanxView.SensorPhalanxView clientDataStateResult={props.clientDataStateResult} />;
+	}
+
+	if (props.cvController[0] === "jumpGate")
+	{
+		return <JumpGateView.JumpGateView clientDataStateResult={props.clientDataStateResult} />;
 	}
 
 	if (props.cvController[0] === "fleets")
