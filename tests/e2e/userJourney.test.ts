@@ -24,6 +24,9 @@ test.afterAll((): void =>
 // slots return to the shared universe (this spec leaves E2E2 behind otherwise).
 test.afterEach(async ({ page }): Promise<void> =>
 {
+    // Capacity test's ~80-account UI teardown legitimately runs past the 30s default.
+    test.setTimeout(120_000);
+
     await E2EHelper.cleanupRegisteredUsers(page);
 });
 
@@ -107,6 +110,9 @@ test('full user journey', async ({ page }) =>
 
 test('registration is rejected once every starting slot in the universe is claimed', async ({ page }) =>
 {
+	// Filling every starting slot is ~80 sequential UI registrations, well past the 30s default.
+	test.setTimeout(120_000);
+
 	// Capacity is derived entirely from live game state + constants, so this test keeps working with
 	// no edits if the universe grows/shrinks (more galaxies/systems, a wider starting-slot band) or
 	// a registration starts handing out a different number of starting planets.
