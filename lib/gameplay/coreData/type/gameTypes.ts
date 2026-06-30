@@ -285,6 +285,9 @@ export const ResearchType =
     HyperspaceDrive: 4,
     ComputerTech: 5,
     EspionageTech: 6,
+    WeaponTech: 7,
+    ShieldingTech: 8,
+    ArmourTech: 9,
 } as const;
 export type ResearchType = typeof ResearchType[keyof typeof ResearchType];
 export type ResearchInfo =

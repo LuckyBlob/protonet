@@ -1177,6 +1177,66 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 3,
 				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+
+
+	[GameType.ResearchType.WeaponTech, { displayName: "Weapons Technology",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 800],
+				[GameType.ResourceType.Crystal, 200],]),},
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 4,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+
+
+	[GameType.ResearchType.ShieldingTech, { displayName: "Shielding Technology",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 200],
+				[GameType.ResourceType.Crystal, 600],]),},
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 6,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.EnergyTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 3,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},],}],
+
+
+	[GameType.ResearchType.ArmourTech, { displayName: "Armour Technology",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 1000],]),},
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 2,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
 ]);
 
 //#endregion
