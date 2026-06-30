@@ -21,6 +21,7 @@ export const DefaultServerData: ServerData =
 export type PlayerData =
 {
 	playerRow: DBType.PlayerRow;
+	adminLevel: number;
 	dynamicPlayerData: DynamicPlayerData;
 	planetDatas: PlanetData[];
 	publicPlanetDatas: PublicPlanetData[];

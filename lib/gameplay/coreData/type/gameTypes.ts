@@ -182,6 +182,23 @@ export type EngineTechData<TValue> =
 	researchLevel: number,
 	value: TValue,
 }
+export const SpeedFunctionType =
+{
+    EngineDrive: 1,
+    Missile: 2,
+} as const;
+export type SpeedFunctionType = typeof SpeedFunctionType[keyof typeof SpeedFunctionType];
+export const RangeFunctionType =
+{
+    Missile: 1,
+} as const;
+export type RangeFunctionType = typeof RangeFunctionType[keyof typeof RangeFunctionType];
+export type SpeedStats =
+{
+	engineTechData?: EngineTechData<number>[];
+	speedFunctionType: SpeedFunctionType;
+	rangeFunctionType?: RangeFunctionType;
+}
 export const UnitPlanetValueProductionFormulasType =
 {
     TemperatureScaled: 1,
@@ -213,11 +230,12 @@ export type UnitStats =
 	maxHealth: number;
 	shieldPower: number;
 	weaponPower: number;
-	speed?: EngineTechData<number>[];
+	speed?: SpeedStats;
 	space?: number;
 	baseFuelConsumption?: EngineTechData<Map<ResourceType, number>>[];
 	canTargetDebrisField?: boolean;
 	canSpy?: boolean;
+	canLaunchAsMissile?: boolean;
 	unitPlanetValueStats?: UnitPlanetValueStats[];
 };
 //#endregion
@@ -231,13 +249,23 @@ export const FleetActionType =
     Recycle: 4,
     Espionage: 5,
     Transport: 6,
+    MissileLaunch: 7,
 } as const;
 export type FleetActionType = typeof FleetActionType[keyof typeof FleetActionType];
+export const FleetActionCategory =
+{
+    Ship: 1,
+    Missile: 2,
+} as const;
+export type FleetActionCategory = typeof FleetActionCategory[keyof typeof FleetActionCategory];
 export type FleetActionInfo =
 {
 	displayName: string;
+	category: FleetActionCategory;
 	requirements?: RequirementType.Requirement[];
 	returnsToOrigin?: boolean;
+	canBeScanned?: boolean;
+	canBeRecalled?: boolean;
 };
 //#endregion
 

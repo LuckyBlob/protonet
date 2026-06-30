@@ -71,8 +71,21 @@ function writeFleetActionToDB(originPlayerData: FleetData.FleetPlayerData, targe
     {
         if (targetPlayerData !== null)
         {
-            ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.planetData.planetRow.id, targetPlayerData.playerData.playerRow.id, CoreType.DataContext.UnitQuantity, targetPlayerData.planetData.dynamicPlanetData);
-            ServerDynamicData.serverUpdatePlanetDataContext(targetPlayerData.planetData.planetRow.id, targetPlayerData.playerData.playerRow.id, CoreType.DataContext.ResourceQuantity, targetPlayerData.planetData.dynamicPlanetData);
+            // Persist every zone the target owns at the targeted coordinate, since one fleet can touch more than the aimed body (a missile hits a moon's defenses while consuming the planet's interceptors).
+            for (const targetBodyData of targetPlayerData.playerData.planetDatas)
+            {
+                const isAtTargetCoordinate: boolean = targetBodyData.planetRow.galaxy === fleetMovement.fleetMovementRow.planet_target_galaxy
+                    && targetBodyData.planetRow.system === fleetMovement.fleetMovementRow.planet_target_system
+                    && targetBodyData.planetRow.slot === fleetMovement.fleetMovementRow.planet_target_slot;
+                if (isAtTargetCoordinate === false)
+                {
+                    continue;
+                }
+
+                ServerDynamicData.serverUpdatePlanetDataContext(targetBodyData.planetRow.id, targetPlayerData.playerData.playerRow.id, CoreType.DataContext.UnitQuantity, targetBodyData.dynamicPlanetData);
+                ServerDynamicData.serverUpdatePlanetDataContext(targetBodyData.planetRow.id, targetPlayerData.playerData.playerRow.id, CoreType.DataContext.ResourceQuantity, targetBodyData.dynamicPlanetData);
+            }
+
             ServerDynamicData.serverUpdatePlayerDataContext(targetPlayerData.playerData.playerRow.id, CoreType.DataContext.Messages, targetPlayerData.playerData.dynamicPlayerData);
             // Target never updates the fleet movement DB data, owner of that is origin only
         }

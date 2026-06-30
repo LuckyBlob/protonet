@@ -56,7 +56,7 @@ function computeFuelConsumption_Base(playerData: CoreType.PlayerData, unitQuanti
 			throw new Error(`⚠️: Unit type ${unitType} has no engine-tech fuel tier matching the player's research.`);
 		}
 
-		const maxSpeed: number | undefined = UnitSpeed.computeUnitSpeed(playerData, unitStats.speed);
+		const maxSpeed: number | undefined = UnitSpeed.computeUnitSpeed(playerData, unitStats.speed.engineTechData);
 		if (maxSpeed === undefined)
 		{
 			throw new Error(`⚠️: Unit type ${unitType} has no engine-tech speed tier matching the player's research.`);

@@ -41,7 +41,7 @@ export function calculateUnitQuantitiesLowestMovementSpeed(playerData: CoreType.
 			throw new Error(`⚠️: Unit type ${unitType} has no speed and cannot be in a fleet.`);
 		}
 
-		const unitSpeed: number | undefined = UnitSpeed.computeUnitSpeed(playerData, unitStats.speed);
+		const unitSpeed: number | undefined = UnitSpeed.computeUnitSpeed(playerData, unitStats.speed.engineTechData);
 		if (unitSpeed === undefined)
 		{
 			throw new Error(`⚠️: Unit type ${unitType} has no engine-tech speed tier matching the player's research.`);

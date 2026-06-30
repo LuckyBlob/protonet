@@ -13,8 +13,13 @@ const ENGINE_TECH_SPEED_BONUS_PER_LEVEL: ReadonlyMap<GameType.EngineTech, number
 	[GameType.ResearchType.HyperspaceDrive, 0.30],
 ]);
 
-export function computeUnitSpeed(playerData: CoreType.PlayerData, unitSpeedDatas: GameType.EngineTechData<number>[]): number | undefined
+export function computeUnitSpeed(playerData: CoreType.PlayerData, unitSpeedDatas: GameType.EngineTechData<number>[] | undefined): number | undefined
 {
+	if (unitSpeedDatas === undefined)
+	{
+		return undefined;
+	}
+
 	const resolvedEngineTechData: GameType.EngineTechData<number> | undefined = ResearchData.resolveEngineTechData(playerData, unitSpeedDatas);
 	if (resolvedEngineTechData === undefined)
 	{

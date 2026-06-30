@@ -231,6 +231,16 @@ describe('canTargetPlayerByScore', () =>
         expect(getter(buildContext(100_000, 1, null))).toBe(1);
     });
 
+    it('lets a power admin (admin_level 0) bypass the score gate that would otherwise block', () =>
+    {
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.canTargetPlayerByScore();
+        expect(getter(buildContext(600, 100, TARGET_ID))).toBe(0);
+
+        const adminContext: RequirementType.RequirementContext = buildContext(600, 100, TARGET_ID);
+        adminContext.playerData.adminLevel = 0;
+        expect(getter(adminContext)).toBe(1);
+    });
+
     it('throws when ownership info was not threaded in', () =>
     {
         const getter: RequirementType.ThingValueGetter = RequirementValueGetters.canTargetPlayerByScore();

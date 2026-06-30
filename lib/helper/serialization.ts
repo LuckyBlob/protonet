@@ -50,6 +50,7 @@ export function serializePlayerData(playerData: CoreType.PlayerData): Serialized
 	const serialized: SerializedPlayerData =
 	{
 		playerRow: playerData.playerRow,
+		adminLevel: playerData.adminLevel,
 		dynamicPlayerData: serializedDynamicPlayerData,
 		planetDatas: serializedPlanetDatas,
 		publicPlanetDatas: serializedPublicPlanetDatas,
@@ -76,6 +77,7 @@ export function deserializePlayerData(serialized: SerializedPlayerData): CoreTyp
 	const playerData: CoreType.PlayerData =
 	{
 		playerRow: serialized.playerRow,
+		adminLevel: serialized.adminLevel,
 		dynamicPlayerData: dynamicPlayerData,
 
 		planetDatas: planetDatas,
@@ -234,6 +236,7 @@ function deserializePublicPlanetData(serialized: SerializedPublicPlanetData): Co
 export type SerializedPlayerData =
 {
 	playerRow: DBType.PlayerRow;
+	adminLevel: number;
 	dynamicPlayerData: SerializedDynamicPlayerData;
 	planetDatas: SerializedPlanetData[];
 	publicPlanetDatas: SerializedPublicPlanetData[];

@@ -112,3 +112,20 @@ describe('computeFleetMovementDurationSeconds (planet form)', () =>
         expect(planetForm).toBe(addressForm);
     });
 });
+
+describe('missile speed function duration', () =>
+{
+    it('uses the flat 30 + 60-per-system missile formula instead of the engine-drive formula', () =>
+    {
+        const missiles: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.InterplanetaryMissile, 1]]);
+        expect(FleetMovementDuration.computeFleetMovementDurationSecondsWithAddress(PLAYER_DATA, ORIGIN_SAME, ORIGIN_SAME, missiles, null)).toBe(30);
+        expect(FleetMovementDuration.computeFleetMovementDurationSecondsWithAddress(PLAYER_DATA, ORIGIN_SAME, TARGET_SYSTEM_DIFF, missiles, null)).toBe(270);
+    });
+
+    it('applies the universe time multiplier to the missile formula', () =>
+    {
+        const missiles: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.InterplanetaryMissile, 1]]);
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData(2);
+        expect(FleetMovementDuration.computeFleetMovementDurationSecondsWithAddress(PLAYER_DATA, ORIGIN_SAME, TARGET_SYSTEM_DIFF, missiles, serverData)).toBe(135);
+    });
+});

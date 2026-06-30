@@ -175,8 +175,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				value: 2,
 				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.RoboticFactory),},},
 			LUNAR_BASE_REQUIREMENT,
-			{
-			hideDataWhenRequirementFailed: false,
+			{hideDataWhenRequirementFailed: false,
 			thingRequirement: {
 				thingType: ThingType.Thing.UnitConstruction,
 				operator: RequirementType.RequirementOperator.Equal,
@@ -246,8 +245,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 10,
 				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ComputerTech),},},
-			{
-			hideDataWhenRequirementFailed: false,
+			{hideDataWhenRequirementFailed: false,
 			thingRequirement: {
 				thingType: ThingType.Thing.UnitConstruction,
 				operator: RequirementType.RequirementOperator.Equal,
@@ -387,8 +385,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 		buildableZones: [GameType.PlanetZone.Moon],
 		upgradeRequirements:[
 			LUNAR_BASE_REQUIREMENT,
-			{
-				hideDataWhenRequirementFailed: true,
+			{hideDataWhenRequirementFailed: true,
 				specificThingRequirement:{
 					thingType: ThingType.Thing.Research,
 					specificThingType: GameType.ResearchType.HyperspaceDrive,
@@ -434,9 +431,11 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		shieldPower: 10,
 		weaponPower: 5,
 		space: 5000,
-		speed: [
-			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 5000},
-			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 5, value: 10000}],
+		speed: {
+			speedFunctionType: GameType.SpeedFunctionType.EngineDrive,
+			engineTechData: [
+				{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 5000},
+				{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 5, value: 10000}]},
 		baseFuelConsumption: [
 			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel:0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 10]])},
 			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel:5, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 20]])},],
@@ -468,8 +467,10 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		shieldPower: 25,
 		weaponPower: 5,
 		space: 25000,
-		speed:  [
-			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 7500}],
+		speed: {
+			speedFunctionType: GameType.SpeedFunctionType.EngineDrive,
+			engineTechData: [
+				{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 7500}]},
 		baseFuelConsumption: [
 			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 50]])},],
 	}],
@@ -501,8 +502,10 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		shieldPower: 100,
 		weaponPower: 50,
 		space: 7500,
-		speed:  [
-			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: 2500}],
+		speed: {
+			speedFunctionType: GameType.SpeedFunctionType.EngineDrive,
+			engineTechData: [
+				{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: 2500}]},
 		baseFuelConsumption: [
 			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 1000]])},],
 	}],
@@ -532,10 +535,12 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		shieldPower: 10,
 		weaponPower: 1,
 		space: 20000,
-		speed: [
-			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 2000},
-			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 17, value: 4000},
-			{ engineTech: GameType.ResearchType.HyperspaceDrive, researchLevel: 15, value: 6000}],
+		speed: {
+			speedFunctionType: GameType.SpeedFunctionType.EngineDrive,
+			engineTechData: [
+				{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 2000},
+				{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 17, value: 4000},
+				{ engineTech: GameType.ResearchType.HyperspaceDrive, researchLevel: 15, value: 6000}]},
 		baseFuelConsumption: [
 			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 300]])},
 			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 17, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 600]])},
@@ -573,8 +578,10 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		shieldPower: 0,
 		weaponPower: 0,
 		space: 5,
-		speed: [
-			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 100000000}],
+		speed: {
+			speedFunctionType: GameType.SpeedFunctionType.EngineDrive,
+			engineTechData: [
+				{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 100000000}]},
 		baseFuelConsumption: [
 			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 1]])},],
 		canSpy: true,
@@ -624,6 +631,11 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 
 	[GameType.UnitType.InterplanetaryMissile, { displayName: "Interplanetary Missile",
 		category: GameType.UnitCategory.Missile,
+		canLaunchAsMissile: true,
+		speed: {
+			speedFunctionType: GameType.SpeedFunctionType.Missile,
+			rangeFunctionType: GameType.RangeFunctionType.Missile,},
+		space: 0,
 		queueType: GameType.UnitConstructionQueueType.MissileSilo,
 		requirements:[
 			{hideDataWhenRequirementFailed: true,
@@ -721,12 +733,26 @@ export const RESOURCE_INFOS: ReadonlyMap<GameType.ResourceType, GameType.Resourc
 // constructed at module load and references it as the Colonize planet-cap threshold.
 export const MAX_ALLOWED_PLANETS: number = 9;
 
+const HAS_FREE_FLEET_SLOT_REQUIREMENT: RequirementType.Requirement =
+{
+	hideDataWhenRequirementFailed: false,
+	thingRequirement:
+	{
+		thingType: ThingType.Thing.FleetMovement,
+		operator: RequirementType.RequirementOperator.Equal,
+		value: true,
+		valueGetter: RequirementValueGetters.hasFreeFleetSlot(),
+	},
+};
+
 export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.FleetActionInfo> = new Map<GameType.FleetActionType, GameType.FleetActionInfo>
 ([
     [GameType.FleetActionType.Station, {
 		displayName: "Station",
-			requirements:[{
-			hideDataWhenRequirementFailed: true,
+			category: GameType.FleetActionCategory.Ship,
+			requirements:[
+			HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
@@ -741,9 +767,11 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 
 	[GameType.FleetActionType.Collect, {
 		displayName: "Collect",
+			category: GameType.FleetActionCategory.Ship,
 			returnsToOrigin: true,
-			requirements:[{
-			hideDataWhenRequirementFailed: true,
+			requirements:[
+			HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
@@ -758,9 +786,11 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 
 	[GameType.FleetActionType.Transport, {
 		displayName: "Transport",
+			category: GameType.FleetActionCategory.Ship,
 			returnsToOrigin: true,
-			requirements:[{
-			hideDataWhenRequirementFailed: true,
+			requirements:[
+			HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				operator: RequirementType.RequirementOperator.Equal,
@@ -775,9 +805,10 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 
 	[GameType.FleetActionType.Colonize, {
 		displayName: "Colonize",
+			category: GameType.FleetActionCategory.Ship,
 			requirements:[
-			{
-			hideDataWhenRequirementFailed: true,
+			HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
 				specificThingType: GameType.UnitType.ColonyShip,
@@ -805,8 +836,10 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 
 	[GameType.FleetActionType.Recycle, {
 		displayName: "Recycle",
+			category: GameType.FleetActionCategory.Ship,
 			returnsToOrigin: true,
 			requirements:[
+			HAS_FREE_FLEET_SLOT_REQUIREMENT,
 			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
@@ -828,8 +861,10 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				
 	[GameType.FleetActionType.Espionage, {
 		displayName: "Espionage",
+			category: GameType.FleetActionCategory.Ship,
 			returnsToOrigin: true,
 			requirements:[
+			HAS_FREE_FLEET_SLOT_REQUIREMENT,
 			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
@@ -855,6 +890,43 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
 				valueGetter: RequirementValueGetters.isTargetPlanetZoneSpyable(),},},
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
+
+	[GameType.FleetActionType.MissileLaunch, {
+		displayName: "Missile Launch",
+			category: GameType.FleetActionCategory.Missile,
+			canBeScanned: false,
+			canBeRecalled: false,
+			requirements:[
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.isTargetEnemyOwned(),},},
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.isTargetWithinRange(),},},
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.allFleetUnitsAreLaunchableMissiles(),},},
 			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
@@ -983,7 +1055,7 @@ export const MAX_PLANET_NAME_LENGTH: number = 16;
 export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requirement[]> = new Map<ThingType.Thing, RequirementType.Requirement[]>
 ([
     [ThingType.Thing.BuildingUpgrade, [{
-		hideDataWhenRequirementFailed: false,
+    	hideDataWhenRequirementFailed: false,
 		thingRequirement: {
 			thingType: ThingType.Thing.BuildingUpgrade,
 			operator: RequirementType.RequirementOperator.Equal,
@@ -1041,15 +1113,8 @@ export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requireme
 			operator: RequirementType.RequirementOperator.GreaterOrEqual,
 			value: 1,
 			valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),}}]],
-	[ThingType.Thing.FleetMovement, [{
-		hideDataWhenRequirementFailed: false,
-		thingRequirement: {
-			thingType: ThingType.Thing.FleetMovement,
-			operator: RequirementType.RequirementOperator.Equal,
-			value: true,
-			valueGetter: RequirementValueGetters.hasFreeFleetSlot(),}}]],
-	[ThingType.Thing.UnitConstruction, [{
-		hideDataWhenRequirementFailed: false,
+		[ThingType.Thing.UnitConstruction, [{
+			hideDataWhenRequirementFailed: false,
 		thingRequirement: {
 			thingType: ThingType.Thing.BuildingUpgrade,
 			operator: RequirementType.RequirementOperator.Equal,

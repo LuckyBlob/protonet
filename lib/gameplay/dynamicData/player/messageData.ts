@@ -13,6 +13,7 @@ export const MessageType =
     FleetAction: 2,
     Espionage: 3,
     Scan: 4,
+    MissileReport: 5,
 } as const;
 
 //#region message helpers

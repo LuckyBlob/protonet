@@ -207,6 +207,7 @@ export type FleetMovementRow =
     duration_at_request_time: number;
     duration_at_start_time: number | null;
     started_at: number | null;
+    unit_focus: number | null;
 };
 
 export type FleetMovementUnitRow =

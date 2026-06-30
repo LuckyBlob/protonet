@@ -108,11 +108,12 @@ export function buildPlanetData(overrides?: { planetRow?: Partial<DBType.PlanetR
     return planetData;
 }
 
-export function buildPlayerData(overrides?: { playerRow?: Partial<DBType.PlayerRow>; dynamicPlayerData?: CoreType.DynamicPlayerData; planetDatas?: CoreType.PlanetData[]; }): CoreType.PlayerData
+export function buildPlayerData(overrides?: { playerRow?: Partial<DBType.PlayerRow>; adminLevel?: number; dynamicPlayerData?: CoreType.DynamicPlayerData; planetDatas?: CoreType.PlanetData[]; }): CoreType.PlayerData
 {
     const playerData: CoreType.PlayerData =
     {
         playerRow: buildPlayerRow(overrides?.playerRow),
+        adminLevel: overrides?.adminLevel ?? 1,
         dynamicPlayerData: overrides?.dynamicPlayerData ?? buildDynamicPlayerData(),
         planetDatas: overrides?.planetDatas ?? [buildPlanetData()],
         publicPlanetDatas: [],
@@ -294,6 +295,7 @@ export function buildFleetMovementRow(overrides?: Partial<DBType.FleetMovementRo
         duration_at_request_time: 10_000,
         duration_at_start_time: 10_000,
         started_at: 1_000_000,
+        unit_focus: null,
         ...overrides,
     };
 

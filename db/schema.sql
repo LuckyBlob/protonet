@@ -256,6 +256,7 @@ CREATE TABLE IF NOT EXISTS fleet_movement
     duration_at_request_time INTEGER NOT NULL DEFAULT 0,
     duration_at_start_time INTEGER,
     started_at INTEGER,
+    unit_focus INTEGER,
     FOREIGN KEY (player_origin_id) REFERENCES player(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_fleet_movement_origin ON fleet_movement(planet_origin_id);

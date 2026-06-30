@@ -581,7 +581,7 @@ export async function clientTrySetBuildingEnergySettingRequest(psController: Cor
     }
 }
 
-export async function clientTrySendFleetRequest(psController: CoreType.PSController, originPlanetId: number, targetPlanetAddress: GameType.PlanetAddress, fleetAction: GameType.FleetActionType, unitQuantities: Map<GameType.UnitType, number>, resourceQuantities: Map<GameType.ResourceType, number>, speedPercentage?: number): Promise<string | null>
+export async function clientTrySendFleetRequest(psController: CoreType.PSController, originPlanetId: number, targetPlanetAddress: GameType.PlanetAddress, fleetAction: GameType.FleetActionType, unitQuantities: Map<GameType.UnitType, number>, resourceQuantities: Map<GameType.ResourceType, number>, speedPercentage?: number, unitFocus?: GameType.UnitType | null): Promise<string | null>
 {
     const effectiveSpeedPercentage: number = speedPercentage ?? 100;
 
@@ -596,6 +596,7 @@ export async function clientTrySendFleetRequest(psController: CoreType.PSControl
         serializedUnitQuantities: Serialization.serializeNumberNumberMap(unitQuantities),
         serializedResourceQuantities: Serialization.serializeNumberNumberMap(resourceQuantities),
         speedPercentage: effectiveSpeedPercentage,
+        unitFocus: unitFocus ?? null,
     };
 
     try

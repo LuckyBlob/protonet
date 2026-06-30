@@ -786,6 +786,14 @@ export function serverGetPlayerRow(playerId: number): DBType.PlayerRow
     return playerRow;
 }
 
+function serverGetUserAdminLevel(userId: number): number
+{
+    const userRow: { admin_level: number } | undefined = DB.databaseConnection.prepare(
+        "SELECT admin_level FROM users WHERE id = ?"
+    ).get(userId) as { admin_level: number } | undefined;
+    return userRow?.admin_level ?? 1;
+}
+
 export function serverGetPublicPlayerRows(): DBType.PublicPlayerRow[]
 {
     type PublicPlayerRowProjection = { id: number; username: string; invested_value: number };
@@ -810,9 +818,11 @@ export function serverGetPublicPlayerRows(): DBType.PublicPlayerRow[]
 
 export function serverGetPlayerData(playerId: number): CoreType.PlayerData
 {
+    const playerRow: DBType.PlayerRow = serverGetPlayerRow(playerId);
     const playerData: CoreType.PlayerData =
     {
-        playerRow: serverGetPlayerRow(playerId),
+        playerRow: playerRow,
+        adminLevel: serverGetUserAdminLevel(playerRow.user_id),
         dynamicPlayerData: ServerDynamicData.getDynamicPlayerData(playerId),
 
         planetDatas: serverGetPlanetDatas(playerId),
@@ -1918,6 +1928,11 @@ function buildScanReportBody(playerData: CoreType.PlayerData, galaxy: number, sy
             continue;
         }
 
+        if (StaticDataHelper.getFleetActionInfo(fleetMovementRow.fleet_action_type as GameType.FleetActionType).canBeScanned === false)
+        {
+            continue;
+        }
+
         reportLines.push(buildScanFleetLine(playerData, fleetMovementRow, now, galaxy, system, slot));
     }
 
@@ -2280,16 +2295,25 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     const targetPlanetData: CoreType.PlanetData | null = getPlanetDataByCoords(targetAddress.galaxy, targetAddress.system, targetAddress.slot, targetAddress.zone);
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
 
+    const fleetActionInfo: GameType.FleetActionInfo = StaticDataHelper.getFleetActionInfo(requestData.fleetAction);
+
     for (const [unitType, unitQuantity] of unitQuantities)
     {
-        if (StaticDataHelper.getUnitCategory(unitType) !== GameType.UnitCategory.Ship)
-        {
-            return { success: false, failureReason: "Only ships can be sent in a fleet.", playerStateResult: playerData };
-        }
-
         if (unitQuantity <= 0)
         {
             return { success: false, failureReason: "Non-positive unit quantity for fleet.", playerStateResult: playerData };
+        }
+
+        if (fleetActionInfo.category === GameType.FleetActionCategory.Missile)
+        {
+            if (StaticDataHelper.canUnitLaunchAsMissile(unitType) === false)
+            {
+                return { success: false, failureReason: "Only launchable missiles can be used in this fleet action.", playerStateResult: playerData };
+            }
+        }
+        else if (StaticDataHelper.getUnitCategory(unitType) !== GameType.UnitCategory.Ship)
+        {
+            return { success: false, failureReason: "Only ships can be sent in a fleet.", playerStateResult: playerData };
         }
     }
 
@@ -2312,25 +2336,16 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     const speedPercentage: number = FleetMovementDuration.clampSpeedPercentage(requestData.speedPercentage);
 
     let fuelRequirements: Map<GameType.ResourceType, number>;
+    let fleetMovementDurationSeconds: number;
     try
     {
         fuelRequirements = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, unitQuantities, serverData, speedPercentage);
+        fleetMovementDurationSeconds = FleetMovementDuration.computeFleetMovementDurationSecondsWithAddress(playerData, originAddress, targetAddress, unitQuantities, serverData, speedPercentage);
     }
     catch (error: unknown)
     {
         const errorMessage: string = error instanceof Error ? error.message : String(error);
-        return { success: false, failureReason: `Fuel calculation problems: ${errorMessage}`, playerStateResult: playerData };
-    }
-
-    let fleetMovementDurationSeconds: number = 0;
-    try
-    {
-         fleetMovementDurationSeconds = FleetMovementDuration.computeFleetMovementDurationSecondsWithAddress(playerData, originAddress, targetAddress, unitQuantities, serverData, speedPercentage);
-    }
-    catch (error: unknown)
-    {
-        const errorMessage: string = error instanceof Error ? error.message : String(error);
-        return { success: false, failureReason: `Duration calculation problems: ${errorMessage}`, playerStateResult: playerData };
+        return { success: false, failureReason: `Fleet send calculation problems: ${errorMessage}`, playerStateResult: playerData };
     }
 
     const totalRequiredResourceQuantities: Map<GameType.ResourceType, number> = MathHelp.addQuantitiesTogether(transportedResourceQuantities, fuelRequirements);
@@ -2432,6 +2447,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
             duration_at_request_time: fleetMovementDurationSeconds * 1000,
             duration_at_start_time: fleetMovementDurationSeconds * 1000,
             started_at: now,
+            unit_focus: requestData.unitFocus,
         };
         const newFleetMovement: CoreType.FleetMovement =
         {
@@ -2497,6 +2513,11 @@ export function tryRecallFleetLogic(playerId: number, serverData: CoreType.Serve
     if (fleetMovement.fleetMovementRow.player_origin_id !== playerId)
     {
         return { success: false, failureReason: "Cannot recall a fleet you do not own.", playerStateResult: playerData };
+    }
+
+    if (StaticDataHelper.getFleetActionInfo(fleetMovement.fleetMovementRow.fleet_action_type as GameType.FleetActionType).canBeRecalled === false)
+    {
+        return { success: false, failureReason: "This fleet action cannot be recalled.", playerStateResult: playerData };
     }
 
     if (fleetMovement.fleetMovementRow.is_return_trip === 1)

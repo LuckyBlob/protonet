@@ -225,6 +225,7 @@ export type SendFleet_ClientRequest = BaseClientRequest &
 	serializedUnitQuantities: Serialization.SerializedNumberNumberMap;
 	serializedResourceQuantities: Serialization.SerializedNumberNumberMap
 	speedPercentage: number;
+	unitFocus: GameType.UnitType | null;
 };
 export type SendFleet_ServerResponse = BaseServerResponse &
 {

@@ -9,6 +9,7 @@ import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValue
 import * as MissileSpaceData from "@/lib/gameplay/dynamicData/planet/missileSpaceData";
 import * as ScoreData from "@/lib/gameplay/dynamicData/player/scoreData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
+import * as FleetRange from "@/lib/gameplay/coreData/formula/fleetRangeFormulas";
 
 const SCORE_TARGET_PROTECTION_THRESHOLD: number = 500000;
 const MAX_ATTACKER_TO_TARGET_SCORE_RATIO: number = 5;
@@ -301,6 +302,11 @@ export function canTargetPlayerByScore(): RequirementType.ThingValueGetter
             throw new Error(`canTargetPlayerByScore requirement evaluated without zone-associated planet ownership info.`);
         }
 
+        if (context.playerData.adminLevel === 0)
+        {
+            return 1;
+        }
+
         const targetOwnerPlayerId: number | null = context.zoneAssociatedPlanetOwnerPlayerId;
 
         if (targetOwnerPlayerId === null || targetOwnerPlayerId === context.playerData.playerRow.id)
@@ -316,5 +322,91 @@ export function canTargetPlayerByScore(): RequirementType.ThingValueGetter
 
         const attackerScore: number = ScoreData.getPublicPlayerScore(context.playerData.publicPlayerRows, context.playerData.playerRow.id);
         return attackerScore < targetScore * MAX_ATTACKER_TO_TARGET_SCORE_RATIO ? 1 : 0;
+    };
+}
+
+export function isTargetEnemyOwned(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.zoneAssociatedPlanetOwnerPlayerId === undefined)
+        {
+            throw new Error(`isTargetEnemyOwned requirement evaluated without zone-associated planet ownership info.`);
+        }
+
+        const targetOwnerPlayerId: number | null = context.zoneAssociatedPlanetOwnerPlayerId;
+        if (targetOwnerPlayerId === null || targetOwnerPlayerId === context.playerData.playerRow.id)
+        {
+            return 0;
+        }
+
+        return 1;
+    };
+}
+
+export function isTargetWithinRange(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.targetPlanetAddress === undefined)
+        {
+            throw new Error(`isTargetWithinRange requirement evaluated without a target planet address.`);
+        }
+
+        if (context.unitQuantities === undefined)
+        {
+            throw new Error(`isTargetWithinRange requirement evaluated without a potential fleet action.`);
+        }
+
+        const originPlanetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
+        const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
+        const impulseDriveLevel: number = ResearchData.getResearchLevel(context.playerData, GameType.ResearchType.ImpulseDrive);
+
+        for (const [unitType, unitQuantity] of context.unitQuantities)
+        {
+            if (unitQuantity <= 0)
+            {
+                continue;
+            }
+
+            const speedStats: GameType.SpeedStats | undefined = StaticDataHelper.getUnitStats(unitType).speed;
+            if (speedStats === undefined)
+            {
+                continue;
+            }
+
+            if (FleetRange.isWithinRange(originAddress, context.targetPlanetAddress, speedStats, impulseDriveLevel) === false)
+            {
+                return 0;
+            }
+        }
+
+        return 1;
+    };
+}
+
+export function allFleetUnitsAreLaunchableMissiles(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.unitQuantities === undefined)
+        {
+            throw new Error(`allFleetUnitsAreLaunchableMissiles requirement evaluated without a potential fleet action.`);
+        }
+
+        for (const [unitType, unitQuantity] of context.unitQuantities)
+        {
+            if (unitQuantity <= 0)
+            {
+                continue;
+            }
+
+            if (StaticDataHelper.canUnitLaunchAsMissile(unitType) === false)
+            {
+                return 0;
+            }
+        }
+
+        return 1;
     };
 }

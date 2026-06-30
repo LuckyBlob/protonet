@@ -172,7 +172,7 @@ test.describe("Shipyard category split", () =>
 
 test.describe("Fleets split", () =>
 {
-    test("Fleets splits into Ships (no missiles) and a Missiles stub once an ICBM is owned", async ({ page }) =>
+    test("Fleets splits into Ships (no missiles) and a Missiles launch view once an ICBM is owned", async ({ page }) =>
     {
         const username: string = E2EHelper.uniqueUsername("Flt");
         await E2EHelper.register(page, username, PASSWORD);
@@ -191,10 +191,10 @@ test.describe("Fleets split", () =>
         await expect(page.getByText("Small Transport")).toBeVisible();
         await expect(page.getByText("Interplanetary Missile")).toHaveCount(0);
 
-        // Missiles stub lists the owned missile and the placeholder.
+        // Missiles launch view lists the owned missile and the launch panel.
         await page.getByRole("button", { name: "Missiles", exact: true }).click();
         await expect(page.getByText("Interplanetary Missile")).toBeVisible();
-        await expect(page.getByText("Coming soon.")).toBeVisible();
+        await expect(page.getByRole("button", { name: "Launch missiles" })).toBeVisible();
     });
 });
 
