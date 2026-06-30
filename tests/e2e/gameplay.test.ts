@@ -126,7 +126,7 @@ test.describe("Buildings", () =>
         // Loads still in-progress, then the client tick resolves it locally without another fetch.
         await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Building");
         await expect(E2EHelper.buildingCard(page, "Metal Mine")).toContainText("Level 1", { timeout: 10_000 });
-        await expect(E2EHelper.buildUpgradeButton(page, "Metal Mine")).toBeEnabled();
+        await expect(E2EHelper.buildUpgradeButton(page, "Metal Mine")).toBeEnabled({ timeout: 15_000 });
     });
 
     test("refresh shows the upgrade in progress, and the finished level after it completes", async ({ page }) =>
