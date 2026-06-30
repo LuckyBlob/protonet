@@ -211,6 +211,8 @@ export type UnitStats =
 	requirements?: RequirementType.Requirement[];
 	costMap: Map<ResourceType, number>;
 	maxHealth: number;
+	shieldPower: number;
+	weaponPower: number;
 	speed?: EngineTechData<number>[];
 	space?: number;
 	baseFuelConsumption?: EngineTechData<Map<ResourceType, number>>[];

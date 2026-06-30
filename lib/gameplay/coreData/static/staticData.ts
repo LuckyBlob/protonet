@@ -431,6 +431,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 			[GameType.ResourceType.Metal, 2000],
 			[GameType.ResourceType.Crystal, 2000],]),
 		maxHealth: 4000,
+		shieldPower: 10,
+		weaponPower: 5,
 		space: 5000,
 		speed: [
 			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 5000},
@@ -463,6 +465,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 			[GameType.ResourceType.Metal, 6000],
 			[GameType.ResourceType.Crystal, 6000],]),
 		maxHealth: 12000,
+		shieldPower: 25,
+		weaponPower: 5,
 		space: 25000,
 		speed:  [
 			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 7500}],
@@ -494,6 +498,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 			[GameType.ResourceType.Crystal, 20000],
 			[GameType.ResourceType.Deuterium, 10000],]),
 		maxHealth: 30000,
+		shieldPower: 100,
+		weaponPower: 50,
 		space: 7500,
 		speed:  [
 			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: 2500}],
@@ -523,6 +529,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 			[GameType.ResourceType.Crystal, 6000],
 			[GameType.ResourceType.Deuterium, 2000],]),
 		maxHealth: 16000,
+		shieldPower: 10,
+		weaponPower: 1,
 		space: 20000,
 		speed: [
 			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 2000},
@@ -562,6 +570,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Crystal, 1000],]),
 		maxHealth: 1000,
+		shieldPower: 0,
+		weaponPower: 0,
 		space: 5,
 		speed: [
 			{ engineTech: GameType.ResearchType.CombustionDrive, researchLevel: 0, value: 100000000}],
@@ -583,6 +593,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 2000],]),
 		maxHealth: 2000,
+		shieldPower: 20,
+		weaponPower: 80,
 	}],
 
 	[GameType.UnitType.SolarSatellite, { displayName: "Solar Satellite",
@@ -600,6 +612,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 			[GameType.ResourceType.Crystal, 2000],
 			[GameType.ResourceType.Deuterium, 500],]),
 		maxHealth: 2000,
+		shieldPower: 1,
+		weaponPower: 1,
 		unitPlanetValueStats: [{
 			unitPlanetValueProductionFormulasType: GameType.UnitPlanetValueProductionFormulasType.TemperatureScaled,
 			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
@@ -638,6 +652,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 			[GameType.ResourceType.Crystal, 2500],
 			[GameType.ResourceType.Deuterium, 10000],]),
 		maxHealth: 15000,
+		shieldPower: 0,
+		weaponPower: 12000,
 		unitPlanetValueStats: [{
 			unitPlanetValueProductionFormulasType: GameType.UnitPlanetValueProductionFormulasType.FixedPerUnit,
 			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
@@ -666,6 +682,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 			[GameType.ResourceType.Metal, 8000],
 			[GameType.ResourceType.Deuterium, 2000],]),
 		maxHealth: 8000,
+		shieldPower: 0,
+		weaponPower: 0,
 		unitPlanetValueStats: [{
 			unitPlanetValueProductionFormulasType: GameType.UnitPlanetValueProductionFormulasType.FixedPerUnit,
 			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
