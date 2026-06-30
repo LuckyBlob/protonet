@@ -230,6 +230,7 @@ export type UnitStats =
 	maxHealth: number;
 	shieldPower: number;
 	weaponPower: number;
+	rapidFire?: Map<UnitType, number>;
 	speed?: SpeedStats;
 	space?: number;
 	baseFuelConsumption?: EngineTechData<Map<ResourceType, number>>[];

@@ -430,6 +430,9 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		maxHealth: 4000,
 		shieldPower: 10,
 		weaponPower: 5,
+		rapidFire: new Map<GameType.UnitType, number>([
+			[GameType.UnitType.EspionageProbe, 5],
+			[GameType.UnitType.SolarSatellite, 5],]),
 		space: 5000,
 		speed: {
 			speedFunctionType: GameType.SpeedFunctionType.EngineDrive,
@@ -466,6 +469,9 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		maxHealth: 12000,
 		shieldPower: 25,
 		weaponPower: 5,
+		rapidFire: new Map<GameType.UnitType, number>([
+			[GameType.UnitType.EspionageProbe, 5],
+			[GameType.UnitType.SolarSatellite, 5],]),
 		space: 25000,
 		speed: {
 			speedFunctionType: GameType.SpeedFunctionType.EngineDrive,
@@ -501,6 +507,9 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		maxHealth: 30000,
 		shieldPower: 100,
 		weaponPower: 50,
+		rapidFire: new Map<GameType.UnitType, number>([
+			[GameType.UnitType.EspionageProbe, 5],
+			[GameType.UnitType.SolarSatellite, 5],]),
 		space: 7500,
 		speed: {
 			speedFunctionType: GameType.SpeedFunctionType.EngineDrive,
@@ -534,6 +543,9 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		maxHealth: 16000,
 		shieldPower: 10,
 		weaponPower: 1,
+		rapidFire: new Map<GameType.UnitType, number>([
+			[GameType.UnitType.EspionageProbe, 5],
+			[GameType.UnitType.SolarSatellite, 5],]),
 		space: 20000,
 		speed: {
 			speedFunctionType: GameType.SpeedFunctionType.EngineDrive,
