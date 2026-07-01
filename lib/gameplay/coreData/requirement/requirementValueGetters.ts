@@ -209,6 +209,19 @@ export function isTargetPlanetZoneSpyable(): RequirementType.ThingValueGetter
     };
 }
 
+export function isTargetPlanetZoneAttackable(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.targetPlanetAddress === undefined)
+        {
+            throw new Error(`isTargetPlanetZoneAttackable requirement evaluated without a target planet address.`);
+        }
+
+        return StaticDataHelper.canPlanetZoneBeAttacked(context.targetPlanetAddress.zone) === true ? 1 : 0;
+    };
+}
+
 export function doesTargetZoneExist(): RequirementType.ThingValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>

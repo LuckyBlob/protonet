@@ -407,6 +407,8 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = new Map<GameType.UnitType, GameType.UnitStats>
 ([
     [GameType.UnitType.SmallTransport, { displayName: "Small Transport",
+		canGenerateDebris: true,
+		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[{
@@ -446,6 +448,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 
 
     [GameType.UnitType.LargeTransport, { displayName: "Large Transport",
+		canGenerateDebris: true,
+		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[{
@@ -483,6 +487,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 
 
     [GameType.UnitType.ColonyShip, { displayName: "Colony Ship",
+		canGenerateDebris: true,
+		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[{
@@ -519,6 +525,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 			{ engineTech: GameType.ResearchType.ImpulseDrive, researchLevel: 0, value: new Map<GameType.ResourceType, number>([[GameType.ResourceType.Deuterium, 1000]])},],
 	}],
     [GameType.UnitType.Recycler, { displayName: "Recycler",
+		canGenerateDebris: true,
+		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[{
@@ -560,6 +568,8 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		canTargetDebrisField: true,
 	}],
 	[GameType.UnitType.EspionageProbe, { displayName: "Espionage Probe",
+		canGenerateDebris: true,
+		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[
@@ -614,9 +624,12 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		maxHealth: 2000,
 		shieldPower: 20,
 		weaponPower: 80,
+		repairChance: 0.7,
+		participatesInCombat: true,
 	}],
 
 	[GameType.UnitType.SolarSatellite, { displayName: "Solar Satellite",
+		participatesInCombat: true,
 		category: GameType.UnitCategory.Satellite,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[{
@@ -732,11 +745,14 @@ export const UNIT_CATEGORY_INFOS: ReadonlyMap<GameType.UnitCategory, GameType.Un
 export const RESOURCE_INFOS: ReadonlyMap<GameType.ResourceType, GameType.ResourceInfo> = new Map<GameType.ResourceType, GameType.ResourceInfo>
 ([
     [GameType.ResourceType.Metal, {
-		displayName: "Metal",}],
+		displayName: "Metal",
+		canGoToDebrisField: true,}],
 	[GameType.ResourceType.Crystal, {
-		displayName: "Crystal",}],
+		displayName: "Crystal",
+		canGoToDebrisField: true,}],
 	[GameType.ResourceType.Deuterium, {
-		displayName: "Deuterium",}],
+		displayName: "Deuterium",
+		canGoToDebrisField: false,}],
 ]);
 //#endregion
 
@@ -945,6 +961,37 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 				operator: RequirementType.RequirementOperator.Equal,
 				value: true,
 				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
+
+	[GameType.FleetActionType.Attack, {
+		displayName: "Attack",
+			category: GameType.FleetActionCategory.Ship,
+			returnsToOrigin: true,
+			requirements:[
+			HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.isTargetEnemyOwned(),},},
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.isTargetPlanetZoneAttackable(),},},
+			{hideDataWhenRequirementFailed: true,
+			thingRequirement:{
+				thingType: ThingType.Thing.FleetMovement,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: true,
+				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
 ]);
 //#endregion
 
@@ -998,17 +1045,20 @@ export const PLANET_ZONE_INFOS: ReadonlyMap<GameType.PlanetZone, GameType.Planet
 		displayName: "Planet",
 		isSelectable: true,
 		canProduceResources: true,
-		canBeSpied: true,}],
+		canBeSpied: true,
+			canBeAttacked: true,}],
 	[GameType.PlanetZone.Moon, {
 		displayName: "Moon",
 		isSelectable: true,
 		canProduceResources: false,
-		canBeSpied: true,}],
+		canBeSpied: true,
+			canBeAttacked: true,}],
 	[GameType.PlanetZone.DebrisField, {
 		displayName: "Debris Field",
 		isSelectable: false,
 		canProduceResources: false,
-		canBeSpied: false,}],
+		canBeSpied: false,
+			canBeAttacked: false,}],
 ]);
 
 export const STARTING_PLANET_DATA: CoreType.DynamicPlanetData =

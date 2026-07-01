@@ -211,34 +211,12 @@ function removeMissileFleet(originPlanetData: CoreType.PlanetData | null, aimedB
     }
 }
 
-function buildDestroyedDefenseSummary(destroyedDefenseQuantities: Map<GameType.UnitType, number>): string
-{
-    const parts: string[] = [];
-    for (const [unitType, quantity] of destroyedDefenseQuantities)
-    {
-        if (quantity <= 0)
-        {
-            continue;
-        }
-
-        const unitName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(unitType));
-        parts.push(`${quantity} ${unitName}`);
-    }
-
-    if (parts.length === 0)
-    {
-        return "no defenses";
-    }
-
-    return parts.join(", ");
-}
-
 function buildMissileReportBody(combatResult: MissileCombatResult): string
 {
     const reportLines: string[] = [];
     reportLines.push(`Missiles launched: ${combatResult.incomingMissiles}`);
     reportLines.push(`Intercepted by anti-ballistic missiles: ${combatResult.interceptedMissiles}`);
-    reportLines.push(`Defenses destroyed: ${buildDestroyedDefenseSummary(combatResult.destroyedDefenseQuantities)}`);
+    reportLines.push(`Defenses destroyed: ${FleetData.buildUnitQuantitiesList(combatResult.destroyedDefenseQuantities, "no defenses")}`);
 
     if (combatResult.destroyedStoredMissiles > 0)
     {

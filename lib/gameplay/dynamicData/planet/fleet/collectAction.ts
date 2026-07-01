@@ -2,7 +2,6 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
-import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
@@ -25,50 +24,11 @@ export function resolveCollectAction(originPlayerData: CoreType.PlayerData | nul
         return;
     }
 
-    const collectedResourceQuantities: Map<GameType.ResourceType, number> = collectResourcesIntoFleet(targetPlanetData, fleetMovement);
+    const collectedResourceQuantities: Map<GameType.ResourceType, number> = FleetData.loadPlanetResourcesIntoFleet(targetPlanetData, fleetMovement, 1);
 
     addCollectActionSuccessMessage(targetPlayerData, fleetMovement, collectedResourceQuantities);
     FleetData.setFleetReturnTrip(targetPlanetData, fleetMovement);
     fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
-}
-
-function collectResourcesIntoFleet(targetPlanetData: CoreType.PlanetData, fleetMovement: CoreType.FleetMovement): Map<GameType.ResourceType, number>
-{
-    const availableSpace: number = FleetData.computeRemainingFleetCargoSpace(fleetMovement);
-    if (availableSpace <= 0)
-    {
-        return new Map<GameType.ResourceType, number>();
-    }
-
-    const targetResourceQuantities: Map<GameType.ResourceType, number> = ResourceData.getResourceQuantities(targetPlanetData);
-    const collectedResourceQuantities: Map<GameType.ResourceType, number> = ResourceData.computeCollectedResources(targetResourceQuantities, availableSpace);
-
-    ResourceData.subtractPlanetResources(targetPlanetData, collectedResourceQuantities);
-
-    for (const [collectedResourceType, collectedResourceQuantity] of collectedResourceQuantities)
-    {
-        if (collectedResourceQuantity <= 0)
-        {
-            continue;
-        }
-
-        const existingResourceRow: DBType.FleetMovementResourceRow | undefined = fleetMovement.fleetMovementResourceRows.find((resourceRow: DBType.FleetMovementResourceRow): boolean => resourceRow.resource_type === collectedResourceType);
-        if (existingResourceRow !== undefined)
-        {
-            existingResourceRow.resource_quantity += collectedResourceQuantity;
-            continue;
-        }
-
-        const newMovementResourceRow: DBType.FleetMovementResourceRow =
-        {
-            fleet_id: fleetMovement.fleetMovementRow.id,
-            resource_type: collectedResourceType,
-            resource_quantity: collectedResourceQuantity,
-        };
-        fleetMovement.fleetMovementResourceRows.push(newMovementResourceRow);
-    }
-
-    return collectedResourceQuantities;
 }
 
 function addCollectActionSuccessMessage(targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, collectedResourceQuantities: Map<GameType.ResourceType, number>): void

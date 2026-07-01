@@ -11,6 +11,7 @@ export type ResourceType = typeof ResourceType[keyof typeof ResourceType];
 export type ResourceInfo =
 {
 	displayName: string;
+	canGoToDebrisField: boolean;
 }
 //#endregion
 
@@ -230,11 +231,14 @@ export type UnitStats =
 	maxHealth: number;
 	shieldPower: number;
 	weaponPower: number;
+	repairChance?: number;
+	participatesInCombat?: boolean;
 	rapidFire?: Map<UnitType, number>;
 	speed?: SpeedStats;
 	space?: number;
 	baseFuelConsumption?: EngineTechData<Map<ResourceType, number>>[];
 	canTargetDebrisField?: boolean;
+	canGenerateDebris?: boolean;
 	canSpy?: boolean;
 	canLaunchAsMissile?: boolean;
 	unitPlanetValueStats?: UnitPlanetValueStats[];
@@ -251,6 +255,7 @@ export const FleetActionType =
     Espionage: 5,
     Transport: 6,
     MissileLaunch: 7,
+    Attack: 8,
 } as const;
 export type FleetActionType = typeof FleetActionType[keyof typeof FleetActionType];
 export const FleetActionCategory =
@@ -284,6 +289,7 @@ export type PlanetZoneInfo =
 	isSelectable: boolean;
 	canProduceResources: boolean;
 	canBeSpied: boolean;
+	canBeAttacked: boolean;
 }
 
 export type SlotSizeRange =

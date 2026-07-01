@@ -105,7 +105,11 @@
       "PowerShell($c = Get-NetTCPConnection -LocalPort 3101 -State Listen -ErrorAction SilentlyContinue; if \\($c\\) { $c | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }; Write-Output \"killed\" } else { Write-Output \"free\" })",
       "PowerShell(Get-CimInstance Win32_Process -Filter \"name='node.exe'\" | Where-Object { $_.CommandLine -match 'next' } | Select-Object ProcessId, @{n='Started';e={$_.CreationDate}}, @{n='Cmd';e={ if \\($_.CommandLine.Length -gt 110\\) { $_.CommandLine.Substring\\(0,110\\) } else { $_.CommandLine } }} | Format-Table -AutoSize -Wrap)",
       "Bash(powershell -NoProfile -Command \"Get-Process -Id 17892 -ErrorAction SilentlyContinue | Select-Object Id,ProcessName,StartTime | Format-List\")",
-      "WebFetch(domain:gameforge.com)"
+      "WebFetch(domain:gameforge.com)",
+      "PowerShell(pnpm typecheck; Write-Output \"EXITCODE=$LASTEXITCODE\")",
+      "WebFetch(domain:board.origin.ogame.gameforge.com)",
+      "WebFetch(domain:board.en.ogame.gameforge.com)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp"
     ]
   },
   "hooks": {

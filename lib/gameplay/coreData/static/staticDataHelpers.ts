@@ -61,6 +61,14 @@ export function getUnitsByCategory(unitCategory: GameType.UnitCategory): GameTyp
     });
 }
 
+export function getCombatUnitTypes(): GameType.UnitType[]
+{
+    return getAllSpecificThings(ThingType.Thing.Unit).filter((unitType: GameType.UnitType): boolean =>
+    {
+        return getUnitStats(unitType).participatesInCombat === true;
+    });
+}
+
 export function getUnitQueueType(unitType: GameType.UnitType): GameType.UnitConstructionQueueType | undefined
 {
     return getUnitStats(unitType).queueType;
@@ -92,6 +100,27 @@ export function canUnitLaunchAsMissile(unitType: GameType.UnitType): boolean
 export function canPlanetZoneBeSpied(zone: GameType.PlanetZone): boolean
 {
     return getPlanetZoneInfo(zone).canBeSpied === true;
+}
+
+export function canPlanetZoneBeAttacked(zone: GameType.PlanetZone): boolean
+{
+    return getPlanetZoneInfo(zone).canBeAttacked === true;
+}
+
+export function getResourceInfo(resourceType: GameType.ResourceType): GameType.ResourceInfo
+{
+    const resourceInfo: GameType.ResourceInfo | undefined = StaticData.RESOURCE_INFOS.get(resourceType);
+    if (resourceInfo === undefined)
+    {
+        throw new Error(`No ResourceInfo for resourceType ${resourceType}.`);
+    }
+
+    return resourceInfo;
+}
+
+export function canResourceGoToDebrisField(resourceType: GameType.ResourceType): boolean
+{
+    return getResourceInfo(resourceType).canGoToDebrisField === true;
 }
 
 export function getResearchInfo(researchType: GameType.ResearchType): GameType.ResearchInfo

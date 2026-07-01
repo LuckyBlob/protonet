@@ -285,6 +285,51 @@ export function computeRemainingFleetCargoSpace(fleetMovement: CoreType.FleetMov
 	return Math.max(totalFleetSpace - usedSpace, 0);
 }
 
+export function loadPlanetResourcesIntoFleet(planetData: CoreType.PlanetData, fleetMovement: CoreType.FleetMovement, fraction: number): Map<GameType.ResourceType, number>
+{
+	const availableSpace: number = computeRemainingFleetCargoSpace(fleetMovement);
+	if (availableSpace <= 0)
+	{
+		return new Map<GameType.ResourceType, number>();
+	}
+
+	const planetResourceQuantities: Map<GameType.ResourceType, number> = ResourceData.getResourceQuantities(planetData);
+	const lootableResourceQuantities: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
+	for (const [resourceType, resourceQuantity] of planetResourceQuantities)
+	{
+		lootableResourceQuantities.set(resourceType, Math.floor(resourceQuantity * fraction));
+	}
+
+	const collectedResourceQuantities: Map<GameType.ResourceType, number> = ResourceData.computeCollectedResources(lootableResourceQuantities, availableSpace);
+
+	ResourceData.subtractPlanetResources(planetData, collectedResourceQuantities);
+
+	for (const [collectedResourceType, collectedResourceQuantity] of collectedResourceQuantities)
+	{
+		if (collectedResourceQuantity <= 0)
+		{
+			continue;
+		}
+
+		const existingResourceRow: DBType.FleetMovementResourceRow | undefined = fleetMovement.fleetMovementResourceRows.find((resourceRow: DBType.FleetMovementResourceRow): boolean => resourceRow.resource_type === collectedResourceType);
+		if (existingResourceRow !== undefined)
+		{
+			existingResourceRow.resource_quantity += collectedResourceQuantity;
+			continue;
+		}
+
+		const newMovementResourceRow: DBType.FleetMovementResourceRow =
+		{
+			fleet_id: fleetMovement.fleetMovementRow.id,
+			resource_type: collectedResourceType,
+			resource_quantity: collectedResourceQuantity,
+		};
+		fleetMovement.fleetMovementResourceRows.push(newMovementResourceRow);
+	}
+
+	return collectedResourceQuantities;
+}
+
 export function getFleetMovementRemainingMs(fleetMovement: CoreType.FleetMovement): number | null
 {
 	if (fleetMovement.fleetMovementRow.started_at === null)
@@ -313,6 +358,28 @@ export function buildResourcesListFromFleetMovement(fleetMovementResourceRows: D
 		const resourceName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.resource(fleetMovementResourceRow.resource_type)) ?? "Unknown";
 		parts.push(`${fleetMovementResourceRow.resource_quantity} ${resourceName}`);
 	}
+	return parts.join(", ");
+}
+
+export function buildUnitQuantitiesList(unitQuantities: Map<GameType.UnitType, number>, emptyLabel: string): string
+{
+	const parts: string[] = [];
+	for (const [unitType, unitQuantity] of unitQuantities)
+	{
+		if (unitQuantity <= 0)
+		{
+			continue;
+		}
+
+		const unitName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(unitType));
+		parts.push(`${unitQuantity} ${unitName}`);
+	}
+
+	if (parts.length === 0)
+	{
+		return emptyLabel;
+	}
+
 	return parts.join(", ");
 }
 
