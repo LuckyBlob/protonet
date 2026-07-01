@@ -9,6 +9,7 @@ import * as ShipyardView from "@/components/views/shipyardView";
 import * as MissileSiloView from "@/components/views/missileSiloView";
 import * as SensorPhalanxView from "@/components/views/sensorPhalanxView";
 import * as JumpGateView from "@/components/views/jumpGateView";
+import * as RepairDockView from "@/components/views/repairDockView";
 import * as FleetView from "@/components/views/fleetView";
 import * as MissileFleetView from "@/components/views/missileFleetView";
 import * as PlanetView from "@/components/views/planetView";
@@ -66,6 +67,11 @@ export function MainWindowElement(props: MainWindowProps): ReactElement
 	if (props.cvController[0] === "jumpGate")
 	{
 		return <JumpGateView.JumpGateView clientDataStateResult={props.clientDataStateResult} />;
+	}
+
+	if (props.cvController[0] === "repairDock")
+	{
+		return <RepairDockView.RepairDockView clientDataStateResult={props.clientDataStateResult} />;
 	}
 
 	if (props.cvController[0] === "fleets")

@@ -322,6 +322,11 @@ export function serverUpdatePlanetDataContext(planetId: number, playerId: number
                 updateBuildingDeconstructions(planetId, playerId, dynamicPlanetData);
                 break;
             }
+            case CoreType.DataContext.PendingRepair:
+            {
+                updatePendingRepairs(planetId, playerId, dynamicPlanetData);
+                break;
+            }
             default:
                 throw new Error(`UNREACHABLE: Dynamic data update function undefined for data context ${dataContext}.`);
         }
@@ -340,6 +345,7 @@ export function getDynamicPlanetData(planetId: number): CoreType.DynamicPlanetDa
         futureFleetArrivals: getDynamicPlanetFutureFleetArrivalData(planetId),
         buildingUpgrades: getDynamicPlanetBuildingUpgradeData(planetId),
         buildingDeconstructions: getDynamicPlanetBuildingDeconstructionData(planetId),
+        pendingRepairs: getDynamicPlanetPendingRepairData(planetId),
     };
 }
 
@@ -489,6 +495,35 @@ export function getDynamicPlanetBuildingDeconstructionData(planetId: number): Co
         }
 
         return buildingDeconstructions;
+    })();
+}
+
+export function getDynamicPlanetPendingRepairData(planetId: number): CoreType.PendingRepair[]
+{
+    return DB.databaseConnection.transaction((): CoreType.PendingRepair[] =>
+    {
+        const pendingRepairs: CoreType.PendingRepair[] = [];
+
+        const pendingRepairRows: DBType.PendingRepairRow[] = DB.databaseConnection.prepare(
+            "SELECT * FROM pending_repair WHERE planet_id = ? ORDER BY id"
+        ).all(planetId) as DBType.PendingRepairRow[];
+
+        for (const pendingRepairRow of pendingRepairRows)
+        {
+            const pendingRepairUnitRows: DBType.PendingRepairUnitRow[] = DB.databaseConnection.prepare(
+                "SELECT * FROM pending_repair_unit WHERE pending_repair_id = ?"
+            ).all(pendingRepairRow.id) as DBType.PendingRepairUnitRow[];
+
+            const newPendingRepair: CoreType.PendingRepair =
+            {
+                pendingRepairRow: pendingRepairRow,
+                pendingRepairUnitRows: pendingRepairUnitRows,
+            };
+
+            pendingRepairs.push(newPendingRepair);
+        }
+
+        return pendingRepairs;
     })();
 }
 
@@ -743,6 +778,52 @@ function updateBuildingUpgrades(planetId: number, playerId: number, dynamicPlane
             {
                 buildingUpgradeResourceRow.building_upgrade_id = buildingUpgradeRow.id;
                 insertResourceStatement.run(buildingUpgradeRow.id, buildingUpgradeResourceRow.resource_type, buildingUpgradeResourceRow.resource_quantity);
+            }
+        }
+    });
+    transaction();
+}
+
+function updatePendingRepairs(planetId: number, playerId: number, dynamicPlanetData: CoreType.DynamicPlanetData): void
+{
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        DB.databaseConnection.prepare("DELETE FROM pending_repair WHERE planet_id = ?").run(planetId);
+        const insertRepairStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO pending_repair (planet_id, player_id, created_at, repair_started_at, repair_completes_at) VALUES (?, ?, ?, ?, ?) RETURNING id"
+        );
+        const insertUnitStatement: Database.Statement = DB.databaseConnection.prepare(
+            "INSERT INTO pending_repair_unit (pending_repair_id, unit_type, unit_quantity) VALUES (?, ?, ?) RETURNING id"
+        );
+
+        if (dynamicPlanetData.pendingRepairs.length === 0)
+        {
+            return;
+        }
+
+        for (const pendingRepair of dynamicPlanetData.pendingRepairs)
+        {
+            const pendingRepairRow: DBType.PendingRepairRow = pendingRepair.pendingRepairRow;
+            const repairIdResult: { id: number } = insertRepairStatement.get(
+                planetId,
+                playerId,
+                pendingRepairRow.created_at,
+                pendingRepairRow.repair_started_at,
+                pendingRepairRow.repair_completes_at,
+            ) as { id: number };
+
+            pendingRepairRow.id = repairIdResult.id;
+
+            for (const pendingRepairUnitRow of pendingRepair.pendingRepairUnitRows)
+            {
+                const unitRowIdResult: { id: number } = insertUnitStatement.get(
+                    pendingRepairRow.id,
+                    pendingRepairUnitRow.unit_type,
+                    pendingRepairUnitRow.unit_quantity,
+                ) as { id: number };
+
+                pendingRepairUnitRow.id = unitRowIdResult.id;
+                pendingRepairUnitRow.pending_repair_id = pendingRepairRow.id;
             }
         }
     });

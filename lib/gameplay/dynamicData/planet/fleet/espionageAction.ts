@@ -2,6 +2,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
+import * as PendingRepairData from "@/lib/gameplay/dynamicData/planet/pendingRepairData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 import * as Espionage from "@/lib/gameplay/coreData/formula/espionageFormulas";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
@@ -66,6 +67,7 @@ function buildEspionageReportBody(targetPlayerData: CoreType.PlayerData, targetP
 
     reportLines.push(`Resources: ${buildBlockOrRedacted(revealedInfoBlocks, Espionage.EspionageInfoBlock.Resources, (): string => buildQuantityList(targetPlanetData.dynamicPlanetData.resourceQuantity, (resourceType: GameType.ResourceType): ThingType.SpecificThingType => ThingHelpers.resource(resourceType)))}`);
     reportLines.push(`Fleet: ${buildBlockOrRedacted(revealedInfoBlocks, Espionage.EspionageInfoBlock.Fleet, (): string => buildQuantityList(targetPlanetData.dynamicPlanetData.unitQuantity, (unitType: GameType.UnitType): ThingType.SpecificThingType => ThingHelpers.unit(unitType)))}`);
+    reportLines.push(`Ships under repair: ${buildBlockOrRedacted(revealedInfoBlocks, Espionage.EspionageInfoBlock.Fleet, (): string => buildQuantityList(buildShipsUnderRepairQuantities(targetPlanetData), (unitType: GameType.UnitType): ThingType.SpecificThingType => ThingHelpers.unit(unitType)))}`);
     reportLines.push(`Buildings: ${buildBlockOrRedacted(revealedInfoBlocks, Espionage.EspionageInfoBlock.Buildings, (): string => buildLevelList(targetPlanetData.dynamicPlanetData.buildingLevels, (buildingType: GameType.BuildingType): ThingType.SpecificThingType => ThingHelpers.building(buildingType)))}`);
     reportLines.push(`Research: ${buildBlockOrRedacted(revealedInfoBlocks, Espionage.EspionageInfoBlock.Research, (): string => buildLevelList(ResearchData.getResearchLevelMap(targetPlayerData), (researchType: GameType.ResearchType): ThingType.SpecificThingType => ThingHelpers.research(researchType)))}`);
 
@@ -126,6 +128,26 @@ function buildLevelList<K extends number>(levels: Map<K, number>, toSpecificThin
     }
 
     return parts.join(", ");
+}
+
+function buildShipsUnderRepairQuantities(targetPlanetData: CoreType.PlanetData): Map<GameType.UnitType, number>
+{
+    const shipsUnderRepair: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();
+    for (const pendingRepair of targetPlanetData.dynamicPlanetData.pendingRepairs)
+    {
+        if (PendingRepairData.isWreckAwaitingRepair(pendingRepair) === true)
+        {
+            continue;
+        }
+
+        const repairedUnitQuantities: Map<GameType.UnitType, number> = PendingRepairData.getPendingRepairUnitQuantities(pendingRepair);
+        for (const [unitType, unitQuantity] of repairedUnitQuantities)
+        {
+            shipsUnderRepair.set(unitType, (shipsUnderRepair.get(unitType) ?? 0) + unitQuantity);
+        }
+    }
+
+    return shipsUnderRepair;
 }
 
 function addEspionageReportMessage(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData, targetPlanetData: CoreType.PlanetData, fleetMovement: CoreType.FleetMovement, revealedInfoBlocks: Set<Espionage.EspionageInfoBlock>): void

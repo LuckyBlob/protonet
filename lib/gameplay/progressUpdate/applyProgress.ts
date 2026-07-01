@@ -8,6 +8,7 @@ import * as UnitConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/uni
 import * as FleetArrival from "@/lib/gameplay/progressUpdate/anchorEvent/fleetArrivalAnchorEvent"
 import * as CurrentlyResearching from "@/lib/gameplay/progressUpdate/anchorEvent/currentlyResearchingAnchorEvent"
 import * as ResourceProduction from "@/lib/gameplay/progressUpdate/anchorEvent/resourceProductionAnchorEvent"
+import * as RepairAnchor from "@/lib/gameplay/progressUpdate/anchorEvent/repairAnchorEvent"
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
@@ -26,7 +27,8 @@ export abstract class PlayerProgressApplier
         anchorEvents.push(FleetArrival.findNextAnchorEvent(playerData, serverData, this));
         anchorEvents.push(CurrentlyResearching.findNextAnchorEvent(playerData, serverData, this));
         anchorEvents.push(ResourceProduction.findNextAnchorEvent(playerData, serverData, this));
-        
+        anchorEvents.push(RepairAnchor.findNextAnchorEvent(playerData, serverData, this));
+
         let nextAnchorEvent: AnchorEvent.AnchorEvent | null = null;
         for (const anchorEvent of anchorEvents)
         {
@@ -77,6 +79,11 @@ export abstract class PlayerProgressApplier
             case AnchorEvent.AnchorEventType.ResourceProduction:
             {
                 ResourceProduction.resolveAnchorEvent(playerData, serverData, anchorEvent);
+                break;
+            }
+            case AnchorEvent.AnchorEventType.Repair:
+            {
+                RepairAnchor.resolveAnchorEvent(playerData, serverData, anchorEvent);
                 break;
             }
             default:

@@ -77,6 +77,7 @@ export function buildDynamicPlanetData(overrides?: Partial<CoreType.DynamicPlane
         futureFleetArrivals: [],
         buildingUpgrades: [],
         buildingDeconstructions: [],
+        pendingRepairs: [],
         ...overrides,
     };
 

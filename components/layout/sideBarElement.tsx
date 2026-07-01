@@ -28,6 +28,81 @@ type NavItem =
 	subItems: NavItem[];
 };
 
+function buildBuildingSubItems(clientDataStateResult: UseClientDataState.ClientDataStateResult): NavItem[]
+{
+	const buildingSubItems: NavItem[] =
+	[
+	    { view: "buildings", label: "Upgrade", subItems: [] },
+	    { view: "buildingsDeconstruct", label: "Deconstruct", subItems: [] },
+	];
+
+	if (getSelectedPlanetBuildingLevel(clientDataStateResult, GameType.BuildingType.MissileSilo) >= 1)
+	{
+	    buildingSubItems.push({ view: "missileSilo", label: "Missile Silo", subItems: [] });
+	}
+
+	if (getSelectedPlanetBuildingLevel(clientDataStateResult, GameType.BuildingType.SensorPhalanx) >= 1)
+	{
+	    buildingSubItems.push({ view: "sensorPhalanx", label: "Sensor Phalanx", subItems: [] });
+	}
+
+	if (getSelectedPlanetBuildingLevel(clientDataStateResult, GameType.BuildingType.JumpGate) >= 1)
+	{
+	    buildingSubItems.push({ view: "jumpGate", label: "Jump Gate", subItems: [] });
+	}
+
+	if (getSelectedPlanetBuildingLevel(clientDataStateResult, GameType.BuildingType.RepairDock) >= 1)
+	{
+	    buildingSubItems.push({ view: "repairDock", label: "Repair Dock", subItems: [] });
+	}
+
+	return buildingSubItems;
+}
+
+function buildFleetSubItems(clientDataStateResult: UseClientDataState.ClientDataStateResult): NavItem[]
+{
+	const fleetSubItems: NavItem[] =
+	[
+	    { view: "fleets", label: "Ships", subItems: [] },
+	];
+
+	if (getSelectedPlanetCategoryUnitQuantity(clientDataStateResult, GameType.UnitCategory.Missile) >= 1)
+	{
+	    fleetSubItems.push({ view: "fleetsMissiles", label: "Missiles", subItems: [] });
+	}
+
+	return fleetSubItems;
+}
+
+function buildPlanetSubItems(): NavItem[]
+{
+	const planetSubItems: NavItem[] =
+	[
+	    { view: "planets", label: "Galaxy", subItems: [] },
+	    { view: "currentPlanet", label: "Current Planet", subItems: [] },
+	];
+
+	return planetSubItems;
+}
+
+function buildNavItems(clientDataStateResult: UseClientDataState.ClientDataStateResult, messagesLabel: ReactNode): NavItem[]
+{
+	const navItems: NavItem[] =
+	[
+	    { view: "game", label: "Game", subItems: [] },
+	    { view: "buildings", label: "Buildings", subItems: buildBuildingSubItems(clientDataStateResult) },
+	    { view: "research", label: "Research", subItems: [] },
+	    { view: "shipyard", label: "Shipyard", subItems: [] },
+	    { view: "fleets", label: "Fleets", subItems: buildFleetSubItems(clientDataStateResult) },
+	    { view: "planets", label: "Planets", subItems: buildPlanetSubItems() },
+	    { view: "messages", label: messagesLabel, subItems: [] },
+	    { view: "stats", label: "Stats", subItems: [] },
+	    { view: "settings", label: "Player Settings", subItems: [] },
+	];
+
+	return navItems;
+}
+
 export function SideBarElement(props: SideBarProps): ReactElement
 {
 	const currentView: string = props.cvController[0];
@@ -47,59 +122,7 @@ export function SideBarElement(props: SideBarProps): ReactElement
 	    <>Messages{unreadBadge}</>
 	);
 
-	const buildingSubItems: NavItem[] =
-	[
-	    { view: "buildings", label: "Upgrade", subItems: [] },
-	    { view: "buildingsDeconstruct", label: "Deconstruct", subItems: [] },
-	];
-
-	const selectedPlanetMissileSiloLevel: number = getSelectedPlanetBuildingLevel(props.clientDataStateResult, GameType.BuildingType.MissileSilo);
-	if (selectedPlanetMissileSiloLevel >= 1)
-	{
-	    buildingSubItems.push({ view: "missileSilo", label: "Missile Silo", subItems: [] });
-	}
-
-	const selectedPlanetSensorPhalanxLevel: number = getSelectedPlanetBuildingLevel(props.clientDataStateResult, GameType.BuildingType.SensorPhalanx);
-	if (selectedPlanetSensorPhalanxLevel >= 1)
-	{
-	    buildingSubItems.push({ view: "sensorPhalanx", label: "Sensor Phalanx", subItems: [] });
-	}
-
-	const selectedPlanetJumpGateLevel: number = getSelectedPlanetBuildingLevel(props.clientDataStateResult, GameType.BuildingType.JumpGate);
-	if (selectedPlanetJumpGateLevel >= 1)
-	{
-	    buildingSubItems.push({ view: "jumpGate", label: "Jump Gate", subItems: [] });
-	}
-
-	const fleetSubItems: NavItem[] =
-	[
-	    { view: "fleets", label: "Ships", subItems: [] },
-	];
-
-	const selectedPlanetMissileQuantity: number = getSelectedPlanetCategoryUnitQuantity(props.clientDataStateResult, GameType.UnitCategory.Missile);
-	if (selectedPlanetMissileQuantity >= 1)
-	{
-	    fleetSubItems.push({ view: "fleetsMissiles", label: "Missiles", subItems: [] });
-	}
-
-	const planetSubItems: NavItem[] =
-	[
-	    { view: "planets", label: "Galaxy", subItems: [] },
-	    { view: "currentPlanet", label: "Current Planet", subItems: [] },
-	];
-
-	const navItems: NavItem[] =
-	[
-	    { view: "game", label: "Game", subItems: [] },
-	    { view: "buildings", label: "Buildings", subItems: buildingSubItems },
-	    { view: "research", label: "Research", subItems: [] },
-	    { view: "shipyard", label: "Shipyard", subItems: [] },
-	    { view: "fleets", label: "Fleets", subItems: fleetSubItems },
-	    { view: "planets", label: "Planets", subItems: planetSubItems },
-	    { view: "messages", label: messagesLabel, subItems: [] },
-	    { view: "stats", label: "Stats", subItems: [] },
-	    { view: "settings", label: "Player Settings", subItems: [] },
-	];
+	const navItems: NavItem[] = buildNavItems(props.clientDataStateResult, messagesLabel);
 
 	const adminSection: ReactElement | null = props.cuController[0].user!.admin_level === 0
 	    ?

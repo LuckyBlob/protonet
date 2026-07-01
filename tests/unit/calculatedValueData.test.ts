@@ -180,13 +180,21 @@ describe("calculatedValueData — size budget", () =>
         expect(size!.consumption).toBe(3);
     });
 
-    it("does not let the energy throttle scale field consumption", () =>
+    it("applies the energy throttle to a building's energy value only, never to its field consumption", () =>
     {
-        const planetData: CoreType.PlanetData = buildPlanetWithBuildings(new Map<GameType.BuildingType, number>([[GameType.BuildingType.MetalMine, 4]]));
-        planetData.dynamicPlanetData.buildingEnergySettings.set(GameType.BuildingType.MetalMine, 0);
+        const throttledPlanetData: CoreType.PlanetData = buildPlanetWithBuildings(new Map<GameType.BuildingType, number>([[GameType.BuildingType.MetalMine, 4]]));
+        throttledPlanetData.dynamicPlanetData.buildingEnergySettings.set(GameType.BuildingType.MetalMine, 0);
 
-        const size: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(planetData, GameType.PlanetValueType.Size, TestDataBuilders.buildPlayerData());
-        expect(size!.consumption).toBe(4);
+        const fullPowerPlanetData: CoreType.PlanetData = buildPlanetWithBuildings(new Map<GameType.BuildingType, number>([[GameType.BuildingType.MetalMine, 4]]));
+
+        const fullPowerEnergy: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(fullPowerPlanetData, GameType.PlanetValueType.Energy, TestDataBuilders.buildPlayerData());
+        const throttledEnergy: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(throttledPlanetData, GameType.PlanetValueType.Energy, TestDataBuilders.buildPlayerData());
+
+        expect(fullPowerEnergy!.consumption).toBeGreaterThan(0);
+        expect(throttledEnergy!.consumption).toBe(0);
+
+        const throttledSize: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(throttledPlanetData, GameType.PlanetValueType.Size, TestDataBuilders.buildPlayerData());
+        expect(throttledSize!.consumption).toBe(4);
     });
 });
 

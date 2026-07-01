@@ -35,6 +35,7 @@ export const BuildingType =
     MissileSilo: 15,
     SensorPhalanx: 16,
     JumpGate: 17,
+    RepairDock: 18,
 } as const;
 export type BuildingType = typeof BuildingType[keyof typeof BuildingType];
 export type BuildingStats =
@@ -48,7 +49,7 @@ export type BuildingStats =
 	costStats?: BuildingCostStats;
 	productionFunctionType?: ProductionFunctionType;
 	productionStats?: Map<ResourceType, ProductionStats>;
-	planetValueStats?: PlanetValueStats[];
+	planetValueStats?: PlanetValueStat[];
 };
 
 export const BuildingCostFunctionType =
@@ -75,23 +76,31 @@ export type ProductionStats =
 	exponentBase: number,
 };
 
-export const BuildingPlanetValueProductionFormulasType =
+export const PlanetValueProductionFormulasType =
 {
     SimpleExponential: 1,
     FlooredNaturalExponential: 2,
-     ResearchScaledExponential: 3,
+    ResearchScaledExponential: 3,
+    LinearPerLevel: 4,
+    TemperatureScaled: 5,
+    FixedPerUnit: 6,
+    SimpleExponentialBuildingEnergyThrottled: 7,
+    ResearchScaledExponentialBuildingEnergyThrottled: 8,
 } as const;
-export type BuildingPlanetValueProductionFormulasType = typeof BuildingPlanetValueProductionFormulasType[keyof typeof BuildingPlanetValueProductionFormulasType];
-export type PlanetValueStats =
+export type PlanetValueProductionFormulasType = typeof PlanetValueProductionFormulasType[keyof typeof PlanetValueProductionFormulasType];
+export type PlanetValueStat =
 {
-	planetValueProductionFormulasType: BuildingPlanetValueProductionFormulasType;
-	basePlanetValueFactor: Map<PlanetValueType, number>;
+	planetValueProductionFormulasType: PlanetValueProductionFormulasType;
+	planetValueType: PlanetValueType;
+	basePlanetValueFactor: number;
 	basePlanetValueExponent?: number;
 	naturalExponentialFactor?: number;
 	naturalExponentialExponentFactor?: number;
 	researchScalingResearchType?: ResearchType;
 	researchScalingBaseFactor?: number;
 	researchScalingPerLevelFactor?: number;
+	temperatureOffset?: number;
+	temperatureDivider?: number;
 };
 //#endregion
 
@@ -128,10 +137,16 @@ export type PlayerValueInfo =
 	displayName: string;
 	limitFleets?: boolean;
 }
-export type PlayerValueStats =
+export const PlayerValueProductionFormulasType =
 {
-	playerValueProductionFormulasType: ResearchPlayerValueProductionFormulasType;
-	basePlayerValueFactor: Map<PlayerValueType, number>;
+    ProportionalOneToOne: 1,
+} as const;
+export type PlayerValueProductionFormulasType = typeof PlayerValueProductionFormulasType[keyof typeof PlayerValueProductionFormulasType];
+export type PlayerValueStat =
+{
+	playerValueProductionFormulasType: PlayerValueProductionFormulasType;
+	playerValueType: PlayerValueType;
+	basePlayerValueFactor: number;
 }
 //#endregion
 
@@ -200,20 +215,6 @@ export type SpeedStats =
 	speedFunctionType: SpeedFunctionType;
 	rangeFunctionType?: RangeFunctionType;
 }
-export const UnitPlanetValueProductionFormulasType =
-{
-    TemperatureScaled: 1,
-    FixedPerUnit: 2,
-} as const;
-export type UnitPlanetValueProductionFormulasType = typeof UnitPlanetValueProductionFormulasType[keyof typeof UnitPlanetValueProductionFormulasType];
-export type UnitPlanetValueStats =
-{
-	unitPlanetValueProductionFormulasType: UnitPlanetValueProductionFormulasType;
-	basePlanetValueFactor: Map<PlanetValueType, number>;
-	temperatureOffset?: number;
-	temperatureDivider?: number;
-};
-
 export const UnitConstructionQueueType =
 {
     Shipyard: 1,
@@ -239,9 +240,10 @@ export type UnitStats =
 	baseFuelConsumption?: EngineTechData<Map<ResourceType, number>>[];
 	canTargetDebrisField?: boolean;
 	canGenerateDebris?: boolean;
+	canBeRepairedAtRepairDock?: boolean;
 	canSpy?: boolean;
 	canLaunchAsMissile?: boolean;
-	unitPlanetValueStats?: UnitPlanetValueStats[];
+	planetValueStats?: PlanetValueStat[];
 };
 //#endregion
 
@@ -331,14 +333,8 @@ export type ResearchInfo =
 	requirements?: RequirementType.Requirement[];
 	costFunctionType?: ResearchCostFunctionType;
 	costStats?: ResearchCostStats;
-	playerValueStats?: PlayerValueStats[];
+	playerValueStats?: PlayerValueStat[];
 };
-
-export const ResearchPlayerValueProductionFormulasType =
-{
-    ProportionalOneToOne: 1,
-} as const;
-export type ResearchPlayerValueProductionFormulasType = typeof ResearchPlayerValueProductionFormulasType[keyof typeof ResearchPlayerValueProductionFormulasType];
 
 export const ResearchCostFunctionType =
 {

@@ -170,6 +170,36 @@ export type BuildUnits_ServerResponse = BaseServerResponse &
 	serializedPlayerData: Serialization.SerializedPlayerData | null;
 };
 
+export type StartRepair_ClientRequest = BaseClientRequest &
+{
+	planetId: number;
+	pendingRepairId: number;
+};
+export type StartRepair_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
+export type CollectRepair_ClientRequest = BaseClientRequest &
+{
+	planetId: number;
+	pendingRepairId: number;
+};
+export type CollectRepair_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
+export type BurnWreckField_ClientRequest = BaseClientRequest &
+{
+	planetId: number;
+	pendingRepairId: number;
+};
+export type BurnWreckField_ServerResponse = BaseServerResponse &
+{
+	serializedPlayerData: Serialization.SerializedPlayerData | null;
+};
+
 export type DestroyMissiles_ClientRequest = BaseClientRequest &
 {
 	planetId: number;

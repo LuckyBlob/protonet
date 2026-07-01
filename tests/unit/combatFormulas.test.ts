@@ -109,4 +109,57 @@ describe('combat formulas', () =>
         const repaired: Map<GameType.UnitType, number> = Combat.computeRepairedUnitQuantities(destroyedUnitQuantities, 4242);
         expect(repaired.size).toBe(0);
     });
+
+    it('computeWreckFieldFraction is zero without a dock, is 0.225 at level 1, rises with level, and is capped', () =>
+    {
+        expect(Combat.computeWreckFieldFraction(0)).toBe(0);
+        expect(Combat.computeWreckFieldFraction(1)).toBeCloseTo(0.225);
+        expect(Combat.computeWreckFieldFraction(2)).toBeGreaterThan(Combat.computeWreckFieldFraction(1));
+        expect(Combat.computeWreckFieldFraction(10)).toBeGreaterThan(Combat.computeWreckFieldFraction(2));
+        expect(Combat.computeWreckFieldFraction(100000)).toBeLessThan(0.285);
+    });
+
+    it('shouldFormWreckField only triggers strictly above 150000 lost score', () =>
+    {
+        expect(Combat.shouldFormWreckField(0)).toBe(false);
+        expect(Combat.shouldFormWreckField(150000)).toBe(false);
+        expect(Combat.shouldFormWreckField(150001)).toBe(true);
+    });
+
+    it('computeRepairTriggerScore counts only metal+crystal of the 4 real ships (excludes deuterium, defenses, satellites, probes)', () =>
+    {
+        const colonyStats: GameType.UnitStats = StaticDataHelper.getUnitStats(GameType.UnitType.ColonyShip);
+        const colonyMetalCrystalValue: number = (colonyStats.costMap.get(GameType.ResourceType.Metal) ?? 0) + (colonyStats.costMap.get(GameType.ResourceType.Crystal) ?? 0);
+
+        const colonyScore: number = Combat.computeRepairTriggerScore(new Map<GameType.UnitType, number>([[GameType.UnitType.ColonyShip, 2]]));
+        expect(colonyScore).toBe(colonyMetalCrystalValue * 2);
+
+        expect(Combat.computeRepairTriggerScore(new Map<GameType.UnitType, number>([[GameType.UnitType.RocketLauncher, 100]]))).toBe(0);
+        expect(Combat.computeRepairTriggerScore(new Map<GameType.UnitType, number>([[GameType.UnitType.SolarSatellite, 100]]))).toBe(0);
+        expect(Combat.computeRepairTriggerScore(new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, 100]]))).toBe(0);
+    });
+
+    it('computeWreckUnitQuantities recovers only repairable ships, floored by the dock fraction', () =>
+    {
+        const defenderLosses: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>
+        ([
+            [GameType.UnitType.SmallTransport, 100],
+            [GameType.UnitType.RocketLauncher, 100],
+            [GameType.UnitType.SolarSatellite, 100],
+            [GameType.UnitType.EspionageProbe, 100],
+        ]);
+
+        const wreckUnitQuantities: Map<GameType.UnitType, number> = Combat.computeWreckUnitQuantities(defenderLosses, 4);
+
+        expect(wreckUnitQuantities.get(GameType.UnitType.SmallTransport)).toBe(25);
+        expect(wreckUnitQuantities.has(GameType.UnitType.RocketLauncher)).toBe(false);
+        expect(wreckUnitQuantities.has(GameType.UnitType.SolarSatellite)).toBe(false);
+        expect(wreckUnitQuantities.has(GameType.UnitType.EspionageProbe)).toBe(false);
+    });
+
+    it('computeWreckUnitQuantities is empty without a dock', () =>
+    {
+        const defenderLosses: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>([[GameType.UnitType.SmallTransport, 100]]);
+        expect(Combat.computeWreckUnitQuantities(defenderLosses, 0).size).toBe(0);
+    });
 });

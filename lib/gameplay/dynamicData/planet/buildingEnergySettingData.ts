@@ -50,6 +50,6 @@ export function buildingHasEnergyPlanetValue(buildingType: GameType.BuildingType
         return false;
     }
 
-    return buildingStats.planetValueStats.some((planetValueStats: GameType.PlanetValueStats): boolean =>
-        planetValueStats.basePlanetValueFactor.has(GameType.PlanetValueType.Energy));
+    return buildingStats.planetValueStats.some((planetValueStat: GameType.PlanetValueStat): boolean =>
+        planetValueStat.planetValueType === GameType.PlanetValueType.Energy);
 }

@@ -23,6 +23,9 @@ export const ActionRequest =
     CancelBuildingDeconstruction:   { endpoint: "buy/cancelBuildingDeconstruction",   name: "CancelBuildingDeconstruction" },
     UpgradeResearch:   { endpoint: "buy/upgradeResearch",   name: "UpgradeResearch" },
     BuildUnits:   { endpoint: "buy/buildUnits",   name: "BuildUnits" },
+    StartRepair:   { endpoint: "buy/startRepair",   name: "StartRepair" },
+    CollectRepair:   { endpoint: "buy/collectRepair",   name: "CollectRepair" },
+    BurnWreckField:   { endpoint: "buy/burnWreckField",   name: "BurnWreckField" },
     DestroyMissiles:   { endpoint: "buy/destroyMissiles",   name: "DestroyMissiles" },
     Scan:   { endpoint: "buy/scan",   name: "Scan" },
     JumpGate:   { endpoint: "buy/jumpGate",   name: "JumpGate" },
@@ -54,6 +57,9 @@ export type ActionRequestMap =
     CancelBuildingDeconstruction: RequestType.CancelBuildingDeconstruction_ClientRequest;
     UpgradeResearch: RequestType.Research_ClientRequest;
     BuildUnits: RequestType.BuildUnits_ClientRequest;
+    StartRepair: RequestType.StartRepair_ClientRequest;
+    CollectRepair: RequestType.CollectRepair_ClientRequest;
+    BurnWreckField: RequestType.BurnWreckField_ClientRequest;
     DestroyMissiles: RequestType.DestroyMissiles_ClientRequest;
     Scan: RequestType.Scan_ClientRequest;
     JumpGate: RequestType.JumpGate_ClientRequest;
@@ -85,6 +91,9 @@ export type ActionResponseMap =
     CancelBuildingDeconstruction: RequestType.CancelBuildingDeconstruction_ServerResponse;
     UpgradeResearch: RequestType.Research_ServerResponse;
     BuildUnits: RequestType.BuildUnits_ServerResponse;
+    StartRepair: RequestType.StartRepair_ServerResponse;
+    CollectRepair: RequestType.CollectRepair_ServerResponse;
+    BurnWreckField: RequestType.BurnWreckField_ServerResponse;
     DestroyMissiles: RequestType.DestroyMissiles_ServerResponse;
     Scan: RequestType.Scan_ServerResponse;
     JumpGate: RequestType.JumpGate_ServerResponse;

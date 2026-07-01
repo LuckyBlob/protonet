@@ -429,6 +429,88 @@ export function getUnitConstructionCount(planetId: number, db: Database.Database
     return row.count;
 }
 
+export type PendingRepairDbRow =
+{
+    id: number;
+    planet_id: number;
+    player_id: number;
+    created_at: number;
+    repair_started_at: number | null;
+    repair_completes_at: number | null;
+};
+
+export function getPendingRepairRows(planetId: number, db: Database.Database): PendingRepairDbRow[]
+{
+    return db.prepare(
+        "SELECT id, planet_id, player_id, created_at, repair_started_at, repair_completes_at FROM pending_repair WHERE planet_id = ? ORDER BY id"
+    ).all(planetId) as PendingRepairDbRow[];
+}
+
+export function getPendingRepairCount(planetId: number, db: Database.Database): number
+{
+    const row: { count: number } = db.prepare(
+        "SELECT COUNT(*) AS count FROM pending_repair WHERE planet_id = ?"
+    ).get(planetId) as { count: number };
+
+    return row.count;
+}
+
+export function getPendingRepairUnitQuantityDb(pendingRepairId: number, unitType: number, db: Database.Database): number
+{
+    const row: { unit_quantity: number } | undefined = db.prepare(
+        "SELECT unit_quantity FROM pending_repair_unit WHERE pending_repair_id = ? AND unit_type = ?"
+    ).get(pendingRepairId, unitType) as { unit_quantity: number } | undefined;
+
+    return row?.unit_quantity ?? 0;
+}
+
+export function getPendingRepairUnitTypeCount(pendingRepairId: number, db: Database.Database): number
+{
+    const row: { count: number } = db.prepare(
+        "SELECT COUNT(*) AS count FROM pending_repair_unit WHERE pending_repair_id = ?"
+    ).get(pendingRepairId) as { count: number };
+
+    return row.count;
+}
+
+export function insertPendingRepair(planetId: number, playerId: number, unitQuantities: [number, number][], db: Database.Database, options?: { createdAt?: number, repairStartedAt?: number | null, repairCompletesAt?: number | null }): number
+{
+    const createdAt: number = options?.createdAt ?? Date.now();
+    const repairStartedAt: number | null = options?.repairStartedAt ?? null;
+    const repairCompletesAt: number | null = options?.repairCompletesAt ?? null;
+
+    const result: { id: number } = db.prepare(
+        "INSERT INTO pending_repair (planet_id, player_id, created_at, repair_started_at, repair_completes_at) VALUES (?, ?, ?, ?, ?) RETURNING id"
+    ).get(planetId, playerId, createdAt, repairStartedAt, repairCompletesAt) as { id: number };
+
+    for (const [unitType, unitQuantity] of unitQuantities)
+    {
+        db.prepare(
+            "INSERT INTO pending_repair_unit (pending_repair_id, unit_type, unit_quantity) VALUES (?, ?, ?)"
+        ).run(result.id, unitType, unitQuantity);
+    }
+
+    return result.id;
+}
+
+export function updatePendingRepairTimestamps(pendingRepairId: number, db: Database.Database, fields: { createdAt?: number, repairStartedAt?: number | null, repairCompletesAt?: number | null }): void
+{
+    if (fields.createdAt !== undefined)
+    {
+        db.prepare("UPDATE pending_repair SET created_at = ? WHERE id = ?").run(fields.createdAt, pendingRepairId);
+    }
+
+    if (fields.repairStartedAt !== undefined)
+    {
+        db.prepare("UPDATE pending_repair SET repair_started_at = ? WHERE id = ?").run(fields.repairStartedAt, pendingRepairId);
+    }
+
+    if (fields.repairCompletesAt !== undefined)
+    {
+        db.prepare("UPDATE pending_repair SET repair_completes_at = ? WHERE id = ?").run(fields.repairCompletesAt, pendingRepairId);
+    }
+}
+
 // Seed a building upgrade that is in progress NOW (started, completing an hour out, so applyPlayerUpdate
 // won't resolve it). Used to assert the build-while-building requirement gates server-side.
 export function seedBuildingUpgradeInProgress(planetId: number, playerId: number, buildingType: number, db: Database.Database): void

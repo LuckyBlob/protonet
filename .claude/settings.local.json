@@ -110,7 +110,10 @@
       "WebFetch(domain:board.origin.ogame.gameforge.com)",
       "WebFetch(domain:board.en.ogame.gameforge.com)",
       "mcp__Claude_in_Chrome__tabs_context_mcp",
-      "Bash(cd \"D:/Claude/WebsiteProject/protonet\" && sed -n '/1\\) tests/,/did not run/p' /tmp/combat.log | grep -vE \"WebServer|📧|Bonjour|Cliquez|verify\\\\?token\" | head -50)"
+      "Bash(cd \"D:/Claude/WebsiteProject/protonet\" && sed -n '/1\\) tests/,/did not run/p' /tmp/combat.log | grep -vE \"WebServer|📧|Bonjour|Cliquez|verify\\\\?token\" | head -50)",
+      "WebFetch(domain:wiki.ogame.org)",
+      "Bash(ls -la .prettierrc* .editorconfig .eslintrc* eslint.config.*)",
+      "Bash(grep -iE \"prettier|printWidth\" package.json)"
     ]
   },
   "hooks": {

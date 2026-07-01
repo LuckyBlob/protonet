@@ -5,19 +5,18 @@ import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelp
 
 export function getUnitMissileSpaceCost(unitType: GameType.UnitType): number
 {
-    const unitPlanetValueStats: GameType.UnitPlanetValueStats[] | undefined = StaticDataHelper.getUnitStats(unitType).unitPlanetValueStats;
+    const unitPlanetValueStats: GameType.PlanetValueStat[] | undefined = StaticDataHelper.getUnitStats(unitType).planetValueStats;
     if (unitPlanetValueStats === undefined)
     {
         return 0;
     }
 
     let missileSpaceCost: number = 0;
-    for (const singleUnitPlanetValueStats of unitPlanetValueStats)
+    for (const singleUnitPlanetValueStat of unitPlanetValueStats)
     {
-        const missileSpaceFactor: number | undefined = singleUnitPlanetValueStats.basePlanetValueFactor.get(GameType.PlanetValueType.MissileSpace);
-        if (missileSpaceFactor !== undefined && missileSpaceFactor < 0)
+        if (singleUnitPlanetValueStat.planetValueType === GameType.PlanetValueType.MissileSpace && singleUnitPlanetValueStat.basePlanetValueFactor < 0)
         {
-            missileSpaceCost += Math.abs(missileSpaceFactor);
+            missileSpaceCost += Math.abs(singleUnitPlanetValueStat.basePlanetValueFactor);
         }
     }
 

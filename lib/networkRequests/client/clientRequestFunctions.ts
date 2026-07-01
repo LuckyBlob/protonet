@@ -445,6 +445,96 @@ export async function clientTryBuildUnitsRequest(psController: CoreType.PSContro
     }
 }
 
+export async function clientTryStartRepairRequest(psController: CoreType.PSController, planetId: number, pendingRepairId: number): Promise<void>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.StartRepair> =
+    {
+        planetId: planetId,
+        pendingRepairId: pendingRepairId,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.StartRepair> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.StartRepair, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Start repair failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
+}
+
+export async function clientTryCollectRepairRequest(psController: CoreType.PSController, planetId: number, pendingRepairId: number): Promise<void>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.CollectRepair> =
+    {
+        planetId: planetId,
+        pendingRepairId: pendingRepairId,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.CollectRepair> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.CollectRepair, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Collect repair failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
+}
+
+export async function clientTryBurnWreckFieldRequest(psController: CoreType.PSController, planetId: number, pendingRepairId: number): Promise<void>
+{
+    const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BurnWreckField> =
+    {
+        planetId: planetId,
+        pendingRepairId: pendingRepairId,
+    };
+
+    try
+    {
+        const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.BurnWreckField> = await ServerRequest.requestServerAction(APIEndPoint.ActionRequest.BurnWreckField, clientRequest);
+        if (response.error !== null)
+        {
+            throw new Error(response.error);
+        }
+        // Use != instead of !== here to catch everything that's very weird.
+        if (response.serializedPlayerData == null)
+        {
+            throw new Error(`Burn wreck field failed for planetId ${planetId}: Invalid response from server.`);
+        }
+
+        const playerData: CoreType.PlayerData = Serialization.deserializePlayerData(response.serializedPlayerData);
+        await setPlayerState(psController, playerData);
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
+}
+
 export async function clientTryDestroyMissilesRequest(psController: CoreType.PSController, planetId: number, unitQuantities: Map<GameType.UnitType, number>): Promise<void>
 {
     const clientRequest: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.DestroyMissiles> =

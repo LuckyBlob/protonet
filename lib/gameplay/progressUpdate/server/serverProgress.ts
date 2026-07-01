@@ -7,6 +7,7 @@ import * as BuildingUpgrade from "@/lib/gameplay/progressUpdate/anchorEvent/buil
 import * as BuildingDeconstruction from "@/lib/gameplay/progressUpdate/anchorEvent/buildingDeconstructionAnchorEvent"
 import * as UnitConstruction from "@/lib/gameplay/progressUpdate/anchorEvent/unitConstructionAnchorEvent"
 import * as ResourceProduction from "@/lib/gameplay/progressUpdate/anchorEvent/resourceProductionAnchorEvent"
+import * as RepairAnchor from "@/lib/gameplay/progressUpdate/anchorEvent/repairAnchorEvent"
 import * as ApplyProgress from "@/lib/gameplay/progressUpdate/applyProgress"
 import * as DB from "@/lib/db/db";
 import * as ServerRequestFunctions from "@/lib/networkRequests/server/serverRequestFunctions";
@@ -76,6 +77,11 @@ class ServerPlayerProgressResolver extends ApplyProgress.PlayerProgressApplier
             case AnchorEvent.AnchorEventType.ResourceProduction:
             {
                 resolveResourceProductionAnchorEventToDB(playerData, serverData, anchorEvent);
+                break;
+            }
+            case AnchorEvent.AnchorEventType.Repair:
+            {
+                resolveRepairAnchorEventToDB(playerData, serverData, anchorEvent);
                 break;
             }
             default:
@@ -226,6 +232,24 @@ function resolveResourceProductionAnchorEventToDB(playerData: CoreType.PlayerDat
     {
         ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.BuildingLevel, planetData.dynamicPlanetData);
         ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.ResourceQuantity, planetData.dynamicPlanetData);
+    });
+
+    transaction();
+}
+
+function resolveRepairAnchorEventToDB(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
+{
+    const repairAnchorEvent: RepairAnchor.RepairAnchorEvent = anchorEvent as RepairAnchor.RepairAnchorEvent;
+    const planetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, repairAnchorEvent.pendingRepair.pendingRepairRow.planet_id);
+    if (planetData === null)
+    {
+        throw new Error(`⚠️: Cant get full planet data for pending repair.`);
+    }
+
+    const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
+    {
+        ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.PendingRepair, planetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(planetData.planetRow.id, playerData.playerRow.id, CoreType.DataContext.UnitQuantity, planetData.dynamicPlanetData);
     });
 
     transaction();

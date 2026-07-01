@@ -25,6 +25,7 @@ import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelp
 import * as FleetMovementDuration from "@/lib/gameplay/coreData/formula/fleetMovementDurationFormulas";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as UnitConstructionData from "@/lib/gameplay/dynamicData/planet/unitConstructionData";
+import * as PendingRepairData from "@/lib/gameplay/dynamicData/planet/pendingRepairData";
 import * as MissileSpaceData from "@/lib/gameplay/dynamicData/planet/missileSpaceData";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as BuildingDeconstructionData from "@/lib/gameplay/dynamicData/planet/buildingDeconstructionData";
@@ -1935,6 +1936,129 @@ function buildScanReportBody(playerData: CoreType.PlayerData, galaxy: number, sy
     }
 
     return reportLines.join("\n");
+}
+
+export function tryStartRepairLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.StartRepair>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    const relevantPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.planetId);
+    if (relevantPlanetData === null)
+    {
+        return { success: false, failureReason: "Wrong planet to start a repair.", playerStateResult: playerData };
+    }
+
+    const pendingRepair: CoreType.PendingRepair | null = PendingRepairData.getPendingRepairForId(relevantPlanetData, requestData.pendingRepairId);
+    if (pendingRepair === null)
+    {
+        return { success: false, failureReason: "No such wreck field.", playerStateResult: playerData };
+    }
+
+    if (PendingRepairData.canStartRepair(relevantPlanetData, pendingRepair, now) === false)
+    {
+        return { success: false, failureReason: "Cannot start this repair.", playerStateResult: playerData };
+    }
+
+    PendingRepairData.startRepair(pendingRepair, relevantPlanetData, serverData, now);
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.PendingRepair, relevantPlanetData.dynamicPlanetData);
+
+        const innerPlayerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        }
+        return innerPlayerActionResult;
+    })();
+
+    return playerActionResult;
+}
+
+export function tryCollectRepairLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.CollectRepair>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    const relevantPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.planetId);
+    if (relevantPlanetData === null)
+    {
+        return { success: false, failureReason: "Wrong planet to collect a repair.", playerStateResult: playerData };
+    }
+
+    const pendingRepair: CoreType.PendingRepair | null = PendingRepairData.getPendingRepairForId(relevantPlanetData, requestData.pendingRepairId);
+    if (pendingRepair === null)
+    {
+        return { success: false, failureReason: "No such repair.", playerStateResult: playerData };
+    }
+
+    if (PendingRepairData.canCollectRepair(pendingRepair, now) === false)
+    {
+        return { success: false, failureReason: "Repair is not ready to collect.", playerStateResult: playerData };
+    }
+
+    const repairedUnitQuantities: Map<GameType.UnitType, number> = PendingRepairData.getPendingRepairUnitQuantities(pendingRepair);
+    UnitData.addPlanetUnits(relevantPlanetData, repairedUnitQuantities);
+    PendingRepairData.removePendingRepair(relevantPlanetData, requestData.pendingRepairId);
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.UnitQuantity, relevantPlanetData.dynamicPlanetData);
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.PendingRepair, relevantPlanetData.dynamicPlanetData);
+
+        const innerPlayerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        }
+        return innerPlayerActionResult;
+    })();
+
+    return playerActionResult;
+}
+
+export function tryBurnWreckFieldLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.BurnWreckField>): PlayerActionResult
+{
+    const now: number = Date.now();
+    const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(playerId, serverData, now);
+
+    const relevantPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(playerData.planetDatas, requestData.planetId);
+    if (relevantPlanetData === null)
+    {
+        return { success: false, failureReason: "Wrong planet to burn a wreck field.", playerStateResult: playerData };
+    }
+
+    const pendingRepair: CoreType.PendingRepair | null = PendingRepairData.getPendingRepairForId(relevantPlanetData, requestData.pendingRepairId);
+    if (pendingRepair === null)
+    {
+        return { success: false, failureReason: "No such wreck field.", playerStateResult: playerData };
+    }
+
+    if (PendingRepairData.canBurnWreckField(relevantPlanetData, now) === false)
+    {
+        return { success: false, failureReason: "Cannot burn a wreck field while a repair is in progress.", playerStateResult: playerData };
+    }
+
+    PendingRepairData.removePendingRepair(relevantPlanetData, requestData.pendingRepairId);
+
+    const playerActionResult: PlayerActionResult = DB.databaseConnection.transaction((): PlayerActionResult =>
+    {
+        ServerDynamicData.serverUpdatePlanetDataContext(relevantPlanetData.planetRow.id, playerId, CoreType.DataContext.PendingRepair, relevantPlanetData.dynamicPlanetData);
+
+        const innerPlayerActionResult: PlayerActionResult =
+        {
+            success: true,
+            failureReason: null,
+            playerStateResult: serverGetPlayerData(playerId),
+        }
+        return innerPlayerActionResult;
+    })();
+
+    return playerActionResult;
 }
 
 export function tryScanLogic(playerId: number, serverData: CoreType.ServerData, requestData: APIEndPoint.RequestForAction<typeof APIEndPoint.ActionRequest.Scan>): PlayerActionResult

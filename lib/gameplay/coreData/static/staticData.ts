@@ -17,10 +17,32 @@ const LUNAR_BASE_REQUIREMENT: RequirementType.Requirement =
 		valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.LunarBase),},
 };
 
+const FREE_FIELD_REQUIREMENT: RequirementType.Requirement =
+{
+	hideDataWhenRequirementFailed: true,
+	specificThingRequirement:
+	{
+		thingType: ThingType.Thing.PlanetValue,
+		specificThingType: GameType.PlanetValueType.Size,
+		operator: RequirementType.RequirementOperator.GreaterThan,
+		value: 0,
+		valueGetter: RequirementValueGetters.freeSize(),
+	},
+};
+
+const FIELD_CONSUMPTION_PLANET_VALUE: GameType.PlanetValueStat =
+{
+	planetValueProductionFormulasType: GameType.PlanetValueProductionFormulasType.LinearPerLevel,
+	planetValueType: GameType.PlanetValueType.Size,
+	basePlanetValueFactor: -1,
+};
+
 export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.BuildingStats> = new Map<GameType.BuildingType, GameType.BuildingStats>
 ([
     [GameType.BuildingType.MetalMine, { displayName: "Metal Mine",
 		buildableZones: [GameType.PlanetZone.Planet],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 1.5,
@@ -35,34 +57,42 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				productionFactor: 30,
 				exponentBase: 1.1,}]]),
 
-		planetValueStats: [{
-			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.Energy, -10],]),
-			basePlanetValueExponent: 1.1,}],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE,
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.SimpleExponentialBuildingEnergyThrottled,
+				planetValueType: GameType.PlanetValueType.Energy,
+				basePlanetValueFactor: -10,
+				basePlanetValueExponent: 1.1,}],
 	}],
 
 
 	[GameType.BuildingType.MetalStorage, { displayName: "Metal Storage",
 		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
-		upgradeRequirements: [LUNAR_BASE_REQUIREMENT],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT,
+			LUNAR_BASE_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
 			baseCost: new Map<GameType.ResourceType, number>([
 				[GameType.ResourceType.Metal, 1000],]),},
 
-		planetValueStats: [{
-			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.FlooredNaturalExponential,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.MetalStorage, 5000],]),
-			naturalExponentialFactor: 2.5,
-			naturalExponentialExponentFactor: 20/33,}],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE,
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.FlooredNaturalExponential,
+				planetValueType: GameType.PlanetValueType.MetalStorage,
+				basePlanetValueFactor: 5000,
+				naturalExponentialFactor: 2.5,
+				naturalExponentialExponentFactor: 20/33,}],
 	}],
 
 
 	[GameType.BuildingType.CrystalGrower, { displayName: "Crystal Grower",
 		buildableZones: [GameType.PlanetZone.Planet],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 1.6,
@@ -77,17 +107,21 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				productionFactor: 20,
 				exponentBase: 1.1,}]]),
 
-		planetValueStats: [{
-			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.Energy, -10],]),
-			basePlanetValueExponent: 1.1,}],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE,
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.SimpleExponentialBuildingEnergyThrottled,
+				planetValueType: GameType.PlanetValueType.Energy,
+				basePlanetValueFactor: -10,
+				basePlanetValueExponent: 1.1,}],
 	}],
 
 
 	[GameType.BuildingType.CrystalContainement, { displayName: "Crystal Containement",
 		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
-		upgradeRequirements: [LUNAR_BASE_REQUIREMENT],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT,
+			LUNAR_BASE_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -95,17 +129,21 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Metal, 500],
 				[GameType.ResourceType.Crystal, 500],]),},
 
-		planetValueStats: [{
-			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.FlooredNaturalExponential,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.CrystalStorage, 5000],]),
-			naturalExponentialFactor: 2.5,
-			naturalExponentialExponentFactor: 20/33,}],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE,
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.FlooredNaturalExponential,
+				planetValueType: GameType.PlanetValueType.CrystalStorage,
+				basePlanetValueFactor: 5000,
+				naturalExponentialFactor: 2.5,
+				naturalExponentialExponentFactor: 20/33,}],
 	}],
 
 
 	[GameType.BuildingType.DeuteriumSynthesizer, { displayName: "Deuterium Synthesizer",
 		buildableZones: [GameType.PlanetZone.Planet],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -120,17 +158,21 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				productionFactor: 10,
 				exponentBase: 1.1,}]]),
 
-		planetValueStats: [{
-			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.Energy, -20],]),
-			basePlanetValueExponent: 1.1,}],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE,
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.SimpleExponentialBuildingEnergyThrottled,
+				planetValueType: GameType.PlanetValueType.Energy,
+				basePlanetValueFactor: -20,
+				basePlanetValueExponent: 1.1,}],
 	}],
 
 
 	[GameType.BuildingType.DeuteriumTank, { displayName: "Deuterium Tank",
 		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
-		upgradeRequirements: [LUNAR_BASE_REQUIREMENT],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT,
+			LUNAR_BASE_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -138,17 +180,21 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Metal, 1000],
 				[GameType.ResourceType.Crystal, 1000],]),},
 
-		planetValueStats: [{
-			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.FlooredNaturalExponential,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.DeuteriumStorage, 5000],]),
-			naturalExponentialFactor: 2.5,
-			naturalExponentialExponentFactor: 20/33,}],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE,
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.FlooredNaturalExponential,
+				planetValueType: GameType.PlanetValueType.DeuteriumStorage,
+				basePlanetValueFactor: 5000,
+				naturalExponentialFactor: 2.5,
+				naturalExponentialExponentFactor: 20/33,}],
 	}],
 
 
 	[GameType.BuildingType.SolarPlant, { displayName: "Solar Plant",
 		buildableZones: [GameType.PlanetZone.Planet],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 1.5,
@@ -156,18 +202,23 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Metal, 75],
 				[GameType.ResourceType.Crystal, 30],]),},
 
-		planetValueStats: [{
-			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.Energy, 20],]),
-			basePlanetValueExponent: 1.1,}],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE,
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.SimpleExponentialBuildingEnergyThrottled,
+				planetValueType: GameType.PlanetValueType.Energy,
+				basePlanetValueFactor: 20,
+				basePlanetValueExponent: 1.1,}],
 	}],
 
 
 	[GameType.BuildingType.Shipyard, { displayName: "Shipyard",
 		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
-		upgradeRequirements:[{
-			hideDataWhenRequirementFailed: true,
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT,
+			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.Building,
 				specificThingType: GameType.BuildingType.RoboticFactory,
@@ -193,7 +244,11 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.RoboticFactory, { displayName: "Robotic Factory",
 		buildableZones: [GameType.PlanetZone.Planet, GameType.PlanetZone.Moon],
-		upgradeRequirements: [LUNAR_BASE_REQUIREMENT],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT,
+			LUNAR_BASE_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 1.5,
@@ -205,8 +260,11 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.ResearchLab, { displayName: "Research Lab",
 		buildableZones: [GameType.PlanetZone.Planet],
-		upgradeRequirements:[{
-			hideDataWhenRequirementFailed: false,
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT,
+			{hideDataWhenRequirementFailed: false,
 			thingRequirement: {
 				thingType: ThingType.Thing.ResearchingResearch,
 				operator: RequirementType.RequirementOperator.Equal,
@@ -230,8 +288,11 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.NaniteFactory, { displayName: "Nanite Factory",
 		buildableZones: [GameType.PlanetZone.Planet],
-		upgradeRequirements:[{
-			hideDataWhenRequirementFailed: true,
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT,
+			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.Building,
 				specificThingType: GameType.BuildingType.RoboticFactory,
@@ -262,8 +323,9 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.FusionReactor, { displayName: "Fusion Reactor",
 		buildableZones: [GameType.PlanetZone.Planet],
-		upgradeRequirements:[{
-			hideDataWhenRequirementFailed: true,
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT,
+			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.Building,
 				specificThingType: GameType.BuildingType.DeuteriumSynthesizer,
@@ -292,20 +354,23 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				productionFactor: -10,
 				exponentBase: 1.1,}]]),
 
-		planetValueStats: [{
-			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.ResearchScaledExponential,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.Energy, 30],]),
-			researchScalingResearchType: GameType.ResearchType.EnergyTech,
-			researchScalingBaseFactor: 1.05,
-			researchScalingPerLevelFactor: 0.01,}],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE,
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.ResearchScaledExponentialBuildingEnergyThrottled,
+				planetValueType: GameType.PlanetValueType.Energy,
+				basePlanetValueFactor: 30,
+				researchScalingResearchType: GameType.ResearchType.EnergyTech,
+				researchScalingBaseFactor: 1.05,
+				researchScalingPerLevelFactor: 0.01,}],
 	},],
 
 	[GameType.BuildingType.Terraformer, { displayName: "Terraformer",
 		buildableZones: [GameType.PlanetZone.Planet],
 		canDeconstruct: false,
-		upgradeRequirements:[{
-			hideDataWhenRequirementFailed: true,
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT,
+			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.Building,
 				specificThingType: GameType.BuildingType.RoboticFactory,
@@ -319,15 +384,19 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Crystal, 50000],
 				[GameType.ResourceType.Deuterium, 100000],]),},
 
-		planetValueStats: [{
-			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.Size, 5.5],]),
-			basePlanetValueExponent: 1,}],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE,
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.SimpleExponential,
+				planetValueType: GameType.PlanetValueType.Size,
+				basePlanetValueFactor: 5.5,
+				basePlanetValueExponent: 1,}],
 	},],
 
 	[GameType.BuildingType.LunarBase, { displayName: "Lunar Base",
 		buildableZones: [GameType.PlanetZone.Moon],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT],
 		canDeconstruct: false,
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
@@ -337,17 +406,20 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Crystal, 40000],
 				[GameType.ResourceType.Deuterium, 20000],]),},
 
-		planetValueStats: [{
-			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.Size, 3],]),
-			basePlanetValueExponent: 1,}],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE,
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.SimpleExponential,
+				planetValueType: GameType.PlanetValueType.Size,
+				basePlanetValueFactor: 3,
+				basePlanetValueExponent: 1,}],
 	},],
 
 	[GameType.BuildingType.MissileSilo, { displayName: "Missile Silo",
 		buildableZones: [GameType.PlanetZone.Planet],
-		upgradeRequirements:[{
-			hideDataWhenRequirementFailed: true,
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT,
+			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.Building,
 				specificThingType: GameType.BuildingType.Shipyard,
@@ -362,16 +434,22 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Crystal, 20000],
 				[GameType.ResourceType.Deuterium, 1000],]),},
 
-		planetValueStats: [{
-			planetValueProductionFormulasType: GameType.BuildingPlanetValueProductionFormulasType.SimpleExponential,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.MissileSpace, 10],]),
-			basePlanetValueExponent: 1,}],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE,
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.SimpleExponential,
+				planetValueType: GameType.PlanetValueType.MissileSpace,
+				basePlanetValueFactor: 10,
+				basePlanetValueExponent: 1,}],
 	},],
 
 	[GameType.BuildingType.SensorPhalanx, { displayName: "Sensor Phalanx",
 		buildableZones: [GameType.PlanetZone.Moon],
-		upgradeRequirements:[LUNAR_BASE_REQUIREMENT],
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT,
+			LUNAR_BASE_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -383,7 +461,10 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 
 	[GameType.BuildingType.JumpGate, { displayName: "Jump Gate",
 		buildableZones: [GameType.PlanetZone.Moon],
-		upgradeRequirements:[
+		planetValueStats: [
+			FIELD_CONSUMPTION_PLANET_VALUE],
+		upgradeRequirements: [
+			FREE_FIELD_REQUIREMENT,
 			LUNAR_BASE_REQUIREMENT,
 			{hideDataWhenRequirementFailed: true,
 				specificThingRequirement:{
@@ -400,6 +481,23 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 				[GameType.ResourceType.Crystal, 4000000],
 				[GameType.ResourceType.Deuterium, 2000000],]),},
 	},],
+	[GameType.BuildingType.RepairDock, { displayName: "Repair Dock",
+		buildableZones: [GameType.PlanetZone.Planet],
+		upgradeRequirements: [
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.Shipyard,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 2,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 5,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 200],
+				[GameType.ResourceType.Deuterium, 50],]),},
+	},],
 ]);
 //#endregion
 
@@ -408,6 +506,7 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 ([
     [GameType.UnitType.SmallTransport, { displayName: "Small Transport",
 		canGenerateDebris: true,
+		canBeRepairedAtRepairDock: true,
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
@@ -449,6 +548,7 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 
     [GameType.UnitType.LargeTransport, { displayName: "Large Transport",
 		canGenerateDebris: true,
+		canBeRepairedAtRepairDock: true,
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
@@ -488,6 +588,7 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 
     [GameType.UnitType.ColonyShip, { displayName: "Colony Ship",
 		canGenerateDebris: true,
+		canBeRepairedAtRepairDock: true,
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
@@ -526,6 +627,7 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 	}],
     [GameType.UnitType.Recycler, { displayName: "Recycler",
 		canGenerateDebris: true,
+		canBeRepairedAtRepairDock: true,
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
@@ -646,12 +748,13 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		maxHealth: 2000,
 		shieldPower: 1,
 		weaponPower: 1,
-		unitPlanetValueStats: [{
-			unitPlanetValueProductionFormulasType: GameType.UnitPlanetValueProductionFormulasType.TemperatureScaled,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.Energy, 1],]),
-			temperatureOffset: 160,
-			temperatureDivider: 6,}],
+		planetValueStats: [
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.TemperatureScaled,
+				planetValueType: GameType.PlanetValueType.Energy,
+				basePlanetValueFactor: 1,
+				temperatureOffset: 160,
+				temperatureDivider: 6,}],
 	}],
 
 	[GameType.UnitType.InterplanetaryMissile, { displayName: "Interplanetary Missile",
@@ -691,10 +794,11 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		maxHealth: 15000,
 		shieldPower: 0,
 		weaponPower: 12000,
-		unitPlanetValueStats: [{
-			unitPlanetValueProductionFormulasType: GameType.UnitPlanetValueProductionFormulasType.FixedPerUnit,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.MissileSpace, -2],]),}],
+		planetValueStats: [
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.FixedPerUnit,
+				planetValueType: GameType.PlanetValueType.MissileSpace,
+				basePlanetValueFactor: -2,}],
 	}],
 
 	[GameType.UnitType.InterceptorMissile, { displayName: "Interceptor Missile",
@@ -721,10 +825,11 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		maxHealth: 8000,
 		shieldPower: 0,
 		weaponPower: 0,
-		unitPlanetValueStats: [{
-			unitPlanetValueProductionFormulasType: GameType.UnitPlanetValueProductionFormulasType.FixedPerUnit,
-			basePlanetValueFactor: new Map<GameType.PlanetValueType, number>([
-				[GameType.PlanetValueType.MissileSpace, -1],]),}],
+		planetValueStats: [
+			{planetValueProductionFormulasType:
+				GameType.PlanetValueProductionFormulasType.FixedPerUnit,
+				planetValueType: GameType.PlanetValueType.MissileSpace,
+				basePlanetValueFactor: -1,}],
 	}],
 ]);
 
@@ -1128,14 +1233,7 @@ export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requireme
 			thingType: ThingType.Thing.BuildingDeconstruction,
 			operator: RequirementType.RequirementOperator.Equal,
 			value: false,
-			valueGetter: RequirementValueGetters.isAnyBuildingDeconstructionInProgress(),}},
-		{hideDataWhenRequirementFailed: true,
-		specificThingRequirement: {
-			thingType: ThingType.Thing.PlanetValue,
-			specificThingType: GameType.PlanetValueType.Size,
-			operator: RequirementType.RequirementOperator.GreaterThan,
-			value: 0,
-			valueGetter: RequirementValueGetters.freeSize(),}}]],
+			valueGetter: RequirementValueGetters.isAnyBuildingDeconstructionInProgress(),}}]],
 	[ThingType.Thing.BuildingDeconstruction, [{
 		hideDataWhenRequirementFailed: false,
 		thingRequirement: {
@@ -1281,10 +1379,11 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				[GameType.ResourceType.Crystal, 400],
 				[GameType.ResourceType.Deuterium, 600],]),},
 
-		playerValueStats: [{
-			playerValueProductionFormulasType: GameType.ResearchPlayerValueProductionFormulasType.ProportionalOneToOne,
-			basePlayerValueFactor: new Map<GameType.PlayerValueType, number>([
-				[GameType.PlayerValueType.FleetSlots, 1],]),}],}],
+		playerValueStats: [
+			{playerValueProductionFormulasType:
+				GameType.PlayerValueProductionFormulasType.ProportionalOneToOne,
+				playerValueType: GameType.PlayerValueType.FleetSlots,
+				basePlayerValueFactor: 1,}],}],
 
 
 	[GameType.ResearchType.EspionageTech, { displayName: "Espionage Technology",

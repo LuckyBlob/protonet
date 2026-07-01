@@ -109,6 +109,24 @@ export type UnitConstructionUnitRow =
     unit_quantity: number;
 };
 
+export type PendingRepairRow =
+{
+    id: number;
+    planet_id: number;
+    player_id: number;
+    created_at: number;
+    repair_started_at: number | null;
+    repair_completes_at: number | null;
+};
+
+export type PendingRepairUnitRow =
+{
+    id: number;
+    pending_repair_id: number;
+    unit_type: number;
+    unit_quantity: number;
+};
+
 export type BuildingUpgradeRow =
 {
     id: number;

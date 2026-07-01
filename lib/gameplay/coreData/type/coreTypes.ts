@@ -62,6 +62,7 @@ export type DynamicPlanetData =
 	futureFleetArrivals: FleetMovement[];
 	buildingUpgrades: BuildingUpgrade[];
 	buildingDeconstructions: BuildingDeconstruction[];
+	pendingRepairs: PendingRepair[];
 };
 export const EmptyPlanetData: DynamicPlanetData =
 {
@@ -73,6 +74,7 @@ export const EmptyPlanetData: DynamicPlanetData =
 	futureFleetArrivals: [],
 	buildingUpgrades: [],
 	buildingDeconstructions: [],
+	pendingRepairs: [],
 
 } as const;
 
@@ -96,6 +98,7 @@ export const PlanetDataContext =
 	FutureFleetArrivals: 5,
 	BuildingUpgrade: 6,
 	BuildingDeconstruction: 10,
+	PendingRepair: 12,
 } as const;
 export type PlanetDataContext = typeof PlanetDataContext[keyof typeof PlanetDataContext];
 export const PlayerDataContext =
@@ -122,6 +125,7 @@ export const PlanetDataContextToVariableNameMap =
     [PlanetDataContext.FutureFleetArrivals]: "futureFleetArrivals",
     [PlanetDataContext.BuildingUpgrade]: "buildingUpgrades",
     [PlanetDataContext.BuildingDeconstruction]: "buildingDeconstructions",
+    [PlanetDataContext.PendingRepair]: "pendingRepairs",
 } as const;
 export const PlayerDataContextToVariableNameMap =
 {
@@ -146,6 +150,12 @@ export type UnitConstruction =
 {
 	unitConstructionRow: DBType.UnitConstructionRow;
 	unitConstructionUnitRows: DBType.UnitConstructionUnitRow[];
+};
+
+export type PendingRepair =
+{
+	pendingRepairRow: DBType.PendingRepairRow;
+	pendingRepairUnitRows: DBType.PendingRepairUnitRow[];
 };
 
 export type BuildingUpgrade =

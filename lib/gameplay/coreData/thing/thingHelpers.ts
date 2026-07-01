@@ -50,6 +50,11 @@ export function getThingValues(playerData: CoreType.PlayerData | null, planetDat
         throw new Error("PlayerSettings context does not have specific things that have a value.");
     }
 
+    if (dataContext === CoreType.DataContext.PendingRepair)
+    {
+        throw new Error("PendingRepair context does not have specific things that have a value.");
+    }
+
     if (CoreType.isPlayerDataContext(dataContext))
     {
         if (playerData === null)
@@ -103,6 +108,11 @@ export function setSpecificThingValue(playerData: CoreType.PlayerData | null, pl
     if (dataContext === CoreType.DataContext.PlayerSettings)
     {
         throw new Error("PlayerSettings context is not supported for type setters since it doesnt have specific things.");
+    }
+
+    if (dataContext === CoreType.DataContext.PendingRepair)
+    {
+        throw new Error("PendingRepair context is not supported for type setters since it doesnt have specific things.");
     }
 
     if (CoreType.isPlayerDataContext(dataContext))

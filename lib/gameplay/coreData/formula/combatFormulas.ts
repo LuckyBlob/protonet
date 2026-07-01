@@ -1,11 +1,13 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as MathHelp from "@/lib/helper/mathHelp";
+import * as WreckField from "@/lib/gameplay/coreData/formula/wreckFieldFormulas";
 
 const DEBRIS_COST_FRACTION: number = 0.5;
 const MOON_DEBRIS_PER_CHANCE_PERCENT: number = 100000;
 const MOON_MAX_CHANCE_PERCENT: number = 20;
 const MOON_SIZE_RANDOM_MAX: number = 10;
+const WRECK_SCORE_THRESHOLD: number = 150000;
 
 export function computeDebrisFromLosses(lostUnitQuantities: Map<GameType.UnitType, number>): Map<GameType.ResourceType, number>
 {
@@ -96,4 +98,76 @@ export function computeRepairedUnitQuantities(destroyedUnitQuantities: Map<GameT
     }
 
     return repairedUnitQuantities;
+}
+
+export function computeWreckFieldFraction(repairDockLevel: number): number
+{
+    return WreckField.computeWreckFieldBaseFraction(repairDockLevel) * (1 - DEBRIS_COST_FRACTION);
+}
+
+function computeUnitDebrisEligibleValue(unitType: GameType.UnitType, unitQuantity: number): number
+{
+    const costMap: Map<GameType.ResourceType, number> = StaticDataHelper.getUnitStats(unitType).costMap;
+    let unitValue: number = 0;
+    for (const [resourceType, resourceCost] of costMap)
+    {
+        if (StaticDataHelper.canResourceGoToDebrisField(resourceType) === false)
+        {
+            continue;
+        }
+
+        unitValue += resourceCost;
+    }
+
+    return unitValue * unitQuantity;
+}
+
+export function computeRepairTriggerScore(unitQuantities: Map<GameType.UnitType, number>): number
+{
+    let totalScore: number = 0;
+    for (const [unitType, unitQuantity] of unitQuantities)
+    {
+        if (StaticDataHelper.getUnitStats(unitType).canBeRepairedAtRepairDock !== true)
+        {
+            continue;
+        }
+
+        totalScore += computeUnitDebrisEligibleValue(unitType, unitQuantity);
+    }
+
+    return totalScore;
+}
+
+export function shouldFormWreckField(lostDefenderScore: number): boolean
+{
+    return lostDefenderScore > WRECK_SCORE_THRESHOLD;
+}
+
+export function computeWreckUnitQuantities(defenderLosses: Map<GameType.UnitType, number>, repairDockLevel: number): Map<GameType.UnitType, number>
+{
+    const wreckFieldFraction: number = computeWreckFieldFraction(repairDockLevel);
+    const wreckUnitQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();
+
+    for (const [unitType, lostQuantity] of defenderLosses)
+    {
+        if (lostQuantity <= 0)
+        {
+            continue;
+        }
+
+        if (StaticDataHelper.getUnitStats(unitType).canBeRepairedAtRepairDock !== true)
+        {
+            continue;
+        }
+
+        const wreckQuantity: number = Math.floor(lostQuantity * wreckFieldFraction);
+        if (wreckQuantity <= 0)
+        {
+            continue;
+        }
+
+        wreckUnitQuantities.set(unitType, wreckQuantity);
+    }
+
+    return wreckUnitQuantities;
 }

@@ -9,6 +9,8 @@ import * as MathHelp from "@/lib/helper/mathHelp";
 import * as CombatResolver from "@/lib/gameplay/combat/resolver";
 import * as Combat from "@/lib/gameplay/coreData/formula/combatFormulas";
 import * as ServerPlanetManagement from "@/lib/gameplay/progressUpdate/server/serverPlanetManagement";
+import * as PendingRepairData from "@/lib/gameplay/dynamicData/planet/pendingRepairData";
+import * as ServerDynamicData from "@/lib/gameplay/dynamicData/serverDynamicData";
 import * as DB from "@/lib/db/db";
 import * as DBType from "@/lib/db/dbTypes";
 
@@ -24,6 +26,7 @@ type AttackOutcome =
     lootedResourceQuantities: Map<GameType.ResourceType, number>;
     debrisResourceQuantities: Map<GameType.ResourceType, number>;
     moonFormed: boolean;
+    wreckUnitQuantities: Map<GameType.UnitType, number>;
     numRounds: number;
     attackerDestroyed: boolean;
 };
@@ -59,6 +62,7 @@ export function resolveAttackAction(originPlayerData: CoreType.PlayerData | null
 
     const debrisResourceQuantities: Map<GameType.ResourceType, number> = buildBattleDebris(attackerLosses, defenderLosses);
     const moonFormed: boolean = resolveDebrisAndMoon(targetPlayerData, targetAddress, fleetMovement, debrisResourceQuantities);
+    const wreckUnitQuantities: Map<GameType.UnitType, number> = resolveWreckField(targetPlayerData, targetAddress, defenderLosses, fleetMovement);
 
     const attackerSurvivingUnitTotal: number = MathHelp.calculateTotalQuantityMap(combatResult.attackerUnitQuantities);
     const defenderRemainingCombatTotal: number = computeDefenderCombatTotal(aimedBody);
@@ -95,6 +99,7 @@ export function resolveAttackAction(originPlayerData: CoreType.PlayerData | null
         lootedResourceQuantities: lootedResourceQuantities,
         debrisResourceQuantities: debrisResourceQuantities,
         moonFormed: moonFormed,
+        wreckUnitQuantities: wreckUnitQuantities,
         numRounds: combatResult.numRounds,
         attackerDestroyed: attackerDestroyed,
     };
@@ -223,6 +228,43 @@ function createDefenderOwnedZone(targetPlayerData: CoreType.PlayerData, zoneAddr
     return zoneData;
 }
 
+function resolveWreckField(targetPlayerData: CoreType.PlayerData, targetAddress: GameType.PlanetAddress, defenderLosses: Map<GameType.UnitType, number>, fleetMovement: CoreType.FleetMovement): Map<GameType.UnitType, number>
+{
+    const emptyWreckUnitQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();
+
+    const planetZoneAddress: GameType.PlanetAddress = { ...targetAddress, zone: GameType.PlanetZone.Planet };
+    const repairPlanet: CoreType.PlanetData | null = CoreType.getPlanetDataForAddress(targetPlayerData.planetDatas, planetZoneAddress);
+    if (repairPlanet === null)
+    {
+        return emptyWreckUnitQuantities;
+    }
+
+    const repairDockLevel: number = PendingRepairData.getRepairDockLevel(repairPlanet);
+    if (repairDockLevel < 1)
+    {
+        return emptyWreckUnitQuantities;
+    }
+
+    const lostDefenderScore: number = Combat.computeRepairTriggerScore(defenderLosses);
+    if (Combat.shouldFormWreckField(lostDefenderScore) === false)
+    {
+        return emptyWreckUnitQuantities;
+    }
+
+    const wreckUnitQuantities: Map<GameType.UnitType, number> = Combat.computeWreckUnitQuantities(defenderLosses, repairDockLevel);
+    if (wreckUnitQuantities.size === 0)
+    {
+        return emptyWreckUnitQuantities;
+    }
+
+    const createdAt: number = fleetMovement.fleetMovementRow.started_at! + fleetMovement.fleetMovementRow.duration_at_start_time!;
+    const pendingRepair: CoreType.PendingRepair = PendingRepairData.buildPendingRepair(repairPlanet.planetRow.id, targetPlayerData.playerRow.id, createdAt, wreckUnitQuantities);
+    repairPlanet.dynamicPlanetData.pendingRepairs.push(pendingRepair);
+    ServerDynamicData.serverUpdatePlanetDataContext(repairPlanet.planetRow.id, targetPlayerData.playerRow.id, CoreType.DataContext.PendingRepair, repairPlanet.dynamicPlanetData);
+
+    return wreckUnitQuantities;
+}
+
 function buildCombatReportBody(targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, attackOutcome: AttackOutcome): string
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
@@ -240,6 +282,11 @@ function buildCombatReportBody(targetPlayerData: CoreType.PlayerData, fleetMovem
     reportLines.push(`Defenses rebuilt: ${FleetData.buildUnitQuantitiesList(attackOutcome.repairedDefenseQuantities, "none")}`);
     reportLines.push(`Resources captured: ${FleetData.buildResourceQuantitiesList(attackOutcome.lootedResourceQuantities)}`);
     reportLines.push(`Debris field: ${FleetData.buildResourceQuantitiesList(attackOutcome.debrisResourceQuantities)}`);
+
+    if (attackOutcome.wreckUnitQuantities.size > 0)
+    {
+        reportLines.push(`Wreck field (repairable at Repair Dock): ${FleetData.buildUnitQuantitiesList(attackOutcome.wreckUnitQuantities, "none")}`);
+    }
 
     if (attackOutcome.moonFormed === true)
     {

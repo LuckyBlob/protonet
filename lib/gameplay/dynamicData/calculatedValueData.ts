@@ -4,16 +4,11 @@
 // here with the merge + accumulate primitives parameterized over the value-type key.
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as BuildingPlanetValueProduction from "@/lib/gameplay/coreData/formula/buildingPlanetValueProductionFormulas";
-import * as UnitPlanetValueProduction from "@/lib/gameplay/coreData/formula/unitPlanetValueProductionFormulas";
-import * as ResearchPlayerValueProduction from "@/lib/gameplay/coreData/formula/researchPlayerValueProductionFormulas";
+import * as PlanetValueProduction from "@/lib/gameplay/coreData/formula/planetValueProductionFormulas";
+import * as PlayerValueProduction from "@/lib/gameplay/coreData/formula/playerValueProductionFormulas";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
-import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
-import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
-import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
-import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 
 //#region shared aggregation primitives
 function getCalculatedValueData<ValueType>(valueDatas: Map<ValueType, CoreType.CalculatedValueData>, valueType: ValueType): CoreType.CalculatedValueData | null
@@ -159,7 +154,7 @@ export function computePlanetValueDatas(planetData: CoreType.PlanetData, playerD
     [
         computePlanetBaseValues(planetData),
         computeBuildingPlanetValueDatas(planetData, playerData),
-        computeUnitPlanetValueDatas(planetData),
+        computeUnitPlanetValueDatas(planetData, playerData),
         computeResearchPlanetValueDatas(planetData),
     ];
 
@@ -176,20 +171,14 @@ function computePlanetBaseValues(planetData: CoreType.PlanetData): Map<GameType.
     return baseValues;
 }
 
-function computeUnitPlanetValueDatas(planetData: CoreType.PlanetData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
+function computeUnitPlanetValueDatas(planetData: CoreType.PlanetData, playerData: CoreType.PlayerData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
 {
     const newUnitPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
 
     const unitTypes: GameType.UnitType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Unit);
     for (const unitType of unitTypes)
     {
-        const unitQuantity: number = UnitData.getUnitQuantity(planetData, unitType);
-        if (unitQuantity <= 0)
-        {
-            continue;
-        }
-
-        const unitPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = UnitPlanetValueProduction.computeUnitPlanetValueProduction(unitType, unitQuantity, planetData);
+        const unitPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = PlanetValueProduction.computeUnitPlanetValueProduction(unitType, playerData, planetData);
         if (unitPlanetValues === null)
         {
             continue;
@@ -218,8 +207,7 @@ function computeBuildingPlanetValueDatas(planetData: CoreType.PlanetData, player
     const buildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building)
     for (const buildingType of buildingTypes)
     {
-        const buildingLevel: number = BuildingData.getBuildingLevel(planetData, buildingType);
-        const buildingPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = computeSingleBuildingPlanetValues(planetData, buildingType, buildingLevel, playerData);
+        const buildingPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = PlanetValueProduction.computeBuildingPlanetValueProduction(buildingType, playerData, planetData) ?? new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
 
         for (const [planetValueType, planetValueAmounts] of buildingPlanetValues)
         {
@@ -228,19 +216,6 @@ function computeBuildingPlanetValueDatas(planetData: CoreType.PlanetData, player
     }
 
     return newBuildingPlanetValues;
-}
-
-function computeSingleBuildingPlanetValues(planetData: CoreType.PlanetData, buildingType: GameType.BuildingType, buildingLevel: number, playerData: CoreType.PlayerData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
-{
-    const energyFactor: number = BuildingEnergySetting.getBuildingEnergyFactor(planetData, buildingType);
-    const buildingPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = BuildingPlanetValueProduction.computeBuildingPlanetValueProduction(buildingLevel, buildingType, playerData, energyFactor) ?? new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
-
-    if (buildingLevel > 0)
-    {
-        addCalculatedValueData(buildingPlanetValues, GameType.PlanetValueType.Size, { production: 0, consumption: buildingLevel });
-    }
-
-    return buildingPlanetValues;
 }
 //#endregion
 
@@ -284,8 +259,7 @@ function computeResearchPlayerValueDatas(playerData: CoreType.PlayerData): Map<G
     const researchTypes: GameType.ResearchType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Research);
     for (const researchType of researchTypes)
     {
-        const researchLevel: number = ResearchData.getResearchLevel(playerData, researchType);
-        const researchPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null = ResearchPlayerValueProduction.computeResearchPlayerValueProduction(researchLevel, researchType);
+        const researchPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null = PlayerValueProduction.computeResearchPlayerValueProduction(researchType, playerData);
 
         if (researchPlayerValues === null)
         {
