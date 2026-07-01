@@ -109,7 +109,8 @@
       "PowerShell(pnpm typecheck; Write-Output \"EXITCODE=$LASTEXITCODE\")",
       "WebFetch(domain:board.origin.ogame.gameforge.com)",
       "WebFetch(domain:board.en.ogame.gameforge.com)",
-      "mcp__Claude_in_Chrome__tabs_context_mcp"
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(cd \"D:/Claude/WebsiteProject/protonet\" && sed -n '/1\\) tests/,/did not run/p' /tmp/combat.log | grep -vE \"WebServer|📧|Bonjour|Cliquez|verify\\\\?token\" | head -50)"
     ]
   },
   "hooks": {

@@ -69,7 +69,7 @@ test.describe("Player score calculation", () =>
         expect(investedAfter - investedBefore).toBe(expectedDelta);
     });
 
-    test("building units immediately raises invested_value by their construction cost", async ({ page }) =>
+    test("building units leaves invested_value unchanged until the units are actually built", async ({ page }) =>
     {
         const username: string = E2EHelper.uniqueUsername("Calc");
         await E2EHelper.register(page, username, PASSWORD);
@@ -87,9 +87,16 @@ test.describe("Player score calculation", () =>
         const investedBefore: number = E2EHelper.getPlayerInvestedValue(playerId, db);
 
         await E2EHelper.goToView(page, "Shipyard");
-        await E2EHelper.buildUnits(page, "Small Transport", 2);
+        await E2EHelper.buildUnits(page, "Small Transport", 1);
 
-        const expectedDelta: number = ScoreData.computeUnitInvestedValue(GameType.UnitType.SmallTransport, 2);
+        await expect.poll((): number => E2EHelper.getUnitConstructionCount(origin.id, db)).toBe(1);
+        expect(E2EHelper.getPlayerInvestedValue(playerId, db)).toBe(investedBefore);
+
+        const constructionId: number = E2EHelper.getConstructionId(origin.id, db);
+        E2EHelper.forceComplete("unit_construction", constructionId, db, 1);
+        await E2EHelper.reloadGame(page);
+
+        const expectedDelta: number = ScoreData.computeUnitInvestedValue(GameType.UnitType.SmallTransport, 1);
         await expect.poll((): number => E2EHelper.getPlayerInvestedValue(playerId, db)).toBe(investedBefore + expectedDelta);
     });
 });

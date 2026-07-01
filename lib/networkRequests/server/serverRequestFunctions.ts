@@ -845,13 +845,6 @@ export function serverUpdatePlayerScore(playerData: CoreType.PlayerData): void
     }
 }
 
-export function serverGetPublicPlayerData(playerId: number): CoreType.PlayerData
-{
-    const playerData: CoreType.PlayerData = serverGetPlayerData(playerId);
-    serverUpdatePlayerScore(playerData);
-    return playerData;
-}
-
 export function serverGetPlanetData(planetId: number): CoreType.PlanetData
 {
     const planetRow: DBType.PlanetRow = DB.databaseConnection.prepare(
@@ -1177,7 +1170,7 @@ export function trySetBuildingEnergySettingLogic(playerId: number, serverData: C
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPublicPlayerData(playerId),
+            playerStateResult: serverGetPlayerData(playerId),
         };
 
         return playerActionResult;
@@ -1305,7 +1298,7 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPublicPlayerData(playerId),
+            playerStateResult: serverGetPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1412,7 +1405,7 @@ export function tryDeconstructBuildingLogic(playerId: number, serverData: CoreTy
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPublicPlayerData(playerId),
+            playerStateResult: serverGetPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1456,7 +1449,7 @@ export function tryCancelBuildingUpgradeLogic(playerId: number, serverData: Core
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPublicPlayerData(playerId),
+            playerStateResult: serverGetPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1500,7 +1493,7 @@ export function tryCancelBuildingDeconstructionLogic(playerId: number, serverDat
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPublicPlayerData(playerId),
+            playerStateResult: serverGetPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1611,7 +1604,7 @@ export function tryUpgradeResearchLogic(playerId: number, serverData: CoreType.S
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPublicPlayerData(playerId),
+            playerStateResult: serverGetPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1679,7 +1672,7 @@ export function tryBuildUnitsLogic(playerId: number, serverData: CoreType.Server
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPublicPlayerData(playerId),
+            playerStateResult: serverGetPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -1839,7 +1832,7 @@ export function tryDestroyMissilesLogic(playerId: number, serverData: CoreType.S
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPublicPlayerData(playerId),
+            playerStateResult: serverGetPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -2010,7 +2003,7 @@ export function tryScanLogic(playerId: number, serverData: CoreType.ServerData, 
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPublicPlayerData(playerId),
+            playerStateResult: serverGetPlayerData(playerId),
         };
         return playerActionResult;
     })();
@@ -2094,7 +2087,7 @@ export function tryJumpGateLogic(playerId: number, serverData: CoreType.ServerDa
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPublicPlayerData(playerId),
+            playerStateResult: serverGetPlayerData(playerId),
         };
         return playerActionResult;
     })();
@@ -2139,7 +2132,7 @@ export function tryDeleteMessageLogic(playerId: number, serverData: CoreType.Ser
     {
         success: true,
         failureReason: null,
-        playerStateResult: serverGetPublicPlayerData(playerId),
+        playerStateResult: serverGetPlayerData(playerId),
     }
 
     return playerActionResult;
@@ -2182,7 +2175,7 @@ export function tryMarkMessageReadLogic(playerId: number, serverData: CoreType.S
     {
         success: true,
         failureReason: null,
-        playerStateResult: serverGetPublicPlayerData(playerId),
+        playerStateResult: serverGetPlayerData(playerId),
     }
 
     return playerActionResult;
@@ -2221,7 +2214,7 @@ export function tryAbandonPlanetLogic(playerId: number, serverData: CoreType.Ser
     {
         success: true,
         failureReason: null,
-        playerStateResult: serverGetPublicPlayerData(playerId),
+        playerStateResult: serverGetPlayerData(playerId),
     }
 
     return playerActionResult;
@@ -2247,7 +2240,7 @@ export function tryRenamePlanetLogic(playerId: number, serverData: CoreType.Serv
     {
         success: true,
         failureReason: null,
-        playerStateResult: serverGetPublicPlayerData(playerId),
+        playerStateResult: serverGetPlayerData(playerId),
     }
 
     return playerActionResult;
@@ -2265,7 +2258,7 @@ export function tryUpdatePlayerSettingsLogic(playerId: number, serverData: CoreT
     {
         success: true,
         failureReason: null,
-        playerStateResult: serverGetPublicPlayerData(playerId),
+        playerStateResult: serverGetPlayerData(playerId),
     };
 
     return playerActionResult;
@@ -2469,7 +2462,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPublicPlayerData(playerId),
+            playerStateResult: serverGetPlayerData(playerId),
         }
         return playerActionResult;
     })();
@@ -2547,7 +2540,7 @@ export function tryRecallFleetLogic(playerId: number, serverData: CoreType.Serve
         {
             success: true,
             failureReason: null,
-            playerStateResult: serverGetPublicPlayerData(playerId),
+            playerStateResult: serverGetPlayerData(playerId),
         }
         return playerActionResult;
     })();

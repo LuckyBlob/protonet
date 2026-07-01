@@ -53,7 +53,7 @@ describe('computePlayerInvestedValue', () =>
         expect(ScoreData.computePlayerInvestedValue(playerData)).toBe(ScoreData.computeBuildingCumulativeInvestedValue(GameType.BuildingType.MetalMine, 3));
     });
 
-    it('counts an in-progress upgrade at the level it will reach (current + 1)', () =>
+    it('ignores an in-progress upgrade — only the settled level counts', () =>
     {
         const baseValue: number = ScoreData.computePlayerInvestedValue(buildPlayerWithMetalMine(2));
 
@@ -74,11 +74,10 @@ describe('computePlayerInvestedValue', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const expectedDelta: number = ScoreData.computeBuildingLevelInvestedValue(GameType.BuildingType.MetalMine, 2);
-        expect(ScoreData.computePlayerInvestedValue(playerData)).toBe(baseValue + expectedDelta);
+        expect(ScoreData.computePlayerInvestedValue(playerData)).toBe(baseValue);
     });
 
-    it('counts an in-progress deconstruction at the level it will reach (current - 1)', () =>
+    it('ignores an in-progress deconstruction — only the settled level counts', () =>
     {
         const baseValue: number = ScoreData.computePlayerInvestedValue(buildPlayerWithMetalMine(2));
 
@@ -99,11 +98,10 @@ describe('computePlayerInvestedValue', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const expectedDelta: number = ScoreData.computeBuildingLevelInvestedValue(GameType.BuildingType.MetalMine, 1);
-        expect(ScoreData.computePlayerInvestedValue(playerData)).toBe(baseValue - expectedDelta);
+        expect(ScoreData.computePlayerInvestedValue(playerData)).toBe(baseValue);
     });
 
-    it('counts stationed, in-construction and own in-flight units', () =>
+    it('counts stationed and own in-flight units, ignoring in-construction', () =>
     {
         const construction: CoreType.UnitConstruction =
         {
@@ -127,7 +125,7 @@ describe('computePlayerInvestedValue', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: 1 }, planetDatas: [planet] });
 
-        const expected: number = ScoreData.computeUnitInvestedValue(GameType.UnitType.SmallTransport, 5 + 3 + 2);
+        const expected: number = ScoreData.computeUnitInvestedValue(GameType.UnitType.SmallTransport, 5 + 2);
         expect(ScoreData.computePlayerInvestedValue(playerData)).toBe(expected);
     });
 
@@ -152,7 +150,7 @@ describe('computePlayerInvestedValue', () =>
         expect(ScoreData.computePlayerInvestedValue(playerData)).toBe(0);
     });
 
-    it('counts cumulative research and in-progress research at the level it will reach', () =>
+    it('counts cumulative research, ignoring in-progress research', () =>
     {
         const researchType: GameType.ResearchType = GameType.ResearchType.ImpulseDrive;
         const dynamicPlayerData: CoreType.DynamicPlayerData = TestDataBuilders.buildDynamicPlayerData(
@@ -173,7 +171,7 @@ describe('computePlayerInvestedValue', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ dynamicPlayerData: dynamicPlayerData, planetDatas: [emptyPlanet] });
 
-        const expected: number = ScoreData.computeResearchCumulativeInvestedValue(researchType, 2) + ScoreData.computeResearchLevelInvestedValue(researchType, 2);
+        const expected: number = ScoreData.computeResearchCumulativeInvestedValue(researchType, 2);
         expect(ScoreData.computePlayerInvestedValue(playerData)).toBe(expected);
     });
 });

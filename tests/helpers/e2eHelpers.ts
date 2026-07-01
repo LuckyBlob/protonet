@@ -420,6 +420,15 @@ export function getConstructionId(planetId: number, db: Database.Database): numb
     return row.id;
 }
 
+export function getUnitConstructionCount(planetId: number, db: Database.Database): number
+{
+    const row: { count: number } = db.prepare(
+        "SELECT COUNT(*) AS count FROM unit_construction WHERE planet_id = ?"
+    ).get(planetId) as { count: number };
+
+    return row.count;
+}
+
 // Seed a building upgrade that is in progress NOW (started, completing an hour out, so applyPlayerUpdate
 // won't resolve it). Used to assert the build-while-building requirement gates server-side.
 export function seedBuildingUpgradeInProgress(planetId: number, playerId: number, buildingType: number, db: Database.Database): void
@@ -486,6 +495,15 @@ export function fleetExists(fleetId: number, db: Database.Database): boolean
 {
     const row: { count: number } = db.prepare("SELECT COUNT(*) AS count FROM fleet_movement WHERE id = ?").get(fleetId) as { count: number };
     return row.count > 0;
+}
+
+export function getFleetResourceQuantity(fleetId: number, resourceType: number, db: Database.Database): number
+{
+    const row: { resource_quantity: number } | undefined = db.prepare(
+        "SELECT resource_quantity FROM fleet_movement_resource WHERE fleet_id = ? AND resource_type = ?"
+    ).get(fleetId, resourceType) as { resource_quantity: number } | undefined;
+
+    return row?.resource_quantity ?? 0;
 }
 
 // Pin a fleet's espionage/counterespionage RNG seed so the detection roll is deterministic in tests.
@@ -733,7 +751,7 @@ export function fleetActionSelect(page: Page): Locator
     return page.locator("select").filter({ has: page.getByRole("option", { name: actionNamePattern }) });
 }
 
-export async function sendFleet(page: Page, unitName: string, unitQuantity: number, target: PlanetRow, actionLabel: "Station" | "Collect" | "Colonize" | "Espionage"): Promise<void>
+export async function sendFleet(page: Page, unitName: string, unitQuantity: number, target: PlanetRow, actionLabel: "Station" | "Collect" | "Colonize" | "Espionage" | "Attack"): Promise<void>
 {
     await unitRowQuantityInput(page, unitName).fill(String(unitQuantity));
     await page.getByPlaceholder("P").fill(String(target.slot));
@@ -762,7 +780,7 @@ async function fillAndSendFleet(
     target: PlanetRow,
     units: { unitName: string, quantity: number }[],
     resources: { resourceName: string, quantity: number }[],
-    actionLabel: "Station" | "Collect" | "Colonize" | "Espionage" | "Transport",
+    actionLabel: "Station" | "Collect" | "Colonize" | "Espionage" | "Transport" | "Attack",
 ): Promise<void>
 {
     for (const unit of units)
@@ -801,6 +819,15 @@ export async function sendTransportFleet(
 ): Promise<void>
 {
     await fillAndSendFleet(page, target, units, resources, "Transport");
+}
+
+export async function sendAttackFleet(
+    page: Page,
+    target: PlanetRow,
+    units: { unitName: string, quantity: number }[],
+): Promise<void>
+{
+    await fillAndSendFleet(page, target, units, [], "Attack");
 }
 
 // The fleet row renders origin/arrow/target as separate spans with a zone-marker icon after each
@@ -893,6 +920,15 @@ export function insertBodyAtAddress(address: PlanetRow, ownerPlayerId: number, d
 export function deleteBody(bodyId: number, db: Database.Database): void
 {
     db.prepare("DELETE FROM planet WHERE id = ?").run(bodyId);
+}
+
+export function getBodyIdAtAddress(address: PlanetRow, db: Database.Database): number | null
+{
+    const row: { id: number } | undefined = db.prepare(
+        "SELECT id FROM planet WHERE slot = ? AND system = ? AND galaxy = ? AND zone = ?"
+    ).get(address.slot, address.system, address.galaxy, address.zone) as { id: number } | undefined;
+
+    return row?.id ?? null;
 }
 
 // Clears any body already sitting at an exact address+zone. Registration already creates a moon at each

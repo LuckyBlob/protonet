@@ -81,31 +81,6 @@ function computePlanetBuildingsInvestedValue(planetData: CoreType.PlanetData): n
         total += computeBuildingCumulativeInvestedValue(buildingType, buildingLevel);
     }
 
-    for (const buildingUpgrade of planetData.dynamicPlanetData.buildingUpgrades)
-    {
-        for (const buildingUpgradeBuildingRow of buildingUpgrade.buildingUpgradeBuildingRows)
-        {
-            const upgradedBuildingType: GameType.BuildingType = buildingUpgradeBuildingRow.building_type as GameType.BuildingType;
-            const levelBeforeUpgrade: number = buildingLevels.get(upgradedBuildingType) ?? 0;
-            total += computeBuildingLevelInvestedValue(upgradedBuildingType, levelBeforeUpgrade);
-        }
-    }
-
-    for (const buildingDeconstruction of planetData.dynamicPlanetData.buildingDeconstructions)
-    {
-        for (const buildingDeconstructionBuildingRow of buildingDeconstruction.buildingDeconstructionBuildingRows)
-        {
-            const deconstructedBuildingType: GameType.BuildingType = buildingDeconstructionBuildingRow.building_type as GameType.BuildingType;
-            const levelBeforeDeconstruction: number = buildingLevels.get(deconstructedBuildingType) ?? 0;
-            if (levelBeforeDeconstruction < 1)
-            {
-                continue;
-            }
-
-            total -= computeBuildingLevelInvestedValue(deconstructedBuildingType, levelBeforeDeconstruction - 1);
-        }
-    }
-
     return total;
 }
 
@@ -116,14 +91,6 @@ function computePlanetUnitsInvestedValue(planetData: CoreType.PlanetData): numbe
     for (const [unitType, unitQuantity] of planetData.dynamicPlanetData.unitQuantity)
     {
         total += computeUnitInvestedValue(unitType, unitQuantity);
-    }
-
-    for (const unitConstruction of planetData.dynamicPlanetData.unitConstructions)
-    {
-        for (const unitConstructionUnitRow of unitConstruction.unitConstructionUnitRows)
-        {
-            total += computeUnitInvestedValue(unitConstructionUnitRow.unit_type as GameType.UnitType, unitConstructionUnitRow.unit_quantity);
-        }
     }
 
     return total;
@@ -167,16 +134,6 @@ function computeResearchInvestedValue(playerData: CoreType.PlayerData): number
     for (const [researchType, researchLevel] of researchLevels)
     {
         total += computeResearchCumulativeInvestedValue(researchType, researchLevel);
-    }
-
-    for (const currentlyResearching of playerData.dynamicPlayerData.currentlyResearchings)
-    {
-        for (const currentlyResearchingResearchRow of currentlyResearching.currentlyResearchingResearchRows)
-        {
-            const researchedType: GameType.ResearchType = currentlyResearchingResearchRow.research_type as GameType.ResearchType;
-            const levelBeforeResearch: number = researchLevels.get(researchedType) ?? 0;
-            total += computeResearchLevelInvestedValue(researchedType, levelBeforeResearch);
-        }
     }
 
     return total;

@@ -28,6 +28,20 @@ export function seededRandom(seed: number): number
     return ((state ^ (state >>> 14)) >>> 0) / 4294967296;
 }
 
+export function createSeededRandomStream(seed: number): () => number
+{
+    let drawCounter: number = 0;
+
+    const rollNextRandom = (): number =>
+    {
+        const randomValue: number = seededRandom(seed + drawCounter);
+        drawCounter += 1;
+        return randomValue;
+    };
+
+    return rollNextRandom;
+}
+
 export function calculateTotalQuantityMap<K>(map: Map<K, number>): number
 {
     let total: number = 0;

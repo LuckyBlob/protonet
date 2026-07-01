@@ -76,13 +76,7 @@ export function resolveMissileCombat(incomingMissiles: number, interceptorCount:
     }
 
     const destroyedDefenseQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();
-    let rngCounter: number = 0;
-    const nextRandom = (): number =>
-    {
-        const randomValue: number = MathHelp.seededRandom(seed + rngCounter);
-        rngCounter += 1;
-        return randomValue;
-    };
+    const nextRandom: () => number = MathHelp.createSeededRandomStream(seed);
 
     while (survivingMissiles > 0 && countAlivePoolInstances(pool) > 0)
     {

@@ -31,7 +31,13 @@ type AttackOutcome =
 export function resolveAttackAction(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const originPlanetData: CoreType.PlanetData | null = originPlayerData !== null ? CoreType.getPlanetDataForId(originPlayerData.planetDatas, fleetRow.planet_origin_id) : null;
+
+    if (originPlayerData === null)
+    {
+        throw new Error(`Attack resolution for fleet ${fleetRow.id} has no origin player data.`);
+    }
+
+    const originPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(originPlayerData.planetDatas, fleetRow.planet_origin_id);
     const targetAddress: GameType.PlanetAddress = CoreType.getFleetTargetAddress(fleetRow);
     const aimedBody: CoreType.PlanetData | null = targetPlayerData !== null ? CoreType.getPlanetDataForAddress(targetPlayerData.planetDatas, targetAddress) : null;
 
@@ -44,12 +50,7 @@ export function resolveAttackAction(originPlayerData: CoreType.PlayerData | null
     const attackerUnitQuantities: Map<GameType.UnitType, number> = FleetData.buildUnitQuantitiesFromRows(fleetMovement.fleetMovementUnitRows);
     const defenderUnitQuantities: Map<GameType.UnitType, number> = buildDefenderCombatUnitQuantities(aimedBody);
 
-    const combatResult: CombatResolver.CombatResult = CombatResolver.resolveCombat(
-    {
-        attackerUnitQuantities: attackerUnitQuantities,
-        defenderUnitQuantities: defenderUnitQuantities,
-        numRounds: 0,
-    });
+    const combatResult: CombatResolver.CombatResult = CombatResolver.resolveCombat(originPlayerData, targetPlayerData, attackerUnitQuantities, defenderUnitQuantities, fleetRow.seed);
 
     const attackerLosses: Map<GameType.UnitType, number> = computeUnitLosses(attackerUnitQuantities, combatResult.attackerUnitQuantities);
     const defenderLosses: Map<GameType.UnitType, number> = computeUnitLosses(defenderUnitQuantities, combatResult.defenderUnitQuantities);

@@ -6,7 +6,6 @@ import { tmpdir } from 'os';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as DBType from '@/lib/db/dbTypes';
-import * as MessageData from '@/lib/gameplay/dynamicData/player/messageData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
 const OUTBOUND_DURATION_MS: number = 600_000;
@@ -131,12 +130,6 @@ function resolve(attackerPlayerId: number): void
     ServerProgress.applyPlayerUpdate(attackerPlayerId, ServerType.getServerData(), Date.now());
 }
 
-function unitCount(planetId: number, unitType: GameType.UnitType): number
-{
-    const dynamicData: CoreType.DynamicPlanetData = ServerDynamicData.getDynamicPlanetData(planetId);
-    return dynamicData.unitQuantity.get(unitType) ?? 0;
-}
-
 function messagesFor(playerId: number): DBType.MessageRow[]
 {
     return databaseConnection.prepare(
@@ -144,50 +137,8 @@ function messagesFor(playerId: number): DBType.MessageRow[]
     ).all(playerId) as DBType.MessageRow[];
 }
 
-function zoneExists(galaxy: number, system: number, slot: number, zone: GameType.PlanetZone): boolean
+describe('attack action resolution', () =>
 {
-    const zoneRow: { id: number } | undefined = databaseConnection.prepare(
-        "SELECT id FROM planet WHERE galaxy = ? AND system = ? AND slot = ? AND zone = ?"
-    ).get(galaxy, system, slot, zone) as { id: number } | undefined;
-    return zoneRow !== undefined;
-}
-
-describe('attack action resolution (combat stub)', () =>
-{
-    it('returns the surviving attacker fleet, leaves the defender intact, and reports to both players', () =>
-    {
-        const system: number = nextSystem;
-        nextSystem += 1;
-        const attackerPlayerId: number = createPlayer();
-        const defenderPlayerId: number = createPlayer();
-        const attackerOrigin: Body = createBody(attackerPlayerId, 1, system, 3, GameType.PlanetZone.Planet, new Map<GameType.UnitType, number>());
-        const defenderPlanet: Body = createBody(defenderPlayerId, 1, system, 8, GameType.PlanetZone.Planet, new Map<GameType.UnitType, number>([[GameType.UnitType.RocketLauncher, 5], [GameType.UnitType.SmallTransport, 2]]));
-
-        persistAttackFleet(attackerPlayerId, attackerOrigin, defenderPlanet, defenderPlayerId, new Map<GameType.UnitType, number>([[GameType.UnitType.SmallTransport, 10]]));
-
-        resolve(attackerPlayerId);
-
-        const returningFleets: CoreType.FleetMovement[] = ServerDynamicData.getDynamicPlanetFutureFleetArrivalData(attackerOrigin.planetId);
-        expect(returningFleets.length).toBe(1);
-        expect(returningFleets[0]!.fleetMovementRow.is_return_trip).toBe(1);
-        const returningSmallTransportRow: DBType.FleetMovementUnitRow | undefined = returningFleets[0]!.fleetMovementUnitRows.find((unitRow: DBType.FleetMovementUnitRow): boolean => unitRow.unit_type === GameType.UnitType.SmallTransport);
-        expect(returningSmallTransportRow?.unit_quantity ?? 0).toBe(10);
-        expect(returningFleets[0]!.fleetMovementResourceRows.length).toBe(0);
-
-        expect(unitCount(defenderPlanet.planetId, GameType.UnitType.RocketLauncher)).toBe(5);
-        expect(unitCount(defenderPlanet.planetId, GameType.UnitType.SmallTransport)).toBe(2);
-
-        expect(zoneExists(1, system, 8, GameType.PlanetZone.DebrisField)).toBe(false);
-        expect(zoneExists(1, system, 8, GameType.PlanetZone.Moon)).toBe(false);
-
-        const attackerMessages: DBType.MessageRow[] = messagesFor(attackerPlayerId);
-        const defenderMessages: DBType.MessageRow[] = messagesFor(defenderPlayerId);
-        expect(attackerMessages.length).toBe(1);
-        expect(attackerMessages[0].type).toBe(MessageData.MessageType.CombatReport);
-        expect(defenderMessages.length).toBe(1);
-        expect(defenderMessages[0].type).toBe(MessageData.MessageType.CombatReport);
-    });
-
     it('bounces home when the aimed zone no longer exists at an owned coordinate', () =>
     {
         const system: number = nextSystem;

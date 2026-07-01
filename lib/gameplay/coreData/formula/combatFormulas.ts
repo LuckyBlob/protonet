@@ -44,9 +44,9 @@ export function computeDebrisFromLosses(lostUnitQuantities: Map<GameType.UnitTyp
     return debrisResourceQuantities;
 }
 
-export function computeMoonChancePercent(debrisMetalCrystalTotal: number): number
+export function computeMoonChancePercent(debrisTotal: number): number
 {
-    const rawChancePercent: number = debrisMetalCrystalTotal / MOON_DEBRIS_PER_CHANCE_PERCENT;
+    const rawChancePercent: number = debrisTotal / MOON_DEBRIS_PER_CHANCE_PERCENT;
     return Math.min(rawChancePercent, MOON_MAX_CHANCE_PERCENT);
 }
 
