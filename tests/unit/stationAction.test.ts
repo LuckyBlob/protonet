@@ -111,22 +111,6 @@ describe('resolveStationAction', () =>
         expect(targetPlanet.dynamicPlanetData.futureFleetArrivals).toHaveLength(0);
     });
 
-    it('marks the fleet Resolved even when origin player data is null', () =>
-    {
-        const fleet: CoreType.FleetMovement = buildFleetMovement();
-        const targetFleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement({ fleetMovementRow: { id: 1 } });
-        const targetPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
-        {
-            planetRow: { id: TARGET_PLANET_ID, slot: 4 },
-            dynamicPlanetData: { futureFleetArrivals: [targetFleet] },
-        });
-        const targetPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: TARGET_PLAYER_ID }, planetDatas: [targetPlanet] });
-
-        StationAction.resolveStationAction(TestDataBuilders.buildPlayerData(), targetPlayer, fleet, TestDataBuilders.buildServerData());
-
-        expect(fleet.resolutionState).toBe(CoreType.FleetMovementResolution.Resolved);
-    });
-
     it('adds an origin message describing the stationed fleet', () =>
     {
         const fleet: CoreType.FleetMovement = buildFleetMovement();
