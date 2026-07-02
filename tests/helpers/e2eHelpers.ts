@@ -739,7 +739,7 @@ export function buildingCard(page: Page, buildingName: string): Locator
 
 export function researchRow(page: Page, researchName: string): Locator
 {
-    return page.locator("div.flex.flex-row.items-center.gap-4").filter({ hasText: researchName });
+    return page.locator("div.flex.flex-row.items-center.gap-4").filter({ has: page.getByText(researchName, { exact: true }) });
 }
 
 export function researchButton(page: Page, researchName: string): Locator
