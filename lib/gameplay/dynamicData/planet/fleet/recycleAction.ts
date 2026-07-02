@@ -6,13 +6,13 @@ import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 
-export function resolveRecycleAction(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
+export function resolveRecycleAction(originPlayerData: CoreType.PlayerData, targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
 	const targetPlanetData: CoreType.PlanetData | null = targetPlayerData !== null
 		? CoreType.getPlanetDataForAddress(targetPlayerData.planetDatas, CoreType.getFleetTargetAddress(fleetMovement.fleetMovementRow))
 		: null;
 
-	const harvestedResourceQuantities: Map<GameType.ResourceType, number> = harvestDebrisIntoFleet(targetPlanetData, fleetMovement);
+	const harvestedResourceQuantities: Map<GameType.ResourceType, number> = harvestDebrisIntoFleet(originPlayerData, targetPlanetData, fleetMovement);
 
 	addRecycleActionMessage(fleetMovement, harvestedResourceQuantities);
 
@@ -20,7 +20,7 @@ export function resolveRecycleAction(originPlayerData: CoreType.PlayerData | nul
 	fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
 }
 
-function harvestDebrisIntoFleet(targetPlanetData: CoreType.PlanetData | null, fleetMovement: CoreType.FleetMovement): Map<GameType.ResourceType, number>
+function harvestDebrisIntoFleet(originPlayerData: CoreType.PlayerData, targetPlanetData: CoreType.PlanetData | null, fleetMovement: CoreType.FleetMovement): Map<GameType.ResourceType, number>
 {
 	const emptyHarvest: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 	if (targetPlanetData === null)
@@ -28,7 +28,7 @@ function harvestDebrisIntoFleet(targetPlanetData: CoreType.PlanetData | null, fl
 		return emptyHarvest;
 	}
 
-	const availableSpace: number = FleetData.computeRemainingFleetCargoSpace(fleetMovement);
+	const availableSpace: number = FleetData.computeRemainingFleetCargoSpace(originPlayerData, fleetMovement);
 	if (availableSpace === 0)
 	{
 		return emptyHarvest;

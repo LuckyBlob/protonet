@@ -6,10 +6,10 @@ import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 
-export function resolveCollectAction(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
+export function resolveCollectAction(originPlayerData: CoreType.PlayerData, targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
     const targetPlanetData: CoreType.PlanetData | null = targetPlayerData !== null ? CoreType.getPlanetDataForAddress(targetPlayerData.planetDatas, CoreType.getFleetTargetAddress(fleetMovement.fleetMovementRow)) : null;
-    if (targetPlanetData === null)
+    if (targetPlayerData === null || targetPlanetData === null)
     {
         FleetData.bounceFleetForMissingTarget(originPlayerData, fleetMovement);
         return;
@@ -24,7 +24,7 @@ export function resolveCollectAction(originPlayerData: CoreType.PlayerData | nul
         return;
     }
 
-    const collectedResourceQuantities: Map<GameType.ResourceType, number> = FleetData.loadPlanetResourcesIntoFleet(targetPlanetData, fleetMovement, 1);
+    const collectedResourceQuantities: Map<GameType.ResourceType, number> = FleetData.loadPlanetResourcesIntoFleet(originPlayerData, targetPlanetData, fleetMovement, 1);
 
     addCollectActionSuccessMessage(targetPlayerData, fleetMovement, collectedResourceQuantities);
     FleetData.setFleetReturnTrip(targetPlanetData, fleetMovement);

@@ -65,12 +65,6 @@ describe('resolveColonizeAction — too many planets', () =>
         expect(fleet.originMessageRow!.body).toMatch(/to many planets/);
     });
 
-    it('throws when origin player data is null', () =>
-    {
-        const fleet: CoreType.FleetMovement = buildColonizingFleet();
-        expect(() => ColonizeAction.resolveColonizeAction(null, fleet, TestDataBuilders.buildServerData())).toThrow();
-    });
-
     it('throws when origin planet cannot be found on origin player', () =>
     {
         const fleet: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement(

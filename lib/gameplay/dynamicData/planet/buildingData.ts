@@ -55,8 +55,9 @@ function computeProductionRatePerHourForResource(planetData: CoreType.PlanetData
 	}
 
 	const resourceProductionRatio: number = CalculatedValueData.computeResourceProductionPlanetValueRatio(planetData, resourceType, playerData);
+	const resourceProductionModificationPercent: number = CalculatedValueData.computeResourceProductionModificationPercent(playerData, resourceType);
 
-	return totalResourceTypeProductionRatePerHour * resourceProductionRatio;
+	return totalResourceTypeProductionRatePerHour * resourceProductionRatio * (1 + resourceProductionModificationPercent / 100);
 }
 
 export function canAffordResourceCost(planetData: CoreType.PlanetData, costMap: Map<GameType.ResourceType, number>): boolean

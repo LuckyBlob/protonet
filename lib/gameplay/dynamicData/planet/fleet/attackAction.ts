@@ -31,14 +31,9 @@ type AttackOutcome =
     attackerDestroyed: boolean;
 };
 
-export function resolveAttackAction(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
+export function resolveAttackAction(originPlayerData: CoreType.PlayerData, targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-
-    if (originPlayerData === null)
-    {
-        throw new Error(`Attack resolution for fleet ${fleetRow.id} has no origin player data.`);
-    }
 
     const originPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(originPlayerData.planetDatas, fleetRow.planet_origin_id);
     const targetAddress: GameType.PlanetAddress = CoreType.getFleetTargetAddress(fleetRow);
@@ -70,7 +65,7 @@ export function resolveAttackAction(originPlayerData: CoreType.PlayerData | null
     let lootedResourceQuantities: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
     if (defenderRemainingCombatTotal === 0 && attackerSurvivingUnitTotal > 0)
     {
-        lootedResourceQuantities = FleetData.loadPlanetResourcesIntoFleet(aimedBody, fleetMovement, ATTACK_LOOT_FRACTION);
+        lootedResourceQuantities = FleetData.loadPlanetResourcesIntoFleet(originPlayerData, aimedBody, fleetMovement, ATTACK_LOOT_FRACTION);
     }
 
     const repairedDefenseQuantities: Map<GameType.UnitType, number> = Combat.computeRepairedUnitQuantities(defenderLosses, fleetRow.seed + DEFENSE_REPAIR_SEED_OFFSET);

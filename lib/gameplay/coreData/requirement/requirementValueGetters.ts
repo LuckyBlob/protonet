@@ -125,8 +125,7 @@ export function hasFreeFleetSlot(): RequirementType.ThingValueGetter
     {
         // The fleet slot cap is a derived player value (Computer Technology produces it, one per level on
         // top of the base slot). Read the net (production minus consumption) so future consumers can spend slots.
-        const fleetSlotsValueData: CoreType.CalculatedValueData | null = CalculatedValueData.computePlayerValueData(context.playerData, GameType.PlayerValueType.FleetSlots);
-        const maximumFleetSlots: number = fleetSlotsValueData === null ? 0 : fleetSlotsValueData.production - fleetSlotsValueData.consumption;
+        const maximumFleetSlots: number = CalculatedValueData.computePlayerValueNet(context.playerData, GameType.PlayerValueType.FleetSlots);
 
         // A fleet occupies a slot for its whole round trip. The player's own movements appear in the
         // futureFleetArrivals of every planet they touch, so collapse them to distinct fleet ids.

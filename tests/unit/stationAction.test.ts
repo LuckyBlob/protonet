@@ -122,7 +122,7 @@ describe('resolveStationAction', () =>
         });
         const targetPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: TARGET_PLAYER_ID }, planetDatas: [targetPlanet] });
 
-        StationAction.resolveStationAction(null, targetPlayer, fleet, TestDataBuilders.buildServerData());
+        StationAction.resolveStationAction(TestDataBuilders.buildPlayerData(), targetPlayer, fleet, TestDataBuilders.buildServerData());
 
         expect(fleet.resolutionState).toBe(CoreType.FleetMovementResolution.Resolved);
     });
@@ -208,7 +208,7 @@ describe('resolveStationAction', () =>
         const fleet: CoreType.FleetMovement = buildFleetMovement();
         const targetPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: TARGET_PLAYER_ID }, planetDatas: [] });
 
-        StationAction.resolveStationAction(null, targetPlayer, fleet, TestDataBuilders.buildServerData());
+        StationAction.resolveStationAction(TestDataBuilders.buildPlayerData(), targetPlayer, fleet, TestDataBuilders.buildServerData());
 
         expect(fleet.resolutionState).toBe(CoreType.FleetMovementResolution.Resolved);
         expect(fleet.fleetMovementRow.is_return_trip).toBe(1);
@@ -220,7 +220,7 @@ describe('resolveStationAction', () =>
         const otherPlanet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { id: 999 } });
         const targetPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: TARGET_PLAYER_ID }, planetDatas: [otherPlanet] });
 
-        StationAction.resolveStationAction(null, targetPlayer, fleet, TestDataBuilders.buildServerData());
+        StationAction.resolveStationAction(TestDataBuilders.buildPlayerData(), targetPlayer, fleet, TestDataBuilders.buildServerData());
 
         expect(fleet.resolutionState).toBe(CoreType.FleetMovementResolution.Resolved);
         expect(fleet.fleetMovementRow.is_return_trip).toBe(1);

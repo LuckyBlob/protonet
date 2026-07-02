@@ -226,6 +226,39 @@ export function computePlayerValueData(playerData: CoreType.PlayerData, playerVa
     return getCalculatedValueData(playerValueDatas, playerValueType);
 }
 
+export function computePlayerValueNet(playerData: CoreType.PlayerData, playerValueType: GameType.PlayerValueType): number
+{
+    const playerValueData: CoreType.CalculatedValueData | null = computePlayerValueData(playerData, playerValueType);
+    if (playerValueData === null)
+    {
+        return 0;
+    }
+
+    return playerValueData.production - playerValueData.consumption;
+}
+
+export function computeResourceProductionModificationPercent(playerData: CoreType.PlayerData, resourceType: GameType.ResourceType): number
+{
+    let totalModificationPercent: number = 0;
+
+    for (const [playerValueType, playerValueInfo] of StaticData.PLAYER_VALUE_INFOS)
+    {
+        if (playerValueInfo.modifiesResourceProduction === undefined)
+        {
+            continue;
+        }
+
+        if (playerValueInfo.associatedResource !== undefined && playerValueInfo.associatedResource !== resourceType)
+        {
+            continue;
+        }
+
+        totalModificationPercent += computePlayerValueNet(playerData, playerValueType);
+    }
+
+    return totalModificationPercent;
+}
+
 export function computePlayerValueDatas(playerData: CoreType.PlayerData): Map<GameType.PlayerValueType, CoreType.CalculatedValueData>
 {
     const playerValueDataBySource: Map<GameType.PlayerValueType, CoreType.CalculatedValueData>[] =
@@ -242,12 +275,42 @@ function computeBuildingPlayerValueDatas(playerData: CoreType.PlayerData): Map<G
 {
     const newBuildingPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> = new Map<GameType.PlayerValueType, CoreType.CalculatedValueData>();
 
+    const buildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building);
+    for (const buildingType of buildingTypes)
+    {
+        const buildingPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null = PlayerValueProduction.computeBuildingPlayerValueProduction(buildingType, playerData);
+        if (buildingPlayerValues === null)
+        {
+            continue;
+        }
+
+        for (const [playerValueType, playerValueAmounts] of buildingPlayerValues)
+        {
+            addCalculatedValueData(newBuildingPlayerValues, playerValueType, playerValueAmounts);
+        }
+    }
+
     return newBuildingPlayerValues;
 }
 
 function computeUnitPlayerValueDatas(playerData: CoreType.PlayerData): Map<GameType.PlayerValueType, CoreType.CalculatedValueData>
 {
     const newUnitPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> = new Map<GameType.PlayerValueType, CoreType.CalculatedValueData>();
+
+    const unitTypes: GameType.UnitType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Unit);
+    for (const unitType of unitTypes)
+    {
+        const unitPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null = PlayerValueProduction.computeUnitPlayerValueProduction(unitType, playerData);
+        if (unitPlayerValues === null)
+        {
+            continue;
+        }
+
+        for (const [playerValueType, playerValueAmounts] of unitPlayerValues)
+        {
+            addCalculatedValueData(newUnitPlayerValues, playerValueType, playerValueAmounts);
+        }
+    }
 
     return newUnitPlayerValues;
 }

@@ -7,11 +7,11 @@ import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 
-export function resolveStationAction(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
+export function resolveStationAction(originPlayerData: CoreType.PlayerData, targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
-    const originPlanetData: CoreType.PlanetData | null = originPlayerData !== null ? CoreType.getPlanetDataForId(originPlayerData.planetDatas, fleetMovement.fleetMovementRow.planet_origin_id) : null;
+    const originPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(originPlayerData.planetDatas, fleetMovement.fleetMovementRow.planet_origin_id);
     const targetPlanetData: CoreType.PlanetData | null = targetPlayerData !== null ? CoreType.getPlanetDataForAddress(targetPlayerData.planetDatas, CoreType.getFleetTargetAddress(fleetMovement.fleetMovementRow)) : null;
-    if (targetPlanetData === null)
+    if (targetPlayerData === null || targetPlanetData === null)
     {
         FleetData.bounceFleetForMissingTarget(originPlayerData, fleetMovement);
         return;

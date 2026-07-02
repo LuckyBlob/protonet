@@ -26,7 +26,7 @@ function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewPro
 	const displayName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.building(buildingType));
 	const currentLevel: number = BuildingData.getBuildingLevel(selectedPlanetDataPredicted, buildingType);
 
-	const deconstructionCostMap: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingDeconstructionCost(currentLevel, buildingType);
+	const deconstructionCostMap: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingDeconstructionCost(currentLevel, buildingType, playerData);
 	const deconstructionDurationSeconds: number | null = BuildingDeconstructionData.getBuildingDeconstructionDurationSeconds(playerData, buildingType, selectedPlanetDataPredicted, props.clientDataStateResult.sdsController[0]);
 
 	const imagePath: string = BuildingViewHelpers.getBuildingImagePath(buildingType, currentLevel);

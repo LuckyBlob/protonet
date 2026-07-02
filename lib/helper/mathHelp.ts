@@ -42,6 +42,23 @@ export function createSeededRandomStream(seed: number): () => number
     return rollNextRandom;
 }
 
+export function clamp(value: number, min: number | undefined, max: number | undefined): number
+{
+    let clampedValue: number = value;
+
+    if (min !== undefined && clampedValue < min)
+    {
+        clampedValue = min;
+    }
+
+    if (max !== undefined && clampedValue > max)
+    {
+        clampedValue = max;
+    }
+
+    return clampedValue;
+}
+
 export function calculateTotalQuantityMap<K>(map: Map<K, number>): number
 {
     let total: number = 0;

@@ -50,6 +50,7 @@ export type BuildingStats =
 	productionFunctionType?: ProductionFunctionType;
 	productionStats?: Map<ResourceType, ProductionStats>;
 	planetValueStats?: PlanetValueStat[];
+	playerValueStats?: PlayerValueStat[];
 };
 
 export const BuildingCostFunctionType =
@@ -130,16 +131,21 @@ export type PlanetValueInfo =
 export const PlayerValueType =
 {
     FleetSlots: 5,
+    FleetSpaceModificationPercent: 9,
+    ResourceProductionModificationPercent: 10,
+    DeconstructionCostModificationPercent: 11,
 } as const;
 export type PlayerValueType = typeof PlayerValueType[keyof typeof PlayerValueType];
 export type PlayerValueInfo =
 {
 	displayName: string;
-	limitFleets?: boolean;
+	modifiesResourceProduction?: boolean;
+	associatedResource?: ResourceType;
 }
 export const PlayerValueProductionFormulasType =
 {
     ProportionalOneToOne: 1,
+    LinearClamped: 2,
 } as const;
 export type PlayerValueProductionFormulasType = typeof PlayerValueProductionFormulasType[keyof typeof PlayerValueProductionFormulasType];
 export type PlayerValueStat =
@@ -147,6 +153,8 @@ export type PlayerValueStat =
 	playerValueProductionFormulasType: PlayerValueProductionFormulasType;
 	playerValueType: PlayerValueType;
 	basePlayerValueFactor: number;
+	minPlayerValue?: number;
+	maxPlayerValue?: number;
 }
 //#endregion
 
@@ -244,6 +252,7 @@ export type UnitStats =
 	canSpy?: boolean;
 	canLaunchAsMissile?: boolean;
 	planetValueStats?: PlanetValueStat[];
+	playerValueStats?: PlayerValueStat[];
 };
 //#endregion
 

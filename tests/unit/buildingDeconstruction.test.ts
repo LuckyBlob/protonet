@@ -39,7 +39,7 @@ describe('computeBuildingDeconstructionCost', () =>
 {
     it('returns null when the building is at level 0', () =>
     {
-        const cost: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingDeconstructionCost(0, GameType.BuildingType.MetalMine);
+        const cost: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingDeconstructionCost(0, GameType.BuildingType.MetalMine, TestDataBuilders.buildPlayerData());
         expect(cost).toBeNull();
     });
 
@@ -47,7 +47,7 @@ describe('computeBuildingDeconstructionCost', () =>
     {
         const currentLevel: number = 4;
         const removedLevelBuildCost: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingUpgradeCost(currentLevel - 1, GameType.BuildingType.MetalMine);
-        const deconstructionCost: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingDeconstructionCost(currentLevel, GameType.BuildingType.MetalMine);
+        const deconstructionCost: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingDeconstructionCost(currentLevel, GameType.BuildingType.MetalMine, TestDataBuilders.buildPlayerData());
 
         expect(removedLevelBuildCost).not.toBeNull();
         expect(deconstructionCost).not.toBeNull();
@@ -62,7 +62,7 @@ describe('computeBuildingDeconstructionCost', () =>
     {
         // Metal Mine: base { Metal 60, Crystal 15 }, exponent 1.5. The cost to build level 3 is
         // floor(base * 1.5^2) = { Metal 135, Crystal 33 }; deconstruction charges half of that, floored.
-        const deconstructionCost: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingDeconstructionCost(3, GameType.BuildingType.MetalMine);
+        const deconstructionCost: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingDeconstructionCost(3, GameType.BuildingType.MetalMine, TestDataBuilders.buildPlayerData());
 
         expect(deconstructionCost).not.toBeNull();
         expect(deconstructionCost!.get(GameType.ResourceType.Metal)).toBe(67);

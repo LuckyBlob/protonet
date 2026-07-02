@@ -6,10 +6,10 @@ import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 
-export function resolveTransportAction(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
+export function resolveTransportAction(originPlayerData: CoreType.PlayerData, targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
     const targetPlanetData: CoreType.PlanetData | null = targetPlayerData !== null ? CoreType.getPlanetDataForAddress(targetPlayerData.planetDatas, CoreType.getFleetTargetAddress(fleetMovement.fleetMovementRow)) : null;
-    if (targetPlanetData === null)
+    if (targetPlayerData === null || targetPlanetData === null)
     {
         FleetData.bounceFleetForMissingTarget(originPlayerData, fleetMovement);
         return;

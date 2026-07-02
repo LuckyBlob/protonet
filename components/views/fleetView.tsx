@@ -417,7 +417,7 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: GameType.Re
 
     const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, data.requestedUnitQuantitiesState.requestedQuantities, props.clientDataStateResult.sdsController[0], data.speedPercentageState[0]);
     const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
-    const totalFleetSpace: number = FleetData.calculateTotalFleetSpace(data.requestedUnitQuantitiesState.requestedQuantities);
+    const totalFleetSpace: number = FleetData.calculateTotalFleetSpace(playerData, data.requestedUnitQuantitiesState.requestedQuantities);
     const specificFuelResource: number = fuelRequirements.get(resourceType) ?? 0;
 
     let otherResourcesRequested: number = 0;

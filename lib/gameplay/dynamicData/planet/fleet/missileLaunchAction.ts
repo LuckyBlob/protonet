@@ -117,10 +117,10 @@ export function resolveMissileCombat(incomingMissiles: number, interceptorCount:
     return result;
 }
 
-export function resolveMissileLaunchAction(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
+export function resolveMissileLaunchAction(originPlayerData: CoreType.PlayerData, targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const originPlanetData: CoreType.PlanetData | null = originPlayerData !== null ? CoreType.getPlanetDataForId(originPlayerData.planetDatas, fleetRow.planet_origin_id) : null;
+    const originPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(originPlayerData.planetDatas, fleetRow.planet_origin_id);
     const targetAddress: GameType.PlanetAddress = CoreType.getFleetTargetAddress(fleetRow);
     const aimedBody: CoreType.PlanetData | null = targetPlayerData !== null ? CoreType.getPlanetDataForAddress(targetPlayerData.planetDatas, targetAddress) : null;
 
@@ -145,7 +145,7 @@ export function resolveMissileLaunchAction(originPlayerData: CoreType.PlayerData
     const interceptorCount: number = interceptorPlanetData !== null ? UnitData.getUnitQuantity(interceptorPlanetData, GameType.UnitType.InterceptorMissile) : 0;
 
     const interplanetaryMissileStats: GameType.UnitStats = StaticDataHelper.getUnitStats(GameType.UnitType.InterplanetaryMissile);
-    const damagePerMissile: number = originPlayerData !== null ? CombatResearch.computeUnitWeaponPower(originPlayerData, interplanetaryMissileStats) : interplanetaryMissileStats.weaponPower;
+    const damagePerMissile: number = CombatResearch.computeUnitWeaponPower(originPlayerData, interplanetaryMissileStats);
 
     const defenseUnitQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();
     const defenseHullByType: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();
@@ -226,7 +226,7 @@ function getMissileReportReceivedAt(fleetMovement: CoreType.FleetMovement): numb
     return fleetMovement.fleetMovementRow.started_at! + fleetMovement.fleetMovementRow.duration_at_start_time!;
 }
 
-function addMissileReportMessages(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, combatResult: MissileCombatResult): void
+function addMissileReportMessages(originPlayerData: CoreType.PlayerData, targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, combatResult: MissileCombatResult): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
     const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
@@ -234,20 +234,17 @@ function addMissileReportMessages(originPlayerData: CoreType.PlayerData | null, 
     const receivedAt: number = getMissileReportReceivedAt(fleetMovement);
     const reportBody: string = buildMissileReportBody(combatResult);
 
-    if (originPlayerData !== null)
+    const targetPlayerName: string = StaticDataHelper.getPlayerName(originPlayerData.publicPlayerRows, fleetRow.player_target_id);
+    fleetMovement.originMessageRow =
     {
-        const targetPlayerName: string = StaticDataHelper.getPlayerName(originPlayerData.publicPlayerRows, fleetRow.player_target_id);
-        fleetMovement.originMessageRow =
-        {
-            id: -1,
-            player_id: fleetRow.player_origin_id,
-            received_at: receivedAt,
-            type: MessageData.MessageType.MissileReport,
-            is_read: 0,
-            title: `Missile Launch Report on ${targetPlayerName} at ${targetAddress}`,
-            body: `Missile strike on ${targetPlayerName}'s ${targetAddress}.\n${reportBody}`,
-        };
-    }
+        id: -1,
+        player_id: fleetRow.player_origin_id,
+        received_at: receivedAt,
+        type: MessageData.MessageType.MissileReport,
+        is_read: 0,
+        title: `Missile Launch Report on ${targetPlayerName} at ${targetAddress}`,
+        body: `Missile strike on ${targetPlayerName}'s ${targetAddress}.\n${reportBody}`,
+    };
 
     if (fleetRow.player_target_id !== null)
     {
@@ -265,13 +262,8 @@ function addMissileReportMessages(originPlayerData: CoreType.PlayerData | null, 
     }
 }
 
-function addDeepSpaceMessage(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement): void
+function addDeepSpaceMessage(originPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement): void
 {
-    if (originPlayerData === null)
-    {
-        return;
-    }
-
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
     const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
 

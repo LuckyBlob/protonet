@@ -1,6 +1,8 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
+import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 
 export function computeBuildingUpgradeCost(currentUpgradeLevel: number, buildingType: GameType.BuildingType): Map<GameType.ResourceType, number> | null
 {
@@ -17,7 +19,7 @@ export function computeBuildingUpgradeCost(currentUpgradeLevel: number, building
 	}
 }
 
-export function computeBuildingDeconstructionCost(currentLevel: number, buildingType: GameType.BuildingType): Map<GameType.ResourceType, number> | null
+export function computeBuildingDeconstructionCost(currentLevel: number, buildingType: GameType.BuildingType, playerData: CoreType.PlayerData): Map<GameType.ResourceType, number> | null
 {
 	if (currentLevel < 1)
 	{
@@ -30,10 +32,12 @@ export function computeBuildingDeconstructionCost(currentLevel: number, building
 		return null;
 	}
 
+	const deconstructionCostModificationPercent: number = CalculatedValueData.computePlayerValueNet(playerData, GameType.PlayerValueType.DeconstructionCostModificationPercent);
+
 	const deconstructionCost: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 	for (const [resourceType, buildResourceCost] of removedLevelBuildCost)
 	{
-		deconstructionCost.set(resourceType, Math.floor(buildResourceCost / 2));
+		deconstructionCost.set(resourceType, Math.floor((buildResourceCost / 2) * (1 + deconstructionCostModificationPercent / 100)));
 	}
 
 	return deconstructionCost;

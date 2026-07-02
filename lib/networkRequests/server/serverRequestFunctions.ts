@@ -1340,7 +1340,7 @@ export function tryDeconstructBuildingLogic(playerId: number, serverData: CoreTy
         return { success: false, failureReason: "Wrong building type to deconstruct.", playerStateResult: playerData };
     }
 
-    const deconstructionCost: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingDeconstructionCost(currentBuildingLevel, requestData.buildingType);
+    const deconstructionCost: Map<GameType.ResourceType, number> | null = BuildingCost.computeBuildingDeconstructionCost(currentBuildingLevel, requestData.buildingType, playerData);
     if (deconstructionCost === null)
     {
         return { success: false, failureReason: "Wrong building type to deconstruct.", playerStateResult: playerData };
@@ -2475,7 +2475,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
             return { success: false, failureReason: `Not enough fuel.`, playerStateResult: playerData };
         }
 
-        const canStoreResources: boolean = FleetData.hasSpaceForResourceQuantities(unitQuantities, totalRequiredResourceQuantities);
+        const canStoreResources: boolean = FleetData.hasSpaceForResourceQuantities(playerData, unitQuantities, totalRequiredResourceQuantities);
         if (canStoreResources === false)
         {
             return { success: false, failureReason: `Not enough space for resources.`, playerStateResult: playerData };
@@ -2487,7 +2487,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
             return { success: false, failureReason: `Not enough units.`, playerStateResult: playerData };
         }
 
-        const actualTransportedResources: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>(FleetData.clampResoucesToAddToFleet(unitQuantities, fuelRequirements, transportedResourceQuantities));
+        const actualTransportedResources: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>(FleetData.clampResoucesToAddToFleet(playerData, unitQuantities, fuelRequirements, transportedResourceQuantities));
 
         const fleetMovementUnitRows: DBType.FleetMovementUnitRow[] = [];
         for (const [unitType, unitQuantity] of unitQuantities)

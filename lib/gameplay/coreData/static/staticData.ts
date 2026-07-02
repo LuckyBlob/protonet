@@ -1138,8 +1138,14 @@ export const PLANET_VALUE_INFOS: ReadonlyMap<GameType.PlanetValueType, GameType.
 export const PLAYER_VALUE_INFOS: ReadonlyMap<GameType.PlayerValueType, GameType.PlayerValueInfo> = new Map<GameType.PlayerValueType, GameType.PlayerValueInfo>
 ([
     [GameType.PlayerValueType.FleetSlots, {
-		displayName: "Fleet Slots",
-		limitFleets: true,}],
+		displayName: "Fleet Slots",}],
+	[GameType.PlayerValueType.FleetSpaceModificationPercent, {
+		displayName: "Fleet Space Modification",}],
+	[GameType.PlayerValueType.ResourceProductionModificationPercent, {
+		displayName: "Resource Production Modification",
+		modifiesResourceProduction: true,}],
+	[GameType.PlayerValueType.DeconstructionCostModificationPercent, {
+		displayName: "Deconstruction Cost Modification",}],
 ]);
 //#endregion
 

@@ -25,6 +25,39 @@ describe('calculateTotalQuantityMap', () =>
     });
 });
 
+describe('clamp', () =>
+{
+    it('returns the value unchanged when within both bounds', () =>
+    {
+        expect(MathHelp.clamp(5, 0, 10)).toBe(5);
+    });
+
+    it('clamps to the minimum when below it', () =>
+    {
+        expect(MathHelp.clamp(-3, 0, 10)).toBe(0);
+    });
+
+    it('clamps to the maximum when above it', () =>
+    {
+        expect(MathHelp.clamp(42, 0, 10)).toBe(10);
+    });
+
+    it('applies no lower bound when min is undefined', () =>
+    {
+        expect(MathHelp.clamp(-1000, undefined, 10)).toBe(-1000);
+    });
+
+    it('applies no upper bound when max is undefined', () =>
+    {
+        expect(MathHelp.clamp(1000, 0, undefined)).toBe(1000);
+    });
+
+    it('leaves the value untouched when both bounds are undefined', () =>
+    {
+        expect(MathHelp.clamp(-7, undefined, undefined)).toBe(-7);
+    });
+});
+
 describe('hasQuantities', () =>
 {
     it('returns true when all required quantities are available', () =>

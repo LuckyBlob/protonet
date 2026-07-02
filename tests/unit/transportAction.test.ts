@@ -164,7 +164,7 @@ describe('resolveTransportAction', () =>
         const fleet: CoreType.FleetMovement = buildFleetMovement();
         const targetPlayer: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: TARGET_PLAYER_ID }, planetDatas: [] });
 
-        TransportAction.resolveTransportAction(null, targetPlayer, fleet, TestDataBuilders.buildServerData());
+        TransportAction.resolveTransportAction(TestDataBuilders.buildPlayerData(), targetPlayer, fleet, TestDataBuilders.buildServerData());
 
         expect(fleet.resolutionState).toBe(CoreType.FleetMovementResolution.Resolved);
         expect(fleet.fleetMovementRow.is_return_trip).toBe(1);

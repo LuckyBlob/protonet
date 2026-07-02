@@ -12,9 +12,9 @@ import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as MathHelp from "@/lib/helper/mathHelp";
 import * as DBType from "@/lib/db/dbTypes";
 
-export function resolveEspionageAction(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
+export function resolveEspionageAction(originPlayerData: CoreType.PlayerData, targetPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): void
 {
-    const originPlanetData: CoreType.PlanetData | null = originPlayerData !== null ? CoreType.getPlanetDataForId(originPlayerData.planetDatas, fleetMovement.fleetMovementRow.planet_origin_id) : null;
+    const originPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(originPlayerData.planetDatas, fleetMovement.fleetMovementRow.planet_origin_id);
     const targetPlanetData: CoreType.PlanetData | null = targetPlayerData !== null ? CoreType.getPlanetDataForAddress(targetPlayerData.planetDatas, CoreType.getFleetTargetAddress(fleetMovement.fleetMovementRow)) : null;
 
     if (targetPlayerData === null || targetPlanetData === null)
@@ -24,7 +24,7 @@ export function resolveEspionageAction(originPlayerData: CoreType.PlayerData | n
     }
 
     const probeCount: number = countEspionageProbes(fleetMovement);
-    const attackerEspionageTech: number = originPlayerData !== null ? ResearchData.getResearchLevel(originPlayerData, GameType.ResearchType.EspionageTech) : 0;
+    const attackerEspionageTech: number = ResearchData.getResearchLevel(originPlayerData, GameType.ResearchType.EspionageTech);
     const defenderEspionageTech: number = ResearchData.getResearchLevel(targetPlayerData, GameType.ResearchType.EspionageTech);
 
     const reportLevel: number = Espionage.computeEspionageReportLevel(probeCount, attackerEspionageTech, defenderEspionageTech);
@@ -150,13 +150,8 @@ function buildShipsUnderRepairQuantities(targetPlanetData: CoreType.PlanetData):
     return shipsUnderRepair;
 }
 
-function addEspionageReportMessage(originPlayerData: CoreType.PlayerData | null, targetPlayerData: CoreType.PlayerData, targetPlanetData: CoreType.PlanetData, fleetMovement: CoreType.FleetMovement, revealedInfoBlocks: Set<Espionage.EspionageInfoBlock>): void
+function addEspionageReportMessage(originPlayerData: CoreType.PlayerData, targetPlayerData: CoreType.PlayerData, targetPlanetData: CoreType.PlanetData, fleetMovement: CoreType.FleetMovement, revealedInfoBlocks: Set<Espionage.EspionageInfoBlock>): void
 {
-    if (originPlayerData === null)
-    {
-        return;
-    }
-
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
     const targetPlayerName: string = StaticDataHelper.getPlayerName(originPlayerData.publicPlayerRows, fleetRow.player_target_id);
     const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);

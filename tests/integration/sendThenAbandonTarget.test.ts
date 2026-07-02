@@ -73,7 +73,7 @@ function createZoneWithData(playerId: number, galaxy: number, system: number, sl
     return zoneId;
 }
 
-function persistStationFleet(playerId: number, originPlanetId: number, galaxy: number, system: number, originSlot: number, targetSlot: number, targetZone: GameType.PlanetZone, startedAt: number): void
+function persistFleetToTarget(playerId: number, originPlanetId: number, galaxy: number, system: number, originSlot: number, targetSlot: number, targetZone: GameType.PlanetZone, fleetActionType: GameType.FleetActionType, startedAt: number): void
 {
     const fleetMovement: CoreType.FleetMovement = TestDataBuilders.buildFleetMovement(
     {
@@ -93,7 +93,7 @@ function persistStationFleet(playerId: number, originPlanetId: number, galaxy: n
             planet_target_system: system,
             planet_target_galaxy: galaxy,
             is_return_trip: 0,
-            fleet_action_type: GameType.FleetActionType.Station,
+            fleet_action_type: fleetActionType,
             requested_at: startedAt,
             duration_at_request_time: OUTBOUND_DURATION_MS,
             duration_at_start_time: OUTBOUND_DURATION_MS,
@@ -117,7 +117,7 @@ describe('station fleet to a target abandoned before arrival', () =>
         const targetPlanetId: number = createZoneWithData(1, 1, 1, 6, GameType.PlanetZone.Planet);
 
         // Fleet is still in flight when the target is abandoned (started now, due in OUTBOUND_DURATION_MS).
-        persistStationFleet(1, originPlanetId, 1, 1, 4, 6, GameType.PlanetZone.Planet, Date.now());
+        persistFleetToTarget(1, originPlanetId, 1, 1, 4, 6, GameType.PlanetZone.Planet, GameType.FleetActionType.Station, Date.now());
 
         ServerPlanetManagement.abandonPlanet(targetPlanetId, 1);
 
@@ -141,7 +141,7 @@ describe('station fleet to a target abandoned before arrival', () =>
         createZoneWithData(2, 2, 2, 6, GameType.PlanetZone.Planet);
         const targetMoonId: number = createZoneWithData(2, 2, 2, 6, GameType.PlanetZone.Moon);
 
-        persistStationFleet(2, originPlanetId, 2, 2, 4, 6, GameType.PlanetZone.Moon, Date.now());
+        persistFleetToTarget(2, originPlanetId, 2, 2, 4, 6, GameType.PlanetZone.Moon, GameType.FleetActionType.Station, Date.now());
 
         // Abandon ONLY the moon — the planet at the coord survives, so there is no nullifier; the
         // Station resolver itself must tolerate the vanished moon and bounce.
@@ -150,6 +150,50 @@ describe('station fleet to a target abandoned before arrival', () =>
         const resolveAfterArrival = (): void =>
         {
             ServerProgress.applyPlayerUpdate(2, ServerType.getServerData(), Date.now() + OUTBOUND_DURATION_MS + 1_000);
+        };
+
+        expect(resolveAfterArrival).not.toThrow();
+
+        const originFleets: CoreType.FleetMovement[] = ServerDynamicData.getDynamicPlanetFutureFleetArrivalData(originPlanetId);
+        expect(originFleets.length).toBe(1);
+        expect(originFleets[0]!.fleetMovementRow.is_return_trip).toBe(1);
+    });
+
+    it('bounces a Collect fleet home (no throw) when its target planet is abandoned mid-flight', () =>
+    {
+        createPlayer(3);
+        const originPlanetId: number = createZoneWithData(3, 1, 3, 4, GameType.PlanetZone.Planet);
+        const targetPlanetId: number = createZoneWithData(3, 1, 3, 6, GameType.PlanetZone.Planet);
+
+        persistFleetToTarget(3, originPlanetId, 1, 3, 4, 6, GameType.PlanetZone.Planet, GameType.FleetActionType.Collect, Date.now());
+
+        ServerPlanetManagement.abandonPlanet(targetPlanetId, 3);
+
+        const resolveAfterArrival = (): void =>
+        {
+            ServerProgress.applyPlayerUpdate(3, ServerType.getServerData(), Date.now() + OUTBOUND_DURATION_MS + 1_000);
+        };
+
+        expect(resolveAfterArrival).not.toThrow();
+
+        const originFleets: CoreType.FleetMovement[] = ServerDynamicData.getDynamicPlanetFutureFleetArrivalData(originPlanetId);
+        expect(originFleets.length).toBe(1);
+        expect(originFleets[0]!.fleetMovementRow.is_return_trip).toBe(1);
+    });
+
+    it('bounces a Transport fleet home (no throw) when its target planet is abandoned mid-flight', () =>
+    {
+        createPlayer(4);
+        const originPlanetId: number = createZoneWithData(4, 1, 4, 4, GameType.PlanetZone.Planet);
+        const targetPlanetId: number = createZoneWithData(4, 1, 4, 6, GameType.PlanetZone.Planet);
+
+        persistFleetToTarget(4, originPlanetId, 1, 4, 4, 6, GameType.PlanetZone.Planet, GameType.FleetActionType.Transport, Date.now());
+
+        ServerPlanetManagement.abandonPlanet(targetPlanetId, 4);
+
+        const resolveAfterArrival = (): void =>
+        {
+            ServerProgress.applyPlayerUpdate(4, ServerType.getServerData(), Date.now() + OUTBOUND_DURATION_MS + 1_000);
         };
 
         expect(resolveAfterArrival).not.toThrow();

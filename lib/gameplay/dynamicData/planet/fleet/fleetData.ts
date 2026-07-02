@@ -5,6 +5,7 @@ import * as UnitSpeed from "@/lib/gameplay/coreData/formula/unitSpeedFormulas";
 import * as MathHelp from "@/lib/helper/mathHelp";
 import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
+import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as DBType from "@/lib/db/dbTypes";
@@ -70,8 +71,10 @@ export function calculateTotalFleetFuel(playerData: CoreType.PlayerData, from: G
 	return UnitFuelConsumption.computeFuelConsumption(playerData, unitQuantities, distance, speedPercentage, serverData);
 }
 
-export function calculateTotalFleetSpace(unitQuantities: Map<GameType.UnitType, number>): number
+export function calculateTotalFleetSpace(playerData: CoreType.PlayerData, unitQuantities: Map<GameType.UnitType, number>): number
 {
+	const fleetSpaceModificationPercent: number = CalculatedValueData.computePlayerValueNet(playerData, GameType.PlayerValueType.FleetSpaceModificationPercent);
+
 	let totalSpace: number = 0;
 	for (const [unitType, unitQuantity] of unitQuantities)
 	{
@@ -81,25 +84,27 @@ export function calculateTotalFleetSpace(unitQuantities: Map<GameType.UnitType, 
 			throw new Error(`⚠️: Unit type ${unitType} has no cargo space and cannot be in a fleet.`);
 		}
 
-		totalSpace += unitStats.space * unitQuantity;
+		const modifiedUnitSpace: number = Math.floor(unitStats.space * (1 + fleetSpaceModificationPercent / 100));
+
+		totalSpace += modifiedUnitSpace * unitQuantity;
 	}
 
 	return totalSpace;
 }
 
-export function hasSpaceForResourceQuantities(unitQuantities: Map<GameType.UnitType, number>, resourceQuantities: Map<GameType.ResourceType, number>): boolean
+export function hasSpaceForResourceQuantities(playerData: CoreType.PlayerData, unitQuantities: Map<GameType.UnitType, number>, resourceQuantities: Map<GameType.ResourceType, number>): boolean
 {
     const totalFuel: number = MathHelp.calculateTotalQuantityMap(resourceQuantities);
-    const totalSpace: number = calculateTotalFleetSpace(unitQuantities);
+    const totalSpace: number = calculateTotalFleetSpace(playerData, unitQuantities);
 
     return totalFuel <= totalSpace;
 }
 
-export function clampResoucesToAddToFleet(unitQuantities: Map<GameType.UnitType, number>, fuelRequirements: Map<GameType.ResourceType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>): Map<GameType.ResourceType, number>
+export function clampResoucesToAddToFleet(playerData: CoreType.PlayerData, unitQuantities: Map<GameType.UnitType, number>, fuelRequirements: Map<GameType.ResourceType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>): Map<GameType.ResourceType, number>
 {
     const totalResources: number = MathHelp.calculateTotalQuantityMap(transportedResourceQuantities);
     const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
-    const availableSpace: number = Math.max(calculateTotalFleetSpace(unitQuantities) - totalFuel, 0);
+    const availableSpace: number = Math.max(calculateTotalFleetSpace(playerData, unitQuantities) - totalFuel, 0);
 
     if (availableSpace >= totalResources)
     {
@@ -131,20 +136,15 @@ export function addFleetMessagesToPlayerData(playerData: CoreType.PlayerData, fl
 // Generic missing-target bounce: a fleet action whose target no longer exists at the destination
 // turns around and returns home. Shared by the resolvers (Station/Collect) whose action requires an
 // existing target.
-export function bounceFleetForMissingTarget(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement): void
+export function bounceFleetForMissingTarget(originPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement): void
 {
 	addMissingTargetFleetActionMessage(originPlayerData, fleetMovement);
 	setFleetReturnTrip(null, fleetMovement);
 	fleetMovement.resolutionState = CoreType.FleetMovementResolution.Resolved;
 }
 
-function addMissingTargetFleetActionMessage(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement): void
+function addMissingTargetFleetActionMessage(originPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement): void
 {
-	if (originPlayerData === null)
-	{
-		return;
-	}
-
 	const actionName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.fleetAction(fleetMovement.fleetMovementRow.fleet_action_type));
 
 	fleetMovement.originMessageRow =
@@ -175,13 +175,8 @@ export function setFleetReturnTrip(target: CoreType.PlanetData | null, fleetMove
 	}
 }
 
-export function resolveFleetMovementReturnTrip(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, fleetPlayerDataPair: FleetPlayerDataPair, serverData: CoreType.ServerData): void
+export function resolveFleetMovementReturnTrip(originPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, fleetPlayerDataPair: FleetPlayerDataPair, serverData: CoreType.ServerData): void
 {
-	if (originPlayerData === null)
-	{
-		throw new Error("Resolving return trip but origin is null.");
-	}
-
 	const originPlanetData: CoreType.PlanetData | undefined = originPlayerData.planetDatas.find((planetData: CoreType.PlanetData) =>
 	{
 		return planetData.planetRow.id === fleetMovement.fleetMovementRow.planet_origin_id;
@@ -261,16 +256,16 @@ export function computeFleetFuelAndSpace(playerData: CoreType.PlayerData, origin
 {
 	const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(playerData, originAddress, targetAddress, unitQuantities, serverData, speedPercentage);
 	const totalFuel: number = MathHelp.calculateTotalQuantityMap(fuelRequirements);
-	const totalSpace: number = FleetData.calculateTotalFleetSpace(unitQuantities);
+	const totalSpace: number = FleetData.calculateTotalFleetSpace(playerData, unitQuantities);
 	const availableSpace: number = Math.max(totalSpace - totalFuel, 0);
 
 	return { totalFuel: totalFuel, availableSpace: availableSpace };
 }
 
-export function computeRemainingFleetCargoSpace(fleetMovement: CoreType.FleetMovement): number
+export function computeRemainingFleetCargoSpace(originPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement): number
 {
 	const unitQuantities: Map<GameType.UnitType, number> = buildUnitQuantitiesFromRows(fleetMovement.fleetMovementUnitRows);
-	const totalFleetSpace: number = calculateTotalFleetSpace(unitQuantities);
+	const totalFleetSpace: number = calculateTotalFleetSpace(originPlayerData, unitQuantities);
 
 	let usedSpace: number = 0;
 	for (const fleetMovementFuelRow of fleetMovement.fleetMovementFuelRows)
@@ -285,9 +280,9 @@ export function computeRemainingFleetCargoSpace(fleetMovement: CoreType.FleetMov
 	return Math.max(totalFleetSpace - usedSpace, 0);
 }
 
-export function loadPlanetResourcesIntoFleet(planetData: CoreType.PlanetData, fleetMovement: CoreType.FleetMovement, fraction: number): Map<GameType.ResourceType, number>
+export function loadPlanetResourcesIntoFleet(originPlayerData: CoreType.PlayerData, planetData: CoreType.PlanetData, fleetMovement: CoreType.FleetMovement, fraction: number): Map<GameType.ResourceType, number>
 {
-	const availableSpace: number = computeRemainingFleetCargoSpace(fleetMovement);
+	const availableSpace: number = computeRemainingFleetCargoSpace(originPlayerData, fleetMovement);
 	if (availableSpace <= 0)
 	{
 		return new Map<GameType.ResourceType, number>();

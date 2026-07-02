@@ -67,27 +67,27 @@ describe('calculateTotalFleetSpace', () =>
     it('returns 0 for an empty fleet', () =>
     {
         const empty: Map<GameType.UnitType, number> = new Map();
-        expect(FleetData.calculateTotalFleetSpace(empty)).toBe(0);
+        expect(FleetData.calculateTotalFleetSpace(TestDataBuilders.buildPlayerData(),empty)).toBe(0);
     });
 
     it('multiplies space by quantity for a single unit type', () =>
     {
         // SMALL_TRANSPORT space = 5000
         const quantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 3]]);
-        expect(FleetData.calculateTotalFleetSpace(quantities)).toBe(15000);
+        expect(FleetData.calculateTotalFleetSpace(TestDataBuilders.buildPlayerData(),quantities)).toBe(15000);
     });
 
     it('aggregates space across unit types', () =>
     {
         // SMALL_TRANSPORT 5000 + LARGE_TRANSPORT 25000
         const quantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1], [GameType.UnitType.LargeTransport, 1]]);
-        expect(FleetData.calculateTotalFleetSpace(quantities)).toBe(30000);
+        expect(FleetData.calculateTotalFleetSpace(TestDataBuilders.buildPlayerData(),quantities)).toBe(30000);
     });
 
     it('throws when an unknown unit type is included', () =>
     {
         const quantities: Map<GameType.UnitType, number> = new Map([[9999 as GameType.UnitType, 1]]);
-        expect(() => FleetData.calculateTotalFleetSpace(quantities)).toThrow();
+        expect(() => FleetData.calculateTotalFleetSpace(TestDataBuilders.buildPlayerData(),quantities)).toThrow();
     });
 });
 
@@ -97,14 +97,14 @@ describe('hasSpaceForResourceQuantities', () =>
     {
         const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
         const resourceQuantities: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 100], [GameType.ResourceType.Crystal, 100]]);
-        expect(FleetData.hasSpaceForResourceQuantities(unitQuantities, resourceQuantities)).toBe(true);
+        expect(FleetData.hasSpaceForResourceQuantities(TestDataBuilders.buildPlayerData(),unitQuantities, resourceQuantities)).toBe(true);
     });
 
     it('returns false when resource total exceeds fleet space', () =>
     {
         const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
         const resourceQuantities: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 10000]]);
-        expect(FleetData.hasSpaceForResourceQuantities(unitQuantities, resourceQuantities)).toBe(false);
+        expect(FleetData.hasSpaceForResourceQuantities(TestDataBuilders.buildPlayerData(),unitQuantities, resourceQuantities)).toBe(false);
     });
 
     it('returns true at exact equality (totalFuel === totalSpace)', () =>
@@ -112,7 +112,7 @@ describe('hasSpaceForResourceQuantities', () =>
         // SMALL_TRANSPORT space = 5000 exactly
         const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallTransport, 1]]);
         const resourceQuantities: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 5000]]);
-        expect(FleetData.hasSpaceForResourceQuantities(unitQuantities, resourceQuantities)).toBe(true);
+        expect(FleetData.hasSpaceForResourceQuantities(TestDataBuilders.buildPlayerData(),unitQuantities, resourceQuantities)).toBe(true);
     });
 });
 
@@ -124,7 +124,7 @@ describe('clampResoucesToAddToFleet', () =>
         const fuelRequirements: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Deuterium, 100]]);
         const transported: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 100]]);
 
-        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(unitQuantities, fuelRequirements, transported);
+        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(TestDataBuilders.buildPlayerData(),unitQuantities, fuelRequirements, transported);
         expect(result.get(GameType.ResourceType.Metal)).toBe(100);
     });
 
@@ -136,7 +136,7 @@ describe('clampResoucesToAddToFleet', () =>
         const fuelRequirements: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Deuterium, 1000]]);
         const transported: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 4000], [GameType.ResourceType.Crystal, 4000]]);
 
-        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(unitQuantities, fuelRequirements, transported);
+        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(TestDataBuilders.buildPlayerData(),unitQuantities, fuelRequirements, transported);
         expect(result.get(GameType.ResourceType.Metal)).toBe(2000);
         expect(result.get(GameType.ResourceType.Crystal)).toBe(2000);
     });
@@ -147,7 +147,7 @@ describe('clampResoucesToAddToFleet', () =>
         const fuelRequirements: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Deuterium, 5000]]);
         const transported: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 1000]]);
 
-        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(unitQuantities, fuelRequirements, transported);
+        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(TestDataBuilders.buildPlayerData(),unitQuantities, fuelRequirements, transported);
         expect(result.get(GameType.ResourceType.Metal)).toBe(0);
     });
 
@@ -157,7 +157,7 @@ describe('clampResoucesToAddToFleet', () =>
         const fuelRequirements: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Deuterium, 9999]]);
         const transported: Map<GameType.ResourceType, number> = new Map([[GameType.ResourceType.Metal, 1000]]);
 
-        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(unitQuantities, fuelRequirements, transported);
+        const result: Map<number, number> = FleetData.clampResoucesToAddToFleet(TestDataBuilders.buildPlayerData(),unitQuantities, fuelRequirements, transported);
         expect(result.get(GameType.ResourceType.Metal)).toBe(0);
     });
 });

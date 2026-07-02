@@ -12,14 +12,9 @@ import * as DB from "@/lib/db/db";
 import * as ServerPlanetManagement from "@/lib/gameplay/progressUpdate/server/serverPlanetManagement";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
-export function resolveColonizeAction(originPlayerData: CoreType.PlayerData | null, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): CoreType.PlayerData | null
+export function resolveColonizeAction(originPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): CoreType.PlayerData | null
 {
-    if (originPlayerData === null)
-    {
-        throw new Error(`⚠️: Failed to resolve colonize action because origin player data was null.`);
-    }
-
-    const originPlanetData: CoreType.PlanetData | null = originPlayerData !== null ? CoreType.getPlanetDataForId(originPlayerData.planetDatas, fleetMovement.fleetMovementRow.planet_origin_id) : null;
+    const originPlanetData: CoreType.PlanetData | null = CoreType.getPlanetDataForId(originPlayerData.planetDatas, fleetMovement.fleetMovementRow.planet_origin_id);
     if (originPlanetData === null)
     {
         throw new Error(`⚠️: Failed to resolve colonize action because origin planet was null.`);
