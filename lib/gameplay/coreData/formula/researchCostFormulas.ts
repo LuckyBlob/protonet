@@ -11,6 +11,10 @@ export function computeResearchUpgradeCost(currentResearchLevel: number, researc
 		{
 			return computeResearchUpgradeCost_SimpleExponential(currentResearchLevel, researchInfo);
 		}
+		case GameType.ResearchCostFunctionType.Free:
+		{
+			return new Map<GameType.ResourceType, number>();
+		}
 		default:
 			return null;
 	}

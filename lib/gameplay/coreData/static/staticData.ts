@@ -1540,6 +1540,27 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 8,
 				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceDrive),},},],}],
+
+
+	[GameType.ResearchType.GravitonTech, { displayName: "Graviton Technology",
+		costFunctionType: GameType.ResearchCostFunctionType.Free,
+		fixedResearchDurationSeconds: 1,
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 12,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.PlanetValue,
+				specificThingType: GameType.PlanetValueType.Energy,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: RequirementValueGetters.gravitonEnergyRequirement(),
+				valueGetter: RequirementValueGetters.energyProduction(),},},],}],
 ]);
 
 //#endregion

@@ -13,6 +13,8 @@ import * as FleetRange from "@/lib/gameplay/coreData/formula/fleetRangeFormulas"
 
 const SCORE_TARGET_PROTECTION_THRESHOLD: number = 500000;
 const MAX_ATTACKER_TO_TARGET_SCORE_RATIO: number = 5;
+const GRAVITON_BASE_ENERGY_REQUIREMENT: number = 300000;
+const GRAVITON_ENERGY_GROWTH_FACTOR: number = 3;
 
 function getPlanetData(playerData: CoreType.PlayerData, planetId: number): CoreType.PlanetData
 {
@@ -174,6 +176,25 @@ export function freeSize(): RequirementType.ThingValueGetter
         }
 
         return sizeValueData.production - sizeValueData.consumption;
+    };
+}
+
+export function energyProduction(): RequirementType.SpecificThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
+        const energyValueData: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(planetData, GameType.PlanetValueType.Energy, context.playerData);
+        return energyValueData === null ? 0 : energyValueData.production;
+    };
+}
+
+export function gravitonEnergyRequirement(): RequirementType.SpecificThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        const currentGravitonLevel: number = ResearchData.getResearchLevel(context.playerData, GameType.ResearchType.GravitonTech);
+        return GRAVITON_BASE_ENERGY_REQUIREMENT * Math.pow(GRAVITON_ENERGY_GROWTH_FACTOR, currentGravitonLevel);
     };
 }
 

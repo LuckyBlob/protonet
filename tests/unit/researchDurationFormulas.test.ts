@@ -100,6 +100,35 @@ describe('computeResearchDurationSeconds', () =>
     });
 });
 
+describe('computeResearchDurationSeconds (Graviton Technology fixed duration)', () =>
+{
+    it('is a flat 1 second regardless of research lab level and cost-free status', () =>
+    {
+        const noLab: number | null = ResearchDuration.computeResearchDurationSeconds(0, GameType.ResearchType.GravitonTech, buildPlayerWithResearchLab(0), 1, null);
+        const bigLab: number | null = ResearchDuration.computeResearchDurationSeconds(0, GameType.ResearchType.GravitonTech, buildPlayerWithResearchLab(30), 1, null);
+
+        expect(noLab).toBe(1);
+        expect(bigLab).toBe(1);
+    });
+
+    it('does not grow with the current research level (it derives from no cost)', () =>
+    {
+        const level0: number | null = ResearchDuration.computeResearchDurationSeconds(0, GameType.ResearchType.GravitonTech, buildPlayerWithResearchLab(0), 1, null);
+        const level5: number | null = ResearchDuration.computeResearchDurationSeconds(5, GameType.ResearchType.GravitonTech, buildPlayerWithResearchLab(0), 1, null);
+
+        expect(level0).toBe(1);
+        expect(level5).toBe(1);
+    });
+
+    it('is accelerated by the server time_multiplier like any other duration', () =>
+    {
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData(2);
+        const accelerated: number | null = ResearchDuration.computeResearchDurationSeconds(0, GameType.ResearchType.GravitonTech, buildPlayerWithResearchLab(0), 1, serverData);
+
+        expect(accelerated).toBe(0);
+    });
+});
+
 function buildPlayerWithLabsAndNetwork(labLevels: number[], researchNetworkLevel: number): CoreType.PlayerData
 {
     const planetDatas: CoreType.PlanetData[] = labLevels.map((labLevel: number, index: number): CoreType.PlanetData =>

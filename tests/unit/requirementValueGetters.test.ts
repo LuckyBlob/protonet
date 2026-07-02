@@ -4,6 +4,7 @@ import * as RequirementType from '@/lib/gameplay/coreData/requirement/requiremen
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as ResearchData from '@/lib/gameplay/dynamicData/player/researchData';
+import * as CalculatedValueData from '@/lib/gameplay/dynamicData/calculatedValueData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
 describe('isAnyBuildingUpgradeInProgress', () =>
@@ -77,6 +78,63 @@ describe('freeColonyPlanetSlots', () =>
 
         const getter: RequirementType.ThingValueGetter = RequirementValueGetters.freeColonyPlanetSlots();
         expect(getter({ playerData: playerData, planetId: 1 })).toBe(1);
+    });
+});
+
+describe('gravitonEnergyRequirement', () =>
+{
+    it('is 300000 tripling with each current Graviton level', () =>
+    {
+        const provider: RequirementType.ThingValueGetter = RequirementValueGetters.gravitonEnergyRequirement();
+
+        const atLevel0: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        expect(provider({ playerData: atLevel0, planetId: 1 })).toBe(300000);
+
+        const atLevel1: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        ResearchData.setResearchLevel(atLevel1, GameType.ResearchType.GravitonTech, 1);
+        expect(provider({ playerData: atLevel1, planetId: 1 })).toBe(900000);
+
+        const atLevel2: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        ResearchData.setResearchLevel(atLevel2, GameType.ResearchType.GravitonTech, 2);
+        expect(provider({ playerData: atLevel2, planetId: 1 })).toBe(2700000);
+    });
+});
+
+describe('energyProduction', () =>
+{
+    it('is 0 on a planet producing no energy', () =>
+    {
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.energyProduction();
+
+        expect(getter({ playerData: playerData, planetId: 1 })).toBe(0);
+    });
+
+    it('is the planet energy production, ignoring energy consumption', () =>
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData: { buildingLevels: new Map([[GameType.BuildingType.SolarPlant, 65], [GameType.BuildingType.MetalMine, 10]]) },
+        });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+
+        const energyValueData: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(planet, GameType.PlanetValueType.Energy, playerData);
+        const producedEnergy: number = energyValueData === null ? 0 : energyValueData.production;
+        const consumedEnergy: number = energyValueData === null ? 0 : energyValueData.consumption;
+
+        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.energyProduction();
+
+        expect(producedEnergy).toBeGreaterThan(0);
+        expect(consumedEnergy).toBeGreaterThan(0);
+        expect(getter({ playerData: playerData, planetId: 1 })).toBe(producedEnergy);
+    });
+
+    it('throws when the planet is not found', () =>
+    {
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+        const getter: RequirementType.SpecificThingValueGetter = RequirementValueGetters.energyProduction();
+
+        expect(() => getter({ playerData: playerData, planetId: 999 })).toThrow();
     });
 });
 

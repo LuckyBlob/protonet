@@ -33,7 +33,7 @@ export type ThingRequirement =
 {
     thingType: ThingType.Thing;
     operator: RequirementOperator;
-    value: number | boolean;
+    value: number | boolean | ThingValueGetter;
     valueGetter: ThingValueGetter;
 };
 
@@ -44,7 +44,7 @@ export type SpecificThingRequirement =
     thingType: ThingType.Thing;
     specificThingType: ThingType.SpecificThing;
     operator: RequirementOperator;
-    value: number | boolean;
+    value: number | boolean | SpecificThingValueGetter;
     valueGetter: SpecificThingValueGetter;
 };
 

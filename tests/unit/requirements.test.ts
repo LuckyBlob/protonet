@@ -4,6 +4,7 @@ import * as RequirementType from '@/lib/gameplay/coreData/requirement/requiremen
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as StaticData from '@/lib/gameplay/coreData/static/staticData';
+import * as ResearchData from '@/lib/gameplay/dynamicData/player/researchData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
 describe('getFailedBuildingUpgradeRequirements', () =>
@@ -726,5 +727,53 @@ describe('getRequirementDescriptions', () =>
 
         const containsShipyardClause: boolean = descriptions.some((line: string): boolean => line.includes("Shipyard"));
         expect(containsShipyardClause).toBe(true);
+    });
+});
+
+describe('Graviton energy gate (produced energy vs dynamic requirement)', () =>
+{
+    function buildGravitonResearcher(solarPlantLevel: number): CoreType.PlayerData
+    {
+        const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map<GameType.BuildingType, number>([
+                    [GameType.BuildingType.ResearchLab, 12],
+                    [GameType.BuildingType.SolarPlant, solarPlantLevel],
+                ]),
+            },
+        });
+        return TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
+    }
+
+    it('blocks Graviton when produced energy is below the level-0 requirement of 300000', () =>
+    {
+        const playerData: CoreType.PlayerData = buildGravitonResearcher(0);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.GravitonTech, 1);
+        expect(failed).toHaveLength(1);
+    });
+
+    it('allows Graviton once produced energy clears 300000', () =>
+    {
+        const playerData: CoreType.PlayerData = buildGravitonResearcher(65);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.GravitonTech, 1);
+        expect(failed).toHaveLength(0);
+    });
+
+    it('re-blocks Graviton at level 1 as the threshold triples to 900000', () =>
+    {
+        const playerData: CoreType.PlayerData = buildGravitonResearcher(65);
+        ResearchData.setResearchLevel(playerData, GameType.ResearchType.GravitonTech, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.GravitonTech, 1);
+        expect(failed).toHaveLength(1);
+    });
+
+    it('describes the requirement with the dynamic threshold, not the static 0', () =>
+    {
+        const playerData: CoreType.PlayerData = buildGravitonResearcher(0);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.GravitonTech, 1);
+        const descriptions: string[] = Requirements.getRequirementDescriptions(failed, playerData, 1);
+        expect(descriptions.some((line: string): boolean => line.includes("Energy") && line.includes("300000"))).toBe(true);
     });
 });

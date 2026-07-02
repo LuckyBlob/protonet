@@ -338,6 +338,7 @@ export const ResearchType =
     ArmourTech: 9,
     Astrophysics: 10,
     IntergalacticResearchNetwork: 11,
+    GravitonTech: 12,
 } as const;
 export type ResearchType = typeof ResearchType[keyof typeof ResearchType];
 export type ResearchInfo =
@@ -346,12 +347,14 @@ export type ResearchInfo =
 	requirements?: RequirementType.Requirement[];
 	costFunctionType?: ResearchCostFunctionType;
 	costStats?: ResearchCostStats;
+	fixedResearchDurationSeconds?: number;
 	playerValueStats?: PlayerValueStat[];
 };
 
 export const ResearchCostFunctionType =
 {
     SimpleExponential: 1,
+    Free: 2,
 } as const;
 export type ResearchCostFunctionType = typeof ResearchCostFunctionType[keyof typeof ResearchCostFunctionType];
 export type ResearchCostStats = 

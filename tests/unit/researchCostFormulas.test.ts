@@ -38,4 +38,15 @@ describe('computeResearchUpgradeCost', () =>
         const cost5: number = level5!.get(GameType.ResourceType.Metal) ?? 0;
         expect(cost5).toBeGreaterThan(cost0);
     });
+
+    it('returns an empty (free) cost map for Graviton Technology at any level', () =>
+    {
+        const level0: Map<number, number> | null = ResearchCost.computeResearchUpgradeCost(0, GameType.ResearchType.GravitonTech);
+        const level3: Map<number, number> | null = ResearchCost.computeResearchUpgradeCost(3, GameType.ResearchType.GravitonTech);
+
+        expect(level0).not.toBeNull();
+        expect(level0!.size).toBe(0);
+        expect(level3).not.toBeNull();
+        expect(level3!.size).toBe(0);
+    });
 });

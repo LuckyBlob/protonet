@@ -116,7 +116,8 @@
       "Bash(grep -iE \"prettier|printWidth\" package.json)",
       "mcp__claude-in-chrome__tabs_context_mcp",
       "mcp__claude-in-chrome__navigate",
-      "mcp__claude-in-chrome__get_page_text"
+      "mcp__claude-in-chrome__get_page_text",
+      "Bash(printf '2 - 4 sept\\\\r\\\\n3 - 28 aug\\\\r\\\\n4 - 21 aug\\\\r\\\\n5 - 14 aug\\\\r\\\\n6 - 7 aug\\\\r\\\\n7 - 31 jul\\\\r\\\\n8 - 24 jul\\\\r\\\\n9 - 17 jul\\\\r\\\\n10 - 10 jul\\\\r\\\\n11 - 3 jul\\\\r\\\\n12 - 26 jun\\\\r\\\\n13 - 19 jun\\\\r\\\\n' >> \"C:/Users/Utilisateur/Desktop/temp.txt\")"
     ]
   },
   "hooks": {

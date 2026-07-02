@@ -98,8 +98,13 @@ function getRequirements(specificThing: ThingType.SpecificThingType): Requiremen
     return [...globalRequirements, ...specificRequirements];
 }
 
-function resolveValueToNumber(value: number | boolean, operator: RequirementType.RequirementOperator): number
+function resolveValueToNumber(requirementContext: RequirementType.RequirementContext, value: number | boolean | RequirementType.ThingValueGetter, operator: RequirementType.RequirementOperator): number
 {
+    if (typeof value === "function")
+    {
+        return value(requirementContext);
+    }
+
     if (typeof value !== "boolean")
     {
         return value;
@@ -179,7 +184,7 @@ function meetsSingleRequirement(requirementContext: RequirementType.RequirementC
     {
         const thingRequirement: RequirementType.ThingRequirement = requirement.thingRequirement;
         const thingValueGetter: number = thingRequirement.valueGetter(requirementContext);
-        const threshold: number = resolveValueToNumber(thingRequirement.value, thingRequirement.operator);
+        const threshold: number = resolveValueToNumber(requirementContext, thingRequirement.value, thingRequirement.operator);
 
         const conditionRespected: boolean = compare(thingValueGetter, thingRequirement.operator, threshold);
         if (conditionRespected === false)
@@ -192,7 +197,7 @@ function meetsSingleRequirement(requirementContext: RequirementType.RequirementC
     {
         const specificThingRequirement: RequirementType.SpecificThingRequirement = requirement.specificThingRequirement;
         const specificThingValueGetter: number = specificThingRequirement.valueGetter(requirementContext);
-        const threshold: number = resolveValueToNumber(specificThingRequirement.value, specificThingRequirement.operator);
+        const threshold: number = resolveValueToNumber(requirementContext, specificThingRequirement.value, specificThingRequirement.operator);
 
         const conditionRespected: boolean = compare(specificThingValueGetter, specificThingRequirement.operator, threshold);
         if (conditionRespected === false)
@@ -242,7 +247,7 @@ function describeSingleRequirement(requirementContext: RequirementType.Requireme
         }
 
         const thingValueGetter: number = thingRequirement.valueGetter(requirementContext);
-        const threshold: number = resolveValueToNumber(thingRequirement.value, thingRequirement.operator);
+        const threshold: number = resolveValueToNumber(requirementContext, thingRequirement.value, thingRequirement.operator);
         const operatorString: string = operatorToString(thingRequirement.operator);
         const thingName: string | undefined = ThingData.THING_DISPLAY_NAMES.get(thingRequirement.thingType);
 
@@ -266,7 +271,7 @@ function describeSingleRequirement(requirementContext: RequirementType.Requireme
 
         const specificName: string = ThingDataHelpers.getSpecificThingName({ thingType: specificThingRequirement.thingType, specificThingType: specificThingRequirement.specificThingType });
         const specificThingValueGetter: number = specificThingRequirement.valueGetter(requirementContext);
-        const threshold: number = resolveValueToNumber(specificThingRequirement.value, specificThingRequirement.operator);
+        const threshold: number = resolveValueToNumber(requirementContext, specificThingRequirement.value, specificThingRequirement.operator);
         const operatorString: string = operatorToString(specificThingRequirement.operator);
 
         return `${specificName} ${operatorString} ${threshold} (current: ${specificThingValueGetter})`;

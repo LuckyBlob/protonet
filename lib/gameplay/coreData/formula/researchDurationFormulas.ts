@@ -12,7 +12,21 @@ export function computeResearchDurationSeconds(currentResearchLevel: number, res
     try
     {
         const researchInfo: GameType.ResearchInfo = StaticDataHelper.getResearchInfo(researchType);
-        return computeResearchDurationSeconds_SimpleResearch(currentResearchLevel, researchInfo, researchType, playerData, planetId, serverData);
+        const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
+
+        switch (researchInfo.costFunctionType)
+        {
+            case GameType.ResearchCostFunctionType.SimpleExponential:
+            {
+                return computeResearchDurationSeconds_SimpleExponential(currentResearchLevel, researchType, playerData, planetId, timeMultiplier);
+            }
+            case GameType.ResearchCostFunctionType.Free:
+            {
+                return computeResearchDurationSeconds_Free(researchInfo, timeMultiplier);
+            }
+            default:
+                throw new Error(`UNREACHABLE: Unknown ResearchCostFunctionType ${researchInfo.costFunctionType}`);
+        }
     }
     catch (error: unknown)
     {
@@ -21,9 +35,8 @@ export function computeResearchDurationSeconds(currentResearchLevel: number, res
     }
 }
 
-function computeResearchDurationSeconds_SimpleResearch(currentResearchLevel: number, researchInfo: GameType.ResearchInfo, researchType: GameType.ResearchType, playerData: CoreType.PlayerData, planetId: number, serverData: CoreType.ServerData | null): number
+function computeResearchDurationSeconds_SimpleExponential(currentResearchLevel: number, researchType: GameType.ResearchType, playerData: CoreType.PlayerData, planetId: number, timeMultiplier: number): number
 {
-	const timeMultiplier: number = serverData !== null ? serverData.config.time_multiplier : 1;
     const nextResearchCostMap: Map<GameType.ResourceType, number> | null = ResearchCost.computeResearchUpgradeCost(currentResearchLevel, researchType);
     if (nextResearchCostMap === null)
     {
@@ -43,6 +56,16 @@ function computeResearchDurationSeconds_SimpleResearch(currentResearchLevel: num
 	const durationSeconds: number = durationHours * 3600;
 
 	return Math.floor(durationSeconds / timeMultiplier);
+}
+
+function computeResearchDurationSeconds_Free(researchInfo: GameType.ResearchInfo, timeMultiplier: number): number
+{
+    if (researchInfo.fixedResearchDurationSeconds === undefined)
+    {
+        throw new Error(`Free research has no fixedResearchDurationSeconds to derive a duration from.`);
+    }
+
+    return Math.floor(researchInfo.fixedResearchDurationSeconds / timeMultiplier);
 }
 
 export function computeEffectiveResearchLabLevel(playerData: CoreType.PlayerData, planetId: number): number
