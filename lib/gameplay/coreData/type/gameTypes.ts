@@ -12,6 +12,8 @@ export type ResourceInfo =
 {
 	displayName: string;
 	canGoToDebrisField: boolean;
+	countsTowardConstructionTime?: boolean;
+	countsTowardResearchTime?: boolean;
 }
 //#endregion
 
@@ -341,6 +343,10 @@ export const ResearchType =
     Astrophysics: 10,
     IntergalacticResearchNetwork: 11,
     GravitonTech: 12,
+    LaserTech: 13,
+    IonTech: 14,
+    PlasmaTech: 15,
+    HyperspaceTech: 16,
 } as const;
 export type ResearchType = typeof ResearchType[keyof typeof ResearchType];
 export type ResearchInfo =

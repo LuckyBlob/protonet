@@ -647,22 +647,16 @@ test.describe("Repair Dock — espionage visibility", () =>
 
 test.describe("Repair Dock — build gating", () =>
 {
-    test("the repair dock requires shipyard level two to build", async ({ page }) =>
+    test("the repair dock builds with no shipyard prerequisite", async ({ page }) =>
     {
         const owner: Player = await registerPlayer(page, "Dock");
         E2EHelper.setAllResources(owner.planet.id, owner.playerId, PLENTY, db);
-        E2EHelper.setBuildingLevel(owner.planet.id, owner.playerId, GameType.BuildingType.Shipyard, 1, db);
+        E2EHelper.setBuildingLevel(owner.planet.id, owner.playerId, GameType.BuildingType.Shipyard, 0, db);
         E2EHelper.touchPlanet(owner.planet.id, Date.now(), db);
 
         await E2EHelper.login(page, owner.username, PASSWORD);
-        const tooLowShipyard: APIResponse = await forgeUpgradeBuilding(page, GameType.BuildingType.RepairDock, owner.planet.id);
-        expect(tooLowShipyard.ok()).toBe(false);
-        expect(buildingUpgradeCount(owner.planet.id)).toBe(0);
-
-        E2EHelper.setBuildingLevel(owner.planet.id, owner.playerId, GameType.BuildingType.Shipyard, 2, db);
-        E2EHelper.touchPlanet(owner.planet.id, Date.now(), db);
-        const shipyardTwo: APIResponse = await forgeUpgradeBuilding(page, GameType.BuildingType.RepairDock, owner.planet.id);
-        expect(shipyardTwo.ok()).toBe(true);
+        const response: APIResponse = await forgeUpgradeBuilding(page, GameType.BuildingType.RepairDock, owner.planet.id);
+        expect(response.ok()).toBe(true);
         expect(buildingUpgradeCount(owner.planet.id)).toBe(1);
     });
 

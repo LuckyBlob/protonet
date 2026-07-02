@@ -397,23 +397,23 @@ describe('unit engine-drive build requirements (OGame prerequisites)', () =>
         expect(failed.length).toBeGreaterThan(0);
     });
 
-    it('allows Recycler once Combustion Drive 6 is researched', () =>
+    it('allows Recycler once Combustion Drive 6 and Shielding Tech 2 are researched', () =>
     {
-        const playerData: CoreType.PlayerData = buildPlayer(4, new Map<GameType.ResearchType, number>([[GameType.ResearchType.CombustionDrive, 6]]));
+        const playerData: CoreType.PlayerData = buildPlayer(4, new Map<GameType.ResearchType, number>([[GameType.ResearchType.CombustionDrive, 6], [GameType.ResearchType.ShieldingTech, 2]]));
         const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.Recycler, 1);
         expect(failed).toHaveLength(0);
     });
 
     it('blocks Espionage Probe without Combustion Drive 3 even with the Shipyard and Espionage Tech met', () =>
     {
-        const playerData: CoreType.PlayerData = buildPlayer(3, new Map<GameType.ResearchType, number>([[GameType.ResearchType.EspionageTech, 1]]));
+        const playerData: CoreType.PlayerData = buildPlayer(3, new Map<GameType.ResearchType, number>([[GameType.ResearchType.EspionageTech, 2]]));
         const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.EspionageProbe, 1);
         expect(failed.length).toBeGreaterThan(0);
     });
 
-    it('allows Espionage Probe once Combustion Drive 3 (with Espionage Tech 1) is researched', () =>
+    it('allows Espionage Probe once Combustion Drive 3 (with Espionage Tech 2) is researched', () =>
     {
-        const playerData: CoreType.PlayerData = buildPlayer(3, new Map<GameType.ResearchType, number>([[GameType.ResearchType.EspionageTech, 1], [GameType.ResearchType.CombustionDrive, 3]]));
+        const playerData: CoreType.PlayerData = buildPlayer(3, new Map<GameType.ResearchType, number>([[GameType.ResearchType.EspionageTech, 2], [GameType.ResearchType.CombustionDrive, 3]]));
         const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.EspionageProbe, 1);
         expect(failed).toHaveLength(0);
     });

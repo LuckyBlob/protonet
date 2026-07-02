@@ -5,7 +5,7 @@ import * as ResearchCost from "@/lib/gameplay/coreData/formula/researchCostFormu
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 
-const BASE_DIVIDER: number = 2500;
+const BASE_DIVIDER: number = 1000;
 
 export function computeResearchDurationSeconds(currentResearchLevel: number, researchType: GameType.ResearchType, playerData: CoreType.PlayerData, planetId: number, serverData: CoreType.ServerData | null): number | null
 {
@@ -44,9 +44,14 @@ function computeResearchDurationSeconds_SimpleExponential(currentResearchLevel: 
     }
 
     let totalCost: number = 0;
-    for (const cost of nextResearchCostMap.values())
+    for (const [resourceType, cost] of nextResearchCostMap)
     {
-        // Each resources counts for 1 independantly of type
+        const resourceInfo: GameType.ResourceInfo = StaticDataHelper.getResourceInfo(resourceType);
+        if (resourceInfo.countsTowardResearchTime !== true)
+        {
+            continue;
+        }
+
         totalCost = totalCost + cost;
     }
 

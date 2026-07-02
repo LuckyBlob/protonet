@@ -126,7 +126,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 		costStats: {
 			baseCostExponent: 2,
 			baseCost: new Map<GameType.ResourceType, number>([
-				[GameType.ResourceType.Metal, 500],
+				[GameType.ResourceType.Metal, 1000],
 				[GameType.ResourceType.Crystal, 500],]),},
 
 		planetValueStats: [
@@ -146,7 +146,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 			FREE_FIELD_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
-			baseCostExponent: 2,
+			baseCostExponent: 1.5,
 			baseCost: new Map<GameType.ResourceType, number>([
 				[GameType.ResourceType.Metal, 225],
 				[GameType.ResourceType.Crystal, 75],]),},
@@ -251,7 +251,7 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 			LUNAR_BASE_REQUIREMENT],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
-			baseCostExponent: 1.5,
+			baseCostExponent: 2,
 			baseCost: new Map<GameType.ResourceType, number>([
 				[GameType.ResourceType.Metal, 400],
 				[GameType.ResourceType.Crystal, 120],
@@ -373,10 +373,17 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.RoboticFactory,
+				specificThingType: GameType.BuildingType.NaniteFactory,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 1,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.RoboticFactory),},},],
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.NaniteFactory),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.EnergyTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 12,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -469,10 +476,10 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 			{hideDataWhenRequirementFailed: true,
 				specificThingRequirement:{
 					thingType: ThingType.Thing.Research,
-					specificThingType: GameType.ResearchType.HyperspaceDrive,
+					specificThingType: GameType.ResearchType.HyperspaceTech,
 					operator: RequirementType.RequirementOperator.GreaterOrEqual,
 					value: 7,
-					valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceDrive),},},],
+					valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceTech),},},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -483,14 +490,6 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 	},],
 	[GameType.BuildingType.RepairDock, { displayName: "Repair Dock",
 		buildableZones: [GameType.PlanetZone.Planet],
-		upgradeRequirements: [
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 5,
@@ -558,7 +557,7 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 				thingType: ThingType.Thing.Building,
 				specificThingType: GameType.BuildingType.Shipyard,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 6,
+				value: 4,
 				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
 			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -645,7 +644,14 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 				specificThingType: GameType.ResearchType.CombustionDrive,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 6,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.CombustionDrive),},},],
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.CombustionDrive),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.ShieldingTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 2,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ShieldingTech),},},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 10000],
 			[GameType.ResourceType.Crystal, 6000],
@@ -687,7 +693,7 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 				thingType: ThingType.Thing.Research,
 				specificThingType: GameType.ResearchType.EspionageTech,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
+				value: 2,
 				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EspionageTech),},},
 			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
@@ -851,10 +857,14 @@ export const RESOURCE_INFOS: ReadonlyMap<GameType.ResourceType, GameType.Resourc
 ([
     [GameType.ResourceType.Metal, {
 		displayName: "Metal",
-		canGoToDebrisField: true,}],
+		canGoToDebrisField: true,
+		countsTowardConstructionTime: true,
+		countsTowardResearchTime: true,}],
 	[GameType.ResourceType.Crystal, {
 		displayName: "Crystal",
-		canGoToDebrisField: true,}],
+		canGoToDebrisField: true,
+		countsTowardConstructionTime: true,
+		countsTowardResearchTime: true,}],
 	[GameType.ResourceType.Deuterium, {
 		displayName: "Deuterium",
 		canGoToDebrisField: false,}],
@@ -1382,7 +1392,21 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				specificThingType: GameType.BuildingType.ResearchLab,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 7,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.ShieldingTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 5,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ShieldingTech),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.HyperspaceTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 3,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceTech),},},],}],
 
 
     [GameType.ResearchType.ComputerTech, { displayName: "Computer Technology",
@@ -1545,10 +1569,10 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 			{hideDataWhenRequirementFailed: true,
 			specificThingRequirement:{
 				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.HyperspaceDrive,
+				specificThingType: GameType.ResearchType.HyperspaceTech,
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 8,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceDrive),},},],}],
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceTech),},},],}],
 
 
 	[GameType.ResearchType.GravitonTech, { displayName: "Graviton Technology",
@@ -1570,6 +1594,163 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: RequirementValueGetters.gravitonEnergyRequirement(),
 				valueGetter: RequirementValueGetters.energyProduction(),},},],}],
+
+
+	[GameType.ResearchType.LaserTech, { displayName: "Laser Technology",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 200],
+				[GameType.ResourceType.Crystal, 100],]),},
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.EnergyTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 2,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 1,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+
+
+	[GameType.ResearchType.IonTech, { displayName: "Ion Technology",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 1000],
+				[GameType.ResourceType.Crystal, 300],
+				[GameType.ResourceType.Deuterium, 100],]),},
+
+		playerValueStats: [
+			{playerValueProductionFormulasType:
+				GameType.PlayerValueProductionFormulasType.LinearClamped,
+				playerValueType: GameType.PlayerValueType.DeconstructionCostModificationPercent,
+				basePlayerValueFactor: -4,
+				minPlayerValue: -100,}],
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 4,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.EnergyTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 4,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.LaserTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 5,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.LaserTech),},},],}],
+
+
+	[GameType.ResearchType.PlasmaTech, { displayName: "Plasma Technology",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 2000],
+				[GameType.ResourceType.Crystal, 4000],
+				[GameType.ResourceType.Deuterium, 1000],]),},
+
+		playerValueStats: [
+			{playerValueProductionFormulasType:
+				GameType.PlayerValueProductionFormulasType.LinearClamped,
+				playerValueType: GameType.PlayerValueType.MetalProductionModificationPercent,
+				basePlayerValueFactor: 1,},
+			{playerValueProductionFormulasType:
+				GameType.PlayerValueProductionFormulasType.LinearClamped,
+				playerValueType: GameType.PlayerValueType.CrystalProductionModificationPercent,
+				basePlayerValueFactor: 0.66,},
+			{playerValueProductionFormulasType:
+				GameType.PlayerValueProductionFormulasType.LinearClamped,
+				playerValueType: GameType.PlayerValueType.DeuteriumProductionModificationPercent,
+				basePlayerValueFactor: 0.33,}],
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 4,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.EnergyTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 8,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.LaserTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 10,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.LaserTech),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.IonTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 5,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.IonTech),},},],}],
+
+
+	[GameType.ResearchType.HyperspaceTech, { displayName: "Hyperspace Technology",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Crystal, 4000],
+				[GameType.ResourceType.Deuterium, 2000],]),},
+
+		playerValueStats: [
+			{playerValueProductionFormulasType:
+				GameType.PlayerValueProductionFormulasType.LinearClamped,
+				playerValueType: GameType.PlayerValueType.FleetSpaceModificationPercent,
+				basePlayerValueFactor: 5,}],
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 7,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.EnergyTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 5,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.ShieldingTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 5,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ShieldingTech),},},],}],
 ]);
 
 //#endregion

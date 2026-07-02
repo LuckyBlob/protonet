@@ -169,10 +169,10 @@ describe('computeUpgradeDurationSeconds', () =>
         const durationAtLevel0: number | null = durationForNaniteFactoryAtLevel(0);
         const durationAtLevel3: number | null = durationForNaniteFactoryAtLevel(3);
 
-        // cost=1_600_000*2^level and the nanite divider=2^level cancel out:
-        // 1_600_000/(2500*(1+10))*3600=209454s at every nanite factory level.
-        expect(durationAtLevel0).toBe(209454);
-        expect(durationAtLevel3).toBe(209454);
+        // metal+crystal=1_500_000*2^level (deuterium excluded), nanite divider=2^level cancels:
+        // 1_500_000/(2500*(1+10))*3600=196363s at every nanite factory level.
+        expect(durationAtLevel0).toBe(196363);
+        expect(durationAtLevel3).toBe(196363);
     });
 
     it('applies time_multiplier from serverData', () =>

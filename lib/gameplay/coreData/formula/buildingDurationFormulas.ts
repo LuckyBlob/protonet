@@ -33,9 +33,14 @@ function computeUpgradeDurationSeconds_SimpleBuilding(currentUpgradeLevel: numbe
     }
 
     let totalCost: number = 0;
-    for (const cost of nextUpgradeCostMap.values())
+    for (const [resourceType, cost] of nextUpgradeCostMap)
     {
-        // Each resources counts for 1 independantly of type
+        const resourceInfo: GameType.ResourceInfo = StaticDataHelper.getResourceInfo(resourceType);
+        if (resourceInfo.countsTowardConstructionTime !== true)
+        {
+            continue;
+        }
+
         totalCost = totalCost + cost;
     }
     
