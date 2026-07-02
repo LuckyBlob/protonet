@@ -132,9 +132,11 @@ export const PlayerValueType =
 {
     FleetSlots: 5,
     FleetSpaceModificationPercent: 9,
-    ResourceProductionModificationPercent: 10,
     DeconstructionCostModificationPercent: 11,
     ColonySlots: 12,
+    MetalProductionModificationPercent: 13,
+    CrystalProductionModificationPercent: 14,
+    DeuteriumProductionModificationPercent: 15,
 } as const;
 export type PlayerValueType = typeof PlayerValueType[keyof typeof PlayerValueType];
 export type PlayerValueInfo =

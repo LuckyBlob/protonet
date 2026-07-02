@@ -1137,9 +1137,18 @@ export const PLAYER_VALUE_INFOS: ReadonlyMap<GameType.PlayerValueType, GameType.
 		displayName: "Fleet Slots",}],
 	[GameType.PlayerValueType.FleetSpaceModificationPercent, {
 		displayName: "Fleet Space Modification",}],
-	[GameType.PlayerValueType.ResourceProductionModificationPercent, {
-		displayName: "Resource Production Modification",
-		modifiesResourceProduction: true,}],
+	[GameType.PlayerValueType.MetalProductionModificationPercent, {
+		displayName: "Metal Production Modification",
+		modifiesResourceProduction: true,
+		associatedResource: GameType.ResourceType.Metal,}],
+	[GameType.PlayerValueType.CrystalProductionModificationPercent, {
+		displayName: "Crystal Production Modification",
+		modifiesResourceProduction: true,
+		associatedResource: GameType.ResourceType.Crystal,}],
+	[GameType.PlayerValueType.DeuteriumProductionModificationPercent, {
+		displayName: "Deuterium Production Modification",
+		modifiesResourceProduction: true,
+		associatedResource: GameType.ResourceType.Deuterium,}],
 	[GameType.PlayerValueType.DeconstructionCostModificationPercent, {
 		displayName: "Deconstruction Cost Modification",}],
 	[GameType.PlayerValueType.ColonySlots, {
