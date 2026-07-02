@@ -113,7 +113,10 @@
       "Bash(cd \"D:/Claude/WebsiteProject/protonet\" && sed -n '/1\\) tests/,/did not run/p' /tmp/combat.log | grep -vE \"WebServer|📧|Bonjour|Cliquez|verify\\\\?token\" | head -50)",
       "WebFetch(domain:wiki.ogame.org)",
       "Bash(ls -la .prettierrc* .editorconfig .eslintrc* eslint.config.*)",
-      "Bash(grep -iE \"prettier|printWidth\" package.json)"
+      "Bash(grep -iE \"prettier|printWidth\" package.json)",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__navigate",
+      "mcp__claude-in-chrome__get_page_text"
     ]
   },
   "hooks": {

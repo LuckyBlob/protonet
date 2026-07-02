@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import * as ColonizeAction from '@/lib/gameplay/dynamicData/planet/fleet/colonizeAction';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
-import * as StaticData from '@/lib/gameplay/coreData/static/staticData';
 import * as MessageData from '@/lib/gameplay/dynamicData/player/messageData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
@@ -14,11 +13,11 @@ describe('resolveColonizeAction — too many planets', () =>
 {
     function buildPlayerAtPlanetCap(): CoreType.PlayerData
     {
-        const planets: CoreType.PlanetData[] = [];
-        for (let i: number = 0; i < StaticData.MAX_ALLOWED_PLANETS; i++)
-        {
-            planets.push(TestDataBuilders.buildPlanetData({ planetRow: { id: i + 1 } }));
-        }
+        const planets: CoreType.PlanetData[] =
+        [
+            TestDataBuilders.buildPlanetData({ planetRow: { id: 1 } }),
+            TestDataBuilders.buildPlanetData({ planetRow: { id: 2 } }),
+        ];
         return TestDataBuilders.buildPlayerData({ playerRow: { id: 1 }, planetDatas: planets });
     }
 

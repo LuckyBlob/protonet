@@ -22,7 +22,6 @@ import * as E2EHelper from "@/tests/helpers/e2eHelpers";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes"
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
-import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 //#region constants (mirror lib/gameplay/coreData/type/gameTypes.ts)
 
@@ -1464,13 +1463,8 @@ test.describe("Colonize", () =>
         const planets: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(username, db);
         const origin: E2EHelper.PlanetRow = planets[0];
 
-        // The player starts with 2 planets. Seed (MAX_ALLOWED_PLANETS - 2) more directly into the
-        // DB so the cap is reached BEFORE the fleet view ever asks "can this player colonize?".
-        const planetsToSeed: number = StaticData.MAX_ALLOWED_PLANETS - planets.length;
-        for (let i: number = 0; i < planetsToSeed; i++)
-        {
-            E2EHelper.insertSeededPlanetForPlayer(playerId, db);
-        }
+        // A fresh player owns 2 planets — exactly the base colony cap with no Astrophysics — so the
+        // Colonize planet-count requirement should already filter it out of the fleet action dropdown.
 
         // Enable colony ships at origin (shipyard L4 + one in stock + resources for fuel/cost).
         E2EHelper.setBuildingLevel(origin.id, playerId, GameType.BuildingType.Shipyard, 4, db);
@@ -1508,6 +1502,7 @@ test.describe("Colonize", () =>
         const otherPlanet: E2EHelper.PlanetRow = E2EHelper.getPlanets(other, db)[0];
         E2EHelper.setPlayerInvestedValue(E2EHelper.getPlayerId(other, db), E2EHelper.TARGETABLE_INVESTED_VALUE, db);
 
+        E2EHelper.setResearchLevel(colonizerPlayerId, GameType.ResearchType.Astrophysics, 4, db);
         E2EHelper.setBuildingLevel(colonizerOrigin.id, colonizerPlayerId, GameType.BuildingType.Shipyard, 4, db);
         E2EHelper.setUnitQuantity(colonizerOrigin.id, colonizerPlayerId, GameType.UnitType.ColonyShip, 1, db);
         E2EHelper.setAllResources(colonizerOrigin.id, colonizerPlayerId, PLENTY, db);
@@ -1540,6 +1535,7 @@ test.describe("Colonize", () =>
         const origin: E2EHelper.PlanetRow = planetsBefore[0];
 
         // Origin: shipyard L4 + 1 colony ship + 2 small transports + plenty of resources.
+        E2EHelper.setResearchLevel(playerId, GameType.ResearchType.Astrophysics, 4, db);
         E2EHelper.setBuildingLevel(origin.id, playerId, GameType.BuildingType.Shipyard, 4, db);
         E2EHelper.setUnitQuantity(origin.id, playerId, GameType.UnitType.ColonyShip, 1, db);
         E2EHelper.setUnitQuantity(origin.id, playerId, GameType.UnitType.SmallTransport, 2, db);
@@ -1816,6 +1812,7 @@ test.describe("Bug probes", () =>
         const colonizerOrigin: E2EHelper.PlanetRow = E2EHelper.getPlanets(colonizer, db)[0];
         const planetsBefore: E2EHelper.PlanetRow[] = E2EHelper.getPlanets(colonizer, db);
 
+        E2EHelper.setResearchLevel(colonizerPlayerId, GameType.ResearchType.Astrophysics, 4, db);
         E2EHelper.setBuildingLevel(colonizerOrigin.id, colonizerPlayerId, GameType.BuildingType.Shipyard, 4, db);
         E2EHelper.setUnitQuantity(colonizerOrigin.id, colonizerPlayerId, GameType.UnitType.ColonyShip, 1, db);
         E2EHelper.setAllResources(colonizerOrigin.id, colonizerPlayerId, PLENTY, db);

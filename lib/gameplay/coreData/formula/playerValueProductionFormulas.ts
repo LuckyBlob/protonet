@@ -122,6 +122,10 @@ function computeRawPlayerValue(playerValueStat: GameType.PlayerValueStat, comput
         {
             return computePlayerValue_LinearClamped(playerValueStat, computeContext);
         }
+        case GameType.PlayerValueProductionFormulasType.FlooredLinearClamped:
+        {
+            return computePlayerValue_FlooredLinearClamped(playerValueStat, computeContext);
+        }
         default:
             throw new Error(`UNREACHABLE: Unknown PlayerValueProductionFormulasType ${playerValueStat.playerValueProductionFormulasType}`);
     }
@@ -140,6 +144,14 @@ function computePlayerValue_LinearClamped(playerValueStat: GameType.PlayerValueS
     const linearPlayerValue: number = playerValueStat.basePlayerValueFactor * amount;
 
     return MathHelp.clamp(linearPlayerValue, playerValueStat.minPlayerValue, playerValueStat.maxPlayerValue);
+}
+
+function computePlayerValue_FlooredLinearClamped(playerValueStat: GameType.PlayerValueStat, computeContext: PlayerValueComputeContext): number
+{
+    const amount: number = getPlayerWideThingAmount(computeContext);
+    const flooredPlayerValue: number = Math.floor(playerValueStat.basePlayerValueFactor * amount);
+
+    return MathHelp.clamp(flooredPlayerValue, playerValueStat.minPlayerValue, playerValueStat.maxPlayerValue);
 }
 
 function getPlayerWideThingAmount(computeContext: PlayerValueComputeContext): number

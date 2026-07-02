@@ -862,10 +862,6 @@ export const RESOURCE_INFOS: ReadonlyMap<GameType.ResourceType, GameType.Resourc
 //#endregion
 
 //#region Fleet
-// MAX_ALLOWED_PLANETS lives here (above its //#region Planet home) because FLEET_ACTION_INFOS is
-// constructed at module load and references it as the Colonize planet-cap threshold.
-export const MAX_ALLOWED_PLANETS: number = 9;
-
 const HAS_FREE_FLEET_SLOT_REQUIREMENT: RequirementType.Requirement =
 {
 	hideDataWhenRequirementFailed: false,
@@ -963,9 +959,9 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 			{hideDataWhenRequirementFailed: true,
 			thingRequirement:{
 				thingType: ThingType.Thing.FleetMovement,
-				operator: RequirementType.RequirementOperator.LesserThan,
-				value: MAX_ALLOWED_PLANETS,
-				valueGetter: RequirementValueGetters.playerPlanetCount(),},},],}],
+				operator: RequirementType.RequirementOperator.GreaterThan,
+				value: 0,
+				valueGetter: RequirementValueGetters.freeColonyPlanetSlots(),},},],}],
 
 	[GameType.FleetActionType.Recycle, {
 		displayName: "Recycle",
@@ -1146,6 +1142,8 @@ export const PLAYER_VALUE_INFOS: ReadonlyMap<GameType.PlayerValueType, GameType.
 		modifiesResourceProduction: true,}],
 	[GameType.PlayerValueType.DeconstructionCostModificationPercent, {
 		displayName: "Deconstruction Cost Modification",}],
+	[GameType.PlayerValueType.ColonySlots, {
+		displayName: "Colony Slots",}],
 ]);
 //#endregion
 
@@ -1221,6 +1219,7 @@ export const MIN_SLOT_STARTING_PLANET: number = 3;
 export const MAX_SLOT_STARTING_PLANET: number = 4;
 export const STARTING_PLANET_SIZE: number = 163;
 export const STARTING_MOON_SIZE: number = 1;
+export const STARTING_OWNED_PLANET_COUNT: number = 2;
 export const MAX_PLANET_NAME_LENGTH: number = 16;
 //#endregion
 
@@ -1469,6 +1468,78 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				operator: RequirementType.RequirementOperator.GreaterOrEqual,
 				value: 2,
 				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+
+
+	[GameType.ResearchType.Astrophysics, { displayName: "Astrophysics",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 1.75,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 4000],
+				[GameType.ResourceType.Crystal, 8000],
+				[GameType.ResourceType.Deuterium, 4000],]),},
+
+		playerValueStats: [
+			{playerValueProductionFormulasType:
+				GameType.PlayerValueProductionFormulasType.FlooredLinearClamped,
+				playerValueType: GameType.PlayerValueType.ColonySlots,
+				basePlayerValueFactor: 0.5,}],
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.EspionageTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 4,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EspionageTech),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.ImpulseDrive,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 3,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ImpulseDrive),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 3,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+
+
+	[GameType.ResearchType.IntergalacticResearchNetwork, { displayName: "Intergalactic Research Network",
+		costFunctionType: GameType.ResearchCostFunctionType.SimpleExponential,
+		costStats: {
+			baseCostExponent: 2,
+			baseCost: new Map<GameType.ResourceType, number>([
+				[GameType.ResourceType.Metal, 240000],
+				[GameType.ResourceType.Crystal, 400000],
+				[GameType.ResourceType.Deuterium, 160000],]),},
+
+		requirements:[{
+			hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Building,
+				specificThingType: GameType.BuildingType.ResearchLab,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 10,
+				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.ComputerTech,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 8,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ComputerTech),},},
+			{hideDataWhenRequirementFailed: true,
+			specificThingRequirement:{
+				thingType: ThingType.Thing.Research,
+				specificThingType: GameType.ResearchType.HyperspaceDrive,
+				operator: RequirementType.RequirementOperator.GreaterOrEqual,
+				value: 8,
+				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceDrive),},},],}],
 ]);
 
 //#endregion

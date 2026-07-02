@@ -7,7 +7,6 @@ import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
 import * as ResearchData from '@/lib/gameplay/dynamicData/player/researchData';
 import * as ThingHelpers from '@/lib/gameplay/coreData/thing/thingHelpers';
 import * as ThingDataHelpers from '@/lib/gameplay/coreData/thing/thingDataHelpers';
-import * as StaticData from '@/lib/gameplay/coreData/static/staticData';
 import * as DBType from '@/lib/db/dbTypes';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
@@ -182,14 +181,17 @@ describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
         return Requirements.getFailedFleetMovementRequirements(player, action, PLANET_ID, unitQuantities, noResources, dummyTargetAddress, targetOwnerPlayerId, targetZoneExists);
     }
 
-    function buildPlayerWithPlanetCount(planetCount: number): CoreType.PlayerData
+    function buildPlayerWithPlanetCount(planetCount: number, astrophysicsLevel: number): CoreType.PlayerData
     {
         const planets: CoreType.PlanetData[] = [];
         for (let i: number = 0; i < planetCount; i++)
         {
             planets.push(TestDataBuilders.buildPlanetData({ planetRow: { id: i + 1 } }));
         }
-        return TestDataBuilders.buildPlayerData({ planetDatas: planets });
+
+        const player: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: planets });
+        ResearchData.setResearchLevel(player, GameType.ResearchType.Astrophysics, astrophysicsLevel);
+        return player;
     }
 
     it('STATION fails for an unowned target (null ownerId)', () =>
@@ -234,9 +236,9 @@ describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
         expect(failed.length).toBeGreaterThan(0);
     });
 
-    it('COLONIZE fails when the player has reached MAX_ALLOWED_PLANETS', () =>
+    it('COLONIZE fails at the base colony cap of 2 with no Astrophysics', () =>
     {
-        const playerAtCap: CoreType.PlayerData = buildPlayerWithPlanetCount(StaticData.MAX_ALLOWED_PLANETS);
+        const playerAtCap: CoreType.PlayerData = buildPlayerWithPlanetCount(2, 0);
         const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.ColonyShip, 1]]);
         const failed: RequirementType.Requirement[] = getFailed(playerAtCap, GameType.FleetActionType.Colonize, unitQuantities, null);
         expect(failed.length).toBeGreaterThan(0);
@@ -249,19 +251,19 @@ describe('getFailedFleetMovementRequirements (fleet action gating)', () =>
         expect(failed).toHaveLength(0);
     });
 
-    it('COLONIZE passes at exactly one planet below the cap (8 owned with cap 9)', () =>
+    it('COLONIZE passes below the Astrophysics colony cap', () =>
     {
-        // The colonize that lands here would be the 9th planet, which is still allowed.
-        const playerOneBelowCap: CoreType.PlayerData = buildPlayerWithPlanetCount(StaticData.MAX_ALLOWED_PLANETS - 1);
+        // Astrophysics 6 → cap floor(6/2)+1 = 4; 3 owned leaves one free colony slot.
+        const playerUnderCap: CoreType.PlayerData = buildPlayerWithPlanetCount(3, 6);
         const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.ColonyShip, 1]]);
-        const failed: RequirementType.Requirement[] = getFailed(playerOneBelowCap, GameType.FleetActionType.Colonize, unitQuantities, null);
+        const failed: RequirementType.Requirement[] = getFailed(playerUnderCap, GameType.FleetActionType.Colonize, unitQuantities, null);
         expect(failed).toHaveLength(0);
     });
 
-    it('COLONIZE fails at exactly the cap (9 owned with cap 9)', () =>
+    it('COLONIZE fails at exactly the Astrophysics colony cap', () =>
     {
-        // The colonize that lands here would be the 10th planet, which is blocked.
-        const playerAtCap: CoreType.PlayerData = buildPlayerWithPlanetCount(StaticData.MAX_ALLOWED_PLANETS);
+        // Astrophysics 6 → cap 4; 4 owned means no free colony slot.
+        const playerAtCap: CoreType.PlayerData = buildPlayerWithPlanetCount(4, 6);
         const unitQuantities: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.ColonyShip, 1]]);
         const failed: RequirementType.Requirement[] = getFailed(playerAtCap, GameType.FleetActionType.Colonize, unitQuantities, null);
         expect(failed.length).toBeGreaterThan(0);

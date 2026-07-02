@@ -10,7 +10,7 @@ import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 import * as DB from "@/lib/db/db";
 import * as ServerPlanetManagement from "@/lib/gameplay/progressUpdate/server/serverPlanetManagement";
-import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
+import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 
 export function resolveColonizeAction(originPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): CoreType.PlayerData | null
 {
@@ -21,7 +21,7 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData, fle
     }
 
     // Too many planets (moons don't count toward the colony cap)
-    if (CoreType.getOwnedPlanets(originPlayerData.planetDatas).length >= StaticData.MAX_ALLOWED_PLANETS)
+    if (CoreType.getOwnedPlanets(originPlayerData.planetDatas).length >= CalculatedValueData.computeMaxOwnedPlanetCount(originPlayerData))
     {
         addTooManyPlanetsFailureMessage(fleetMovement);
         FleetData.setFleetReturnTrip(null, fleetMovement);

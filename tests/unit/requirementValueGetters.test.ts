@@ -3,6 +3,7 @@ import * as RequirementValueGetters from '@/lib/gameplay/coreData/requirement/re
 import * as RequirementType from '@/lib/gameplay/coreData/requirement/requirementTypes';
 import * as CoreType from '@/lib/gameplay/coreData/type/coreTypes';
 import * as GameType from '@/lib/gameplay/coreData/type/gameTypes';
+import * as ResearchData from '@/lib/gameplay/dynamicData/player/researchData';
 import * as TestDataBuilders from '../helpers/testDataBuilders';
 
 describe('isAnyBuildingUpgradeInProgress', () =>
@@ -52,6 +53,30 @@ describe('playerPlanetCount', () =>
 
         const getter: RequirementType.ThingValueGetter = RequirementValueGetters.playerPlanetCount();
         expect(getter({ playerData: playerData, planetId: 1 })).toBe(2);
+    });
+});
+
+describe('freeColonyPlanetSlots', () =>
+{
+    it('is 0 for a fresh two-planet player with no Astrophysics', () =>
+    {
+        const planetA: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { id: 1, zone: GameType.PlanetZone.Planet } });
+        const planetB: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { id: 2, zone: GameType.PlanetZone.Planet } });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planetA, planetB] });
+
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.freeColonyPlanetSlots();
+        expect(getter({ playerData: playerData, planetId: 1 })).toBe(0);
+    });
+
+    it('reports the slots opened by Astrophysics', () =>
+    {
+        const planetA: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { id: 1, zone: GameType.PlanetZone.Planet } });
+        const planetB: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { id: 2, zone: GameType.PlanetZone.Planet } });
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planetA, planetB] });
+        ResearchData.setResearchLevel(playerData, GameType.ResearchType.Astrophysics, 4);
+
+        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.freeColonyPlanetSlots();
+        expect(getter({ playerData: playerData, planetId: 1 })).toBe(1);
     });
 });
 

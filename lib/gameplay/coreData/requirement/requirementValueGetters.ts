@@ -119,6 +119,14 @@ export function playerPlanetCount(): RequirementType.ThingValueGetter
     };
 }
 
+export function freeColonyPlanetSlots(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        return CalculatedValueData.computeFreeColonyPlanetSlots(context.playerData);
+    };
+}
+
 export function hasFreeFleetSlot(): RequirementType.ThingValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>

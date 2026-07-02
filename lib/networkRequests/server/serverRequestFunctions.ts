@@ -984,35 +984,27 @@ function createPlayer(userId: number): void
         ).get(userId) as DBType.PlayerRow;
 
         const now: number = Date.now();
-        const firstPlanetId: number = ServerPlanetManagement.claimPlanet(null, playerRow.id, now);
-        const firstPlanetRow: DBType.PlanetRow = readPlanetRow(firstPlanetId);
-        const firstMoonAddress: GameType.PlanetAddress =
-        {
-            galaxy: firstPlanetRow.galaxy,
-            system: firstPlanetRow.system,
-            slot: firstPlanetRow.slot,
-            zone: GameType.PlanetZone.Moon,
-        };
-        const firstMoonId: number = ServerPlanetManagement.createZone(firstMoonAddress, playerRow.id, StaticData.STARTING_MOON_SIZE, StaticDataHelper.rollTemperatureForSlot(firstMoonAddress.slot), now);
-        const secondPlanetId: number = ServerPlanetManagement.claimPlanet(null, playerRow.id, now + 1);
-        const secondPlanetRow: DBType.PlanetRow = readPlanetRow(secondPlanetId);
-        const secondMoonAddress: GameType.PlanetAddress =
-        {
-            galaxy: secondPlanetRow.galaxy,
-            system: secondPlanetRow.system,
-            slot: secondPlanetRow.slot,
-            zone: GameType.PlanetZone.Moon,
-        };
-        const secondMoonId: number = ServerPlanetManagement.createZone(secondMoonAddress, playerRow.id, StaticData.STARTING_MOON_SIZE, StaticDataHelper.rollTemperatureForSlot(secondMoonAddress.slot), now + 1);
 
-        ServerDynamicData.serverUpdateAllPlanetData(firstPlanetId, playerRow.id, StaticData.STARTING_PLANET_DATA);
-        ServerDynamicData.serverUpdateAllPlanetData(firstMoonId, playerRow.id, StaticData.STARTING_PLANET_DATA);
-        ServerDynamicData.serverUpdateAllPlanetData(secondPlanetId, playerRow.id, StaticData.STARTING_PLANET_DATA);
-        ServerDynamicData.serverUpdateAllPlanetData(secondMoonId, playerRow.id, StaticData.STARTING_PLANET_DATA);
+        for (let startingPlanetIndex: number = 0; startingPlanetIndex < StaticData.STARTING_OWNED_PLANET_COUNT; startingPlanetIndex++)
+        {
+            const claimedAt: number = now + startingPlanetIndex;
+            const planetId: number = ServerPlanetManagement.claimPlanet(null, playerRow.id, claimedAt);
+            const planetRow: DBType.PlanetRow = readPlanetRow(planetId);
+            const moonAddress: GameType.PlanetAddress =
+            {
+                galaxy: planetRow.galaxy,
+                system: planetRow.system,
+                slot: planetRow.slot,
+                zone: GameType.PlanetZone.Moon,
+            };
+            const moonId: number = ServerPlanetManagement.createZone(moonAddress, playerRow.id, StaticData.STARTING_MOON_SIZE, StaticDataHelper.rollTemperatureForSlot(moonAddress.slot), claimedAt);
 
+            ServerDynamicData.serverUpdateAllPlanetData(planetId, playerRow.id, StaticData.STARTING_PLANET_DATA);
+            ServerDynamicData.serverUpdateAllPlanetData(moonId, playerRow.id, StaticData.STARTING_PLANET_DATA);
+        }
 
         const serverData: CoreType.ServerData = ServerType.getServerData();
-        ServerProgress.applyPlayerUpdate(playerRow.id, serverData, now + 1);
+        ServerProgress.applyPlayerUpdate(playerRow.id, serverData, now + StaticData.STARTING_OWNED_PLANET_COUNT - 1);
     });
 
     transaction();

@@ -10,6 +10,8 @@ import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 
+const HOMEWORLD_PLANET_COUNT: number = 1;
+
 //#region shared aggregation primitives
 function getCalculatedValueData<ValueType>(valueDatas: Map<ValueType, CoreType.CalculatedValueData>, valueType: ValueType): CoreType.CalculatedValueData | null
 {
@@ -235,6 +237,22 @@ export function computePlayerValueNet(playerData: CoreType.PlayerData, playerVal
     }
 
     return playerValueData.production - playerValueData.consumption;
+}
+
+export function computeMaxOwnedPlanetCount(playerData: CoreType.PlayerData): number
+{
+    const colonySlots: number = computePlayerValueNet(playerData, GameType.PlayerValueType.ColonySlots);
+    const astrophysicsPlanetAllowance: number = HOMEWORLD_PLANET_COUNT + colonySlots;
+
+    return Math.max(StaticData.STARTING_OWNED_PLANET_COUNT, astrophysicsPlanetAllowance);
+}
+
+export function computeFreeColonyPlanetSlots(playerData: CoreType.PlayerData): number
+{
+    const maxOwnedPlanetCount: number = computeMaxOwnedPlanetCount(playerData);
+    const ownedPlanetCount: number = CoreType.getOwnedPlanets(playerData.planetDatas).length;
+
+    return maxOwnedPlanetCount - ownedPlanetCount;
 }
 
 export function computeResourceProductionModificationPercent(playerData: CoreType.PlayerData, resourceType: GameType.ResourceType): number

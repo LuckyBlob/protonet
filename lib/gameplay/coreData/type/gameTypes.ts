@@ -134,6 +134,7 @@ export const PlayerValueType =
     FleetSpaceModificationPercent: 9,
     ResourceProductionModificationPercent: 10,
     DeconstructionCostModificationPercent: 11,
+    ColonySlots: 12,
 } as const;
 export type PlayerValueType = typeof PlayerValueType[keyof typeof PlayerValueType];
 export type PlayerValueInfo =
@@ -146,6 +147,7 @@ export const PlayerValueProductionFormulasType =
 {
     ProportionalOneToOne: 1,
     LinearClamped: 2,
+    FlooredLinearClamped: 3,
 } as const;
 export type PlayerValueProductionFormulasType = typeof PlayerValueProductionFormulasType[keyof typeof PlayerValueProductionFormulasType];
 export type PlayerValueStat =
@@ -334,6 +336,8 @@ export const ResearchType =
     WeaponTech: 7,
     ShieldingTech: 8,
     ArmourTech: 9,
+    Astrophysics: 10,
+    IntergalacticResearchNetwork: 11,
 } as const;
 export type ResearchType = typeof ResearchType[keyof typeof ResearchType];
 export type ResearchInfo =
@@ -354,6 +358,5 @@ export type ResearchCostStats =
 {
 	baseCostExponent: number;
 	baseCost: Map<ResourceType, number>;
-	freePlanetValueRequirements?: Map<PlanetValueType, number>;
 }
 //#endregion
