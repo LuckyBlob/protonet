@@ -12,6 +12,7 @@ import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelp
 import * as HelperElement from "@/components/helpers/helperElements";
 import * as UnitConstructionData from "@/lib/gameplay/dynamicData/planet/unitConstructionData";
 import * as MissileSpaceData from "@/lib/gameplay/dynamicData/planet/missileSpaceData";
+import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as UnitBuildElements from "@/components/helpers/unitBuildElements";
 
 const MISSILE_INSUFFICIENT_TEXT: string = "Not enough resources or space.";
@@ -82,7 +83,8 @@ function renderMissileSiloBody(props: MissileSiloViewProps, planetDataPredicted:
         (planet: CoreType.PlanetData, requestedUnitQuantities: Map<GameType.UnitType, number>): Map<GameType.UnitType, number> =>
         {
             const affordableQuantities: Map<GameType.UnitType, number> = UnitConstructionData.computeMaxAffordableUnitQuantities(planet, requestedUnitQuantities);
-            return MissileSpaceData.computeMaxStorableMissileQuantities(planet, playerData, affordableQuantities);
+            const storableQuantities: Map<GameType.UnitType, number> = MissileSpaceData.computeMaxStorableMissileQuantities(planet, playerData, affordableQuantities);
+            return Requirement.capUnitQuantitiesByBuildCount(playerData, planet, storableQuantities);
         };
 
     const renderDestroyAction: UnitBuildElements.RenderRowEndAction =

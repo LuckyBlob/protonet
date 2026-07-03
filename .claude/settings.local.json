@@ -119,7 +119,13 @@
       "mcp__claude-in-chrome__get_page_text",
       "Bash(printf '2 - 4 sept\\\\r\\\\n3 - 28 aug\\\\r\\\\n4 - 21 aug\\\\r\\\\n5 - 14 aug\\\\r\\\\n6 - 7 aug\\\\r\\\\n7 - 31 jul\\\\r\\\\n8 - 24 jul\\\\r\\\\n9 - 17 jul\\\\r\\\\n10 - 10 jul\\\\r\\\\n11 - 3 jul\\\\r\\\\n12 - 26 jun\\\\r\\\\n13 - 19 jun\\\\r\\\\n' >> \"C:/Users/Utilisateur/Desktop/temp.txt\")",
       "mcp__claude-in-chrome__list_connected_browsers",
-      "mcp__claude-in-chrome__browser_batch"
+      "mcp__claude-in-chrome__browser_batch",
+      "Bash(node \"C:/Users/Utilisateur/AppData/Local/Temp/claude/D--Claude-WebsiteProject-protonet/5c67fdae-adcb-45be-ac61-01b3a90f93a7/scratchpad/setshield.cjs\")",
+      "Bash(NODE_PATH=\"D:/Claude/WebsiteProject/protonet/node_modules\" node \"C:/Users/Utilisateur/AppData/Local/Temp/claude/D--Claude-WebsiteProject-protonet/5c67fdae-adcb-45be-ac61-01b3a90f93a7/scratchpad/setshield.cjs\")",
+      "Bash(NODE_PATH=\"D:/Claude/WebsiteProject/protonet/node_modules\" node \"C:/Users/Utilisateur/AppData/Local/Temp/claude/D--Claude-WebsiteProject-protonet/5c67fdae-adcb-45be-ac61-01b3a90f93a7/scratchpad/setresources.cjs\")",
+      "Bash(NODE_PATH=\"D:/Claude/WebsiteProject/protonet/node_modules\" node \"C:/Users/Utilisateur/AppData/Local/Temp/claude/D--Claude-WebsiteProject-protonet/5c67fdae-adcb-45be-ac61-01b3a90f93a7/scratchpad/q2.cjs\")",
+      "Bash(cat)",
+      "Bash(NODE_PATH=\"D:/Claude/WebsiteProject/protonet/node_modules\" node \"C:/Users/Utilisateur/AppData/Local/Temp/claude/D--Claude-WebsiteProject-protonet/5c67fdae-adcb-45be-ac61-01b3a90f93a7/scratchpad/q3.cjs\")"
     ]
   },
   "hooks": {

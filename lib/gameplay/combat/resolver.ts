@@ -179,14 +179,18 @@ function fireEveryUnitAtEnemy(shooterSide: CombatSide, enemySide: CombatSide, sh
             return;
         }
 
-        fireVolley(shooter, enemySide, shooterFleetProfile, enemyFleetProfile, rollNextRandom);
+        const shooterProfile: CombatUnitProfile = getUnitProfile(shooterFleetProfile, shooter.unitType);
+        if (shooterProfile.weaponPower <= 0)
+        {
+            continue;
+        }
+
+        fireVolley(shooterProfile, enemySide, enemyFleetProfile, rollNextRandom);
     }
 }
 
-function fireVolley(shooter: CombatUnit, enemySide: CombatSide, shooterFleetProfile: CombatFleet, enemyFleetProfile: CombatFleet, rollNextRandom: () => number): void
+function fireVolley(shooterProfile: CombatUnitProfile, enemySide: CombatSide, enemyFleetProfile: CombatFleet, rollNextRandom: () => number): void
 {
-    const shooterProfile: CombatUnitProfile = getUnitProfile(shooterFleetProfile, shooter.unitType);
-
     let shooterKeepsFiring: boolean = true;
     while (shooterKeepsFiring && hasLivingUnit(enemySide))
     {

@@ -187,6 +187,8 @@ export const UnitType =
     SolarSatellite: 7,
     InterplanetaryMissile: 8,
     InterceptorMissile: 9,
+    SmallShieldDome: 10,
+    LargeShieldDome: 11,
 } as const;
 export type UnitType = typeof UnitType[keyof typeof UnitType];
 

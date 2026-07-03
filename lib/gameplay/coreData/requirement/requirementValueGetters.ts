@@ -4,6 +4,7 @@ import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as BuildingDeconstructionData from "@/lib/gameplay/dynamicData/planet/buildingDeconstructionData";
+import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 import * as MissileSpaceData from "@/lib/gameplay/dynamicData/planet/missileSpaceData";
@@ -76,6 +77,15 @@ export function researchLevel(researchType: GameType.ResearchType): RequirementT
     return (context: RequirementType.RequirementContext): number =>
     {
         return ResearchData.getResearchLevel(context.playerData, researchType);
+    };
+}
+
+export function ownedAndQueuedUnitCount(unitType: GameType.UnitType): RequirementType.SpecificThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
+        return UnitData.getOwnedAndQueuedUnitQuantity(planetData, unitType);
     };
 }
 

@@ -351,6 +351,18 @@ export function getUnitQuantityDb(planetId: number, unitType: number, db: Databa
     return row?.unit_quantity ?? 0;
 }
 
+export function getQueuedUnitQuantity(planetId: number, unitType: number, db: Database.Database): number
+{
+    const row: { queued_quantity: number } = db.prepare(
+        `SELECT COALESCE(SUM(ucu.unit_quantity), 0) AS queued_quantity
+         FROM unit_construction_unit ucu
+         JOIN unit_construction uc ON ucu.unit_construction_id = uc.id
+         WHERE uc.planet_id = ? AND ucu.unit_type = ?`
+    ).get(planetId, unitType) as { queued_quantity: number };
+
+    return row.queued_quantity;
+}
+
 export function getBuildingLevelDb(planetId: number, buildingType: number, db: Database.Database): number
 {
     const row: { building_level: number } | undefined = db.prepare(

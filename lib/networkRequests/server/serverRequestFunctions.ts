@@ -1636,7 +1636,8 @@ export function tryBuildUnitsLogic(playerId: number, serverData: CoreType.Server
     }
 
     const affordableUnitQuantities: Map<GameType.UnitType, number> = UnitConstructionData.computeMaxAffordableUnitQuantities(relevantPlanetData, requestedUnitQuantities);
-    const buildableUnitQuantities: Map<GameType.UnitType, number> = capMissilesByStorage(relevantPlanetData, playerData, affordableUnitQuantities);
+    const storableUnitQuantities: Map<GameType.UnitType, number> = capMissilesByStorage(relevantPlanetData, playerData, affordableUnitQuantities);
+    const buildableUnitQuantities: Map<GameType.UnitType, number> = Requirement.capUnitQuantitiesByBuildCount(playerData, relevantPlanetData, storableUnitQuantities);
     if (buildableUnitQuantities.size === 0)
     {
         return { success: false, failureReason: "Not enough resources or storage.", playerStateResult: playerData };

@@ -68,6 +68,57 @@ export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerDa
     return getFailedRequirements(requirementContext, requirements);
 }
 
+// Derives the quantity cap from the unit's own self-referential count requirement, so the binary gate and the "max out" cap stay driven by one piece of data. Returns null when the unit has no such cap.
+export function getRemainingBuildableUnitCount(playerData: CoreType.PlayerData, unitType: GameType.UnitType, planetId: number): number | null
+{
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: planetId,
+    };
+    const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.UnitConstruction, specificThingType: unitType });
+
+    let remainingBuildableCount: number | null = null;
+
+    for (const requirement of requirements)
+    {
+        const buildCountCap: number | null = getRequirementUnitConstructionCountCap(requirementContext, requirement, unitType);
+        if (buildCountCap === null)
+        {
+            continue;
+        }
+
+        remainingBuildableCount = remainingBuildableCount === null ? buildCountCap : Math.min(remainingBuildableCount, buildCountCap);
+    }
+
+    return remainingBuildableCount;
+}
+
+export function capUnitQuantitiesByBuildCount(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, requestedUnitQuantities: Map<GameType.UnitType, number>): Map<GameType.UnitType, number>
+{
+    const cappedUnitQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();
+
+    for (const [unitType, requestedUnitQuantity] of requestedUnitQuantities)
+    {
+        const remainingBuildableCount: number | null = getRemainingBuildableUnitCount(playerData, unitType, planetData.planetRow.id);
+        if (remainingBuildableCount === null)
+        {
+            cappedUnitQuantities.set(unitType, requestedUnitQuantity);
+            continue;
+        }
+
+        const cappedUnitQuantity: number = Math.min(requestedUnitQuantity, remainingBuildableCount);
+        if (cappedUnitQuantity <= 0)
+        {
+            continue;
+        }
+
+        cappedUnitQuantities.set(unitType, cappedUnitQuantity);
+    }
+
+    return cappedUnitQuantities;
+}
+
 export function getRequirementDescriptions(failedRequirements: RequirementType.Requirement[], playerData: CoreType.PlayerData, planetId: number): string[]
 {
     const requirementContext: RequirementType.RequirementContext =
@@ -96,6 +147,40 @@ function getRequirements(specificThing: ThingType.SpecificThingType): Requiremen
     const specificRequirements: RequirementType.Requirement[] = StaticDataHelper.getSpecificThingRequirements(specificThing);
 
     return [...globalRequirements, ...specificRequirements];
+}
+
+function getRequirementUnitConstructionCountCap(requirementContext: RequirementType.RequirementContext, requirement: RequirementType.Requirement, unitType: GameType.UnitType): number | null
+{
+    const specificThingRequirement: RequirementType.SpecificThingRequirement | undefined = requirement.specificThingRequirement;
+    if (specificThingRequirement === undefined)
+    {
+        return null;
+    }
+
+    if (specificThingRequirement.thingType !== ThingType.Thing.Unit)
+    {
+        return null;
+    }
+
+    if ((specificThingRequirement.specificThingType as GameType.UnitType) !== unitType)
+    {
+        return null;
+    }
+
+    const currentUnitCount: number = specificThingRequirement.valueGetter(requirementContext);
+    const maximumUnitCount: number = resolveValueToNumber(requirementContext, specificThingRequirement.value, specificThingRequirement.operator);
+
+    if (specificThingRequirement.operator === RequirementType.RequirementOperator.LesserThan)
+    {
+        return Math.max(0, maximumUnitCount - currentUnitCount);
+    }
+
+    if (specificThingRequirement.operator === RequirementType.RequirementOperator.LesserOrEqual)
+    {
+        return Math.max(0, maximumUnitCount + 1 - currentUnitCount);
+    }
+
+    return null;
 }
 
 function resolveValueToNumber(requirementContext: RequirementType.RequirementContext, value: number | boolean | RequirementType.ThingValueGetter, operator: RequirementType.RequirementOperator): number

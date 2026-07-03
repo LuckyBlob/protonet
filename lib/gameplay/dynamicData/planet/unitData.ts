@@ -16,6 +16,28 @@ export function getUnitQuantity(planetData: CoreType.PlanetData, unitType: GameT
 	return unitQuantities.get(unitType) ?? 0;
 }
 
+export function getQueuedUnitQuantity(planetData: CoreType.PlanetData, unitType: GameType.UnitType): number
+{
+	let queuedUnitQuantity: number = 0;
+	for (const unitConstruction of planetData.dynamicPlanetData.unitConstructions)
+	{
+		for (const unitConstructionUnitRow of unitConstruction.unitConstructionUnitRows)
+		{
+			if ((unitConstructionUnitRow.unit_type as GameType.UnitType) === unitType)
+			{
+				queuedUnitQuantity += unitConstructionUnitRow.unit_quantity;
+			}
+		}
+	}
+
+	return queuedUnitQuantity;
+}
+
+export function getOwnedAndQueuedUnitQuantity(planetData: CoreType.PlanetData, unitType: GameType.UnitType): number
+{
+	return getUnitQuantity(planetData, unitType) + getQueuedUnitQuantity(planetData, unitType);
+}
+
 export function getCategoryUnitQuantity(planetData: CoreType.PlanetData, unitCategory: GameType.UnitCategory): number
 {
 	const categoryUnitTypes: GameType.UnitType[] = StaticDataHelper.getUnitsByCategory(unitCategory);

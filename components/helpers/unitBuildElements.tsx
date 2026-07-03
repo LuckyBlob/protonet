@@ -75,6 +75,8 @@ function renderBuildQuantityInput(playerData: CoreType.PlayerData, planetData: C
         return element;
     }
 
+    const remainingBuildableCount: number | null = Requirement.getRemainingBuildableUnitCount(playerData, unitType, planetId);
+
     const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>): void =>
     {
         const parsedValue: number = Number.parseInt(e.target.value, 10);
@@ -85,7 +87,8 @@ function renderBuildQuantityInput(playerData: CoreType.PlayerData, planetData: C
             return;
         }
 
-        setRequestedQuantity(unitType, parsedValue);
+        const cappedValue: number = remainingBuildableCount === null ? parsedValue : Math.min(parsedValue, remainingBuildableCount);
+        setRequestedQuantity(unitType, cappedValue);
     };
 
     const element: ReactElement =
@@ -93,6 +96,7 @@ function renderBuildQuantityInput(playerData: CoreType.PlayerData, planetData: C
         <input
             type="number"
             min={0}
+            max={remainingBuildableCount ?? undefined}
             value={requestedQuantity}
             onChange={handleQuantityChange}
             className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-24"

@@ -9,6 +9,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as HelperElement from "@/components/helpers/helperElements";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as UnitConstructionData from "@/lib/gameplay/dynamicData/planet/unitConstructionData";
+import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as UnitBuildElements from "@/components/helpers/unitBuildElements";
 
 const PREVIEW_MAX_UNIT_LINES: number = 7;
@@ -35,11 +36,6 @@ type ShipyardViewProps =
 {
     clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
-
-function computeBuildableShipyardQuantities(planetData: CoreType.PlanetData, requestedUnitQuantities: Map<GameType.UnitType, number>): Map<GameType.UnitType, number>
-{
-    return UnitConstructionData.computeMaxAffordableUnitQuantities(planetData, requestedUnitQuantities);
-}
 
 //#region rendering helpers
 function renderShipyardLayout(previewSlot: ReactElement, buildRowElements: ReactElement, activeConstructionElements: ReactElement): ReactElement
@@ -94,6 +90,13 @@ function renderShipyardBody(props: ShipyardViewProps, planetDataPredicted: CoreT
     const serverData: CoreType.ServerData = props.clientDataStateResult.sdsController[0];
     const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
     const buildableUnitTypes: GameType.UnitType[] = StaticDataHelper.getUnitsByQueueType(GameType.UnitConstructionQueueType.Shipyard);
+
+    const computeBuildableShipyardQuantities: UnitBuildElements.ComputeBuildableUnitQuantities =
+        (planet: CoreType.PlanetData, requestedUnitQuantities: Map<GameType.UnitType, number>): Map<GameType.UnitType, number> =>
+        {
+            const affordableQuantities: Map<GameType.UnitType, number> = UnitConstructionData.computeMaxAffordableUnitQuantities(planet, requestedUnitQuantities);
+            return Requirement.capUnitQuantitiesByBuildCount(playerData, planet, affordableQuantities);
+        };
 
     const requestedMap: Map<GameType.UnitType, number> = UnitBuildElements.buildRequestedUnitQuantitiesMap(buildableUnitTypes, quantitiesState.requestedQuantities);
     const hasRequestedData: boolean = requestedMap.size > 0;
