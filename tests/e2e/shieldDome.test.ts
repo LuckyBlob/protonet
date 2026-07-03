@@ -90,7 +90,7 @@ test.describe("Shield Dome build cap (UI)", () =>
     {
         const username: string = E2EHelper.uniqueUsername("SdIndep");
         await E2EHelper.register(page, username, PASSWORD);
-        const seed: { playerId: number, planet: E2EHelper.PlanetRow } = await seedShieldDomePlayer(page, username, 4, 6);
+        const seed: { playerId: number, planet: E2EHelper.PlanetRow } = await seedShieldDomePlayer(page, username, 6, 6);
         E2EHelper.setUnitQuantity(seed.planet.id, seed.playerId, GameType.UnitType.SmallShieldDome, 1, db);
 
         await E2EHelper.reloadGame(page);
