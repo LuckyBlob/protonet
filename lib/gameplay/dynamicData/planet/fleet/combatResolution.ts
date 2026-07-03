@@ -214,8 +214,8 @@ function resolveWreckField(targetPlayerData: CoreType.PlayerData, targetAddress:
         return emptyWreckUnitQuantities;
     }
 
-    const lostDefenderScore: number = Combat.computeRepairTriggerScore(defenderLosses);
-    if (Combat.shouldFormWreckField(lostDefenderScore) === false)
+    const lostDefenderValue: number = Combat.computeRepairTriggerValue(defenderLosses);
+    if (Combat.shouldFormWreckField(lostDefenderValue) === false)
     {
         return emptyWreckUnitQuantities;
     }

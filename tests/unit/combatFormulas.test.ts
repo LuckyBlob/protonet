@@ -32,11 +32,11 @@ describe('combat formulas', () =>
         expect(debrisResourceQuantities.size).toBe(0);
     });
 
-    it('canResourceGoToDebrisField includes metal and crystal but excludes deuterium', () =>
+    it('resourceCountsInUnitValue includes metal and crystal but excludes deuterium', () =>
     {
-        expect(StaticDataHelper.canResourceGoToDebrisField(GameType.ResourceType.Metal)).toBe(true);
-        expect(StaticDataHelper.canResourceGoToDebrisField(GameType.ResourceType.Crystal)).toBe(true);
-        expect(StaticDataHelper.canResourceGoToDebrisField(GameType.ResourceType.Deuterium)).toBe(false);
+        expect(StaticDataHelper.resourceCountsInUnitValue(GameType.ResourceType.Metal)).toBe(true);
+        expect(StaticDataHelper.resourceCountsInUnitValue(GameType.ResourceType.Crystal)).toBe(true);
+        expect(StaticDataHelper.resourceCountsInUnitValue(GameType.ResourceType.Deuterium)).toBe(false);
     });
 
     it('getCombatUnitTypes includes ships, defenses and satellites but excludes missiles', () =>
@@ -119,24 +119,24 @@ describe('combat formulas', () =>
         expect(Combat.computeWreckFieldFraction(100000)).toBeLessThan(0.285);
     });
 
-    it('shouldFormWreckField only triggers strictly above 150000 lost score', () =>
+    it('shouldFormWreckField only triggers strictly above 150000 lost value', () =>
     {
         expect(Combat.shouldFormWreckField(0)).toBe(false);
         expect(Combat.shouldFormWreckField(150000)).toBe(false);
         expect(Combat.shouldFormWreckField(150001)).toBe(true);
     });
 
-    it('computeRepairTriggerScore counts only metal+crystal of the 4 real ships (excludes deuterium, defenses, satellites, probes)', () =>
+    it('computeRepairTriggerValue counts only metal+crystal of the 4 real ships (excludes deuterium, defenses, satellites, probes)', () =>
     {
         const colonyStats: GameType.UnitStats = StaticDataHelper.getUnitStats(GameType.UnitType.ColonyShip);
         const colonyMetalCrystalValue: number = (colonyStats.costMap.get(GameType.ResourceType.Metal) ?? 0) + (colonyStats.costMap.get(GameType.ResourceType.Crystal) ?? 0);
 
-        const colonyScore: number = Combat.computeRepairTriggerScore(new Map<GameType.UnitType, number>([[GameType.UnitType.ColonyShip, 2]]));
-        expect(colonyScore).toBe(colonyMetalCrystalValue * 2);
+        const colonyValue: number = Combat.computeRepairTriggerValue(new Map<GameType.UnitType, number>([[GameType.UnitType.ColonyShip, 2]]));
+        expect(colonyValue).toBe(colonyMetalCrystalValue * 2);
 
-        expect(Combat.computeRepairTriggerScore(new Map<GameType.UnitType, number>([[GameType.UnitType.RocketLauncher, 100]]))).toBe(0);
-        expect(Combat.computeRepairTriggerScore(new Map<GameType.UnitType, number>([[GameType.UnitType.SolarSatellite, 100]]))).toBe(0);
-        expect(Combat.computeRepairTriggerScore(new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, 100]]))).toBe(0);
+        expect(Combat.computeRepairTriggerValue(new Map<GameType.UnitType, number>([[GameType.UnitType.RocketLauncher, 100]]))).toBe(0);
+        expect(Combat.computeRepairTriggerValue(new Map<GameType.UnitType, number>([[GameType.UnitType.SolarSatellite, 100]]))).toBe(0);
+        expect(Combat.computeRepairTriggerValue(new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, 100]]))).toBe(0);
     });
 
     it('computeWreckUnitQuantities recovers only repairable ships, floored by the dock fraction', () =>

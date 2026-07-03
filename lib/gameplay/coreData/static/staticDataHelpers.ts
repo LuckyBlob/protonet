@@ -123,9 +123,9 @@ export function getResourceInfo(resourceType: GameType.ResourceType): GameType.R
     return resourceInfo;
 }
 
-export function canResourceGoToDebrisField(resourceType: GameType.ResourceType): boolean
+export function resourceCountsInUnitValue(resourceType: GameType.ResourceType): boolean
 {
-    return getResourceInfo(resourceType).canGoToDebrisField === true;
+    return getResourceInfo(resourceType).countsInUnitValue === true;
 }
 
 export function getResearchInfo(researchType: GameType.ResearchType): GameType.ResearchInfo

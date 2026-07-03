@@ -11,7 +11,7 @@ export type ResourceType = typeof ResourceType[keyof typeof ResourceType];
 export type ResourceInfo =
 {
 	displayName: string;
-	canGoToDebrisField: boolean;
+	countsInUnitValue: boolean;
 	countsTowardConstructionTime?: boolean;
 	countsTowardResearchTime?: boolean;
 }

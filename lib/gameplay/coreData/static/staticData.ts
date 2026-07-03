@@ -1503,17 +1503,17 @@ export const RESOURCE_INFOS: ReadonlyMap<GameType.ResourceType, GameType.Resourc
 ([
     [GameType.ResourceType.Metal, {
 		displayName: "Metal",
-		canGoToDebrisField: true,
+		countsInUnitValue: true,
 		countsTowardConstructionTime: true,
 		countsTowardResearchTime: true,}],
 	[GameType.ResourceType.Crystal, {
 		displayName: "Crystal",
-		canGoToDebrisField: true,
+		countsInUnitValue: true,
 		countsTowardConstructionTime: true,
 		countsTowardResearchTime: true,}],
 	[GameType.ResourceType.Deuterium, {
 		displayName: "Deuterium",
-		canGoToDebrisField: false,}],
+		countsInUnitValue: false,}],
 ]);
 //#endregion
 
