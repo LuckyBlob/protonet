@@ -97,6 +97,11 @@ export function canUnitLaunchAsMissile(unitType: GameType.UnitType): boolean
     return getUnitStats(unitType).canLaunchAsMissile === true;
 }
 
+export function unitParticipatesInMoonDestruction(unitType: GameType.UnitType): boolean
+{
+    return getUnitStats(unitType).participatesInMoonDestruction === true;
+}
+
 export function canPlanetZoneBeSpied(zone: GameType.PlanetZone): boolean
 {
     return getPlanetZoneInfo(zone).canBeSpied === true;

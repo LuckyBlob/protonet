@@ -9,6 +9,7 @@ import * as EspionageAction from "@/lib/gameplay/dynamicData/planet/fleet/espion
 import * as TransportAction from "@/lib/gameplay/dynamicData/planet/fleet/transportAction";
 import * as MissileLaunchAction from "@/lib/gameplay/dynamicData/planet/fleet/missileLaunchAction";
 import * as AttackAction from "@/lib/gameplay/dynamicData/planet/fleet/attackAction";
+import * as DestroyMoonAction from "@/lib/gameplay/dynamicData/planet/fleet/destroyMoonAction";
 
 export function serverResolveFleetAction(targetPlayerData: CoreType.PlayerData | null, originPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, serverData: CoreType.ServerData): CoreType.PlayerData | null
 {
@@ -52,6 +53,11 @@ export function serverResolveFleetAction(targetPlayerData: CoreType.PlayerData |
         case GameType.FleetActionType.Attack:
         {
             AttackAction.resolveAttackAction(originPlayerData, targetPlayerData, fleetMovement, serverData);
+            break;
+        }
+        case GameType.FleetActionType.DestroyMoon:
+        {
+            DestroyMoonAction.resolveDestroyMoonAction(originPlayerData, targetPlayerData, fleetMovement, serverData);
             break;
         }
         default:

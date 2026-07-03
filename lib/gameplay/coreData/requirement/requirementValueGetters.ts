@@ -461,3 +461,29 @@ export function allFleetUnitsAreLaunchableMissiles(): RequirementType.ThingValue
         return 1;
     };
 }
+
+export function fleetHasMoonDestructionUnit(): RequirementType.ThingValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.unitQuantities === undefined)
+        {
+            throw new Error(`fleetHasMoonDestructionUnit requirement evaluated without a potential fleet action.`);
+        }
+
+        for (const [unitType, unitQuantity] of context.unitQuantities)
+        {
+            if (unitQuantity <= 0)
+            {
+                continue;
+            }
+
+            if (StaticDataHelper.unitParticipatesInMoonDestruction(unitType) === true)
+            {
+                return 1;
+            }
+        }
+
+        return 0;
+    };
+}

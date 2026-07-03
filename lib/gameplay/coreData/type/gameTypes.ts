@@ -189,6 +189,7 @@ export const UnitType =
     InterceptorMissile: 9,
     SmallShieldDome: 10,
     LargeShieldDome: 11,
+    Deathstar: 12,
 } as const;
 export type UnitType = typeof UnitType[keyof typeof UnitType];
 
@@ -250,6 +251,7 @@ export type UnitStats =
 	weaponPower: number;
 	repairChance?: number;
 	participatesInCombat?: boolean;
+	participatesInMoonDestruction?: boolean;
 	rapidFire?: Map<UnitType, number>;
 	speed?: SpeedStats;
 	space?: number;
@@ -275,6 +277,7 @@ export const FleetActionType =
     Transport: 6,
     MissileLaunch: 7,
     Attack: 8,
+    DestroyMoon: 9,
 } as const;
 export type FleetActionType = typeof FleetActionType[keyof typeof FleetActionType];
 export const FleetActionCategory =

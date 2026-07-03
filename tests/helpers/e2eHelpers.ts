@@ -845,7 +845,7 @@ export function fleetActionSelect(page: Page): Locator
     return page.locator("select").filter({ has: page.getByRole("option", { name: actionNamePattern }) });
 }
 
-export async function sendFleet(page: Page, unitName: string, unitQuantity: number, target: PlanetRow, actionLabel: "Station" | "Collect" | "Colonize" | "Espionage" | "Attack"): Promise<void>
+export async function sendFleet(page: Page, unitName: string, unitQuantity: number, target: PlanetRow, actionLabel: "Station" | "Collect" | "Colonize" | "Espionage" | "Attack" | "Destroy Moon"): Promise<void>
 {
     await unitRowQuantityInput(page, unitName).fill(String(unitQuantity));
     await page.getByPlaceholder("P").fill(String(target.slot));
@@ -874,7 +874,8 @@ async function fillAndSendFleet(
     target: PlanetRow,
     units: { unitName: string, quantity: number }[],
     resources: { resourceName: string, quantity: number }[],
-    actionLabel: "Station" | "Collect" | "Colonize" | "Espionage" | "Transport" | "Attack",
+    actionLabel: "Station" | "Collect" | "Colonize" | "Espionage" | "Transport" | "Attack" | "Destroy Moon",
+    targetZoneLabel?: "Planet" | "Moon" | "Debris Field",
 ): Promise<void>
 {
     for (const unit of units)
@@ -885,6 +886,11 @@ async function fillAndSendFleet(
     await page.getByPlaceholder("P").fill(String(target.slot));
     await page.getByPlaceholder("S").fill(String(target.system));
     await page.getByPlaceholder("G").fill(String(target.galaxy));
+
+    if (targetZoneLabel !== undefined)
+    {
+        await selectTargetZone(page, targetZoneLabel);
+    }
 
     for (const resource of resources)
     {
@@ -922,6 +928,15 @@ export async function sendAttackFleet(
 ): Promise<void>
 {
     await fillAndSendFleet(page, target, units, [], "Attack");
+}
+
+export async function sendDestroyMoonFleet(
+    page: Page,
+    target: PlanetRow,
+    units: { unitName: string, quantity: number }[],
+): Promise<void>
+{
+    await fillAndSendFleet(page, target, units, [], "Destroy Moon", "Moon");
 }
 
 // The fleet row renders origin/arrow/target as separate spans with a zone-marker icon after each

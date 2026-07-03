@@ -8,6 +8,10 @@ const MOON_DEBRIS_PER_CHANCE_PERCENT: number = 100000;
 const MOON_MAX_CHANCE_PERCENT: number = 20;
 const MOON_SIZE_RANDOM_MAX: number = 10;
 const WRECK_SCORE_THRESHOLD: number = 150000;
+const MOON_DIAMETER_FIELD_SCALE: number = 1000;
+const MIN_CHANCE_PERCENT: number = 0;
+const MAX_CHANCE_PERCENT: number = 100;
+const FLEET_DESTRUCTION_DIAMETER_DIVIDER: number = 2;
 
 export function computeDebrisFromLosses(lostUnitQuantities: Map<GameType.UnitType, number>): Map<GameType.ResourceType, number>
 {
@@ -61,9 +65,43 @@ export function rollMoonFormation(seed: number, moonChancePercent: number): bool
 export function computeMoonSizeFields(seed: number, moonChancePercent: number): number
 {
     const randomBonus: number = Math.floor(MathHelp.seededRandom(seed) * (MOON_SIZE_RANDOM_MAX + 1));
-    const moonDiameter: number = Math.floor(1000 * Math.sqrt(10 + randomBonus + 300 * moonChancePercent));
-    const moonSizeFields: number = Math.floor((moonDiameter / 1000) ** 2);
+    const moonDiameter: number = Math.floor(MOON_DIAMETER_FIELD_SCALE * Math.sqrt(10 + randomBonus + 300 * moonChancePercent));
+    const moonSizeFields: number = Math.floor((moonDiameter / MOON_DIAMETER_FIELD_SCALE) ** 2);
     return moonSizeFields;
+}
+
+export function computeMoonDiameterKm(moonSizeFields: number): number
+{
+    return Math.floor(MOON_DIAMETER_FIELD_SCALE * Math.sqrt(moonSizeFields));
+}
+
+export function computeMoonDestructionChancePercent(moonSizeFields: number, deathstarCount: number): number
+{
+    const moonDiameterKm: number = computeMoonDiameterKm(moonSizeFields);
+    const rawChancePercent: number = (MAX_CHANCE_PERCENT - Math.sqrt(moonDiameterKm)) * Math.sqrt(deathstarCount);
+    return clampChancePercent(rawChancePercent);
+}
+
+export function computeAttackerFleetDestructionChancePercent(moonSizeFields: number): number
+{
+    const moonDiameterKm: number = computeMoonDiameterKm(moonSizeFields);
+    const rawChancePercent: number = Math.sqrt(moonDiameterKm) / FLEET_DESTRUCTION_DIAMETER_DIVIDER;
+    return clampChancePercent(rawChancePercent);
+}
+
+export function rollMoonDestruction(seed: number, moonDestructionChancePercent: number): boolean
+{
+    return MathHelp.seededRandom(seed) < moonDestructionChancePercent / MAX_CHANCE_PERCENT;
+}
+
+export function rollAttackerFleetDestruction(seed: number, attackerFleetDestructionChancePercent: number): boolean
+{
+    return MathHelp.seededRandom(seed) < attackerFleetDestructionChancePercent / MAX_CHANCE_PERCENT;
+}
+
+function clampChancePercent(chancePercent: number): number
+{
+    return MathHelp.clamp(chancePercent, MIN_CHANCE_PERCENT, MAX_CHANCE_PERCENT);
 }
 
 export function computeRepairedUnitQuantities(destroyedUnitQuantities: Map<GameType.UnitType, number>, seed: number): Map<GameType.UnitType, number>
