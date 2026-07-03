@@ -190,6 +190,18 @@ export const UnitType =
     SmallShieldDome: 10,
     LargeShieldDome: 11,
     Deathstar: 12,
+    LightFighter: 13,
+    HeavyFighter: 14,
+    Cruiser: 15,
+    Battleship: 16,
+    Battlecruiser: 17,
+    Bomber: 18,
+    Destroyer: 19,
+    LightLaser: 20,
+    HeavyLaser: 21,
+    IonCannon: 22,
+    GaussCannon: 23,
+    PlasmaTurret: 24,
 } as const;
 export type UnitType = typeof UnitType[keyof typeof UnitType];
 
