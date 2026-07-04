@@ -12,10 +12,6 @@ export const RequirementOperator =
 } as const;
 export type RequirementOperator = typeof RequirementOperator[keyof typeof RequirementOperator];
 
-export type PotentialFleetAction =
-{
-};
-
 export type RequirementContext =
 {
     playerData: CoreType.PlayerData;
@@ -27,31 +23,19 @@ export type RequirementContext =
     targetZoneExists?: boolean;
 };
 
-export type ThingValueGetter = (context: RequirementContext) => number;
-
-export type ThingRequirement =
+export type RequirementValueGetter = (context: RequirementContext, requirement: Requirement) => number;
+export type RequirementCondition = 
 {
-    thingType: ThingType.Thing;
-    operator: RequirementOperator;
-    value: number | boolean | ThingValueGetter;
-    valueGetter: ThingValueGetter;
+    valueGetter: RequirementValueGetter;
+    failureDescription: string | ((requirement: Requirement, context: RequirementContext) => string);
 };
-
-export type SpecificThingValueGetter = (context: RequirementContext) => number;
-
-export type SpecificThingRequirement =
-{
-    thingType: ThingType.Thing;
-    specificThingType: ThingType.SpecificThing;
-    operator: RequirementOperator;
-    value: number | boolean | SpecificThingValueGetter;
-    valueGetter: SpecificThingValueGetter;
-};
-
 export type Requirement =
 {
-    hideDataWhenRequirementFailed: boolean;
+    hideDataWhenRequirementFailed?: boolean;
     applicableZones?: GameType.PlanetZone[];
-    thingRequirement?: ThingRequirement;
-    specificThingRequirement?: SpecificThingRequirement;
+    thingType?: ThingType.Thing;
+    specificThingType?: ThingType.SpecificThing;
+    condition: RequirementCondition;
+    operator: RequirementOperator;
+    value: number | boolean | RequirementValueGetter;
 };

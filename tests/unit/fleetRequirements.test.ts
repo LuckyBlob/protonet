@@ -10,7 +10,7 @@ describe('getTargetPlanetZone requirement getter', () =>
 {
     it('returns the target address zone', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.getTargetPlanetZone();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.GET_TARGET_PLANET_ZONE.valueGetter);
         const context: RequirementType.RequirementContext =
         {
             playerData: TestDataBuilders.buildPlayerData(),
@@ -22,7 +22,7 @@ describe('getTargetPlanetZone requirement getter', () =>
 
     it('throws when no target address is present', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.getTargetPlanetZone();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.GET_TARGET_PLANET_ZONE.valueGetter);
         const context: RequirementType.RequirementContext =
         {
             playerData: TestDataBuilders.buildPlayerData(),
@@ -51,8 +51,8 @@ describe('Colonize fleet requirements — target zone must be Planet', () =>
         const planetTarget: GameType.PlanetAddress = { galaxy: 2, system: 5, slot: 3, zone: GameType.PlanetZone.Planet };
         const moonTarget: GameType.PlanetAddress = { galaxy: 2, system: 5, slot: 3, zone: GameType.PlanetZone.Moon };
 
-        const failedForPlanet: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Colonize, 1, unitQuantities, transportedResources, planetTarget, null, false);
-        const failedForMoon: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Colonize, 1, unitQuantities, transportedResources, moonTarget, null, false);
+        const failedForPlanet: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: unitQuantities, transportedResourceQuantities: transportedResources, targetPlanetAddress: planetTarget, zoneAssociatedPlanetOwnerPlayerId: null, targetZoneExists: false }, GameType.FleetActionType.Colonize);
+        const failedForMoon: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: unitQuantities, transportedResourceQuantities: transportedResources, targetPlanetAddress: moonTarget, zoneAssociatedPlanetOwnerPlayerId: null, targetZoneExists: false }, GameType.FleetActionType.Colonize);
 
         expect(failedForMoon.length).toBe(failedForPlanet.length + 1);
     });
@@ -76,21 +76,21 @@ describe('Transport fleet requirements', () =>
     it('is blocked when no resources are carried', () =>
     {
         const player: CoreType.PlayerData = buildSender();
-        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Transport, 1, ONE_TRANSPORT, NO_RESOURCES, TARGET, SELF_ID, true);
+        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: ONE_TRANSPORT, transportedResourceQuantities: NO_RESOURCES, targetPlanetAddress: TARGET, zoneAssociatedPlanetOwnerPlayerId: SELF_ID, targetZoneExists: true }, GameType.FleetActionType.Transport);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('is blocked when the target zone does not exist', () =>
     {
         const player: CoreType.PlayerData = buildSender();
-        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Transport, 1, ONE_TRANSPORT, SOME_RESOURCES, TARGET, SELF_ID, false);
+        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: ONE_TRANSPORT, transportedResourceQuantities: SOME_RESOURCES, targetPlanetAddress: TARGET, zoneAssociatedPlanetOwnerPlayerId: SELF_ID, targetZoneExists: false }, GameType.FleetActionType.Transport);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('is allowed when resources are carried and the target zone exists', () =>
     {
         const player: CoreType.PlayerData = buildSender();
-        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Transport, 1, ONE_TRANSPORT, SOME_RESOURCES, TARGET, SELF_ID, true);
+        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: ONE_TRANSPORT, transportedResourceQuantities: SOME_RESOURCES, targetPlanetAddress: TARGET, zoneAssociatedPlanetOwnerPlayerId: SELF_ID, targetZoneExists: true }, GameType.FleetActionType.Transport);
         expect(failed).toHaveLength(0);
     });
 
@@ -104,8 +104,8 @@ describe('Transport fleet requirements', () =>
             TestDataBuilders.buildPublicPlayerRow({ id: TARGET_OWNER_ID, score: 1 }),
         ];
 
-        const transportFailed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Transport, 1, ONE_TRANSPORT, SOME_RESOURCES, TARGET, TARGET_OWNER_ID, true);
-        const stationFailed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Station, 1, ONE_TRANSPORT, SOME_RESOURCES, TARGET, TARGET_OWNER_ID, true);
+        const transportFailed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: ONE_TRANSPORT, transportedResourceQuantities: SOME_RESOURCES, targetPlanetAddress: TARGET, zoneAssociatedPlanetOwnerPlayerId: TARGET_OWNER_ID, targetZoneExists: true }, GameType.FleetActionType.Transport);
+        const stationFailed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: ONE_TRANSPORT, transportedResourceQuantities: SOME_RESOURCES, targetPlanetAddress: TARGET, zoneAssociatedPlanetOwnerPlayerId: TARGET_OWNER_ID, targetZoneExists: true }, GameType.FleetActionType.Station);
 
         expect(transportFailed).toHaveLength(0);
         expect(stationFailed.length).toBeGreaterThan(0);

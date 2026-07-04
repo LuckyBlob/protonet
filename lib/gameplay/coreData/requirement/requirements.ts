@@ -1,81 +1,46 @@
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as ThingData from "@/lib/gameplay/coreData/thing/thingData";
-import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
+import * as RequirementValueGetters from "@/lib/gameplay/coreData/requirement/requirementValueGetters";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
-export function getFailedBuildingUpgradeRequirements(playerData: CoreType.PlayerData, buildingType: GameType.BuildingType, planetId: number): RequirementType.Requirement[]
+export function getFailedBuildingUpgradeRequirements(requirementContext: RequirementType.RequirementContext, buildingType: GameType.BuildingType): RequirementType.Requirement[]
 {
-    const requirementContext: RequirementType.RequirementContext =
-    {
-        playerData: playerData,
-        planetId: planetId,
-    };
     const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.BuildingUpgrade, specificThingType: buildingType });
     return getFailedRequirements(requirementContext, requirements);
 }
 
-export function getFailedBuildingDeconstructionRequirements(playerData: CoreType.PlayerData, buildingType: GameType.BuildingType, planetId: number): RequirementType.Requirement[]
+export function getFailedBuildingDeconstructionRequirements(requirementContext: RequirementType.RequirementContext, buildingType: GameType.BuildingType): RequirementType.Requirement[]
 {
-    const requirementContext: RequirementType.RequirementContext =
-    {
-        playerData: playerData,
-        planetId: planetId,
-    };
     const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.BuildingDeconstruction, specificThingType: buildingType });
     return getFailedRequirements(requirementContext, requirements);
 }
 
-export function getFailedUnitBuildRequirements(playerData: CoreType.PlayerData, unitType: GameType.UnitType, planetId: number): RequirementType.Requirement[]
+export function getFailedUnitBuildRequirements(requirementContext: RequirementType.RequirementContext, unitType: GameType.UnitType): RequirementType.Requirement[]
 {
-    const requirementContext: RequirementType.RequirementContext =
-    {
-        playerData: playerData,
-        planetId: planetId,
-    };
     const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.UnitConstruction, specificThingType: unitType });
     return getFailedRequirements(requirementContext, requirements);
 }
 
-export function getFailedResearchRequirements(playerData: CoreType.PlayerData, researchType: GameType.ResearchType, planetId: number): RequirementType.Requirement[]
+export function getFailedResearchRequirements(requirementContext: RequirementType.RequirementContext, researchType: GameType.ResearchType): RequirementType.Requirement[]
 {
-    const requirementContext: RequirementType.RequirementContext =
-    {
-        playerData: playerData,
-        planetId: planetId,
-    };
     const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.ResearchingResearch, specificThingType: researchType });
     return getFailedRequirements(requirementContext, requirements);
 }
 
-export function getFailedFleetMovementRequirements(playerData: CoreType.PlayerData, fleetActionType: GameType.FleetActionType, planetId: number, unitQuantities: Map<GameType.UnitType, number>, transportedResourceQuantities: Map<GameType.ResourceType, number>, targetPlanetAddress: GameType.PlanetAddress, zoneAssociatedPlanetOwnerPlayerId: number | null, targetZoneExists: boolean): RequirementType.Requirement[]
+export function getFailedFleetMovementRequirements(requirementContext: RequirementType.RequirementContext, fleetActionType: GameType.FleetActionType): RequirementType.Requirement[]
 {
-    const requirementContext: RequirementType.RequirementContext =
-    {
-        playerData: playerData,
-        planetId: planetId,
-        unitQuantities: unitQuantities,
-        transportedResourceQuantities: transportedResourceQuantities,
-        targetPlanetAddress: targetPlanetAddress,
-        zoneAssociatedPlanetOwnerPlayerId: zoneAssociatedPlanetOwnerPlayerId,
-        targetZoneExists: targetZoneExists,
-    };
     const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.FleetMovement, specificThingType: fleetActionType });
     return getFailedRequirements(requirementContext, requirements);
 }
 
 // Derives the quantity cap from the unit's own self-referential count requirement, so the binary gate and the "max out" cap stay driven by one piece of data. Returns null when the unit has no such cap.
-export function getRemainingBuildableUnitCount(playerData: CoreType.PlayerData, unitType: GameType.UnitType, planetId: number): number | null
+export function getRemainingBuildableUnitCount(requirementContext: RequirementType.RequirementContext, unitType: GameType.UnitType): number | null
 {
-    const requirementContext: RequirementType.RequirementContext =
-    {
-        playerData: playerData,
-        planetId: planetId,
-    };
     const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.UnitConstruction, specificThingType: unitType });
 
     let remainingBuildableCount: number | null = null;
@@ -94,13 +59,13 @@ export function getRemainingBuildableUnitCount(playerData: CoreType.PlayerData, 
     return remainingBuildableCount;
 }
 
-export function capUnitQuantitiesByBuildCount(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, requestedUnitQuantities: Map<GameType.UnitType, number>): Map<GameType.UnitType, number>
+export function capUnitQuantitiesByBuildCount(requirementContext: RequirementType.RequirementContext, requestedUnitQuantities: Map<GameType.UnitType, number>): Map<GameType.UnitType, number>
 {
     const cappedUnitQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();
 
     for (const [unitType, requestedUnitQuantity] of requestedUnitQuantities)
     {
-        const remainingBuildableCount: number | null = getRemainingBuildableUnitCount(playerData, unitType, planetData.planetRow.id);
+        const remainingBuildableCount: number | null = getRemainingBuildableUnitCount(requirementContext, unitType);
         if (remainingBuildableCount === null)
         {
             cappedUnitQuantities.set(unitType, requestedUnitQuantity);
@@ -119,13 +84,8 @@ export function capUnitQuantitiesByBuildCount(playerData: CoreType.PlayerData, p
     return cappedUnitQuantities;
 }
 
-export function getRequirementDescriptions(failedRequirements: RequirementType.Requirement[], playerData: CoreType.PlayerData, planetId: number): string[]
+export function getRequirementDescriptions(failedRequirements: RequirementType.Requirement[], requirementContext: RequirementType.RequirementContext): string[]
 {
-    const requirementContext: RequirementType.RequirementContext =
-    {
-        playerData: playerData,
-        planetId: planetId,
-    };
     const descriptions: string[] = [];
 
     for (const requirement of failedRequirements)
@@ -140,7 +100,16 @@ export function getRequirementDescriptions(failedRequirements: RequirementType.R
     return descriptions;
 }
 
-// --- internals ---
+export function shouldHideDataWhenRequirementFailed(requirement: RequirementType.Requirement): boolean
+{
+    if (requirement.hideDataWhenRequirementFailed === undefined)
+    {
+        throw new Error(`Requirement with operator ${requirement.operator} is missing hideDataWhenRequirementFailed.`);
+    }
+
+    return requirement.hideDataWhenRequirementFailed;
+}
+
 function getRequirements(specificThing: ThingType.SpecificThingType): RequirementType.Requirement[]
 {
     const globalRequirements: RequirementType.Requirement[] = StaticData.GLOBAL_REQUIREMENTS.get(specificThing.thingType) ?? [];
@@ -151,31 +120,25 @@ function getRequirements(specificThing: ThingType.SpecificThingType): Requiremen
 
 function getRequirementUnitConstructionCountCap(requirementContext: RequirementType.RequirementContext, requirement: RequirementType.Requirement, unitType: GameType.UnitType): number | null
 {
-    const specificThingRequirement: RequirementType.SpecificThingRequirement | undefined = requirement.specificThingRequirement;
-    if (specificThingRequirement === undefined)
+    if (requirement.condition !== RequirementValueGetters.OWNED_AND_QUEUED_UNIT_COUNT)
     {
         return null;
     }
 
-    if (specificThingRequirement.thingType !== ThingType.Thing.Unit)
+    if ((requirement.specificThingType as GameType.UnitType) !== unitType)
     {
         return null;
     }
 
-    if ((specificThingRequirement.specificThingType as GameType.UnitType) !== unitType)
-    {
-        return null;
-    }
+    const currentUnitCount: number = requirement.condition.valueGetter(requirementContext, requirement);
+    const maximumUnitCount: number = resolveValueToNumber(requirementContext, requirement);
 
-    const currentUnitCount: number = specificThingRequirement.valueGetter(requirementContext);
-    const maximumUnitCount: number = resolveValueToNumber(requirementContext, specificThingRequirement.value, specificThingRequirement.operator);
-
-    if (specificThingRequirement.operator === RequirementType.RequirementOperator.LesserThan)
+    if (requirement.operator === RequirementType.RequirementOperator.LesserThan)
     {
         return Math.max(0, maximumUnitCount - currentUnitCount);
     }
 
-    if (specificThingRequirement.operator === RequirementType.RequirementOperator.LesserOrEqual)
+    if (requirement.operator === RequirementType.RequirementOperator.LesserOrEqual)
     {
         return Math.max(0, maximumUnitCount + 1 - currentUnitCount);
     }
@@ -183,11 +146,13 @@ function getRequirementUnitConstructionCountCap(requirementContext: RequirementT
     return null;
 }
 
-function resolveValueToNumber(requirementContext: RequirementType.RequirementContext, value: number | boolean | RequirementType.ThingValueGetter, operator: RequirementType.RequirementOperator): number
+function resolveValueToNumber(requirementContext: RequirementType.RequirementContext, requirement: RequirementType.Requirement): number
 {
+    const value: number | boolean | RequirementType.RequirementValueGetter = requirement.value;
+
     if (typeof value === "function")
     {
-        return value(requirementContext);
+        return value(requirementContext, requirement);
     }
 
     if (typeof value !== "boolean")
@@ -195,12 +160,12 @@ function resolveValueToNumber(requirementContext: RequirementType.RequirementCon
         return value;
     }
 
-    if (operator !== RequirementType.RequirementOperator.Equal)
+    if (requirement.operator !== RequirementType.RequirementOperator.Equal)
     {
         throw new Error(`UNREACHABLE: Boolean value can only be used with the Equal operator.`);
     }
 
-    return value ? 1 : 0;
+    return value === true ? 1 : 0;
 }
 
 function compare(valueGetter: number, operator: RequirementType.RequirementOperator, threshold: number): boolean
@@ -265,33 +230,10 @@ function operatorToString(operator: RequirementType.RequirementOperator): string
 
 function meetsSingleRequirement(requirementContext: RequirementType.RequirementContext, requirement: RequirementType.Requirement): boolean
 {
-    if (requirement.thingRequirement !== undefined)
-    {
-        const thingRequirement: RequirementType.ThingRequirement = requirement.thingRequirement;
-        const thingValueGetter: number = thingRequirement.valueGetter(requirementContext);
-        const threshold: number = resolveValueToNumber(requirementContext, thingRequirement.value, thingRequirement.operator);
+    const currentValue: number = requirement.condition.valueGetter(requirementContext, requirement);
+    const threshold: number = resolveValueToNumber(requirementContext, requirement);
 
-        const conditionRespected: boolean = compare(thingValueGetter, thingRequirement.operator, threshold);
-        if (conditionRespected === false)
-        {
-            return false;
-        }
-    }
-
-    if (requirement.specificThingRequirement !== undefined)
-    {
-        const specificThingRequirement: RequirementType.SpecificThingRequirement = requirement.specificThingRequirement;
-        const specificThingValueGetter: number = specificThingRequirement.valueGetter(requirementContext);
-        const threshold: number = resolveValueToNumber(requirementContext, specificThingRequirement.value, specificThingRequirement.operator);
-
-        const conditionRespected: boolean = compare(specificThingValueGetter, specificThingRequirement.operator, threshold);
-        if (conditionRespected === false)
-        {
-            return false;
-        }
-    }
-
-    return true;
+    return compare(currentValue, requirement.operator, threshold);
 }
 
 function getFailedRequirements(requirementContext: RequirementType.RequirementContext, requirements: RequirementType.Requirement[]): RequirementType.Requirement[]
@@ -312,55 +254,38 @@ function getFailedRequirements(requirementContext: RequirementType.RequirementCo
 
 function describeSingleRequirement(requirementContext: RequirementType.RequirementContext, requirement: RequirementType.Requirement): string | null
 {
-    if (requirement.thingRequirement !== undefined)
+    const currentValue: number = requirement.condition.valueGetter(requirementContext, requirement);
+    const threshold: number = resolveValueToNumber(requirementContext, requirement);
+    const operatorString: string = operatorToString(requirement.operator);
+
+    const failureText: string = typeof requirement.condition.failureDescription === "function" ? requirement.condition.failureDescription(requirement, requirementContext) : requirement.condition.failureDescription;
+
+    if (requirement.specificThingType !== undefined)
     {
-        const thingRequirement: RequirementType.ThingRequirement = requirement.thingRequirement;
-
-        if (thingRequirement.thingType === ThingType.Thing.BuildingUpgrade)
+        if (requirement.thingType === undefined)
         {
-            return null;
+            throw new Error(`UNREACHABLE: If specific thing is set in a requirement, a thing must be set.`);
         }
 
-        if (thingRequirement.thingType === ThingType.Thing.ResearchingResearch)
+        const specificThing: ThingType.SpecificThingType =
         {
-            return null;
+            thingType: requirement.thingType,
+            specificThingType: requirement.specificThingType,
         }
 
-        if (thingRequirement.thingType === ThingType.Thing.UnitConstruction)
-        {
-            return null;
-        }
+        const specificName: string = ThingDataHelpers.getSpecificThingName(specificThing);
 
-        const thingValueGetter: number = thingRequirement.valueGetter(requirementContext);
-        const threshold: number = resolveValueToNumber(requirementContext, thingRequirement.value, thingRequirement.operator);
-        const operatorString: string = operatorToString(thingRequirement.operator);
-        const thingName: string | undefined = ThingData.THING_DISPLAY_NAMES.get(thingRequirement.thingType);
+        return failureText + ` - ${specificName} ${operatorString} ${threshold} (current: ${currentValue})`;
+    }
 
+    if (requirement.thingType !== undefined)
+    {
+        const thingName: string | undefined = ThingData.THING_DISPLAY_NAMES.get(requirement.thingType);
         if (thingName === undefined)
         {
-            throw new Error(`UNREACHABLE: No display name for Thing ${thingRequirement.thingType}`);
+            throw new Error(`UNREACHABLE: No display name for Thing ${requirement.thingType}`);
         }
-
-        return `Total ${thingName} ${operatorString} ${threshold} (current: ${thingValueGetter})`;
     }
 
-    if (requirement.specificThingRequirement !== undefined)
-    {
-        const specificThingRequirement: RequirementType.SpecificThingRequirement = requirement.specificThingRequirement;
-
-        if (specificThingRequirement.thingType === ThingType.Thing.BuildingUpgrade)
-        {
-            const buildingName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.building(specificThingRequirement.specificThingType));
-            return `${buildingName} upgrading`;
-        }
-
-        const specificName: string = ThingDataHelpers.getSpecificThingName({ thingType: specificThingRequirement.thingType, specificThingType: specificThingRequirement.specificThingType });
-        const specificThingValueGetter: number = specificThingRequirement.valueGetter(requirementContext);
-        const threshold: number = resolveValueToNumber(requirementContext, specificThingRequirement.value, specificThingRequirement.operator);
-        const operatorString: string = operatorToString(specificThingRequirement.operator);
-
-        return `${specificName} ${operatorString} ${threshold} (current: ${specificThingValueGetter})`;
-    }
-
-    return null;
+    return failureText;
 }

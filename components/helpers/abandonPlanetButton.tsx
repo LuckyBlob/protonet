@@ -7,6 +7,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
+import * as HelperElements from "@/components/helpers/helperElements";
 
 type AbandonPlanetButtonProps =
 {
@@ -39,6 +40,8 @@ export function AbandonPlanetButton(props: AbandonPlanetButtonProps): ReactEleme
 		}
 	};
 
+	const abandonDisabledReasons: string[] = isDisabled === true ? ["You cannot abandon your last planet."] : [];
+
 	const buttonElement: ReactElement =
 	(
 		<button
@@ -51,5 +54,5 @@ export function AbandonPlanetButton(props: AbandonPlanetButtonProps): ReactEleme
 		</button>
 	);
 
-	return buttonElement;
+	return HelperElements.renderWithTooltip(abandonDisabledReasons, buttonElement);
 }

@@ -329,13 +329,15 @@ test.describe("Combat — Tier 1: trivial-outcome oracles", () =>
         await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Attack" })).toHaveCount(1);
 
         await E2EHelper.selectTargetZone(page, "Debris Field");
-        await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Attack" })).toHaveCount(0);
+        await E2EHelper.fleetActionSelect(page).selectOption({ label: "Attack" });
+        await expect(E2EHelper.sendFleetButton(page)).toBeDisabled();
 
         await page.getByPlaceholder("P").fill(String(scenario.attackerPlanet.slot));
         await page.getByPlaceholder("S").fill(String(scenario.attackerPlanet.system));
         await page.getByPlaceholder("G").fill(String(scenario.attackerPlanet.galaxy));
         await E2EHelper.unitRowQuantityInput(page, "Small Transport").fill("1");
-        await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Attack" })).toHaveCount(0);
+        await E2EHelper.fleetActionSelect(page).selectOption({ label: "Attack" });
+        await expect(E2EHelper.sendFleetButton(page)).toBeDisabled();
     });
 });
 

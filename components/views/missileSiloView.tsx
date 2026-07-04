@@ -13,6 +13,7 @@ import * as HelperElement from "@/components/helpers/helperElements";
 import * as UnitConstructionData from "@/lib/gameplay/dynamicData/planet/unitConstructionData";
 import * as MissileSpaceData from "@/lib/gameplay/dynamicData/planet/missileSpaceData";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
+import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as UnitBuildElements from "@/components/helpers/unitBuildElements";
 
 const MISSILE_INSUFFICIENT_TEXT: string = "Not enough resources or space.";
@@ -58,7 +59,9 @@ function renderDestroyButton(props: MissileSiloViewProps, unitType: GameType.Uni
     const usableClassName: string = "px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500";
     const disabledClassName: string = "px-4 py-2 bg-gray-400 text-white rounded cursor-not-allowed";
 
-    const element: ReactElement =
+    const destroyDisabledReasons: string[] = isUsable === false ? ["Enter a quantity to destroy."] : [];
+
+    const destroyButton: ReactElement =
     (
         <button
             onClick={handleDestroy}
@@ -69,7 +72,7 @@ function renderDestroyButton(props: MissileSiloViewProps, unitType: GameType.Uni
         </button>
     );
 
-    return element;
+    return HelperElement.renderWithTooltip(destroyDisabledReasons, destroyButton);
 }
 //#endregion
 
@@ -84,7 +87,12 @@ function renderMissileSiloBody(props: MissileSiloViewProps, planetDataPredicted:
         {
             const affordableQuantities: Map<GameType.UnitType, number> = UnitConstructionData.computeMaxAffordableUnitQuantities(planet, requestedUnitQuantities);
             const storableQuantities: Map<GameType.UnitType, number> = MissileSpaceData.computeMaxStorableMissileQuantities(planet, playerData, affordableQuantities);
-            return Requirement.capUnitQuantitiesByBuildCount(playerData, planet, storableQuantities);
+            const requirementContext: RequirementType.RequirementContext =
+            {
+                playerData: playerData,
+                planetId: planet.planetRow.id,
+            };
+            return Requirement.capUnitQuantitiesByBuildCount(requirementContext, storableQuantities);
         };
 
     const renderDestroyAction: UnitBuildElements.RenderRowEndAction =
@@ -99,7 +107,7 @@ function renderMissileSiloBody(props: MissileSiloViewProps, planetDataPredicted:
     const onBuildAll: () => void = UnitBuildElements.createBuildUnitsHandler(props.clientDataStateResult, planetDataPredicted, requestedBuildMap, quantitiesState.resetRequestedQuantities);
 
     const previewContent: ReactElement | null = UnitBuildElements.renderBuildPreviewContent(planetDataPredicted, serverData, requestedBuildMap, computeBuildableMissileQuantities, MISSILE_INSUFFICIENT_TEXT);
-    const buildButton: ReactElement | null = UnitBuildElements.renderBuildButton(planetDataPredicted, requestedBuildMap, hasRequestedData, onBuildAll, computeBuildableMissileQuantities);
+    const buildButton: ReactElement | null = UnitBuildElements.renderBuildButton(planetDataPredicted, requestedBuildMap, hasRequestedData, onBuildAll, computeBuildableMissileQuantities, MISSILE_INSUFFICIENT_TEXT);
     const buildSections: ReactElement = UnitBuildElements.renderUnitBuildSections(playerData, missileUnitTypes, planetDataPredicted, serverData, quantitiesState.requestedQuantities, quantitiesState.setRequestedQuantity, renderDestroyAction);
     const constructionSection: ReactElement = UnitBuildElements.renderUnitConstructionSection(planetDataPredicted, serverData, GameType.UnitConstructionQueueType.MissileSilo, "No missile construction in progress.");
 

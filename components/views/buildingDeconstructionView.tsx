@@ -35,8 +35,13 @@ function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewPro
 	const remainingMs: number = BuildingDeconstructionData.getBuildingDeconstructionRemainingMs(selectedPlanetDataPredicted) ?? 0;
 	const canAfford: boolean = (deconstructionCostMap !== null) && BuildingData.canAffordResourceCost(selectedPlanetDataPredicted, deconstructionCostMap);
 
-	const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedBuildingDeconstructionRequirements(playerData, buildingType, planetId);
-	const failedRequirementsBox: ReactElement | null = BuildingViewHelpers.renderFailedRequirementsBox(failedRequirements, playerData, planetId);
+	const requirementContext: RequirementType.RequirementContext =
+	{
+		playerData: playerData,
+		planetId: planetId,
+	};
+	const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedBuildingDeconstructionRequirements(requirementContext, buildingType);
+	const failedRequirementsBox: ReactElement | null = BuildingViewHelpers.renderFailedRequirementsBox(failedRequirements, requirementContext);
 
 	const handleDeconstruct: () => void = () =>
 	{
@@ -51,6 +56,12 @@ function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewPro
 	const levelLine: ReactElement = isThisBuildingDeconstructing === true
 		? <div className="text-sm">{"Level"} {currentLevel} {"->"} {"Level"} {currentLevel - 1}</div>
 		: <div className="text-sm">Level {currentLevel}</div>;
+
+	const deconstructDisabledReasons: string[] = Requirement.getRequirementDescriptions(failedRequirements, requirementContext);
+	if (canAfford === false)
+	{
+		deconstructDisabledReasons.push("Not enough resources.");
+	}
 
 	const actionElement: ReactElement = isThisBuildingDeconstructing === true
 		? (
@@ -68,7 +79,7 @@ function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewPro
 				<div className="text-xs">Cannot deconstruct.</div>
 			</div>
 		)
-		: (
+		: HelperElements.renderWithTooltip(deconstructDisabledReasons,
 			<button
 				onClick={handleDeconstruct}
 				disabled={(canAfford === false) || (failedRequirements.length > 0)}
@@ -91,36 +102,41 @@ function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewPro
 	return BuildingViewHelpers.renderBuildingRowShell(buildingType, imagePath, middleColumn, actionElement);
 }
 
+function renderBuildingDeconstructionViewBody(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData): ReactElement
+{
+	const selectedZone: GameType.PlanetZone = selectedPlanetDataPredicted.planetRow.zone as GameType.PlanetZone;
+
+	const deconstructableBuildingTypes: GameType.BuildingType[] = BuildingViewHelpers.getBuildableBuildingTypes(selectedZone).filter((buildingType: GameType.BuildingType): boolean =>
+	{
+		return (BuildingData.getBuildingLevel(selectedPlanetDataPredicted, buildingType) >= 1) && (StaticDataHelper.canDeconstructBuilding(buildingType) === true);
+	});
+
+	const rowElements: ReactElement[] = deconstructableBuildingTypes.map((buildingType: GameType.BuildingType): ReactElement =>
+	{
+		return renderBuildingDeconstructRow(props, selectedPlanetDataPredicted, buildingType);
+	});
+
+	const emptyElement: ReactElement | null = (rowElements.length === 0)
+		? <div className="border border-gray-400 rounded p-4 text-gray-400 text-center">Nothing to deconstruct.</div>
+		: null;
+
+	const buildingDeconstructionViewElement: ReactElement =
+	(
+		<div className="flex flex-col gap-2 p-4">
+			{rowElements}
+			{emptyElement}
+		</div>
+	);
+
+	return buildingDeconstructionViewElement;
+}
+
 export function BuildingDeconstructionView(props: BuildingViewHelpers.BuildingViewProps): ReactElement
 {
 	try
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-		const selectedZone: GameType.PlanetZone = selectedPlanetDataPredicted.planetRow.zone as GameType.PlanetZone;
-
-		const deconstructableBuildingTypes: GameType.BuildingType[] = BuildingViewHelpers.getBuildableBuildingTypes(selectedZone).filter((buildingType: GameType.BuildingType): boolean =>
-		{
-			return (BuildingData.getBuildingLevel(selectedPlanetDataPredicted, buildingType) >= 1) && (StaticDataHelper.canDeconstructBuilding(buildingType) === true);
-		});
-
-		const rowElements: ReactElement[] = deconstructableBuildingTypes.map((buildingType: GameType.BuildingType): ReactElement =>
-		{
-			return renderBuildingDeconstructRow(props, selectedPlanetDataPredicted, buildingType);
-		});
-
-		const emptyElement: ReactElement | null = (rowElements.length === 0)
-			? <div className="border border-gray-400 rounded p-4 text-gray-400 text-center">Nothing to deconstruct.</div>
-			: null;
-
-		const buildingDeconstructionViewElement: ReactElement =
-		(
-			<div className="flex flex-col gap-2 p-4">
-				{rowElements}
-				{emptyElement}
-			</div>
-		);
-
-		return buildingDeconstructionViewElement;
+		return renderBuildingDeconstructionViewBody(props, selectedPlanetDataPredicted);
 	}
 	catch (error: unknown)
 	{

@@ -85,9 +85,14 @@ function renderResearchRow(props: ResearchViewProps, selectedPlanetDataPredicted
 	const imagePath: string = getResearchImagePath(researchType, currentLevel);
 
 	const isThisResearching: boolean = ResearchData.isResearchTypeCurrentlyResearching(playerData, researchType);
-	const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedResearchRequirements(playerData, researchType, planetId);
-	const failedHidingRequirements: RequirementType.Requirement[] = failedRequirements.filter((requirement: RequirementType.Requirement): boolean => requirement.hideDataWhenRequirementFailed === true);
-	const hidingDescriptions: string[] = Requirement.getRequirementDescriptions(failedHidingRequirements, playerData, planetId);
+	const requirementContext: RequirementType.RequirementContext =
+	{
+		playerData: playerData,
+		planetId: planetId,
+	};
+	const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedResearchRequirements(requirementContext, researchType);
+	const failedHidingRequirements: RequirementType.Requirement[] = failedRequirements.filter((requirement: RequirementType.Requirement): boolean => Requirement.shouldHideDataWhenRequirementFailed(requirement));
+	const hidingDescriptions: string[] = Requirement.getRequirementDescriptions(failedHidingRequirements, requirementContext);
 
 	const remainingMs: number = ResearchData.getCurrentlyResearchingRemainingMs(playerData) ?? 0;
 	const canAfford: boolean = ResearchData.canAffordResearch(playerData, selectedPlanetDataPredicted, researchType);
@@ -100,6 +105,12 @@ function renderResearchRow(props: ResearchViewProps, selectedPlanetDataPredicted
 	const levelLine: ReactElement = isThisResearching === true
 		? <div className="text-sm">{"Level"} {currentLevel} {"->"} {"Level"} {currentLevel + 1}</div>
 		: <div className="text-sm">Level {currentLevel}</div>;
+
+	const researchDisabledReasons: string[] = Requirement.getRequirementDescriptions(failedRequirements, requirementContext);
+	if (canAfford === false)
+	{
+		researchDisabledReasons.push("Not enough resources.");
+	}
 
 	const actionElement: ReactElement = isThisResearching === true
 		? (
@@ -117,7 +128,7 @@ function renderResearchRow(props: ResearchViewProps, selectedPlanetDataPredicted
 				})}
 			</div>
 		)
-		: (
+		: HelperElements.renderWithTooltip(researchDisabledReasons,
 			<button
 				onClick={handleBuyResearch}
 				disabled={(canAfford === false) || (failedRequirements.length > 0)}
@@ -171,38 +182,42 @@ function renderResearchRow(props: ResearchViewProps, selectedPlanetDataPredicted
 	return rowElement;
 }
 
+function renderResearchViewBody(props: ResearchViewProps, selectedPlanetDataPredicted: CoreType.PlanetData): ReactElement
+{
+	const researchLabLevel: number = BuildingData.getBuildingLevel(selectedPlanetDataPredicted, GameType.BuildingType.ResearchLab);
+	if (researchLabLevel < 1)
+	{
+		const noResearchLabElement: ReactElement =
+		(
+			<div className="flex flex-col items-center justify-center p-8 text-lg text-gray-300">
+				No Research Lab
+			</div>
+		);
+
+		return noResearchLabElement;
+	}
+
+	const rowElements: ReactElement[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Research).map((researchType: GameType.ResearchType): ReactElement =>
+	{
+		return renderResearchRow(props, selectedPlanetDataPredicted, researchType);
+	});
+
+	const researchViewElement: ReactElement =
+	(
+		<div className="flex flex-col gap-2 p-4">
+			{rowElements}
+		</div>
+	);
+
+	return researchViewElement;
+}
+
 export function ResearchView(props: ResearchViewProps): ReactElement
 {
 	try
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-
-		const researchLabLevel: number = BuildingData.getBuildingLevel(selectedPlanetDataPredicted, GameType.BuildingType.ResearchLab);
-		if (researchLabLevel < 1)
-		{
-			const noResearchLabElement: ReactElement =
-			(
-				<div className="flex flex-col items-center justify-center p-8 text-lg text-gray-300">
-					No Research Lab
-				</div>
-			);
-
-			return noResearchLabElement;
-		}
-
-		const rowElements: ReactElement[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Research).map((researchType: GameType.ResearchType): ReactElement =>
-		{
-			return renderResearchRow(props, selectedPlanetDataPredicted, researchType);
-		});
-
-		const researchViewElement: ReactElement =
-		(
-			<div className="flex flex-col gap-2 p-4">
-				{rowElements}
-			</div>
-		);
-
-		return researchViewElement;
+		return renderResearchViewBody(props, selectedPlanetDataPredicted);
 	}
 	catch (error: unknown)
 	{

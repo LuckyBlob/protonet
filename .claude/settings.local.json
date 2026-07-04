@@ -125,7 +125,11 @@
       "Bash(NODE_PATH=\"D:/Claude/WebsiteProject/protonet/node_modules\" node \"C:/Users/Utilisateur/AppData/Local/Temp/claude/D--Claude-WebsiteProject-protonet/5c67fdae-adcb-45be-ac61-01b3a90f93a7/scratchpad/setresources.cjs\")",
       "Bash(NODE_PATH=\"D:/Claude/WebsiteProject/protonet/node_modules\" node \"C:/Users/Utilisateur/AppData/Local/Temp/claude/D--Claude-WebsiteProject-protonet/5c67fdae-adcb-45be-ac61-01b3a90f93a7/scratchpad/q2.cjs\")",
       "Bash(cat)",
-      "Bash(NODE_PATH=\"D:/Claude/WebsiteProject/protonet/node_modules\" node \"C:/Users/Utilisateur/AppData/Local/Temp/claude/D--Claude-WebsiteProject-protonet/5c67fdae-adcb-45be-ac61-01b3a90f93a7/scratchpad/q3.cjs\")"
+      "Bash(NODE_PATH=\"D:/Claude/WebsiteProject/protonet/node_modules\" node \"C:/Users/Utilisateur/AppData/Local/Temp/claude/D--Claude-WebsiteProject-protonet/5c67fdae-adcb-45be-ac61-01b3a90f93a7/scratchpad/q3.cjs\")",
+      "PowerShell($errors = npm run typecheck 2>&1 | Select-String -Pattern \"error TS\"; Write-Output \"total_errors=$\\($errors.Count\\)\"; $errors | Select-Object -First 30)",
+      "PowerShell($errors = npm run typecheck 2>&1 | Select-String -Pattern \"error TS\"; Write-Output \"total_errors=$\\($errors.Count\\)\"; $errors | Select-Object -First 20)",
+      "PowerShell($errors = npm run typecheck 2>&1 | Select-String -Pattern \"error TS\"; Write-Output \"total_errors=$\\($errors.Count\\)\"; $errors | Select-Object -First 10)",
+      "PowerShell($errors = npm run typecheck 2>&1 | Select-String -Pattern \"error TS\"; Write-Output \"total_errors=$\\($errors.Count\\)\"; $errors | Select-Object -First 15)"
     ]
   },
   "hooks": {

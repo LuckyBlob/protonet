@@ -46,25 +46,25 @@ describe('getRemainingBuildableUnitCount', () =>
     it('returns the per-unit maximum when none are owned or queued', () =>
     {
         const playerData: CoreType.PlayerData = buildScenarioPlayer(BUILDABLE_SCENARIO);
-        expect(Requirement.getRemainingBuildableUnitCount(playerData, GameType.UnitType.SmallShieldDome, PLANET_ID)).toBe(1);
+        expect(Requirement.getRemainingBuildableUnitCount({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.SmallShieldDome)).toBe(1);
     });
 
     it('drops to 0 once one is already owned', () =>
     {
         const playerData: CoreType.PlayerData = buildScenarioPlayer({ ...BUILDABLE_SCENARIO, ownedSmallDomes: 1 });
-        expect(Requirement.getRemainingBuildableUnitCount(playerData, GameType.UnitType.SmallShieldDome, PLANET_ID)).toBe(0);
+        expect(Requirement.getRemainingBuildableUnitCount({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.SmallShieldDome)).toBe(0);
     });
 
     it('drops to 0 once one is already queued in construction', () =>
     {
         const playerData: CoreType.PlayerData = buildScenarioPlayer({ ...BUILDABLE_SCENARIO, queuedSmallDomes: 1 });
-        expect(Requirement.getRemainingBuildableUnitCount(playerData, GameType.UnitType.SmallShieldDome, PLANET_ID)).toBe(0);
+        expect(Requirement.getRemainingBuildableUnitCount({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.SmallShieldDome)).toBe(0);
     });
 
     it('returns null for a unit with no self-count cap', () =>
     {
         const playerData: CoreType.PlayerData = buildScenarioPlayer(BUILDABLE_SCENARIO);
-        expect(Requirement.getRemainingBuildableUnitCount(playerData, GameType.UnitType.SmallTransport, PLANET_ID)).toBeNull();
+        expect(Requirement.getRemainingBuildableUnitCount({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.SmallTransport)).toBeNull();
     });
 });
 
@@ -73,19 +73,19 @@ describe('getFailedUnitBuildRequirements gates the shield dome by count', () =>
     it('passes when below the cap and prerequisites are met', () =>
     {
         const playerData: CoreType.PlayerData = buildScenarioPlayer(BUILDABLE_SCENARIO);
-        expect(Requirement.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallShieldDome, PLANET_ID).length).toBe(0);
+        expect(Requirement.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.SmallShieldDome).length).toBe(0);
     });
 
     it('fails when one is already owned', () =>
     {
         const playerData: CoreType.PlayerData = buildScenarioPlayer({ ...BUILDABLE_SCENARIO, ownedSmallDomes: 1 });
-        expect(Requirement.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallShieldDome, PLANET_ID).length).toBeGreaterThan(0);
+        expect(Requirement.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.SmallShieldDome).length).toBeGreaterThan(0);
     });
 
     it('fails when one is already queued in construction', () =>
     {
         const playerData: CoreType.PlayerData = buildScenarioPlayer({ ...BUILDABLE_SCENARIO, queuedSmallDomes: 1 });
-        expect(Requirement.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallShieldDome, PLANET_ID).length).toBeGreaterThan(0);
+        expect(Requirement.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.SmallShieldDome).length).toBeGreaterThan(0);
     });
 });
 
@@ -95,7 +95,7 @@ describe('capUnitQuantitiesByBuildCount', () =>
     {
         const playerData: CoreType.PlayerData = buildScenarioPlayer(BUILDABLE_SCENARIO);
         const planet: CoreType.PlanetData = playerData.planetDatas[0];
-        const capped: Map<GameType.UnitType, number> = Requirement.capUnitQuantitiesByBuildCount(playerData, planet, new Map([[GameType.UnitType.SmallShieldDome, 5]]));
+        const capped: Map<GameType.UnitType, number> = Requirement.capUnitQuantitiesByBuildCount({ playerData: playerData, planetId: planet.planetRow.id }, new Map([[GameType.UnitType.SmallShieldDome, 5]]));
         expect(capped.get(GameType.UnitType.SmallShieldDome)).toBe(1);
     });
 
@@ -103,7 +103,7 @@ describe('capUnitQuantitiesByBuildCount', () =>
     {
         const playerData: CoreType.PlayerData = buildScenarioPlayer({ ...BUILDABLE_SCENARIO, ownedSmallDomes: 1 });
         const planet: CoreType.PlanetData = playerData.planetDatas[0];
-        const capped: Map<GameType.UnitType, number> = Requirement.capUnitQuantitiesByBuildCount(playerData, planet, new Map([[GameType.UnitType.SmallShieldDome, 5]]));
+        const capped: Map<GameType.UnitType, number> = Requirement.capUnitQuantitiesByBuildCount({ playerData: playerData, planetId: planet.planetRow.id }, new Map([[GameType.UnitType.SmallShieldDome, 5]]));
         expect(capped.has(GameType.UnitType.SmallShieldDome)).toBe(false);
     });
 
@@ -112,7 +112,7 @@ describe('capUnitQuantitiesByBuildCount', () =>
         const playerData: CoreType.PlayerData = buildScenarioPlayer(BUILDABLE_SCENARIO);
         const planet: CoreType.PlanetData = playerData.planetDatas[0];
         const request: Map<GameType.UnitType, number> = new Map([[GameType.UnitType.SmallShieldDome, 5], [GameType.UnitType.SmallTransport, 3]]);
-        const capped: Map<GameType.UnitType, number> = Requirement.capUnitQuantitiesByBuildCount(playerData, planet, request);
+        const capped: Map<GameType.UnitType, number> = Requirement.capUnitQuantitiesByBuildCount({ playerData: playerData, planetId: planet.planetRow.id }, request);
         expect(capped.get(GameType.UnitType.SmallShieldDome)).toBe(1);
         expect(capped.get(GameType.UnitType.SmallTransport)).toBe(3);
     });

@@ -57,20 +57,6 @@ function getTargetAddress(galaxy: number, system: number, slot: number, zone: Ga
     return targetAddress;
 }
 
-function getFailedLaunchRequirements(data: MissileLaunchData): RequirementType.Requirement[]
-{
-    const unitQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>([[LAUNCHABLE_MISSILE_TYPE, data.requestedQuantity]]);
-
-    const targetPublicPlanetData: CoreType.PublicPlanetData | null = CoreType.getPublicPlanetDataForAddress(data.publicPlanetDatas, data.targetAddress);
-    const targetZoneExists: boolean = targetPublicPlanetData !== null;
-
-    const zoneAssociatedPlanetAddress: GameType.PlanetAddress = { ...data.targetAddress, zone: GameType.PlanetZone.Planet };
-    const zoneAssociatedPlanetData: CoreType.PublicPlanetData | null = CoreType.getPublicPlanetDataForAddress(data.publicPlanetDatas, zoneAssociatedPlanetAddress);
-    const zoneAssociatedPlanetOwnerPlayerId: number | null = zoneAssociatedPlanetData?.owner_player_id ?? null;
-
-    return Requirement.getFailedFleetMovementRequirements(data.playerData, GameType.FleetActionType.MissileLaunch, data.originPlanetData.planetRow.id, unitQuantities, new Map<GameType.ResourceType, number>(), data.targetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists);
-}
-
 function formatFlightTime(totalSeconds: number): string
 {
     const minutes: number = Math.floor(totalSeconds / 60);
@@ -212,7 +198,22 @@ function renderLaunchControls(props: MissileFleetViewProps, data: MissileLaunchD
     const ownedQuantity: number = UnitData.getUnitQuantity(data.originPlanetData, LAUNCHABLE_MISSILE_TYPE);
     const cappedRequestedQuantity: number = Math.min(data.requestedQuantity, ownedQuantity);
 
-    const failedRequirements: RequirementType.Requirement[] = getFailedLaunchRequirements(data);
+    const targetPublicPlanetData: CoreType.PublicPlanetData | null = CoreType.getPublicPlanetDataForAddress(data.publicPlanetDatas, data.targetAddress);
+    const zoneAssociatedPlanetAddress: GameType.PlanetAddress = { ...data.targetAddress, zone: GameType.PlanetZone.Planet };
+    const zoneAssociatedPlanetData: CoreType.PublicPlanetData | null = CoreType.getPublicPlanetDataForAddress(data.publicPlanetDatas, zoneAssociatedPlanetAddress);
+
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: data.playerData,
+        planetId: data.originPlanetData.planetRow.id,
+        unitQuantities: new Map<GameType.UnitType, number>([[LAUNCHABLE_MISSILE_TYPE, data.requestedQuantity]]),
+        transportedResourceQuantities: new Map<GameType.ResourceType, number>(),
+        targetPlanetAddress: data.targetAddress,
+        zoneAssociatedPlanetOwnerPlayerId: zoneAssociatedPlanetData?.owner_player_id ?? null,
+        targetZoneExists: targetPublicPlanetData !== null,
+    };
+
+    const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(requirementContext, GameType.FleetActionType.MissileLaunch);
     const isLaunchDisabled: boolean = (cappedRequestedQuantity === 0) || (failedRequirements.length > 0);
 
     const handleLaunch = async (): Promise<void> =>
@@ -240,6 +241,21 @@ function renderLaunchControls(props: MissileFleetViewProps, data: MissileLaunchD
         ? "bg-gray-700 text-gray-400 cursor-not-allowed"
         : "bg-red-700 hover:bg-red-600 text-white";
 
+    const launchDisabledReasons: string[] = [];
+    if (cappedRequestedQuantity === 0)
+    {
+        launchDisabledReasons.push("Select at least one missile to launch.");
+    }
+
+    launchDisabledReasons.push(...Requirement.getRequirementDescriptions(failedRequirements, requirementContext));
+
+    const launchButton: ReactElement =
+    (
+        <button type="button" disabled={isLaunchDisabled} onClick={handleLaunch} className={`rounded px-6 py-2 text-sm font-bold ${buttonClass}`}>
+            Launch missiles
+        </button>
+    );
+
     const element: ReactElement =
     (
         <div className="flex flex-col items-center gap-2">
@@ -247,9 +263,7 @@ function renderLaunchControls(props: MissileFleetViewProps, data: MissileLaunchD
                 Missiles to launch ({ownedQuantity} owned)
                 {HelperElement.renderQuantityInput(LAUNCHABLE_MISSILE_TYPE, 0, ownedQuantity, cappedRequestedQuantity, data.originPlanetData, data.setRequestedQuantity)}
             </label>
-            <button type="button" disabled={isLaunchDisabled} onClick={handleLaunch} className={`rounded px-6 py-2 text-sm font-bold ${buttonClass}`}>
-                Launch missiles
-            </button>
+            {HelperElement.renderWithTooltip(launchDisabledReasons, launchButton)}
             {errorElement}
         </div>
     );

@@ -68,7 +68,19 @@ function renderPendingRepairRow(props: RepairDockViewProps, planetData: CoreType
     if (PendingRepairData.isWreckAwaitingRepair(pendingRepair) === true)
     {
         const canStartRepair: boolean = PendingRepairData.canStartRepair(planetData, pendingRepair, now);
-        stateElement =
+
+        const startRepairDisabledReasons: string[] = [];
+        if (PendingRepairData.getRepairDockLevel(planetData) < 1)
+        {
+            startRepairDisabledReasons.push("No Repair Dock on this planet.");
+        }
+
+        if (PendingRepairData.isAnyRepairInProgress(planetData, now) === true)
+        {
+            startRepairDisabledReasons.push("Another repair is already in progress.");
+        }
+
+        const startRepairButton: ReactElement =
         (
             <button
                 type="button"
@@ -79,6 +91,8 @@ function renderPendingRepairRow(props: RepairDockViewProps, planetData: CoreType
                 Start Repair
             </button>
         );
+
+        stateElement = HelperElements.renderWithTooltip(startRepairDisabledReasons, startRepairButton);
     }
     else if (PendingRepairData.isRepairReady(pendingRepair, now) === true)
     {
@@ -100,6 +114,20 @@ function renderPendingRepairRow(props: RepairDockViewProps, planetData: CoreType
         stateElement = <div className="text-sm">Repairing — ready in {remainingLabel}</div>;
     }
 
+    const burnDisabledReasons: string[] = canBurnWreckField === false ? ["Cannot burn while a repair is in progress."] : [];
+
+    const burnButton: ReactElement =
+    (
+        <button
+            type="button"
+            onClick={handleBurnWreckField}
+            disabled={canBurnWreckField === false}
+            className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+            Burn
+        </button>
+    );
+
     const element: ReactElement =
     (
         <div className="w-full flex flex-row items-center justify-between gap-4 border border-gray-500 rounded px-4 py-2">
@@ -109,14 +137,7 @@ function renderPendingRepairRow(props: RepairDockViewProps, planetData: CoreType
             </div>
             <div className="flex flex-row items-center gap-2">
                 {stateElement}
-                <button
-                    type="button"
-                    onClick={handleBurnWreckField}
-                    disabled={canBurnWreckField === false}
-                    className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                    Burn
-                </button>
+                {HelperElements.renderWithTooltip(burnDisabledReasons, burnButton)}
             </div>
         </div>
     );

@@ -27,7 +27,7 @@ function getPlanetData(playerData: CoreType.PlayerData, planetId: number): CoreT
     return planetData;
 }
 
-export function isAnyBuildingUpgradeInProgress(): RequirementType.ThingValueGetter
+function isAnyBuildingUpgradeInProgress(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -35,8 +35,13 @@ export function isAnyBuildingUpgradeInProgress(): RequirementType.ThingValueGett
         return planetData.dynamicPlanetData.buildingUpgrades.length > 0 ? 1 : 0;
     };
 }
+export const IS_ANY_BUILDING_UPGRADE_IN_PROGRESS: RequirementType.RequirementCondition =
+{
+    valueGetter: isAnyBuildingUpgradeInProgress(),
+    failureDescription: "A building upgrade is already in progress.",
+}
 
-export function isAnyBuildingDeconstructionInProgress(): RequirementType.ThingValueGetter
+function isAnyBuildingDeconstructionInProgress(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -44,8 +49,13 @@ export function isAnyBuildingDeconstructionInProgress(): RequirementType.ThingVa
         return planetData.dynamicPlanetData.buildingDeconstructions.length > 0 ? 1 : 0;
     };
 }
+export const IS_ANY_BUILDING_DECONSTRUCTION_IN_PROGRESS: RequirementType.RequirementCondition =
+{
+    valueGetter: isAnyBuildingDeconstructionInProgress(),
+    failureDescription: "A building deconstruction is already in progress.",
+}
 
-export function isAnyUnitBeingConstructed(): RequirementType.ThingValueGetter
+function isAnyUnitBeingConstructed(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -53,102 +63,128 @@ export function isAnyUnitBeingConstructed(): RequirementType.ThingValueGetter
         return planetData.dynamicPlanetData.unitConstructions.length > 0 ? 1 : 0;
     };
 }
+export const IS_ANY_UNIT_BEING_CONSTRUCTED: RequirementType.RequirementCondition =
+{
+    valueGetter: isAnyUnitBeingConstructed(),
+    failureDescription: "A unit is already being constructed.",
+}
 
-export function isAnyResearchInProgress(): RequirementType.ThingValueGetter
+function isAnyResearchInProgress(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
-        // Research is player-level, so it reads playerData directly rather than a planet.
         return context.playerData.dynamicPlayerData.currentlyResearchings.length > 0 ? 1 : 0;
     };
 }
-
-export function buildingLevel(buildingType: GameType.BuildingType): RequirementType.SpecificThingValueGetter
+export const IS_ANY_RESEARCH_IN_PROGRESS: RequirementType.RequirementCondition =
 {
-    return (context: RequirementType.RequirementContext): number =>
-    {
-        const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
-        return BuildingData.getBuildingLevel(planetData, buildingType);
-    };
+    valueGetter: isAnyResearchInProgress(),
+    failureDescription: "A research is already in progress.",
 }
 
-export function researchLevel(researchType: GameType.ResearchType): RequirementType.SpecificThingValueGetter
+function buildingLevel(): RequirementType.RequirementValueGetter
 {
-    return (context: RequirementType.RequirementContext): number =>
-    {
-        return ResearchData.getResearchLevel(context.playerData, researchType);
-    };
-}
-
-export function ownedAndQueuedUnitCount(unitType: GameType.UnitType): RequirementType.SpecificThingValueGetter
-{
-    return (context: RequirementType.RequirementContext): number =>
+    return (context: RequirementType.RequirementContext, requirement: RequirementType.Requirement): number =>
     {
         const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
-        return UnitData.getOwnedAndQueuedUnitQuantity(planetData, unitType);
+        return BuildingData.getBuildingLevel(planetData, requirement.specificThingType as GameType.BuildingType);
     };
 }
-
-export function isSpecificBuildingBeingUpgraded(buildingType: GameType.BuildingType): RequirementType.SpecificThingValueGetter
+export const BUILDING_LEVEL: RequirementType.RequirementCondition =
 {
-    return (context: RequirementType.RequirementContext): number =>
+    valueGetter: buildingLevel(),
+    failureDescription: "Building level requirement not met.",
+}
+
+function researchLevel(): RequirementType.RequirementValueGetter
+{
+    return (context: RequirementType.RequirementContext, requirement: RequirementType.Requirement): number =>
+    {
+        return ResearchData.getResearchLevel(context.playerData, requirement.specificThingType as GameType.ResearchType);
+    };
+}
+export const RESEARCH_LEVEL: RequirementType.RequirementCondition =
+{
+    valueGetter: researchLevel(),
+    failureDescription: "Research level requirement not met.",
+}
+
+function ownedAndQueuedUnitCount(): RequirementType.RequirementValueGetter
+{
+    return (context: RequirementType.RequirementContext, requirement: RequirementType.Requirement): number =>
     {
         const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
-        ;
-        const isUpgrading: boolean = BuildingUpgradeData.isBuildingTypeCurrentlyUpgrading(planetData, buildingType);
+        return UnitData.getOwnedAndQueuedUnitQuantity(planetData, requirement.specificThingType as GameType.UnitType);
+    };
+}
+export const OWNED_AND_QUEUED_UNIT_COUNT: RequirementType.RequirementCondition =
+{
+    valueGetter: ownedAndQueuedUnitCount(),
+    failureDescription: "Maximum build count reached.",
+}
+
+function isSpecificBuildingBeingUpgraded(): RequirementType.RequirementValueGetter
+{
+    return (context: RequirementType.RequirementContext, requirement: RequirementType.Requirement): number =>
+    {
+        const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
+        const isUpgrading: boolean = BuildingUpgradeData.isBuildingTypeCurrentlyUpgrading(planetData, requirement.specificThingType as GameType.BuildingType);
         return isUpgrading ? 1 : 0;
     };
 }
-
-export function isSpecificBuildingBeingDeconstructed(buildingType: GameType.BuildingType): RequirementType.SpecificThingValueGetter
+export const IS_SPECIFIC_BUILDING_BEING_UPGRADED: RequirementType.RequirementCondition =
 {
-    return (context: RequirementType.RequirementContext): number =>
+    valueGetter: isSpecificBuildingBeingUpgraded(),
+    failureDescription: "That building is currently being upgraded.",
+}
+
+function isSpecificBuildingBeingDeconstructed(): RequirementType.RequirementValueGetter
+{
+    return (context: RequirementType.RequirementContext, requirement: RequirementType.Requirement): number =>
     {
         const planetData: CoreType.PlanetData = getPlanetData(context.playerData, context.planetId);
-        const isDeconstructing: boolean = BuildingDeconstructionData.isBuildingTypeCurrentlyDeconstructing(planetData, buildingType);
+        const isDeconstructing: boolean = BuildingDeconstructionData.isBuildingTypeCurrentlyDeconstructing(planetData, requirement.specificThingType as GameType.BuildingType);
         return isDeconstructing ? 1 : 0;
     };
 }
-
-export function unitQuantities(unitType: GameType.UnitType): RequirementType.ThingValueGetter
+export const IS_SPECIFIC_BUILDING_BEING_DECONSTRUCTED: RequirementType.RequirementCondition =
 {
-    return (context: RequirementType.RequirementContext): number =>
-    {
-        if (context.unitQuantities === undefined)
-        {
-            throw new Error(`unitQuantities requirement evaluated without a potential fleet action for unitType ${unitType}.`);
-        }
-
-        return context.unitQuantities.get(unitType) ?? 0;
-    };
+    valueGetter: isSpecificBuildingBeingDeconstructed(),
+    failureDescription: "That building is currently being deconstructed.",
 }
 
-export function playerPlanetCount(): RequirementType.ThingValueGetter
+function playerPlanetCount(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
         return CoreType.getOwnedPlanets(context.playerData.planetDatas).length;
     };
 }
+export const PLAYER_PLANET_COUNT: RequirementType.RequirementCondition =
+{
+    valueGetter: playerPlanetCount(),
+    failureDescription: "Planet count requirement not met.",
+}
 
-export function freeColonyPlanetSlots(): RequirementType.ThingValueGetter
+function freeColonyPlanetSlots(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
         return CalculatedValueData.computeFreeColonyPlanetSlots(context.playerData);
     };
 }
+export const FREE_COLONY_PLANET_SLOTS: RequirementType.RequirementCondition =
+{
+    valueGetter: freeColonyPlanetSlots(),
+    failureDescription: "No free colony slots available.",
+}
 
-export function hasFreeFleetSlot(): RequirementType.ThingValueGetter
+function hasFreeFleetSlot(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
-        // The fleet slot cap is a derived player value (Computer Technology produces it, one per level on
-        // top of the base slot). Read the net (production minus consumption) so future consumers can spend slots.
         const maximumFleetSlots: number = CalculatedValueData.computePlayerValueNet(context.playerData, GameType.PlayerValueType.FleetSlots);
 
-        // A fleet occupies a slot for its whole round trip. The player's own movements appear in the
-        // futureFleetArrivals of every planet they touch, so collapse them to distinct fleet ids.
         const activeFleetIds: Set<number> = new Set<number>();
         for (const planetData of context.playerData.planetDatas)
         {
@@ -164,8 +200,13 @@ export function hasFreeFleetSlot(): RequirementType.ThingValueGetter
         return activeFleetIds.size < maximumFleetSlots ? 1 : 0;
     };
 }
+export const HAS_FREE_FLEET_SLOT: RequirementType.RequirementCondition =
+{
+    valueGetter: hasFreeFleetSlot(),
+    failureDescription: "No free fleet slot available.",
+}
 
-export function freeMissileSpace(): RequirementType.SpecificThingValueGetter
+function freeMissileSpace(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -173,8 +214,13 @@ export function freeMissileSpace(): RequirementType.SpecificThingValueGetter
         return MissileSpaceData.computeFreeMissileSpace(planetData, context.playerData);
     };
 }
+export const FREE_MISSILE_SPACE: RequirementType.RequirementCondition =
+{
+    valueGetter: freeMissileSpace(),
+    failureDescription: "Not enough missile space.",
+}
 
-export function freeSize(): RequirementType.ThingValueGetter
+function freeSize(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -188,8 +234,13 @@ export function freeSize(): RequirementType.ThingValueGetter
         return sizeValueData.production - sizeValueData.consumption;
     };
 }
+export const FREE_SIZE: RequirementType.RequirementCondition =
+{
+    valueGetter: freeSize(),
+    failureDescription: "No free fields available.",
+}
 
-export function energyProduction(): RequirementType.SpecificThingValueGetter
+function energyProduction(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -198,8 +249,13 @@ export function energyProduction(): RequirementType.SpecificThingValueGetter
         return energyValueData === null ? 0 : energyValueData.production;
     };
 }
+export const ENERGY_PRODUCTION: RequirementType.RequirementCondition =
+{
+    valueGetter: energyProduction(),
+    failureDescription: "Energy production requirement not met.",
+}
 
-export function gravitonEnergyRequirement(): RequirementType.SpecificThingValueGetter
+export function gravitonEnergyRequirement(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -208,7 +264,7 @@ export function gravitonEnergyRequirement(): RequirementType.SpecificThingValueG
     };
 }
 
-export function isZoneAssociatedPlanetOwned(): RequirementType.ThingValueGetter
+function isZoneAssociatedPlanetOwned(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -220,8 +276,13 @@ export function isZoneAssociatedPlanetOwned(): RequirementType.ThingValueGetter
         return context.zoneAssociatedPlanetOwnerPlayerId === null ? 0 : 1;
     };
 }
+export const IS_ZONE_ASSOCIATED_PLANET_OWNED: RequirementType.RequirementCondition =
+{
+    valueGetter: isZoneAssociatedPlanetOwned(),
+    failureDescription: "Target planet ownership requirement not met.",
+}
 
-export function getTargetPlanetZone(): RequirementType.ThingValueGetter
+function getTargetPlanetZone(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -233,8 +294,18 @@ export function getTargetPlanetZone(): RequirementType.ThingValueGetter
         return context.targetPlanetAddress.zone;
     };
 }
+export const GET_TARGET_PLANET_ZONE: RequirementType.RequirementCondition =
+{
+    valueGetter: getTargetPlanetZone(),
+    failureDescription: (requirement: RequirementType.Requirement): string =>
+    {
+        const requiredZone: GameType.PlanetZone = requirement.value as GameType.PlanetZone;
+        return `Target must be a ${StaticDataHelper.getPlanetZoneInfo(requiredZone).displayName.toLowerCase()}.`;
+    },
+    //failureDescription: "Target zone requirement not met.",
+}
 
-export function isTargetPlanetZoneSpyable(): RequirementType.ThingValueGetter
+function isTargetPlanetZoneSpyable(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -246,8 +317,13 @@ export function isTargetPlanetZoneSpyable(): RequirementType.ThingValueGetter
         return StaticDataHelper.canPlanetZoneBeSpied(context.targetPlanetAddress.zone) === true ? 1 : 0;
     };
 }
+export const IS_TARGET_PLANET_ZONE_SPYABLE: RequirementType.RequirementCondition =
+{
+    valueGetter: isTargetPlanetZoneSpyable(),
+    failureDescription: "Target zone cannot be spied.",
+}
 
-export function isTargetPlanetZoneAttackable(): RequirementType.ThingValueGetter
+function isTargetPlanetZoneAttackable(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -259,8 +335,13 @@ export function isTargetPlanetZoneAttackable(): RequirementType.ThingValueGetter
         return StaticDataHelper.canPlanetZoneBeAttacked(context.targetPlanetAddress.zone) === true ? 1 : 0;
     };
 }
+export const IS_TARGET_PLANET_ZONE_ATTACKABLE: RequirementType.RequirementCondition =
+{
+    valueGetter: isTargetPlanetZoneAttackable(),
+    failureDescription: "Target zone cannot be attacked.",
+}
 
-export function doesTargetZoneExist(): RequirementType.ThingValueGetter
+function doesTargetZoneExist(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -272,8 +353,13 @@ export function doesTargetZoneExist(): RequirementType.ThingValueGetter
         return context.targetZoneExists === true ? 1 : 0;
     };
 }
+export const DOES_TARGET_ZONE_EXIST: RequirementType.RequirementCondition =
+{
+    valueGetter: doesTargetZoneExist(),
+    failureDescription: "The target does not exist.",
+}
 
-export function transportedResourceTotal(): RequirementType.ThingValueGetter
+function transportedResourceTotal(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -291,8 +377,13 @@ export function transportedResourceTotal(): RequirementType.ThingValueGetter
         return totalTransportedResources;
     };
 }
+export const TRANSPORTED_RESOURCE_TOTAL: RequirementType.RequirementCondition =
+{
+    valueGetter: transportedResourceTotal(),
+    failureDescription: "No resources selected to transport.",
+}
 
-export function allFleetUnitsCanTargetDebrisField(): RequirementType.ThingValueGetter
+function allFleetUnitsCanTargetDebrisField(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -317,8 +408,13 @@ export function allFleetUnitsCanTargetDebrisField(): RequirementType.ThingValueG
         return 1;
     };
 }
+export const ALL_FLEET_UNITS_CAN_TARGET_DEBRIS_FIELD: RequirementType.RequirementCondition =
+{
+    valueGetter: allFleetUnitsCanTargetDebrisField(),
+    failureDescription: "Some units cannot target a debris field.",
+}
 
-export function allFleetUnitsCanSpy(): RequirementType.ThingValueGetter
+function allFleetUnitsCanSpy(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -343,8 +439,13 @@ export function allFleetUnitsCanSpy(): RequirementType.ThingValueGetter
         return 1;
     };
 }
+export const ALL_FLEET_UNITS_CAN_SPY: RequirementType.RequirementCondition =
+{
+    valueGetter: allFleetUnitsCanSpy(),
+    failureDescription: "Some units cannot spy.",
+}
 
-export function canTargetPlayerByScore(): RequirementType.ThingValueGetter
+function canTargetPlayerByScore(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -375,8 +476,13 @@ export function canTargetPlayerByScore(): RequirementType.ThingValueGetter
         return attackerScore < targetScore * MAX_ATTACKER_TO_TARGET_SCORE_RATIO ? 1 : 0;
     };
 }
+export const CAN_TARGET_PLAYER_BY_SCORE: RequirementType.RequirementCondition =
+{
+    valueGetter: canTargetPlayerByScore(),
+    failureDescription: "Target is protected by the score ratio.",
+}
 
-export function isTargetEnemyOwned(): RequirementType.ThingValueGetter
+function isTargetEnemyOwned(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -394,8 +500,13 @@ export function isTargetEnemyOwned(): RequirementType.ThingValueGetter
         return 1;
     };
 }
+export const IS_TARGET_ENEMY_OWNED: RequirementType.RequirementCondition =
+{
+    valueGetter: isTargetEnemyOwned(),
+    failureDescription: "Target must be owned by another player.",
+}
 
-export function isTargetWithinRange(): RequirementType.ThingValueGetter
+function isTargetWithinRange(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -435,8 +546,13 @@ export function isTargetWithinRange(): RequirementType.ThingValueGetter
         return 1;
     };
 }
+export const IS_TARGET_WITHIN_RANGE: RequirementType.RequirementCondition =
+{
+    valueGetter: isTargetWithinRange(),
+    failureDescription: "Target is out of range.",
+}
 
-export function allFleetUnitsAreLaunchableMissiles(): RequirementType.ThingValueGetter
+function allFleetUnitsAreLaunchableMissiles(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -461,8 +577,44 @@ export function allFleetUnitsAreLaunchableMissiles(): RequirementType.ThingValue
         return 1;
     };
 }
+export const ALL_FLEET_UNITS_ARE_LAUNCHABLE_MISSILES: RequirementType.RequirementCondition =
+{
+    valueGetter: allFleetUnitsAreLaunchableMissiles(),
+    failureDescription: "Some units are not launchable missiles.",
+}
 
-export function fleetHasMoonDestructionUnit(): RequirementType.ThingValueGetter
+function fleetHasColonizeUnit(): RequirementType.RequirementValueGetter
+{
+    return (context: RequirementType.RequirementContext): number =>
+    {
+        if (context.unitQuantities === undefined)
+        {
+            throw new Error(`fleetHasColonizeUnit requirement evaluated without a potential fleet action.`);
+        }
+
+        for (const [unitType, unitQuantity] of context.unitQuantities)
+        {
+            if (unitQuantity <= 0)
+            {
+                continue;
+            }
+
+            if (StaticDataHelper.unitParticipatesInColonization(unitType) === true)
+            {
+                return 1;
+            }
+        }
+
+        return 0;
+    };
+}
+export const FLEET_HAS_COLONIZE_UNIT: RequirementType.RequirementCondition =
+{
+    valueGetter: fleetHasColonizeUnit(),
+    failureDescription: "Fleet has no unit that can colonize.",
+}
+
+function fleetHasMoonDestructionUnit(): RequirementType.RequirementValueGetter
 {
     return (context: RequirementType.RequirementContext): number =>
     {
@@ -486,4 +638,9 @@ export function fleetHasMoonDestructionUnit(): RequirementType.ThingValueGetter
 
         return 0;
     };
+}
+export const FLEET_HAS_MOON_DESTRUCTION_UNIT: RequirementType.RequirementCondition =
+{
+    valueGetter: fleetHasMoonDestructionUnit(),
+    failureDescription: "Fleet has no moon-destruction unit.",
 }

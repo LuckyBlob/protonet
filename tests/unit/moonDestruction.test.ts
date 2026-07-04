@@ -81,7 +81,7 @@ describe('unitParticipatesInMoonDestruction', () =>
 
 describe('fleetHasMoonDestructionUnit', () =>
 {
-    const getter: RequirementType.ThingValueGetter = RequirementValueGetters.fleetHasMoonDestructionUnit();
+    const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.FLEET_HAS_MOON_DESTRUCTION_UNIT.valueGetter);
     const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
 
     it('returns 1 when the fleet has at least one Death Star', () =>

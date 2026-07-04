@@ -199,39 +199,39 @@ describe('canTargetPlayerByScore', () =>
 
     it('allows when the attacker is under 5x a below-threshold target score', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.canTargetPlayerByScore();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE.valueGetter);
         expect(getter(buildContext(400, 100, TARGET_ID))).toBe(1);
     });
 
     it('blocks at exactly 5x and above (strictly-under rule)', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.canTargetPlayerByScore();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE.valueGetter);
         expect(getter(buildContext(500, 100, TARGET_ID))).toBe(0);
         expect(getter(buildContext(600, 100, TARGET_ID))).toBe(0);
     });
 
     it('is unrestricted when the target is at or above the protection threshold', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.canTargetPlayerByScore();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE.valueGetter);
         expect(getter(buildContext(100_000_000, 500_000, TARGET_ID))).toBe(1);
     });
 
     it('makes a score-0 target untargetable', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.canTargetPlayerByScore();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE.valueGetter);
         expect(getter(buildContext(0, 0, TARGET_ID))).toBe(0);
     });
 
     it('is unrestricted against own or unowned targets', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.canTargetPlayerByScore();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE.valueGetter);
         expect(getter(buildContext(100_000, 1, ATTACKER_ID))).toBe(1);
         expect(getter(buildContext(100_000, 1, null))).toBe(1);
     });
 
     it('lets a power admin (admin_level 0) bypass the score gate that would otherwise block', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.canTargetPlayerByScore();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE.valueGetter);
         expect(getter(buildContext(600, 100, TARGET_ID))).toBe(0);
 
         const adminContext: RequirementType.RequirementContext = buildContext(600, 100, TARGET_ID);
@@ -241,7 +241,7 @@ describe('canTargetPlayerByScore', () =>
 
     it('throws when ownership info was not threaded in', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.canTargetPlayerByScore();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE.valueGetter);
         expect(() => getter(buildContext(100, 100, undefined))).toThrow();
     });
 });

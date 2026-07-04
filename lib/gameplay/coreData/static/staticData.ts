@@ -9,25 +9,21 @@ const LUNAR_BASE_REQUIREMENT: RequirementType.Requirement =
 {
 	hideDataWhenRequirementFailed: true,
 	applicableZones: [GameType.PlanetZone.Moon],
-	specificThingRequirement: {
-		thingType: ThingType.Thing.Building,
-		specificThingType: GameType.BuildingType.LunarBase,
-		operator: RequirementType.RequirementOperator.GreaterOrEqual,
-		value: 1,
-		valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.LunarBase),},
+	thingType: ThingType.Thing.Building,
+	specificThingType: GameType.BuildingType.LunarBase,
+	condition: RequirementValueGetters.BUILDING_LEVEL,
+	operator: RequirementType.RequirementOperator.GreaterOrEqual,
+	value: 1,
 };
 
 const FREE_FIELD_REQUIREMENT: RequirementType.Requirement =
 {
 	hideDataWhenRequirementFailed: true,
-	specificThingRequirement:
-	{
-		thingType: ThingType.Thing.PlanetValue,
-		specificThingType: GameType.PlanetValueType.Size,
-		operator: RequirementType.RequirementOperator.GreaterThan,
-		value: 0,
-		valueGetter: RequirementValueGetters.freeSize(),
-	},
+	thingType: ThingType.Thing.PlanetValue,
+	specificThingType: GameType.PlanetValueType.Size,
+	condition: RequirementValueGetters.FREE_SIZE,
+	operator: RequirementType.RequirementOperator.GreaterThan,
+	value: 0,
 };
 
 const FIELD_CONSUMPTION_PLANET_VALUE: GameType.PlanetValueStat =
@@ -218,20 +214,19 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 			FIELD_CONSUMPTION_PLANET_VALUE],
 		upgradeRequirements: [
 			FREE_FIELD_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.RoboticFactory,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.RoboticFactory),},},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.RoboticFactory,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},
 			LUNAR_BASE_REQUIREMENT,
-			{hideDataWhenRequirementFailed: false,
-			thingRequirement: {
-				thingType: ThingType.Thing.UnitConstruction,
-				operator: RequirementType.RequirementOperator.Equal,
-				value: false,
-				valueGetter: RequirementValueGetters.isAnyUnitBeingConstructed(),},},],
+		{
+			hideDataWhenRequirementFailed: false,
+			condition: RequirementValueGetters.IS_ANY_UNIT_BEING_CONSTRUCTED,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -264,19 +259,17 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 			FIELD_CONSUMPTION_PLANET_VALUE],
 		upgradeRequirements: [
 			FREE_FIELD_REQUIREMENT,
-			{hideDataWhenRequirementFailed: false,
-			thingRequirement: {
-				thingType: ThingType.Thing.ResearchingResearch,
-				operator: RequirementType.RequirementOperator.Equal,
-				value: false,
-				valueGetter: RequirementValueGetters.isAnyResearchInProgress(),},},],
-		deconstructRequirements:[{
+		{
 			hideDataWhenRequirementFailed: false,
-			thingRequirement: {
-				thingType: ThingType.Thing.ResearchingResearch,
-				operator: RequirementType.RequirementOperator.Equal,
-				value: false,
-				valueGetter: RequirementValueGetters.isAnyResearchInProgress(),},},],
+			condition: RequirementValueGetters.IS_ANY_RESEARCH_IN_PROGRESS,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,},],
+		deconstructRequirements:[
+		{
+			hideDataWhenRequirementFailed: false,
+			condition: RequirementValueGetters.IS_ANY_RESEARCH_IN_PROGRESS,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -292,26 +285,25 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 			FIELD_CONSUMPTION_PLANET_VALUE],
 		upgradeRequirements: [
 			FREE_FIELD_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.RoboticFactory,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 10,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.RoboticFactory),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ComputerTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 10,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ComputerTech),},},
-			{hideDataWhenRequirementFailed: false,
-			thingRequirement: {
-				thingType: ThingType.Thing.UnitConstruction,
-				operator: RequirementType.RequirementOperator.Equal,
-				value: false,
-				valueGetter: RequirementValueGetters.isAnyUnitBeingConstructed(),},},],
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.RoboticFactory,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 10,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ComputerTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 10,},
+		{
+			hideDataWhenRequirementFailed: false,
+			condition: RequirementValueGetters.IS_ANY_UNIT_BEING_CONSTRUCTED,
+			operator: RequirementType.RequirementOperator.Equal,
+			value: false,},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -325,20 +317,20 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 		buildableZones: [GameType.PlanetZone.Planet],
 		upgradeRequirements: [
 			FREE_FIELD_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.DeuteriumSynthesizer,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 5,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.DeuteriumSynthesizer),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},],
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.DeuteriumSynthesizer,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 5,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 1.8,
@@ -370,20 +362,20 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 		canDeconstruct: false,
 		upgradeRequirements: [
 			FREE_FIELD_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.NaniteFactory,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.NaniteFactory),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 12,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},],
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.NaniteFactory,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 12,},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -426,13 +418,13 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 		buildableZones: [GameType.PlanetZone.Planet],
 		upgradeRequirements: [
 			FREE_FIELD_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -473,13 +465,13 @@ export const BUILDING_STATS: ReadonlyMap<GameType.BuildingType, GameType.Buildin
 		upgradeRequirements: [
 			FREE_FIELD_REQUIREMENT,
 			LUNAR_BASE_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-				specificThingRequirement:{
-					thingType: ThingType.Thing.Research,
-					specificThingType: GameType.ResearchType.HyperspaceTech,
-					operator: RequirementType.RequirementOperator.GreaterOrEqual,
-					value: 7,
-					valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceTech),},},],
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.HyperspaceTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 7,},],
 		costFunctionType: GameType.BuildingCostFunctionType.SimpleExponential,
 		costStats: {
 			baseCostExponent: 2,
@@ -509,21 +501,19 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.CombustionDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.CombustionDrive),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.CombustionDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 2000],
 			[GameType.ResourceType.Crystal, 2000],]),
@@ -551,21 +541,19 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.CombustionDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 6,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.CombustionDrive),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.CombustionDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 6,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 6000],
 			[GameType.ResourceType.Crystal, 6000],]),
@@ -589,23 +577,22 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		canGenerateDebris: true,
 		canBeRepairedAtRepairDock: true,
 		participatesInCombat: true,
+		participatesInColonization: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ImpulseDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ImpulseDrive),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ImpulseDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 10000],
 			[GameType.ResourceType.Crystal, 20000],
@@ -630,28 +617,25 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.CombustionDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 6,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.CombustionDrive),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ShieldingTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ShieldingTech),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.CombustionDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 6,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ShieldingTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 10000],
 			[GameType.ResourceType.Crystal, 6000],
@@ -681,27 +665,24 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EspionageTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EspionageTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.CombustionDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.CombustionDrive),},},],
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EspionageTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.CombustionDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Crystal, 1000],]),
 		maxHealth: 1000,
@@ -722,21 +703,19 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.CombustionDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.CombustionDrive),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.CombustionDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 3000],
 			[GameType.ResourceType.Crystal, 1000],]),
@@ -761,28 +740,25 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ImpulseDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ImpulseDrive),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ArmourTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ArmourTech),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ImpulseDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ArmourTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 6000],
 			[GameType.ResourceType.Crystal, 4000],]),
@@ -808,28 +784,25 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 5,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ImpulseDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ImpulseDrive),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.IonTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.IonTech),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 5,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ImpulseDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.IonTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 20000],
 			[GameType.ResourceType.Crystal, 7000],
@@ -857,21 +830,19 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 7,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.HyperspaceDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceDrive),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 7,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.HyperspaceDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 45000],
 			[GameType.ResourceType.Crystal, 15000],]),
@@ -896,35 +867,31 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 8,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.HyperspaceTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 5,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.HyperspaceDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 5,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceDrive),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.LaserTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 12,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.LaserTech),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 8,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.HyperspaceTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 5,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.HyperspaceDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 5,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.LaserTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 12,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 30000],
 			[GameType.ResourceType.Crystal, 40000],
@@ -955,28 +922,25 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 8,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ImpulseDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 6,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ImpulseDrive),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.PlasmaTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 5,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.PlasmaTech),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 8,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ImpulseDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 6,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.PlasmaTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 5,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 50000],
 			[GameType.ResourceType.Crystal, 25000],
@@ -1009,28 +973,25 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 9,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.HyperspaceDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 6,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceDrive),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.HyperspaceTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 5,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceTech),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 9,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.HyperspaceDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 6,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.HyperspaceTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 5,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 60000],
 			[GameType.ResourceType.Crystal, 50000],
@@ -1060,34 +1021,30 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		category: GameType.UnitCategory.Ship,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 12,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.HyperspaceDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 7,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceDrive),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.HyperspaceTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 6,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.GravitonTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.GravitonTech),},},],
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 12,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.HyperspaceDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 7,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.HyperspaceTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 6,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.GravitonTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 5000000],
 			[GameType.ResourceType.Crystal, 4000000],
@@ -1125,14 +1082,13 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 	[GameType.UnitType.RocketLauncher, { displayName: "Rocket Launcher",
 		category: GameType.UnitCategory.Defense,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 2000],]),
 		maxHealth: 2000,
@@ -1145,28 +1101,25 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 	[GameType.UnitType.LightLaser, { displayName: "Light Laser",
 		category: GameType.UnitCategory.Defense,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.LaserTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.LaserTech),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.LaserTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 1500],
 			[GameType.ResourceType.Crystal, 500],]),
@@ -1180,28 +1133,25 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 	[GameType.UnitType.HeavyLaser, { displayName: "Heavy Laser",
 		category: GameType.UnitCategory.Defense,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.LaserTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 6,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.LaserTech),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.LaserTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 6,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 6000],
 			[GameType.ResourceType.Crystal, 2000],]),
@@ -1215,21 +1165,19 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 	[GameType.UnitType.IonCannon, { displayName: "Ion Cannon",
 		category: GameType.UnitCategory.Defense,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.IonTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.IonTech),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.IonTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 5000],
 			[GameType.ResourceType.Crystal, 3000],]),
@@ -1243,35 +1191,31 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 	[GameType.UnitType.GaussCannon, { displayName: "Gauss Cannon",
 		category: GameType.UnitCategory.Defense,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 6,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 6,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.WeaponTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.WeaponTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ShieldingTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ShieldingTech),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 6,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 6,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.WeaponTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ShieldingTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 20000],
 			[GameType.ResourceType.Crystal, 15000],
@@ -1286,21 +1230,19 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 	[GameType.UnitType.PlasmaTurret, { displayName: "Plasma Turret",
 		category: GameType.UnitCategory.Defense,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 8,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.PlasmaTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 7,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.PlasmaTech),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 8,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.PlasmaTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 7,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 50000],
 			[GameType.ResourceType.Crystal, 50000],
@@ -1316,27 +1258,24 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		category: GameType.UnitCategory.Defense,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ShieldingTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ShieldingTech),},},
-			{hideDataWhenRequirementFailed: false,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Unit,
-				specificThingType: GameType.UnitType.SmallShieldDome,
-				operator: RequirementType.RequirementOperator.LesserThan,
-				value: 1,
-				valueGetter: RequirementValueGetters.ownedAndQueuedUnitCount(GameType.UnitType.SmallShieldDome),},},],
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ShieldingTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},
+		{
+			thingType: ThingType.Thing.Unit,
+			specificThingType: GameType.UnitType.SmallShieldDome,
+			condition: RequirementValueGetters.OWNED_AND_QUEUED_UNIT_COUNT,
+			operator: RequirementType.RequirementOperator.LesserThan,
+			value: 1,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 10000],
 			[GameType.ResourceType.Crystal, 10000],]),
@@ -1351,27 +1290,24 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		category: GameType.UnitCategory.Defense,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
 		requirements:[
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 6,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ShieldingTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 6,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ShieldingTech),},},
-			{hideDataWhenRequirementFailed: false,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Unit,
-				specificThingType: GameType.UnitType.LargeShieldDome,
-				operator: RequirementType.RequirementOperator.LesserThan,
-				value: 1,
-				valueGetter: RequirementValueGetters.ownedAndQueuedUnitCount(GameType.UnitType.LargeShieldDome),},},],
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 6,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ShieldingTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 6,},
+		{
+			thingType: ThingType.Thing.Unit,
+			specificThingType: GameType.UnitType.LargeShieldDome,
+			condition: RequirementValueGetters.OWNED_AND_QUEUED_UNIT_COUNT,
+			operator: RequirementType.RequirementOperator.LesserThan,
+			value: 1,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 50000],
 			[GameType.ResourceType.Crystal, 50000],]),
@@ -1386,14 +1322,13 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		participatesInCombat: true,
 		category: GameType.UnitCategory.Satellite,
 		queueType: GameType.UnitConstructionQueueType.Shipyard,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.Shipyard,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.Shipyard),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Crystal, 2000],
 			[GameType.ResourceType.Deuterium, 500],]),
@@ -1418,27 +1353,24 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 		space: 0,
 		queueType: GameType.UnitConstructionQueueType.MissileSilo,
 		requirements:[
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.MissileSilo,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.MissileSilo),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ImpulseDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ImpulseDrive),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.PlanetValue,
-				specificThingType: GameType.PlanetValueType.MissileSpace,
-				operator: RequirementType.RequirementOperator.GreaterThan,
-				value: 0,
-				valueGetter: RequirementValueGetters.freeMissileSpace(),},},],
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.MissileSilo,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},
+		{
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ImpulseDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},
+		{
+			thingType: ThingType.Thing.PlanetValue,
+			specificThingType: GameType.PlanetValueType.MissileSpace,
+			condition: RequirementValueGetters.FREE_MISSILE_SPACE,
+			operator: RequirementType.RequirementOperator.GreaterThan,
+			value: 0,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 12500],
 			[GameType.ResourceType.Crystal, 2500],
@@ -1456,21 +1388,19 @@ export const UNIT_STATS: ReadonlyMap<GameType.UnitType, GameType.UnitStats> = ne
 	[GameType.UnitType.InterceptorMissile, { displayName: "Interceptor Missile",
 		category: GameType.UnitCategory.Missile,
 		queueType: GameType.UnitConstructionQueueType.MissileSilo,
-		requirements:[{
-			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.MissileSilo,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.MissileSilo),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.PlanetValue,
-				specificThingType: GameType.PlanetValueType.MissileSpace,
-				operator: RequirementType.RequirementOperator.GreaterThan,
-				value: 0,
-				valueGetter: RequirementValueGetters.freeMissileSpace(),},},],
+		requirements:[
+		{
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.MissileSilo,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},
+		{
+			thingType: ThingType.Thing.PlanetValue,
+			specificThingType: GameType.PlanetValueType.MissileSpace,
+			condition: RequirementValueGetters.FREE_MISSILE_SPACE,
+			operator: RequirementType.RequirementOperator.GreaterThan,
+			value: 0,},],
 		costMap: new Map<GameType.ResourceType, number>([
 			[GameType.ResourceType.Metal, 8000],
 			[GameType.ResourceType.Deuterium, 2000],]),
@@ -1520,14 +1450,9 @@ export const RESOURCE_INFOS: ReadonlyMap<GameType.ResourceType, GameType.Resourc
 //#region Fleet
 const HAS_FREE_FLEET_SLOT_REQUIREMENT: RequirementType.Requirement =
 {
-	hideDataWhenRequirementFailed: false,
-	thingRequirement:
-	{
-		thingType: ThingType.Thing.FleetMovement,
-		operator: RequirementType.RequirementOperator.Equal,
-		value: true,
-		valueGetter: RequirementValueGetters.hasFreeFleetSlot(),
-	},
+	condition: RequirementValueGetters.HAS_FREE_FLEET_SLOT,
+	operator: RequirementType.RequirementOperator.Equal,
+	value: true,
 };
 
 export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.FleetActionInfo> = new Map<GameType.FleetActionType, GameType.FleetActionInfo>
@@ -1536,151 +1461,109 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 		displayName: "Station",
 			category: GameType.FleetActionCategory.Ship,
 			requirements:[
-			HAS_FREE_FLEET_SLOT_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{
+				condition: RequirementValueGetters.DOES_TARGET_ZONE_EXIST,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
+				value: true,},],}],
 
 	[GameType.FleetActionType.Collect, {
 		displayName: "Collect",
 			category: GameType.FleetActionCategory.Ship,
 			returnsToOrigin: true,
 			requirements:[
-			HAS_FREE_FLEET_SLOT_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{
+				condition: RequirementValueGetters.DOES_TARGET_ZONE_EXIST,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
+				value: true,},],}],
 
 	[GameType.FleetActionType.Transport, {
 		displayName: "Transport",
 			category: GameType.FleetActionCategory.Ship,
 			returnsToOrigin: true,
 			requirements:[
-			HAS_FREE_FLEET_SLOT_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{
+				condition: RequirementValueGetters.DOES_TARGET_ZONE_EXIST,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.TRANSPORTED_RESOURCE_TOTAL,
 				operator: RequirementType.RequirementOperator.GreaterThan,
-				value: 0,
-				valueGetter: RequirementValueGetters.transportedResourceTotal(),},},],}],
+				value: 0,},],}],
 
 	[GameType.FleetActionType.Colonize, {
 		displayName: "Colonize",
 			category: GameType.FleetActionCategory.Ship,
 			requirements:[
-			HAS_FREE_FLEET_SLOT_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
-				specificThingType: GameType.UnitType.ColonyShip,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.unitQuantities(GameType.UnitType.ColonyShip),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{
+				condition: RequirementValueGetters.FLEET_HAS_COLONIZE_UNIT,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: false,
-				valueGetter: RequirementValueGetters.isZoneAssociatedPlanetOwned(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.IS_ZONE_ASSOCIATED_PLANET_OWNED,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: GameType.PlanetZone.Planet,
-				valueGetter: RequirementValueGetters.getTargetPlanetZone(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: false,},
+			{
+				condition: RequirementValueGetters.GET_TARGET_PLANET_ZONE,
+				operator: RequirementType.RequirementOperator.Equal,
+				value: GameType.PlanetZone.Planet,},
+			{
+				condition: RequirementValueGetters.FREE_COLONY_PLANET_SLOTS,
 				operator: RequirementType.RequirementOperator.GreaterThan,
-				value: 0,
-				valueGetter: RequirementValueGetters.freeColonyPlanetSlots(),},},],}],
+				value: 0,},],}],
 
 	[GameType.FleetActionType.Recycle, {
 		displayName: "Recycle",
 			category: GameType.FleetActionCategory.Ship,
 			returnsToOrigin: true,
 			requirements:[
-			HAS_FREE_FLEET_SLOT_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{
+				condition: RequirementValueGetters.GET_TARGET_PLANET_ZONE,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: GameType.PlanetZone.DebrisField,
-				valueGetter: RequirementValueGetters.getTargetPlanetZone(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: GameType.PlanetZone.DebrisField,},
+			{
+				condition: RequirementValueGetters.ALL_FLEET_UNITS_CAN_TARGET_DEBRIS_FIELD,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.allFleetUnitsCanTargetDebrisField(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.IS_ZONE_ASSOCIATED_PLANET_OWNED,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.isZoneAssociatedPlanetOwned(),},},],}],
+				value: true,},],}],
 				
 	[GameType.FleetActionType.Espionage, {
 		displayName: "Espionage",
 			category: GameType.FleetActionCategory.Ship,
 			returnsToOrigin: true,
 			requirements:[
-			HAS_FREE_FLEET_SLOT_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{
+				condition: RequirementValueGetters.DOES_TARGET_ZONE_EXIST,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
-				specificThingType: GameType.UnitType.EspionageProbe,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.unitQuantities(GameType.UnitType.EspionageProbe),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.ALL_FLEET_UNITS_CAN_SPY,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.allFleetUnitsCanSpy(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.IS_TARGET_PLANET_ZONE_SPYABLE,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.isTargetPlanetZoneSpyable(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
+				value: true,},],}],
 
 	[GameType.FleetActionType.MissileLaunch, {
 		displayName: "Missile Launch",
@@ -1688,104 +1571,76 @@ export const FLEET_ACTION_INFOS: ReadonlyMap<GameType.FleetActionType, GameType.
 			canBeScanned: false,
 			canBeRecalled: false,
 			requirements:[
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+			{
+				condition: RequirementValueGetters.DOES_TARGET_ZONE_EXIST,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.IS_TARGET_ENEMY_OWNED,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.isTargetEnemyOwned(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.IS_TARGET_WITHIN_RANGE,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.isTargetWithinRange(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.ALL_FLEET_UNITS_ARE_LAUNCHABLE_MISSILES,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.allFleetUnitsAreLaunchableMissiles(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
+				value: true,},],}],
 
 	[GameType.FleetActionType.Attack, {
 		displayName: "Attack",
 			category: GameType.FleetActionCategory.Ship,
 			returnsToOrigin: true,
 			requirements:[
-			HAS_FREE_FLEET_SLOT_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{
+				condition: RequirementValueGetters.DOES_TARGET_ZONE_EXIST,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.IS_TARGET_ENEMY_OWNED,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.isTargetEnemyOwned(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.IS_TARGET_PLANET_ZONE_ATTACKABLE,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.isTargetPlanetZoneAttackable(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
+				value: true,},],}],
 
 	[GameType.FleetActionType.DestroyMoon, {
 		displayName: "Destroy Moon",
 			category: GameType.FleetActionCategory.Ship,
 			returnsToOrigin: true,
 			requirements:[
-			HAS_FREE_FLEET_SLOT_REQUIREMENT,
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				HAS_FREE_FLEET_SLOT_REQUIREMENT,
+			{
+				condition: RequirementValueGetters.DOES_TARGET_ZONE_EXIST,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.doesTargetZoneExist(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.GET_TARGET_PLANET_ZONE,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: GameType.PlanetZone.Moon,
-				valueGetter: RequirementValueGetters.getTargetPlanetZone(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: GameType.PlanetZone.Moon,},
+			{
+				condition: RequirementValueGetters.IS_TARGET_ENEMY_OWNED,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.isTargetEnemyOwned(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.FLEET_HAS_MOON_DESTRUCTION_UNIT,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.fleetHasMoonDestructionUnit(),},},
-			{hideDataWhenRequirementFailed: true,
-			thingRequirement:{
-				thingType: ThingType.Thing.FleetMovement,
+				value: true,},
+			{
+				condition: RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE,
 				operator: RequirementType.RequirementOperator.Equal,
-				value: true,
-				valueGetter: RequirementValueGetters.canTargetPlayerByScore(),},},],}],
+				value: true,},],}],
 ]);
 //#endregion
 
@@ -1928,71 +1783,68 @@ export const MAX_PLANET_NAME_LENGTH: number = 16;
 //#region Requirements
 export const GLOBAL_REQUIREMENTS: Map<ThingType.Thing, RequirementType.Requirement[]> = new Map<ThingType.Thing, RequirementType.Requirement[]>
 ([
-    [ThingType.Thing.BuildingUpgrade, [{
-    	hideDataWhenRequirementFailed: false,
-		thingRequirement: {
-			thingType: ThingType.Thing.BuildingUpgrade,
-			operator: RequirementType.RequirementOperator.Equal,
-			value: false,
-			valueGetter: RequirementValueGetters.isAnyBuildingUpgradeInProgress(),}},
-		{hideDataWhenRequirementFailed: false,
-		thingRequirement: {
-			thingType: ThingType.Thing.BuildingDeconstruction,
-			operator: RequirementType.RequirementOperator.Equal,
-			value: false,
-			valueGetter: RequirementValueGetters.isAnyBuildingDeconstructionInProgress(),}}]],
-	[ThingType.Thing.BuildingDeconstruction, [{
+    [ThingType.Thing.BuildingUpgrade, [
+	{
 		hideDataWhenRequirementFailed: false,
-		thingRequirement: {
-			thingType: ThingType.Thing.BuildingUpgrade,
-			operator: RequirementType.RequirementOperator.Equal,
-			value: false,
-			valueGetter: RequirementValueGetters.isAnyBuildingUpgradeInProgress(),}},
-		{hideDataWhenRequirementFailed: false,
-		thingRequirement: {
-			thingType: ThingType.Thing.BuildingDeconstruction,
-			operator: RequirementType.RequirementOperator.Equal,
-			value: false,
-			valueGetter: RequirementValueGetters.isAnyBuildingDeconstructionInProgress(),}}]],
-	[ThingType.Thing.ResearchingResearch, [{
+		condition: RequirementValueGetters.IS_ANY_BUILDING_UPGRADE_IN_PROGRESS,
+		operator: RequirementType.RequirementOperator.Equal,
+		value: false,},
+	{
 		hideDataWhenRequirementFailed: false,
-		thingRequirement: {
-			thingType: ThingType.Thing.ResearchingResearch,
-			operator: RequirementType.RequirementOperator.Equal,
-			value: false,
-			valueGetter: RequirementValueGetters.isAnyResearchInProgress(),}},
-		{hideDataWhenRequirementFailed: false,
-		thingRequirement: {
+		condition: RequirementValueGetters.IS_ANY_BUILDING_DECONSTRUCTION_IN_PROGRESS,
+		operator: RequirementType.RequirementOperator.Equal,
+		value: false,}]],
+	[ThingType.Thing.BuildingDeconstruction, [
+	{
+		hideDataWhenRequirementFailed: false,
+		condition: RequirementValueGetters.IS_ANY_BUILDING_UPGRADE_IN_PROGRESS,
+		operator: RequirementType.RequirementOperator.Equal,
+		value: false,},
+	{
+		hideDataWhenRequirementFailed: false,
+		condition: RequirementValueGetters.IS_ANY_BUILDING_DECONSTRUCTION_IN_PROGRESS,
+		operator: RequirementType.RequirementOperator.Equal,
+		value: false,}]],
+	[ThingType.Thing.ResearchingResearch, [
+	{
+		hideDataWhenRequirementFailed: false,
+		condition: RequirementValueGetters.IS_ANY_RESEARCH_IN_PROGRESS,
+		operator: RequirementType.RequirementOperator.Equal,
+		value: false,},
+	{
+		hideDataWhenRequirementFailed: false,
+		thingType: ThingType.Thing.BuildingUpgrade,
+		specificThingType: GameType.BuildingType.ResearchLab,
+		condition: RequirementValueGetters.IS_SPECIFIC_BUILDING_BEING_UPGRADED,
+		operator: RequirementType.RequirementOperator.Equal,
+		value: false,},
+	{
+		hideDataWhenRequirementFailed: false,
+		thingType: ThingType.Thing.BuildingDeconstruction,
+		specificThingType: GameType.BuildingType.ResearchLab,
+		condition: RequirementValueGetters.IS_SPECIFIC_BUILDING_BEING_DECONSTRUCTED,
+		operator: RequirementType.RequirementOperator.Equal,
+		value: false,},
+	{
+		hideDataWhenRequirementFailed: false,
+		thingType: ThingType.Thing.Building,
+		specificThingType: GameType.BuildingType.ResearchLab,
+		condition: RequirementValueGetters.BUILDING_LEVEL,
+		operator: RequirementType.RequirementOperator.GreaterOrEqual,
+		value: 1,}]],
+		[ThingType.Thing.UnitConstruction, [
+		{
 			thingType: ThingType.Thing.BuildingUpgrade,
+			specificThingType: GameType.BuildingType.Shipyard,
+			condition: RequirementValueGetters.IS_SPECIFIC_BUILDING_BEING_UPGRADED,
 			operator: RequirementType.RequirementOperator.Equal,
-			value: false,
-			valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.ResearchLab),}},
-		{hideDataWhenRequirementFailed: false,
-		thingRequirement: {
-			thingType: ThingType.Thing.BuildingDeconstruction,
-			operator: RequirementType.RequirementOperator.Equal,
-			value: false,
-			valueGetter: RequirementValueGetters.isSpecificBuildingBeingDeconstructed(GameType.BuildingType.ResearchLab),}},
-		{hideDataWhenRequirementFailed: false,
-		specificThingRequirement: {
-			thingType: ThingType.Thing.Building,
-			specificThingType: GameType.BuildingType.ResearchLab,
-			operator: RequirementType.RequirementOperator.GreaterOrEqual,
-			value: 1,
-			valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),}}]],
-		[ThingType.Thing.UnitConstruction, [{
-			hideDataWhenRequirementFailed: false,
-		thingRequirement: {
-			thingType: ThingType.Thing.BuildingUpgrade,
-			operator: RequirementType.RequirementOperator.Equal,
-			value: false,
-			valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.Shipyard),}},
-		{hideDataWhenRequirementFailed: false,
-		thingRequirement: {
-			thingType: ThingType.Thing.BuildingUpgrade,
-			operator: RequirementType.RequirementOperator.Equal,
-			value: false,
-			valueGetter: RequirementValueGetters.isSpecificBuildingBeingUpgraded(GameType.BuildingType.NaniteFactory),}}]],
+			value: false,},
+	{
+		thingType: ThingType.Thing.BuildingUpgrade,
+		specificThingType: GameType.BuildingType.NaniteFactory,
+		condition: RequirementValueGetters.IS_SPECIFIC_BUILDING_BEING_UPGRADED,
+		operator: RequirementType.RequirementOperator.Equal,
+		value: false,}]],
 ]);
 //#endregion
 
@@ -2016,14 +1868,14 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				[GameType.ResourceType.Metal, 400],
 				[GameType.ResourceType.Deuterium, 600],]),},
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},],}],
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},],}],
 
 
     [GameType.ResearchType.ImpulseDrive, { displayName: "Impulse Drive",
@@ -2035,21 +1887,21 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				[GameType.ResourceType.Crystal, 4000],
 				[GameType.ResourceType.Deuterium, 600],]),},
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},],}],
 
 
     [GameType.ResearchType.HyperspaceDrive, { displayName: "Hyperspace Drive",
@@ -2061,35 +1913,35 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				[GameType.ResourceType.Crystal, 20000],
 				[GameType.ResourceType.Deuterium, 6000],]),},
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 5,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 7,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ShieldingTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 5,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ShieldingTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.HyperspaceTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceTech),},},],}],
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 5,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 7,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ShieldingTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 5,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.HyperspaceTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},],}],
 
 
     [GameType.ResearchType.ComputerTech, { displayName: "Computer Technology",
@@ -2116,14 +1968,14 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				[GameType.ResourceType.Crystal, 1000],
 				[GameType.ResourceType.Deuterium, 200],]),},
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},],}],
 
 
 	[GameType.ResearchType.WeaponTech, { displayName: "Weapons Technology",
@@ -2134,14 +1986,14 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				[GameType.ResourceType.Metal, 800],
 				[GameType.ResourceType.Crystal, 200],]),},
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},],}],
 
 
 	[GameType.ResearchType.ShieldingTech, { displayName: "Shielding Technology",
@@ -2152,21 +2004,21 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				[GameType.ResourceType.Metal, 200],
 				[GameType.ResourceType.Crystal, 600],]),},
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 6,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},],}],
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 6,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},],}],
 
 
 	[GameType.ResearchType.ArmourTech, { displayName: "Armour Technology",
@@ -2176,14 +2028,14 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 			baseCost: new Map<GameType.ResourceType, number>([
 				[GameType.ResourceType.Metal, 1000],]),},
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},],}],
 
 
 	[GameType.ResearchType.Astrophysics, { displayName: "Astrophysics",
@@ -2201,28 +2053,28 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				playerValueType: GameType.PlayerValueType.ColonySlots,
 				basePlayerValueFactor: 0.5,}],
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EspionageTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EspionageTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ImpulseDrive,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ImpulseDrive),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 3,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EspionageTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ImpulseDrive,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 3,},],}],
 
 
 	[GameType.ResearchType.IntergalacticResearchNetwork, { displayName: "Intergalactic Research Network",
@@ -2234,49 +2086,49 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				[GameType.ResourceType.Crystal, 400000],
 				[GameType.ResourceType.Deuterium, 160000],]),},
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 10,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ComputerTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 8,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ComputerTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.HyperspaceTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 8,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.HyperspaceTech),},},],}],
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 10,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ComputerTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 8,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.HyperspaceTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 8,},],}],
 
 
 	[GameType.ResearchType.GravitonTech, { displayName: "Graviton Technology",
 		costFunctionType: GameType.ResearchCostFunctionType.Free,
 		fixedResearchDurationSeconds: 1,
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 12,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.PlanetValue,
-				specificThingType: GameType.PlanetValueType.Energy,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: RequirementValueGetters.gravitonEnergyRequirement(),
-				valueGetter: RequirementValueGetters.energyProduction(),},},],}],
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 12,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.PlanetValue,
+			specificThingType: GameType.PlanetValueType.Energy,
+			condition: RequirementValueGetters.ENERGY_PRODUCTION,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: RequirementValueGetters.gravitonEnergyRequirement(),},],}],
 
 
 	[GameType.ResearchType.LaserTech, { displayName: "Laser Technology",
@@ -2287,21 +2139,21 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				[GameType.ResourceType.Metal, 200],
 				[GameType.ResourceType.Crystal, 100],]),},
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 2,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 1,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},],}],
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 2,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 1,},],}],
 
 
 	[GameType.ResearchType.IonTech, { displayName: "Ion Technology",
@@ -2320,28 +2172,28 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				basePlayerValueFactor: -4,
 				minPlayerValue: -100,}],
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.LaserTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 5,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.LaserTech),},},],}],
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.LaserTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 5,},],}],
 
 
 	[GameType.ResearchType.PlasmaTech, { displayName: "Plasma Technology",
@@ -2367,35 +2219,35 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				playerValueType: GameType.PlayerValueType.DeuteriumProductionModificationPercent,
 				basePlayerValueFactor: 0.33,}],
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 4,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 8,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.LaserTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 10,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.LaserTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.IonTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 5,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.IonTech),},},],}],
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 4,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 8,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.LaserTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 10,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.IonTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 5,},],}],
 
 
 	[GameType.ResearchType.HyperspaceTech, { displayName: "Hyperspace Technology",
@@ -2412,28 +2264,28 @@ export const REASEARCH_INFO: ReadonlyMap<GameType.ResearchType, GameType.Researc
 				playerValueType: GameType.PlayerValueType.FleetSpaceModificationPercent,
 				basePlayerValueFactor: 5,}],
 
-		requirements:[{
+		requirements:[
+		{
 			hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Building,
-				specificThingType: GameType.BuildingType.ResearchLab,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 7,
-				valueGetter: RequirementValueGetters.buildingLevel(GameType.BuildingType.ResearchLab),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.EnergyTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 5,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.EnergyTech),},},
-			{hideDataWhenRequirementFailed: true,
-			specificThingRequirement:{
-				thingType: ThingType.Thing.Research,
-				specificThingType: GameType.ResearchType.ShieldingTech,
-				operator: RequirementType.RequirementOperator.GreaterOrEqual,
-				value: 5,
-				valueGetter: RequirementValueGetters.researchLevel(GameType.ResearchType.ShieldingTech),},},],}],
+			thingType: ThingType.Thing.Building,
+			specificThingType: GameType.BuildingType.ResearchLab,
+			condition: RequirementValueGetters.BUILDING_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 7,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.EnergyTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 5,},
+		{
+			hideDataWhenRequirementFailed: true,
+			thingType: ThingType.Thing.Research,
+			specificThingType: GameType.ResearchType.ShieldingTech,
+			condition: RequirementValueGetters.RESEARCH_LEVEL,
+			operator: RequirementType.RequirementOperator.GreaterOrEqual,
+			value: 5,},],}],
 ]);
 
 //#endregion

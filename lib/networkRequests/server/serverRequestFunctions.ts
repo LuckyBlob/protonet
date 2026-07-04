@@ -16,6 +16,7 @@ import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as ServerProgress from "@/lib/gameplay/progressUpdate/server/serverProgress";
 import * as Serialization from "@/lib/helper/serialization";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
+import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as APIEndPoint from "@/app/api/apiEndPoints";
 import * as ServerDynamicData from "@/lib/gameplay/dynamicData/serverDynamicData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
@@ -908,9 +909,9 @@ export function serverGetPlanetDatas(playerId: number): CoreType.PlanetData[]
 
 export function serverFindAllPlanetsPublic(): CoreType.PublicPlanetData[]
 {
-    type PublicPlanetRowProjection = { id: number; zone: number; slot: number; system: number; galaxy: number; owner_player_id: number };
+    type PublicPlanetRowProjection = { id: number; zone: number; slot: number; system: number; galaxy: number; name: string | null; owner_player_id: number };
     const planetRows: PublicPlanetRowProjection[] = DB.databaseConnection.prepare(
-        "SELECT id, zone, slot, system, galaxy, owner_player_id FROM planet WHERE owner_player_id IS NOT NULL ORDER BY galaxy ASC, system ASC, slot ASC"
+        "SELECT id, zone, slot, system, galaxy, name, owner_player_id FROM planet WHERE owner_player_id IS NOT NULL ORDER BY galaxy ASC, system ASC, slot ASC"
     ).all() as PublicPlanetRowProjection[];
 
     const publicPlanetDatas: CoreType.PublicPlanetData[] = planetRows.map((planetRow: PublicPlanetRowProjection): CoreType.PublicPlanetData =>
@@ -930,6 +931,7 @@ export function serverFindAllPlanetsPublic(): CoreType.PublicPlanetData[]
             slot: planetRow.slot,
             system: planetRow.system,
             galaxy: planetRow.galaxy,
+            name: planetRow.name,
             owner_player_id: planetRow.owner_player_id,
             dynamicPlanetData: dynamicPlanetData,
         };
@@ -1183,7 +1185,13 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
         return { success: false, failureReason: "Wrong planet to upgrade building.", playerStateResult: playerData };
     }
 
-    if (Requirement.getFailedBuildingUpgradeRequirements(playerData, requestData.buildingType, relevantPlanetData.planetRow.id).length > 0)
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: relevantPlanetData.planetRow.id,
+    };
+
+    if (Requirement.getFailedBuildingUpgradeRequirements(requirementContext, requestData.buildingType).length > 0)
     {
         return { success: false, failureReason: "Building doesnt meet requirements.", playerStateResult: playerData };
     }
@@ -1315,7 +1323,13 @@ export function tryDeconstructBuildingLogic(playerId: number, serverData: CoreTy
         return { success: false, failureReason: "This building cannot be deconstructed.", playerStateResult: playerData };
     }
 
-    if (Requirement.getFailedBuildingDeconstructionRequirements(playerData, requestData.buildingType, relevantPlanetData.planetRow.id).length > 0)
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: relevantPlanetData.planetRow.id,
+    };
+
+    if (Requirement.getFailedBuildingDeconstructionRequirements(requirementContext, requestData.buildingType).length > 0)
     {
         return { success: false, failureReason: "Deconstruction doesnt meet requirements.", playerStateResult: playerData };
     }
@@ -1505,7 +1519,13 @@ export function tryUpgradeResearchLogic(playerId: number, serverData: CoreType.S
         return { success: false, failureReason: "Wrong planet to research from.", playerStateResult: playerData };
     }
 
-    if (Requirement.getFailedResearchRequirements(playerData, requestData.researchType, relevantPlanetData.planetRow.id).length > 0)
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: relevantPlanetData.planetRow.id,
+    };
+
+    if (Requirement.getFailedResearchRequirements(requirementContext, requestData.researchType).length > 0)
     {
         return { success: false, failureReason: "Research doesnt meet requirements.", playerStateResult: playerData };
     }
@@ -1622,9 +1642,15 @@ export function tryBuildUnitsLogic(playerId: number, serverData: CoreType.Server
         return { success: false, failureReason: "No units requested.", playerStateResult: playerData };
     }
 
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: relevantPlanetData.planetRow.id,
+    };
+
     for (const [unitType, unitQuantity] of requestedUnitQuantities)
     {
-        if (Requirement.getFailedUnitBuildRequirements(playerData, unitType, relevantPlanetData.planetRow.id).length > 0)
+        if (Requirement.getFailedUnitBuildRequirements(requirementContext, unitType).length > 0)
         {
             return { success: false, failureReason: "A unit doesn't meet requirements.", playerStateResult: playerData };
         }
@@ -1637,7 +1663,7 @@ export function tryBuildUnitsLogic(playerId: number, serverData: CoreType.Server
 
     const affordableUnitQuantities: Map<GameType.UnitType, number> = UnitConstructionData.computeMaxAffordableUnitQuantities(relevantPlanetData, requestedUnitQuantities);
     const storableUnitQuantities: Map<GameType.UnitType, number> = capMissilesByStorage(relevantPlanetData, playerData, affordableUnitQuantities);
-    const buildableUnitQuantities: Map<GameType.UnitType, number> = Requirement.capUnitQuantitiesByBuildCount(playerData, relevantPlanetData, storableUnitQuantities);
+    const buildableUnitQuantities: Map<GameType.UnitType, number> = Requirement.capUnitQuantitiesByBuildCount(requirementContext, storableUnitQuantities);
     if (buildableUnitQuantities.size === 0)
     {
         return { success: false, failureReason: "Not enough resources or storage.", playerStateResult: playerData };
@@ -2432,7 +2458,18 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     const zoneAssociatedPlanetData: CoreType.PlanetData | null = getPlanetDataByCoords(targetAddress.galaxy, targetAddress.system, targetAddress.slot, GameType.PlanetZone.Planet);
     const zoneAssociatedPlanetOwnerPlayerId: number | null = zoneAssociatedPlanetData === null ? null : zoneAssociatedPlanetData.planetRow.owner_player_id;
 
-    if (Requirement.getFailedFleetMovementRequirements(playerData, requestData.fleetAction, originPlanetData.planetRow.id, unitQuantities, transportedResourceQuantities, targetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists).length > 0)
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: originPlanetData.planetRow.id,
+        unitQuantities: unitQuantities,
+        transportedResourceQuantities: transportedResourceQuantities,
+        targetPlanetAddress: targetAddress,
+        zoneAssociatedPlanetOwnerPlayerId: zoneAssociatedPlanetOwnerPlayerId,
+        targetZoneExists: targetZoneExists,
+    };
+
+    if (Requirement.getFailedFleetMovementRequirements(requirementContext, requestData.fleetAction).length > 0)
     {
         return { success: false, failureReason: "Fleet movement doesnt meet requirements.", playerStateResult: playerData };
     }

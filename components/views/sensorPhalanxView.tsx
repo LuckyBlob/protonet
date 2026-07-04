@@ -69,6 +69,24 @@ function renderSensorPhalanxBody(props: SensorPhalanxViewProps, moonData: CoreTy
         ? <div className="text-sm">{statusMessage}</div>
         : null;
 
+    const scanDisabledReasons: string[] = [];
+    if (canAffordScan === false)
+    {
+        scanDisabledReasons.push(`Not enough deuterium (need ${SensorPhalanx.SCAN_DEUTERIUM_COST}).`);
+    }
+
+    const scanButton: ReactElement =
+    (
+        <button
+            type="button"
+            onClick={handleScan}
+            disabled={canScan === false}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+            Scan (costs {SensorPhalanx.SCAN_DEUTERIUM_COST} deuterium)
+        </button>
+    );
+
     const element: ReactElement =
     (
         <div className="w-full flex flex-col items-center gap-4 pt-4 text-white">
@@ -93,14 +111,7 @@ function renderSensorPhalanxBody(props: SensorPhalanxViewProps, moonData: CoreTy
 
             {outOfRangeNotice}
 
-            <button
-                type="button"
-                onClick={handleScan}
-                disabled={canScan === false}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-                Scan (costs {SensorPhalanx.SCAN_DEUTERIUM_COST} deuterium)
-            </button>
+            {HelperElements.renderWithTooltip(scanDisabledReasons, scanButton)}
 
             {statusNotice}
         </div>

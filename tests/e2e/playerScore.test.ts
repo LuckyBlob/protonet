@@ -131,8 +131,10 @@ test.describe("Fleet action score limitation", () =>
         await page.getByPlaceholder("S").fill(String(targetPlanet.system));
         await page.getByPlaceholder("G").fill(String(targetPlanet.galaxy));
 
-        await expect(page.getByRole("option", { name: "Station", exact: true })).toHaveCount(0);
-        await expect(page.getByRole("option", { name: "Collect", exact: true })).toHaveCount(0);
+        await E2EHelper.fleetActionSelect(page).selectOption({ label: "Station" });
+        await expect(E2EHelper.sendFleetButton(page)).toBeDisabled();
+        await E2EHelper.fleetActionSelect(page).selectOption({ label: "Collect" });
+        await expect(E2EHelper.sendFleetButton(page)).toBeDisabled();
     });
 
     test("a strong attacker CAN Station a target whose score is above the protection threshold", async ({ page }) =>

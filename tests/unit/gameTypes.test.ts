@@ -168,12 +168,11 @@ describe('Moon-buildable buildings require a Lunar Base', () =>
 
             const requirements: RequirementType.Requirement[] = buildingStats.upgradeRequirements ?? [];
             const hasLunarBaseRequirement: boolean = requirements.some((requirement: RequirementType.Requirement): boolean =>
-                requirement.specificThingRequirement !== undefined
-                && requirement.specificThingRequirement.thingType === ThingType.Thing.Building
-                && requirement.specificThingRequirement.specificThingType === GameType.BuildingType.LunarBase
-                && requirement.specificThingRequirement.operator === RequirementType.RequirementOperator.GreaterOrEqual
-                && typeof requirement.specificThingRequirement.value === "number"
-                && requirement.specificThingRequirement.value >= 1);
+                requirement.thingType === ThingType.Thing.Building
+                && requirement.specificThingType === GameType.BuildingType.LunarBase
+                && requirement.operator === RequirementType.RequirementOperator.GreaterOrEqual
+                && typeof requirement.value === "number"
+                && requirement.value >= 1);
 
             expect(hasLunarBaseRequirement).toBe(true);
         }

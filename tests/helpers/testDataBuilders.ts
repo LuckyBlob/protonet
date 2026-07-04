@@ -1,6 +1,8 @@
 import * as DBType from "@/lib/db/dbTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
+import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
 export const NEUTRAL_TEMPERATURE: number = (1 - StaticData.DEUTERIUM_TEMPERATURE_BASE) / StaticData.DEUTERIUM_TEMPERATURE_COEFF;
@@ -122,6 +124,26 @@ export function buildPlayerData(overrides?: { playerRow?: Partial<DBType.PlayerR
     };
 
     return playerData;
+}
+
+export function buildRequirement(specificThingType?: ThingType.SpecificThing): RequirementType.Requirement
+{
+    const requirement: RequirementType.Requirement =
+    {
+        hideDataWhenRequirementFailed: false,
+        specificThingType: specificThingType,
+        condition: { valueGetter: (): number => 0, failureDescription: "" },
+        operator: RequirementType.RequirementOperator.Equal,
+        value: 0,
+    };
+
+    return requirement;
+}
+
+export function bindGetter(valueGetter: RequirementType.RequirementValueGetter, specificThingType?: ThingType.SpecificThing): (context: RequirementType.RequirementContext) => number
+{
+    const requirement: RequirementType.Requirement = buildRequirement(specificThingType);
+    return (context: RequirementType.RequirementContext): number => valueGetter(context, requirement);
 }
 
 export function buildServerData(timeMultiplier?: number): CoreType.ServerData
@@ -378,6 +400,7 @@ export function buildPublicPlanetData(overrides?: Partial<CoreType.PublicPlanetD
         slot: 3,
         system: 1,
         galaxy: 1,
+        name: null,
         owner_player_id: 1,
         dynamicPlanetData: structuredClone(CoreType.EmptyPlanetData),
         ...overrides,

@@ -10,6 +10,7 @@ import * as HelperElement from "@/components/helpers/helperElements";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as UnitConstructionData from "@/lib/gameplay/dynamicData/planet/unitConstructionData";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
+import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as UnitBuildElements from "@/components/helpers/unitBuildElements";
 
 const PREVIEW_MAX_UNIT_LINES: number = 7;
@@ -95,7 +96,12 @@ function renderShipyardBody(props: ShipyardViewProps, planetDataPredicted: CoreT
         (planet: CoreType.PlanetData, requestedUnitQuantities: Map<GameType.UnitType, number>): Map<GameType.UnitType, number> =>
         {
             const affordableQuantities: Map<GameType.UnitType, number> = UnitConstructionData.computeMaxAffordableUnitQuantities(planet, requestedUnitQuantities);
-            return Requirement.capUnitQuantitiesByBuildCount(playerData, planet, affordableQuantities);
+            const requirementContext: RequirementType.RequirementContext =
+            {
+                playerData: playerData,
+                planetId: planet.planetRow.id,
+            };
+            return Requirement.capUnitQuantitiesByBuildCount(requirementContext, affordableQuantities);
         };
 
     const requestedMap: Map<GameType.UnitType, number> = UnitBuildElements.buildRequestedUnitQuantitiesMap(buildableUnitTypes, quantitiesState.requestedQuantities);
@@ -104,7 +110,7 @@ function renderShipyardBody(props: ShipyardViewProps, planetDataPredicted: CoreT
     const onBuildAll: () => void = UnitBuildElements.createBuildUnitsHandler(props.clientDataStateResult, planetDataPredicted, requestedMap, quantitiesState.resetRequestedQuantities);
 
     const previewContent: ReactElement | null = UnitBuildElements.renderBuildPreviewContent(planetDataPredicted, serverData, requestedMap, computeBuildableShipyardQuantities, SHIPYARD_INSUFFICIENT_TEXT);
-    const buildButton: ReactElement | null = UnitBuildElements.renderBuildButton(planetDataPredicted, requestedMap, hasRequestedData, onBuildAll, computeBuildableShipyardQuantities);
+    const buildButton: ReactElement | null = UnitBuildElements.renderBuildButton(planetDataPredicted, requestedMap, hasRequestedData, onBuildAll, computeBuildableShipyardQuantities, SHIPYARD_INSUFFICIENT_TEXT);
     const previewSlot: ReactElement = renderPreviewSlot(previewContent, buildButton);
     const buildRowElements: ReactElement = UnitBuildElements.renderUnitBuildSections(playerData, buildableUnitTypes, planetDataPredicted, serverData, quantitiesState.requestedQuantities, quantitiesState.setRequestedQuantity);
     const activeConstructionElements: ReactElement = UnitBuildElements.renderUnitConstructionSection(planetDataPredicted, serverData, GameType.UnitConstructionQueueType.Shipyard, "No unit construction in progress.");

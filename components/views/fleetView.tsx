@@ -40,7 +40,7 @@ type FleetViewData =
     zoneIdState: [GameType.PlanetZone, (value: GameType.PlanetZone) => void];
     requestedUnitQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.UnitType>;
     requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ResourceType>;
-    fleetActionState: [GameType.FleetActionType, (value: GameType.FleetActionType) => void];
+    fleetActionState: [GameType.FleetActionType | null, (value: GameType.FleetActionType | null) => void];
     speedPercentageState: [number, (value: number) => void];
     sendErrorState: [string | null, (value: string | null) => void];
 }
@@ -461,8 +461,8 @@ function renderFleetResourceRow(props: FleetViewProps, resourceType: GameType.Re
 
 function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): ReactElement
 {
-    const selectedAction: GameType.FleetActionType = data.fleetActionState[0];
-    const setSelectedAction: (value: GameType.FleetActionType) => void = data.fleetActionState[1];
+    const selectedAction: GameType.FleetActionType | null = data.fleetActionState[0];
+    const setSelectedAction: (value: GameType.FleetActionType | null) => void = data.fleetActionState[1];
     const speedPercentage: number = data.speedPercentageState[0];
 
     const totalUnitsRequested: number = MathHelp.calculateTotalQuantityMap(data.requestedUnitQuantitiesState.requestedQuantities);
@@ -477,31 +477,70 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
     const zoneAssociatedPlanetData: CoreType.PublicPlanetData | null = CoreType.getPublicPlanetDataForAddress(publicPlanetDatas, zoneAssociatedPlanetAddress);
     const zoneAssociatedPlanetOwnerPlayerId: number | null = zoneAssociatedPlanetData?.owner_player_id ?? null;
 
-    const validActionIds: GameType.FleetActionType[] = Array.from(StaticData.FLEET_ACTION_INFOS.keys()).filter((actionId: GameType.FleetActionType): boolean =>
+    const fleetRequirementContext: RequirementType.RequirementContext =
     {
-        if (StaticDataHelper.getFleetActionInfo(actionId).category !== GameType.FleetActionCategory.Ship)
-        {
-            return false;
-        }
+        playerData: data.playerData,
+        planetId: data.planetData.planetRow.id,
+        unitQuantities: data.requestedUnitQuantitiesState.requestedQuantities,
+        transportedResourceQuantities: data.requestedResourceQuantitiesState.requestedQuantities,
+        targetPlanetAddress: targetPlanetAddress,
+        zoneAssociatedPlanetOwnerPlayerId: zoneAssociatedPlanetOwnerPlayerId,
+        targetZoneExists: targetZoneExists,
+    };
 
-        const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(data.playerData, actionId, data.planetData.planetRow.id, data.requestedUnitQuantitiesState.requestedQuantities, data.requestedResourceQuantitiesState.requestedQuantities, targetPlanetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists);
-        return failedRequirements.length === 0;
+    const shipActionIds: GameType.FleetActionType[] = Array.from(StaticData.FLEET_ACTION_INFOS.keys()).filter((actionId: GameType.FleetActionType): boolean =>
+    {
+        return StaticDataHelper.getFleetActionInfo(actionId).category === GameType.FleetActionCategory.Ship;
     });
 
-    const isSelectedActionValid: boolean = validActionIds.includes(selectedAction);
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(data.planetData);
     const isSamePlanet: boolean = StaticDataHelper.isSameAddress(originAddress, targetPlanetAddress);
-    const isSendDisabled: boolean = (totalUnitsRequested === 0) || (isSelectedActionValid === false) || (isSamePlanet === true);
+
+    const sendDisabledReasons: string[] = [];
+
+    if (selectedAction === null)
+    {
+        sendDisabledReasons.push("Nothing selected.");
+    }
+    else
+    {
+        if (totalUnitsRequested === 0)
+        {
+            sendDisabledReasons.push("Select at least one unit to send.");
+        }
+
+        if (isSamePlanet === true)
+        {
+            sendDisabledReasons.push("Origin and target are the same planet.");
+        }
+
+        const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(fleetRequirementContext, selectedAction);
+        const failedRequirementReasons: string[] = Requirement.getRequirementDescriptions(failedRequirements, fleetRequirementContext);
+        sendDisabledReasons.push(...failedRequirementReasons);
+    }
+
+    const isSendDisabled: boolean = sendDisabledReasons.length > 0;
 
     const handleChange = (e: ChangeEvent<HTMLSelectElement>): void =>
     {
-        const parsedValue: number = Number.parseInt(e.target.value, 10);
-        setSelectedAction(parsedValue as GameType.FleetActionType);
+        const rawValue: string = e.target.value;
+        if (rawValue === "")
+        {
+            setSelectedAction(null);
+            return;
+        }
+
+        setSelectedAction(Number.parseInt(rawValue, 10) as GameType.FleetActionType);
     };
 
     const setSendError: (value: string | null) => void = data.sendErrorState[1];
     const handleSendFleet = async (): Promise<void> =>
     {
+        if (selectedAction === null)
+        {
+            return;
+        }
+
         const errorMessage: string | null = await ClientRequestFunctions.clientTrySendFleetRequest(
             props.clientDataStateResult.psController,
             data.planetData.planetRow.id,
@@ -519,7 +558,7 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
         ? <div className="text-sm font-normal text-red-400 whitespace-nowrap">{sendError}</div>
         : null;
 
-    const optionElements: ReactElement[] = validActionIds.map((actionId: GameType.FleetActionType): ReactElement =>
+    const optionElements: ReactElement[] = shipActionIds.map((actionId: GameType.FleetActionType): ReactElement =>
     {
         const actionName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.fleetAction(actionId));
 
@@ -533,9 +572,17 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
         return optionElement;
     });
 
-    const placeholderOption: ReactElement | null = (isSelectedActionValid === false)
-        ? <option key="none" value="" disabled>-- Select an action --</option>
-        : null;
+    const sendFleetButton: ReactElement =
+    (
+        <button
+            type="button"
+            onClick={handleSendFleet}
+            disabled={isSendDisabled}
+            className="border border-gray-400 px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold"
+        >
+            Send fleet
+        </button>
+    );
 
     const element: ReactElement =
     (
@@ -545,22 +592,15 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
             </div>
             <div className="flex flex-row items-center gap-2">
                 <select
-                    value={isSelectedActionValid ? selectedAction : ""}
+                    value={selectedAction === null ? "" : selectedAction}
                     onChange={handleChange}
                     className="border border-gray-400 px-2 py-1 rounded bg-white text-black"
                 >
-                    {placeholderOption}
+                    <option value="" disabled>-- Select an action --</option>
                     {optionElements}
                 </select>
 
-                <button
-                    type="button"
-                    onClick={handleSendFleet}
-                    disabled={isSendDisabled}
-                    className="border border-gray-400 px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold"
-                >
-                    Send fleet
-                </button>
+                {HelperElement.renderWithTooltip(sendDisabledReasons, sendFleetButton)}
             </div>
             {errorElement}
         </div>
@@ -606,7 +646,7 @@ export function FleetView(props: FleetViewProps): ReactElement
     const zoneIdState: [GameType.PlanetZone, (value: GameType.PlanetZone) => void] = useState<GameType.PlanetZone>(GameType.PlanetZone.Planet);
     const requestedUnitQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.UnitType> = HelperElement.useRequestedQuantities<GameType.UnitType>();
     const requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ResourceType> = HelperElement.useRequestedQuantities<GameType.ResourceType>();
-    const fleetActionState: [GameType.FleetActionType, (value: GameType.FleetActionType) => void] = useState<GameType.FleetActionType>(GameType.FleetActionType.Station);
+    const fleetActionState: [GameType.FleetActionType | null, (value: GameType.FleetActionType | null) => void] = useState<GameType.FleetActionType | null>(null);
     const speedPercentageState: [number, (value: number) => void] = useState<number>(100);
     const sendErrorState: [string | null, (value: string | null) => void] = useState<string | null>(null);
 
@@ -618,7 +658,7 @@ export function FleetView(props: FleetViewProps): ReactElement
         systemIdState[1](1);
         slotIdState[1](1);
         zoneIdState[1](GameType.PlanetZone.Planet);
-        fleetActionState[1](GameType.FleetActionType.Station);
+        fleetActionState[1](null);
         speedPercentageState[1](100);
         sendErrorState[1](null);
     }, [selectedPlanetId]);

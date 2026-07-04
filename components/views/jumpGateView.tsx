@@ -166,6 +166,39 @@ function renderJumpGateBody(props: JumpGateViewProps, sourceMoonData: CoreType.P
         )
         : <span className="text-sm text-gray-300">none</span>;
 
+    const jumpDisabledReasons: string[] = [];
+    if (isSourceOnCooldown === true)
+    {
+        jumpDisabledReasons.push("Jump Gate is on cooldown.");
+    }
+
+    if (isDestinationOnCooldown === true)
+    {
+        jumpDisabledReasons.push("Destination Jump Gate is on cooldown.");
+    }
+
+    if (selectedDestination === undefined)
+    {
+        jumpDisabledReasons.push("No destination moon selected.");
+    }
+
+    if (hasRequestedUnits === false)
+    {
+        jumpDisabledReasons.push("Select at least one unit to jump.");
+    }
+
+    const jumpButton: ReactElement =
+    (
+        <button
+            type="button"
+            onClick={handleJump}
+            disabled={canJump === false}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+            Jump
+        </button>
+    );
+
     const element: ReactElement =
     (
         <div className="w-full flex flex-col items-center gap-4 pt-4 text-white">
@@ -184,14 +217,7 @@ function renderJumpGateBody(props: JumpGateViewProps, sourceMoonData: CoreType.P
 
             {unitsSection}
 
-            <button
-                type="button"
-                onClick={handleJump}
-                disabled={canJump === false}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-                Jump
-            </button>
+            {HelperElements.renderWithTooltip(jumpDisabledReasons, jumpButton)}
 
             {statusNotice}
         </div>

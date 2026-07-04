@@ -209,12 +209,14 @@ test.describe("Destroy Moon — action gating", () =>
         await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Destroy Moon" })).toHaveCount(1);
 
         await E2EHelper.selectTargetZone(page, "Planet");
-        await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Destroy Moon" })).toHaveCount(0);
+        await E2EHelper.fleetActionSelect(page).selectOption({ label: "Destroy Moon" });
+        await expect(E2EHelper.sendFleetButton(page)).toBeDisabled();
 
         await E2EHelper.unitRowQuantityInput(page, "Death Star").fill("0");
         await E2EHelper.unitRowQuantityInput(page, "Small Transport").fill("1");
         await E2EHelper.selectTargetZone(page, "Moon");
-        await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Destroy Moon" })).toHaveCount(0);
+        await E2EHelper.fleetActionSelect(page).selectOption({ label: "Destroy Moon" });
+        await expect(E2EHelper.sendFleetButton(page)).toBeDisabled();
     });
 });
 

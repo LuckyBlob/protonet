@@ -1485,7 +1485,8 @@ test.describe("Colonize", () =>
         await page.getByPlaceholder("S").fill(String(target.system));
         await page.getByPlaceholder("G").fill(String(target.galaxy));
 
-        await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Colonize" })).toHaveCount(0);
+        await E2EHelper.fleetActionSelect(page).selectOption({ label: "Colonize" });
+        await expect(E2EHelper.sendFleetButton(page)).toBeDisabled();
     });
 
     test("targeting a planet owned by another player hides Colonize from the action dropdown", async ({ page }) =>
@@ -1519,7 +1520,8 @@ test.describe("Colonize", () =>
         await page.getByPlaceholder("S").fill(String(otherPlanet.system));
         await page.getByPlaceholder("G").fill(String(otherPlanet.galaxy));
 
-        await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Colonize" })).toHaveCount(0);
+        await E2EHelper.fleetActionSelect(page).selectOption({ label: "Colonize" });
+        await expect(E2EHelper.sendFleetButton(page)).toBeDisabled();
         // Sanity: Station IS valid for an owned target — proves the dropdown rendered correctly,
         // it's just Colonize that was filtered out (not the whole dropdown).
         await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Station" })).toHaveCount(1);

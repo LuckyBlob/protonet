@@ -12,7 +12,7 @@ describe('getFailedBuildingUpgradeRequirements', () =>
     it('returns no failures for Metal Mine when no upgrade is in progress', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalMine, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: 1 }, GameType.BuildingType.MetalMine);
         expect(failed).toHaveLength(0);
     });
 
@@ -30,7 +30,7 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalMine, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: 1 }, GameType.BuildingType.MetalMine);
         expect(failed).toHaveLength(1);
     });
 
@@ -45,7 +45,7 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.Shipyard, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: 1 }, GameType.BuildingType.Shipyard);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -60,7 +60,7 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.Shipyard, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: 1 }, GameType.BuildingType.Shipyard);
         expect(failed).toHaveLength(0);
     });
 
@@ -75,7 +75,7 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.Shipyard, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: 1 }, GameType.BuildingType.Shipyard);
         expect(failed).toHaveLength(0);
     });
 
@@ -90,7 +90,7 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.NaniteFactory, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: 1 }, GameType.BuildingType.NaniteFactory);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -109,14 +109,14 @@ describe('getFailedBuildingUpgradeRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ dynamicPlayerData: dynamicPlayerData, planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.NaniteFactory, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: 1 }, GameType.BuildingType.NaniteFactory);
         expect(failed).toHaveLength(0);
     });
 
     it('throws for an unknown building type (no registered info)', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        expect(() => Requirements.getFailedBuildingUpgradeRequirements(playerData, 9999 as GameType.BuildingType, 1)).toThrow();
+        expect(() => Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: 1 }, 9999 as GameType.BuildingType)).toThrow();
     });
 });
 
@@ -148,7 +148,7 @@ describe('no building can be queued while another upgrade is already in progress
         const queueableBuildingNames: string[] = [];
         for (const buildingType of StaticData.BUILDING_STATS.keys())
         {
-            const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, buildingType, planet.planetRow.id);
+            const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: planet.planetRow.id }, buildingType);
             if (failed.length === 0)
             {
                 queueableBuildingNames.push(StaticData.BUILDING_STATS.get(buildingType)!.displayName);
@@ -172,7 +172,7 @@ describe('getFailedUnitBuildRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.SmallTransport);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -194,7 +194,7 @@ describe('getFailedUnitBuildRequirements', () =>
             }),
         });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.SmallTransport);
         expect(failed).toHaveLength(0);
     });
 
@@ -210,7 +210,7 @@ describe('getFailedUnitBuildRequirements', () =>
         // Shipyard requirement met, but no Combustion Drive researched yet.
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.SmallTransport);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -233,7 +233,7 @@ describe('getFailedUnitBuildRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.SmallTransport);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -263,7 +263,7 @@ describe('getFailedUnitBuildRequirements', () =>
             }),
         });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.SmallTransport);
         expect(failed).toHaveLength(0);
     });
 
@@ -278,7 +278,7 @@ describe('getFailedUnitBuildRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.LargeTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.LargeTransport);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -300,7 +300,7 @@ describe('getFailedUnitBuildRequirements', () =>
             }),
         });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.LargeTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.LargeTransport);
         expect(failed).toHaveLength(0);
     });
 
@@ -315,7 +315,7 @@ describe('getFailedUnitBuildRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.ColonyShip, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.ColonyShip);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -337,7 +337,7 @@ describe('getFailedUnitBuildRequirements', () =>
             }),
         });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.ColonyShip, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.ColonyShip);
         expect(failed).toHaveLength(0);
     });
 });
@@ -365,56 +365,56 @@ describe('unit engine-drive build requirements (OGame prerequisites)', () =>
     it('blocks Large Transport without Combustion Drive 6 even with the Shipyard met', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer(6, NO_RESEARCH);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.LargeTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.LargeTransport);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('allows Large Transport once Combustion Drive 6 is researched', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer(6, new Map<GameType.ResearchType, number>([[GameType.ResearchType.CombustionDrive, 6]]));
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.LargeTransport, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.LargeTransport);
         expect(failed).toHaveLength(0);
     });
 
     it('blocks Colony Ship without Impulse Drive 3 even with the Shipyard met', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer(4, NO_RESEARCH);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.ColonyShip, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.ColonyShip);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('allows Colony Ship once Impulse Drive 3 is researched', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer(4, new Map<GameType.ResearchType, number>([[GameType.ResearchType.ImpulseDrive, 3]]));
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.ColonyShip, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.ColonyShip);
         expect(failed).toHaveLength(0);
     });
 
     it('blocks Recycler without Combustion Drive 6 even with the Shipyard met', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer(4, NO_RESEARCH);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.Recycler, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.Recycler);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('allows Recycler once Combustion Drive 6 and Shielding Tech 2 are researched', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer(4, new Map<GameType.ResearchType, number>([[GameType.ResearchType.CombustionDrive, 6], [GameType.ResearchType.ShieldingTech, 2]]));
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.Recycler, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.Recycler);
         expect(failed).toHaveLength(0);
     });
 
     it('blocks Espionage Probe without Combustion Drive 3 even with the Shipyard and Espionage Tech met', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer(3, new Map<GameType.ResearchType, number>([[GameType.ResearchType.EspionageTech, 2]]));
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.EspionageProbe, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.EspionageProbe);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('allows Espionage Probe once Combustion Drive 3 (with Espionage Tech 2) is researched', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer(3, new Map<GameType.ResearchType, number>([[GameType.ResearchType.EspionageTech, 2], [GameType.ResearchType.CombustionDrive, 3]]));
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.EspionageProbe, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.EspionageProbe);
         expect(failed).toHaveLength(0);
     });
 });
@@ -452,7 +452,7 @@ describe('no unit can be started while the Shipyard is being built', () =>
         const buildableUnitNames: string[] = [];
         for (const unitType of StaticData.UNIT_STATS.keys())
         {
-            const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, unitType, planet.planetRow.id);
+            const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: planet.planetRow.id }, unitType);
             if (failed.length === 0)
             {
                 buildableUnitNames.push(StaticData.UNIT_STATS.get(unitType)!.displayName);
@@ -468,7 +468,7 @@ describe('getFailedResearchRequirements', () =>
     it('blocks research when the selected planet has no Research Lab', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.ImpulseDrive, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements({ playerData: playerData, planetId: 1 }, GameType.ResearchType.ImpulseDrive);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -484,7 +484,7 @@ describe('getFailedResearchRequirements', () =>
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
         // EnergyTech has no research-specific requirements, isolating the global "needs a Research Lab" rule.
-        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.EnergyTech, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements({ playerData: playerData, planetId: 1 }, GameType.ResearchType.EnergyTech);
         expect(failed).toHaveLength(0);
     });
 
@@ -504,7 +504,7 @@ describe('getFailedResearchRequirements', () =>
             dynamicPlayerData: TestDataBuilders.buildDynamicPlayerData({ currentlyResearchings: [inProgress] }),
         });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.ImpulseDrive, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements({ playerData: playerData, planetId: 1 }, GameType.ResearchType.ImpulseDrive);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -527,7 +527,7 @@ describe('getFailedResearchRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.EnergyTech, planet.planetRow.id);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements({ playerData: playerData, planetId: planet.planetRow.id }, GameType.ResearchType.EnergyTech);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -550,7 +550,7 @@ describe('getFailedResearchRequirements', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.EnergyTech, planet.planetRow.id);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements({ playerData: playerData, planetId: planet.planetRow.id }, GameType.ResearchType.EnergyTech);
         expect(failed.length).toBeGreaterThan(0);
     });
 });
@@ -578,7 +578,7 @@ describe('Research Lab build gate while researching', () =>
     {
         const playerData: CoreType.PlayerData = buildResearchingPlayerData();
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.ResearchLab, playerData.planetDatas[0].planetRow.id);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: playerData.planetDatas[0].planetRow.id }, GameType.BuildingType.ResearchLab);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -586,7 +586,7 @@ describe('Research Lab build gate while researching', () =>
     {
         const playerData: CoreType.PlayerData = buildResearchingPlayerData();
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingDeconstructionRequirements(playerData, GameType.BuildingType.ResearchLab, playerData.planetDatas[0].planetRow.id);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingDeconstructionRequirements({ playerData: playerData, planetId: playerData.planetDatas[0].planetRow.id }, GameType.BuildingType.ResearchLab);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -601,7 +601,7 @@ describe('Research Lab build gate while researching', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.ResearchLab, planet.planetRow.id);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: planet.planetRow.id }, GameType.BuildingType.ResearchLab);
         expect(failed).toHaveLength(0);
     });
 });
@@ -622,7 +622,7 @@ describe('Lunar Base gate (applicableZones = Moon)', () =>
         const moon: CoreType.PlanetData = buildMoon(new Map<GameType.BuildingType, number>());
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [moon] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalStorage, moon.planetRow.id);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: moon.planetRow.id }, GameType.BuildingType.MetalStorage);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -631,7 +631,7 @@ describe('Lunar Base gate (applicableZones = Moon)', () =>
         const moon: CoreType.PlanetData = buildMoon(new Map<GameType.BuildingType, number>([[GameType.BuildingType.LunarBase, 1]]));
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [moon] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalStorage, moon.planetRow.id);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: moon.planetRow.id }, GameType.BuildingType.MetalStorage);
         expect(failed).toHaveLength(0);
     });
 
@@ -640,7 +640,7 @@ describe('Lunar Base gate (applicableZones = Moon)', () =>
         const moon: CoreType.PlanetData = buildMoon(new Map<GameType.BuildingType, number>());
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [moon] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.LunarBase, moon.planetRow.id);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: moon.planetRow.id }, GameType.BuildingType.LunarBase);
         expect(failed).toHaveLength(0);
     });
 
@@ -649,7 +649,7 @@ describe('Lunar Base gate (applicableZones = Moon)', () =>
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { zone: GameType.PlanetZone.Planet } });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalStorage, planet.planetRow.id);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: planet.planetRow.id }, GameType.BuildingType.MetalStorage);
         expect(failed).toHaveLength(0);
     });
 });
@@ -666,8 +666,8 @@ describe('Size build gate (free fields > 0)', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalMine, planet.planetRow.id);
-        const descriptions: string[] = Requirements.getRequirementDescriptions(failed, playerData, planet.planetRow.id);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: planet.planetRow.id }, GameType.BuildingType.MetalMine);
+        const descriptions: string[] = Requirements.getRequirementDescriptions(failed, { playerData: playerData, planetId: planet.planetRow.id });
         expect(failed.length).toBeGreaterThan(0);
         expect(descriptions.some((line: string): boolean => line.includes("Size"))).toBe(true);
     });
@@ -677,7 +677,7 @@ describe('Size build gate (free fields > 0)', () =>
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { size: 10 } });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalMine, planet.planetRow.id);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: planet.planetRow.id }, GameType.BuildingType.MetalMine);
         expect(failed).toHaveLength(0);
     });
 });
@@ -687,7 +687,7 @@ describe('getRequirementDescriptions', () =>
     it('returns no descriptions when no requirements failed', () =>
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
-        const descriptions: string[] = Requirements.getRequirementDescriptions([], playerData, 1);
+        const descriptions: string[] = Requirements.getRequirementDescriptions([], { playerData: playerData, planetId: 1 });
         expect(descriptions).toHaveLength(0);
     });
 
@@ -702,8 +702,8 @@ describe('getRequirementDescriptions', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.Shipyard, 1);
-        const descriptions: string[] = Requirements.getRequirementDescriptions(failed, playerData, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: 1 }, GameType.BuildingType.Shipyard);
+        const descriptions: string[] = Requirements.getRequirementDescriptions(failed, { playerData: playerData, planetId: 1 });
 
         for (const description of descriptions)
         {
@@ -722,8 +722,8 @@ describe('getRequirementDescriptions', () =>
         });
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ planetDatas: [planet] });
 
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, 1);
-        const descriptions: string[] = Requirements.getRequirementDescriptions(failed, playerData, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: 1 }, GameType.UnitType.SmallTransport);
+        const descriptions: string[] = Requirements.getRequirementDescriptions(failed, { playerData: playerData, planetId: 1 });
 
         const containsShipyardClause: boolean = descriptions.some((line: string): boolean => line.includes("Shipyard"));
         expect(containsShipyardClause).toBe(true);
@@ -750,14 +750,14 @@ describe('Graviton energy gate (produced energy vs dynamic requirement)', () =>
     it('blocks Graviton when produced energy is below the level-0 requirement of 300000', () =>
     {
         const playerData: CoreType.PlayerData = buildGravitonResearcher(0);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.GravitonTech, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements({ playerData: playerData, planetId: 1 }, GameType.ResearchType.GravitonTech);
         expect(failed).toHaveLength(1);
     });
 
     it('allows Graviton once produced energy clears 300000', () =>
     {
         const playerData: CoreType.PlayerData = buildGravitonResearcher(65);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.GravitonTech, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements({ playerData: playerData, planetId: 1 }, GameType.ResearchType.GravitonTech);
         expect(failed).toHaveLength(0);
     });
 
@@ -765,15 +765,15 @@ describe('Graviton energy gate (produced energy vs dynamic requirement)', () =>
     {
         const playerData: CoreType.PlayerData = buildGravitonResearcher(65);
         ResearchData.setResearchLevel(playerData, GameType.ResearchType.GravitonTech, 1);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.GravitonTech, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements({ playerData: playerData, planetId: 1 }, GameType.ResearchType.GravitonTech);
         expect(failed).toHaveLength(1);
     });
 
     it('describes the requirement with the dynamic threshold, not the static 0', () =>
     {
         const playerData: CoreType.PlayerData = buildGravitonResearcher(0);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements(playerData, GameType.ResearchType.GravitonTech, 1);
-        const descriptions: string[] = Requirements.getRequirementDescriptions(failed, playerData, 1);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedResearchRequirements({ playerData: playerData, planetId: 1 }, GameType.ResearchType.GravitonTech);
+        const descriptions: string[] = Requirements.getRequirementDescriptions(failed, { playerData: playerData, planetId: 1 });
         expect(descriptions.some((line: string): boolean => line.includes("Energy") && line.includes("300000"))).toBe(true);
     });
 });

@@ -21,7 +21,7 @@ describe('allFleetUnitsCanTargetDebrisField requirement getter', () =>
 {
     it('returns 1 when every unit in the fleet is debris-capable', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.allFleetUnitsCanTargetDebrisField();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.ALL_FLEET_UNITS_CAN_TARGET_DEBRIS_FIELD.valueGetter);
         const context: RequirementType.RequirementContext =
         {
             playerData: TestDataBuilders.buildPlayerData(),
@@ -33,7 +33,7 @@ describe('allFleetUnitsCanTargetDebrisField requirement getter', () =>
 
     it('returns 0 when any unit in the fleet is not debris-capable', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.allFleetUnitsCanTargetDebrisField();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.ALL_FLEET_UNITS_CAN_TARGET_DEBRIS_FIELD.valueGetter);
         const context: RequirementType.RequirementContext =
         {
             playerData: TestDataBuilders.buildPlayerData(),
@@ -45,7 +45,7 @@ describe('allFleetUnitsCanTargetDebrisField requirement getter', () =>
 
     it('ignores zero-quantity unit types', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.allFleetUnitsCanTargetDebrisField();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.ALL_FLEET_UNITS_CAN_TARGET_DEBRIS_FIELD.valueGetter);
         const context: RequirementType.RequirementContext =
         {
             playerData: TestDataBuilders.buildPlayerData(),
@@ -57,7 +57,7 @@ describe('allFleetUnitsCanTargetDebrisField requirement getter', () =>
 
     it('throws when there is no fleet (unitQuantities undefined)', () =>
     {
-        const getter: RequirementType.ThingValueGetter = RequirementValueGetters.allFleetUnitsCanTargetDebrisField();
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.ALL_FLEET_UNITS_CAN_TARGET_DEBRIS_FIELD.valueGetter);
         const context: RequirementType.RequirementContext =
         {
             playerData: TestDataBuilders.buildPlayerData(),
@@ -85,7 +85,7 @@ describe('Recycle fleet requirements', () =>
     {
         const player: CoreType.PlayerData = buildRecyclingPlayer();
 
-        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Recycle, 1, recyclerFleet, noResources, debrisTarget, debrisOwnerId, true);
+        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: recyclerFleet, transportedResourceQuantities: noResources, targetPlanetAddress: debrisTarget, zoneAssociatedPlanetOwnerPlayerId: debrisOwnerId, targetZoneExists: true }, GameType.FleetActionType.Recycle);
         expect(failed.length).toBe(0);
     });
 
@@ -93,7 +93,7 @@ describe('Recycle fleet requirements', () =>
     {
         const player: CoreType.PlayerData = buildRecyclingPlayer();
 
-        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Recycle, 1, recyclerFleet, noResources, debrisTarget, debrisOwnerId, false);
+        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: recyclerFleet, transportedResourceQuantities: noResources, targetPlanetAddress: debrisTarget, zoneAssociatedPlanetOwnerPlayerId: debrisOwnerId, targetZoneExists: false }, GameType.FleetActionType.Recycle);
         expect(failed.length).toBe(0);
     });
 
@@ -101,7 +101,7 @@ describe('Recycle fleet requirements', () =>
     {
         const player: CoreType.PlayerData = buildRecyclingPlayer();
 
-        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Recycle, 1, recyclerFleet, noResources, debrisTarget, null, false);
+        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: recyclerFleet, transportedResourceQuantities: noResources, targetPlanetAddress: debrisTarget, zoneAssociatedPlanetOwnerPlayerId: null, targetZoneExists: false }, GameType.FleetActionType.Recycle);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -110,7 +110,7 @@ describe('Recycle fleet requirements', () =>
         const player: CoreType.PlayerData = buildRecyclingPlayer();
         const planetTarget: GameType.PlanetAddress = { galaxy: 2, system: 5, slot: 3, zone: GameType.PlanetZone.Planet };
 
-        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Recycle, 1, recyclerFleet, noResources, planetTarget, debrisOwnerId, true);
+        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: recyclerFleet, transportedResourceQuantities: noResources, targetPlanetAddress: planetTarget, zoneAssociatedPlanetOwnerPlayerId: debrisOwnerId, targetZoneExists: true }, GameType.FleetActionType.Recycle);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -119,7 +119,7 @@ describe('Recycle fleet requirements', () =>
         const player: CoreType.PlayerData = buildRecyclingPlayer();
         const mixedFleet: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>([[GameType.UnitType.Recycler, 1], [GameType.UnitType.SmallTransport, 1]]);
 
-        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(player, GameType.FleetActionType.Recycle, 1, mixedFleet, noResources, debrisTarget, debrisOwnerId, true);
+        const failed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: mixedFleet, transportedResourceQuantities: noResources, targetPlanetAddress: debrisTarget, zoneAssociatedPlanetOwnerPlayerId: debrisOwnerId, targetZoneExists: true }, GameType.FleetActionType.Recycle);
         expect(failed.length).toBeGreaterThan(0);
     });
 });

@@ -210,7 +210,8 @@ test.describe("Espionage", () =>
         await page.getByPlaceholder("G").fill(String(scenario.victimPlanet.galaxy));
 
         // No unit picked yet → Espionage is not offered.
-        await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Espionage" })).toHaveCount(0);
+        await E2EHelper.fleetActionSelect(page).selectOption({ label: "Espionage" });
+        await expect(E2EHelper.sendFleetButton(page)).toBeDisabled();
 
         // A probe-only fleet → Espionage is offered.
         await E2EHelper.unitRowQuantityInput(page, "Espionage Probe").fill("1");
@@ -218,7 +219,8 @@ test.describe("Espionage", () =>
 
         // Adding a non-probe unit → Espionage disappears (it must be probe-only).
         await E2EHelper.unitRowQuantityInput(page, "Small Transport").fill("1");
-        await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Espionage" })).toHaveCount(0);
+        await E2EHelper.fleetActionSelect(page).selectOption({ label: "Espionage" });
+        await expect(E2EHelper.sendFleetButton(page)).toBeDisabled();
     });
 
     test("the galaxy view spy icon is lit and one click launches a probe", async ({ page }) =>
@@ -364,6 +366,7 @@ test.describe("Espionage", () =>
 
         // The debris field is a real, existing target (Station is offered) but espionage is gated out of it.
         await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Station" })).toHaveCount(1);
-        await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Espionage" })).toHaveCount(0);
+        await E2EHelper.fleetActionSelect(page).selectOption({ label: "Espionage" });
+        await expect(E2EHelper.sendFleetButton(page)).toBeDisabled();
     });
 });

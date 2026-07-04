@@ -91,8 +91,13 @@ function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selecte
 	const imagePath: string = BuildingViewHelpers.getBuildingImagePath(buildingType, currentLevel);
 
 	const isThisBuildingUpgrading: boolean = BuildingUpgradeData.isBuildingTypeCurrentlyUpgrading(selectedPlanetDataPredicted, buildingType);
-	const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedBuildingUpgradeRequirements(playerData, buildingType, planetId);
-	const failedRequirementsBox: ReactElement | null = BuildingViewHelpers.renderFailedRequirementsBox(failedRequirements, playerData, planetId);
+	const requirementContext: RequirementType.RequirementContext =
+	{
+		playerData: playerData,
+		planetId: planetId,
+	};
+	const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedBuildingUpgradeRequirements(requirementContext, buildingType);
+	const failedRequirementsBox: ReactElement | null = BuildingViewHelpers.renderFailedRequirementsBox(failedRequirements, requirementContext);
 
 	const remainingMs: number = BuildingUpgradeData.getBuildingUpgradeRemainingMs(selectedPlanetDataPredicted) ?? 0;
 	const canAfford: boolean = BuildingData.canAffordUpgrade(selectedPlanetDataPredicted, buildingType);
@@ -111,6 +116,12 @@ function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selecte
 		? <div className="text-sm">{"Level"} {currentLevel} {"->"} {"Level"} {currentLevel + 1}</div>
 		: <div className="text-sm">Level {currentLevel}</div>;
 
+	const upgradeDisabledReasons: string[] = Requirement.getRequirementDescriptions(failedRequirements, requirementContext);
+	if (canAfford === false)
+	{
+		upgradeDisabledReasons.push("Not enough resources.");
+	}
+
 	const actionElement: ReactElement = isThisBuildingUpgrading === true
 		? (
 			<div className="w-full px-4 py-2 bg-yellow-600 text-white rounded text-center">
@@ -121,7 +132,7 @@ function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selecte
 		)
 		: (failedRequirementsBox !== null)
 		? failedRequirementsBox
-		: (
+		: HelperElements.renderWithTooltip(upgradeDisabledReasons,
 			<button
 				onClick={handleBuyUpgrade}
 				disabled={(canAfford === false) || (failedRequirements.length > 0)}
@@ -145,27 +156,32 @@ function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selecte
 	return BuildingViewHelpers.renderBuildingRowShell(buildingType, imagePath, middleColumn, actionElement);
 }
 
+function renderBuildingViewBody(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData): ReactElement
+{
+	const selectedZone: GameType.PlanetZone = selectedPlanetDataPredicted.planetRow.zone as GameType.PlanetZone;
+	const buildableBuildingTypes: GameType.BuildingType[] = BuildingViewHelpers.getBuildableBuildingTypes(selectedZone);
+
+	const rowElements: ReactElement[] = buildableBuildingTypes.map((buildingType: GameType.BuildingType): ReactElement =>
+	{
+		return renderBuildingRow(props, selectedPlanetDataPredicted, buildingType);
+	});
+
+	const buildingViewElement: ReactElement =
+	(
+		<div className="flex flex-col gap-2 p-4">
+			{rowElements}
+		</div>
+	);
+
+	return buildingViewElement;
+}
+
 export function BuildingView(props: BuildingViewHelpers.BuildingViewProps): ReactElement
 {
 	try
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-		const selectedZone: GameType.PlanetZone = selectedPlanetDataPredicted.planetRow.zone as GameType.PlanetZone;
-		const buildableBuildingTypes: GameType.BuildingType[] = BuildingViewHelpers.getBuildableBuildingTypes(selectedZone);
-
-		const rowElements: ReactElement[] = buildableBuildingTypes.map((buildingType: GameType.BuildingType): ReactElement =>
-		{
-			return renderBuildingRow(props, selectedPlanetDataPredicted, buildingType);
-		});
-
-		const buildingViewElement: ReactElement =
-		(
-			<div className="flex flex-col gap-2 p-4">
-				{rowElements}
-			</div>
-		);
-
-		return buildingViewElement;
+		return renderBuildingViewBody(props, selectedPlanetDataPredicted);
 	}
 	catch (error: unknown)
 	{

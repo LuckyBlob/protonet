@@ -198,6 +198,7 @@ export type SerializedPublicPlanetData =
 	slot: number;
 	system: number;
 	galaxy: number;
+	name: string | null;
 	owner_player_id: number;
 	dynamicPlanetData: SerializedDynamicPlanetData;
 };
@@ -211,6 +212,7 @@ export function serializePublicPlanetData(publicPlanetData: CoreType.PublicPlane
 		slot: publicPlanetData.slot,
 		system: publicPlanetData.system,
 		galaxy: publicPlanetData.galaxy,
+		name: publicPlanetData.name,
 		owner_player_id: publicPlanetData.owner_player_id,
 		dynamicPlanetData: serializeDynamicPlanetData(publicPlanetData.dynamicPlanetData),
 	};
@@ -227,6 +229,7 @@ function deserializePublicPlanetData(serialized: SerializedPublicPlanetData): Co
 		slot: serialized.slot,
 		system: serialized.system,
 		galaxy: serialized.galaxy,
+		name: serialized.name,
 		owner_player_id: serialized.owner_player_id,
 		dynamicPlanetData: deserializeDynamicPlanetData(serialized.dynamicPlanetData),
 	};

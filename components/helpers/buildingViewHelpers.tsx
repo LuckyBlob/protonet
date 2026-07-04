@@ -3,7 +3,6 @@
 import { ReactElement } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
-import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as HelperElements from "@/components/helpers/helperElements";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
@@ -61,15 +60,15 @@ export function getBuildableBuildingTypes(selectedZone: GameType.PlanetZone): Ga
 	});
 }
 
-export function renderFailedRequirementsBox(failedRequirements: RequirementType.Requirement[], playerData: CoreType.PlayerData, planetId: number): ReactElement | null
+export function renderFailedRequirementsBox(failedRequirements: RequirementType.Requirement[], requirementContext: RequirementType.RequirementContext): ReactElement | null
 {
-	const failedHidingRequirements: RequirementType.Requirement[] = failedRequirements.filter((requirement: RequirementType.Requirement): boolean => requirement.hideDataWhenRequirementFailed === true);
+	const failedHidingRequirements: RequirementType.Requirement[] = failedRequirements.filter((requirement: RequirementType.Requirement): boolean => Requirement.shouldHideDataWhenRequirementFailed(requirement));
 	if (failedHidingRequirements.length === 0)
 	{
 		return null;
 	}
 
-	const hidingDescriptions: string[] = Requirement.getRequirementDescriptions(failedHidingRequirements, playerData, planetId);
+	const hidingDescriptions: string[] = Requirement.getRequirementDescriptions(failedHidingRequirements, requirementContext);
 
 	const element: ReactElement =
 	(

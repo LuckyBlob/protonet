@@ -57,10 +57,15 @@ function renderBuildQuantityInput(playerData: CoreType.PlayerData, planetData: C
 {
     const planetId: number = planetData.planetRow.id;
 
-    const failedUnitRequirements: RequirementType.Requirement[] = Requirement.getFailedUnitBuildRequirements(playerData, unitType, planetId);
+    const requirementContext: RequirementType.RequirementContext =
+    {
+        playerData: playerData,
+        planetId: planetId,
+    };
+    const failedUnitRequirements: RequirementType.Requirement[] = Requirement.getFailedUnitBuildRequirements(requirementContext, unitType);
     if (failedUnitRequirements.length > 0)
     {
-        const requirements: string[] = Requirement.getRequirementDescriptions(failedUnitRequirements, playerData, planetId);
+        const requirements: string[] = Requirement.getRequirementDescriptions(failedUnitRequirements, requirementContext);
 
         const element: ReactElement =
         (
@@ -75,7 +80,7 @@ function renderBuildQuantityInput(playerData: CoreType.PlayerData, planetData: C
         return element;
     }
 
-    const remainingBuildableCount: number | null = Requirement.getRemainingBuildableUnitCount(playerData, unitType, planetId);
+    const remainingBuildableCount: number | null = Requirement.getRemainingBuildableUnitCount(requirementContext, unitType);
 
     const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>): void =>
     {
@@ -294,7 +299,7 @@ export function renderBuildPreviewContent(planetData: CoreType.PlanetData, serve
     return element;
 }
 
-export function renderBuildButton(planetData: CoreType.PlanetData, requestedMap: Map<GameType.UnitType, number>, hasRequestedData: boolean, onBuildAll: () => void, computeBuildable: ComputeBuildableUnitQuantities): ReactElement | null
+export function renderBuildButton(planetData: CoreType.PlanetData, requestedMap: Map<GameType.UnitType, number>, hasRequestedData: boolean, onBuildAll: () => void, computeBuildable: ComputeBuildableUnitQuantities, insufficientText: string): ReactElement | null
 {
     if (hasRequestedData === false)
     {
@@ -302,19 +307,22 @@ export function renderBuildButton(planetData: CoreType.PlanetData, requestedMap:
     }
 
     const buildableQuantities: Map<GameType.UnitType, number> = computeBuildable(planetData, requestedMap);
+    const isBuildDisabled: boolean = buildableQuantities.size === 0;
 
-    const element: ReactElement =
+    const buildButton: ReactElement =
     (
         <button
             onClick={onBuildAll}
-            disabled={buildableQuantities.size === 0}
+            disabled={isBuildDisabled}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
             Build all
         </button>
     );
 
-    return element;
+    const buildDisabledReasons: string[] = isBuildDisabled === true ? [insufficientText] : [];
+
+    return HelperElement.renderWithTooltip(buildDisabledReasons, buildButton);
 }
 
 export function createBuildUnitsHandler(clientDataStateResult: UseClientDataState.ClientDataStateResult, planetData: CoreType.PlanetData, requestedQuantities: Map<GameType.UnitType, number>, resetRequestedQuantities: () => void): () => void

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, ReactElement, ReactNode, ChangeEvent } from "react";
+import { useState, ReactElement, ChangeEvent } from "react";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
@@ -136,4 +136,28 @@ export function buildCostParts(costMap: Map<GameType.ResourceType, number>): str
 	}
 
 	return costParts;
+}
+
+// The tooltip lives on a wrapper because CSS :hover works over a disabled child, unlike a native title.
+export function renderWithTooltip(tooltipLines: string[], child: ReactElement): ReactElement
+{
+	if (tooltipLines.length === 0)
+	{
+		return child;
+	}
+
+	const element: ReactElement =
+	(
+		<div className="group relative">
+			{child}
+			<div className="hidden group-hover:block absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-1 w-max max-w-xs px-2 py-1 bg-gray-800 text-white text-xs rounded shadow-lg text-left pointer-events-none">
+				{tooltipLines.map((line: string, index: number): ReactElement =>
+				{
+					return <div key={index}>{line}</div>;
+				})}
+			</div>
+		</div>
+	);
+
+	return element;
 }

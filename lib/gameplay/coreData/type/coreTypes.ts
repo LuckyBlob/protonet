@@ -85,6 +85,7 @@ export type PublicPlanetData =
 	slot: number;
 	system: number;
 	galaxy: number;
+	name: string | null;
 	owner_player_id: number;
 	dynamicPlanetData: DynamicPlanetData;
 };

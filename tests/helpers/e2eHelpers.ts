@@ -845,6 +845,11 @@ export function fleetActionSelect(page: Page): Locator
     return page.locator("select").filter({ has: page.getByRole("option", { name: actionNamePattern }) });
 }
 
+export function sendFleetButton(page: Page): Locator
+{
+    return page.getByRole("button", { name: "Send fleet" });
+}
+
 export async function sendFleet(page: Page, unitName: string, unitQuantity: number, target: PlanetRow, actionLabel: "Station" | "Collect" | "Colonize" | "Espionage" | "Attack" | "Destroy Moon"): Promise<void>
 {
     await unitRowQuantityInput(page, unitName).fill(String(unitQuantity));

@@ -32,14 +32,14 @@ describe('getFailedUnitBuildRequirements — Interceptor Missile (needs Missile 
     it('blocks Interceptor when Missile Silo is level 1', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer({ buildingLevels: new Map([[GameType.BuildingType.MissileSilo, 1]]) });
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.InterceptorMissile, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.InterceptorMissile);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('allows Interceptor when Missile Silo is exactly level 2 (boundary)', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer({ buildingLevels: new Map([[GameType.BuildingType.MissileSilo, 2]]) });
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.InterceptorMissile, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.InterceptorMissile);
         expect(failed).toHaveLength(0);
     });
 });
@@ -49,28 +49,28 @@ describe('getFailedUnitBuildRequirements — Interplanetary Missile (needs Missi
     it('blocks ICBM at Missile Silo 4 when Impulse Drive is missing', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer({ buildingLevels: new Map([[GameType.BuildingType.MissileSilo, 4]]) });
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.InterplanetaryMissile, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.InterplanetaryMissile);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('blocks ICBM at Missile Silo 3 even with Impulse Drive', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer({ buildingLevels: new Map([[GameType.BuildingType.MissileSilo, 3]]) }, IMPULSE_1);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.InterplanetaryMissile, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.InterplanetaryMissile);
         expect(failed.length).toBeGreaterThan(0);
     });
 
     it('allows ICBM at Missile Silo 4 with Impulse Drive 1 (boundary)', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer({ buildingLevels: new Map([[GameType.BuildingType.MissileSilo, 4]]) }, IMPULSE_1);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.InterplanetaryMissile, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.InterplanetaryMissile);
         expect(failed).toHaveLength(0);
     });
 
     it('blocks ICBM at Missile Silo 2 (interceptor-only level)', () =>
     {
         const playerData: CoreType.PlayerData = buildPlayer({ buildingLevels: new Map([[GameType.BuildingType.MissileSilo, 2]]) }, IMPULSE_1);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.InterplanetaryMissile, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.InterplanetaryMissile);
         expect(failed.length).toBeGreaterThan(0);
     });
 });
@@ -83,7 +83,7 @@ describe('missile storage capacity gate', () =>
             buildingLevels: new Map([[GameType.BuildingType.MissileSilo, 2]]),
             unitQuantity: new Map([[GameType.UnitType.InterceptorMissile, 20]]),
         });
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.InterceptorMissile, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.InterceptorMissile);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -93,7 +93,7 @@ describe('missile storage capacity gate', () =>
             buildingLevels: new Map([[GameType.BuildingType.MissileSilo, 2]]),
             unitQuantity: new Map([[GameType.UnitType.InterceptorMissile, 19]]),
         });
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.InterceptorMissile, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.InterceptorMissile);
         expect(failed).toHaveLength(0);
     });
 });
@@ -111,7 +111,7 @@ describe('build-while-building concurrency rules', () =>
             buildingLevels: new Map([[GameType.BuildingType.MissileSilo, 4]]),
             unitConstructions: [unitConstruction],
         }, IMPULSE_1);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.InterplanetaryMissile, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.InterplanetaryMissile);
         expect(failed).toHaveLength(0);
     });
 
@@ -121,7 +121,7 @@ describe('build-while-building concurrency rules', () =>
             buildingLevels: new Map([[GameType.BuildingType.MissileSilo, 4]]),
             buildingUpgrades: [buildingUpgradeInProgress(GameType.BuildingType.Shipyard)],
         }, IMPULSE_1);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.InterplanetaryMissile, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.InterplanetaryMissile);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -131,7 +131,7 @@ describe('build-while-building concurrency rules', () =>
             buildingLevels: new Map([[GameType.BuildingType.MissileSilo, 4]]),
             buildingUpgrades: [buildingUpgradeInProgress(GameType.BuildingType.MissileSilo)],
         }, IMPULSE_1);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.InterplanetaryMissile, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.InterplanetaryMissile);
         expect(failed).toHaveLength(0);
     });
 
@@ -141,7 +141,7 @@ describe('build-while-building concurrency rules', () =>
             buildingLevels: new Map([[GameType.BuildingType.Shipyard, 2]]),
             buildingUpgrades: [buildingUpgradeInProgress(GameType.BuildingType.MissileSilo)],
         }, COMBUSTION_2);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.SmallTransport);
         expect(failed).toHaveLength(0);
     });
 
@@ -151,7 +151,7 @@ describe('build-while-building concurrency rules', () =>
             buildingLevels: new Map([[GameType.BuildingType.Shipyard, 2]]),
             buildingUpgrades: [buildingUpgradeInProgress(GameType.BuildingType.Shipyard)],
         });
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.SmallTransport);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -161,7 +161,7 @@ describe('build-while-building concurrency rules', () =>
             buildingLevels: new Map([[GameType.BuildingType.Shipyard, 2]]),
             buildingUpgrades: [buildingUpgradeInProgress(GameType.BuildingType.NaniteFactory)],
         });
-        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements(playerData, GameType.UnitType.SmallTransport, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedUnitBuildRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.UnitType.SmallTransport);
         expect(failed.length).toBeGreaterThan(0);
     });
 });
@@ -183,7 +183,7 @@ describe('Shipyard upgrade is blocked while units are in the build queue', () =>
             buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 2]]),
             unitConstructions: [unitConstructionInProgress()],
         });
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.Shipyard, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.BuildingType.Shipyard);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -192,7 +192,7 @@ describe('Shipyard upgrade is blocked while units are in the build queue', () =>
         const playerData: CoreType.PlayerData = buildPlayer({
             buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 2]]),
         });
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.Shipyard, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.BuildingType.Shipyard);
         expect(failed).toHaveLength(0);
     });
 
@@ -202,7 +202,7 @@ describe('Shipyard upgrade is blocked while units are in the build queue', () =>
             buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 2]]),
             unitConstructions: [unitConstructionInProgress()],
         });
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.MetalMine, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.BuildingType.MetalMine);
         expect(failed).toHaveLength(0);
     });
 });
@@ -217,7 +217,7 @@ describe('Nanite Factory upgrade is blocked while units are in the build queue',
             buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 10]]),
             unitConstructions: [unitConstructionInProgress()],
         }, NANITE_PREREQUISITE_RESEARCH);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.NaniteFactory, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.BuildingType.NaniteFactory);
         expect(failed.length).toBeGreaterThan(0);
     });
 
@@ -226,7 +226,7 @@ describe('Nanite Factory upgrade is blocked while units are in the build queue',
         const playerData: CoreType.PlayerData = buildPlayer({
             buildingLevels: new Map([[GameType.BuildingType.RoboticFactory, 10]]),
         }, NANITE_PREREQUISITE_RESEARCH);
-        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements(playerData, GameType.BuildingType.NaniteFactory, PLANET_ID);
+        const failed: RequirementType.Requirement[] = Requirements.getFailedBuildingUpgradeRequirements({ playerData: playerData, planetId: PLANET_ID }, GameType.BuildingType.NaniteFactory);
         expect(failed).toHaveLength(0);
     });
 });

@@ -102,6 +102,11 @@ export function unitParticipatesInMoonDestruction(unitType: GameType.UnitType): 
     return getUnitStats(unitType).participatesInMoonDestruction === true;
 }
 
+export function unitParticipatesInColonization(unitType: GameType.UnitType): boolean
+{
+    return getUnitStats(unitType).participatesInColonization === true;
+}
+
 export function canPlanetZoneBeSpied(zone: GameType.PlanetZone): boolean
 {
     return getPlanetZoneInfo(zone).canBeSpied === true;
@@ -298,7 +303,7 @@ export function formatPlanetAddress(galaxy: number, system: number, slot: number
     return `${baseLabel} (${planetZoneInfo.displayName})`;
 }
 
-export function getPlanetDisplayName(planetRow: DBType.PlanetRow): string
+export function getPlanetDisplayName(planetRow: { name: string | null; galaxy: number; system: number; slot: number; zone: number }): string
 {
     const trimmedName: string = (planetRow.name ?? "").trim();
     if (trimmedName.length > 0)

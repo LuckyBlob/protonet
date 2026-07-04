@@ -65,7 +65,15 @@ async function openColonizeStaging(page: Page, origin: E2EHelper.PlanetRow, targ
 
 async function expectColonizeAvailable(page: Page, available: boolean): Promise<void>
 {
-    await expect(E2EHelper.fleetActionSelect(page).getByRole("option", { name: "Colonize" })).toHaveCount(available === true ? 1 : 0);
+    await E2EHelper.fleetActionSelect(page).selectOption({ label: "Colonize" });
+    if (available === true)
+    {
+        await expect(E2EHelper.sendFleetButton(page)).toBeEnabled();
+    }
+    else
+    {
+        await expect(E2EHelper.sendFleetButton(page)).toBeDisabled();
+    }
 }
 
 test.describe("Astrophysics colony cap", () =>

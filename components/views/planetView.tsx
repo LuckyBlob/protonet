@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactElement, ChangeEvent, useState } from "react";
+import { ReactElement, ChangeEvent, useState, useEffect } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
@@ -62,34 +62,43 @@ function getEspionageProbeQuantities(context: GalaxyViewContext): Map<GameType.U
     return new Map<GameType.UnitType, number>([[GameType.UnitType.EspionageProbe, probesToSend]]);
 }
 
-function canSendEspionageProbe(context: GalaxyViewContext, targetPlanetAddress: GameType.PlanetAddress, targetZoneExists: boolean, zoneAssociatedPlanetOwnerPlayerId: number | null): boolean
+function getEspionageProbeFailureReasons(context: GalaxyViewContext, targetPlanetAddress: GameType.PlanetAddress, targetZoneExists: boolean, zoneAssociatedPlanetOwnerPlayerId: number | null): string[]
 {
+    const reasons: string[] = [];
+
     if (UnitData.getUnitQuantity(context.originPlanetData, GameType.UnitType.EspionageProbe) < 1)
     {
-        return false;
+        reasons.push("No espionage probes available.");
     }
 
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(context.originPlanetData);
     if (StaticDataHelper.isSameAddress(originAddress, targetPlanetAddress) === true)
     {
-        return false;
+        reasons.push("Origin and target are the same planet.");
     }
 
     const probeQuantities: Map<GameType.UnitType, number> = getEspionageProbeQuantities(context);
 
-    const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(context.playerData, GameType.FleetActionType.Espionage, context.originPlanetData.planetRow.id, probeQuantities, NO_TRANSPORTED_RESOURCES, targetPlanetAddress, zoneAssociatedPlanetOwnerPlayerId, targetZoneExists);
-    if (failedRequirements.length > 0)
+    const requirementContext: RequirementType.RequirementContext =
     {
-        return false;
-    }
+        playerData: context.playerData,
+        planetId: context.originPlanetData.planetRow.id,
+        unitQuantities: probeQuantities,
+        transportedResourceQuantities: NO_TRANSPORTED_RESOURCES,
+        targetPlanetAddress: targetPlanetAddress,
+        zoneAssociatedPlanetOwnerPlayerId: zoneAssociatedPlanetOwnerPlayerId,
+        targetZoneExists: targetZoneExists,
+    };
+    const espionageFailedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(requirementContext, GameType.FleetActionType.Espionage);
+    reasons.push(...Requirement.getRequirementDescriptions(espionageFailedRequirements, requirementContext));
 
     const fuelRequirements: Map<GameType.ResourceType, number> = FleetData.calculateTotalFleetFuel(context.playerData, originAddress, targetPlanetAddress, probeQuantities, context.serverData);
     if (ResourceData.hasResourceQuantities(context.originPlanetData, fuelRequirements) === false)
     {
-        return false;
+        reasons.push("Not enough fuel.");
     }
 
-    return true;
+    return reasons;
 }
 
 function renderEspionageIndicator(context: GalaxyViewContext, planetPublicPlanetData: CoreType.PublicPlanetData | null, targetPlanetAddress: GameType.PlanetAddress): ReactElement | null
@@ -99,11 +108,12 @@ function renderEspionageIndicator(context: GalaxyViewContext, planetPublicPlanet
         return null;
     }
 
-    const canSpy: boolean = canSendEspionageProbe(context, targetPlanetAddress, true, planetPublicPlanetData.owner_player_id);
+    const failureReasons: string[] = getEspionageProbeFailureReasons(context, targetPlanetAddress, true, planetPublicPlanetData.owner_player_id);
+    const canSpy: boolean = failureReasons.length === 0;
     const probeQuantities: Map<GameType.UnitType, number> = getEspionageProbeQuantities(context);
     const probesToSend: number = probeQuantities.get(GameType.UnitType.EspionageProbe) ?? 1;
     const variant: string = canSpy === true ? "color" : "gray";
-    const title: string = canSpy === true ? `Send ${probesToSend} espionage probe(s)` : "Cannot send an espionage probe here";
+    const spyTitle: string | undefined = canSpy === true ? `Send ${probesToSend} espionage probe(s)` : undefined;
 
     const handleSpyClick = async (): Promise<void> =>
     {
@@ -126,18 +136,18 @@ function renderEspionageIndicator(context: GalaxyViewContext, planetPublicPlanet
 
     const cursorClass: string = canSpy === true ? "cursor-pointer" : "cursor-default";
 
-    const element: ReactElement =
+    const spyIcon: ReactElement =
     (
         <img
             src={`/icons/fleetAction/${GameType.FleetActionType.Espionage}_${variant}.png`}
             alt="Espionage"
-            title={title}
+            title={spyTitle}
             onClick={handleSpyClick}
             className={`w-4 h-4 object-contain ${cursorClass}`}
         />
     );
 
-    return element;
+    return HelperElements.renderWithTooltip(failureReasons, spyIcon);
 }
 
 function renderPlanetRow(context: GalaxyViewContext, slot: number, selectedGalaxy: number, selectedSystem: number, publicPlanetDatas: CoreType.PublicPlanetData[], publicPlayerRows: DBType.PublicPlayerRow[]): ReactElement
@@ -152,6 +162,8 @@ function renderPlanetRow(context: GalaxyViewContext, slot: number, selectedGalax
         ? "Unowned"
         : `Owned by: ${getPlayerUsername(planetPublicPlanetData.owner_player_id, publicPlayerRows)}`;
 
+    const planetName: string = planetPublicPlanetData !== null ? StaticDataHelper.getPlanetDisplayName(planetPublicPlanetData) : "";
+
     const moonIndicator: ReactElement | null = hasMoon === true
         ? <img src="/icons/zone/2_color.png" alt="Moon" title="Moon present" className="w-4 h-4 object-contain" />
         : null;
@@ -165,6 +177,8 @@ function renderPlanetRow(context: GalaxyViewContext, slot: number, selectedGalax
     (
         <div key={slot} className="flex flex-row items-center gap-4 px-4 py-2 border border-gray-600 rounded text-sm text-white">
             <span className="font-semibold w-4 text-right">{slot}</span>
+            <span className="text-gray-400">|</span>
+            <span className="w-32 truncate">{planetName}</span>
             <span className="text-gray-400">|</span>
             <span>{ownershipText}</span>
             {moonIndicator}
@@ -183,18 +197,20 @@ function renderDebrisIndicator(debrisPublicPlanetData: CoreType.PublicPlanetData
         return null;
     }
 
-    const debrisMetal: number = Math.floor(debrisPublicPlanetData.dynamicPlanetData.resourceQuantity.get(GameType.ResourceType.Metal) ?? 0);
-    const debrisCrystal: number = Math.floor(debrisPublicPlanetData.dynamicPlanetData.resourceQuantity.get(GameType.ResourceType.Crystal) ?? 0);
+    const flooredDebrisResources: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
+    for (const [resourceType, resourceQuantity] of debrisPublicPlanetData.dynamicPlanetData.resourceQuantity)
+    {
+        flooredDebrisResources.set(resourceType, Math.floor(resourceQuantity));
+    }
 
-    const element: ReactElement =
+    const debrisTooltipLines: string[] = HelperElements.buildCostParts(flooredDebrisResources);
+
+    const debrisIcon: ReactElement =
     (
-        <div className="flex flex-row items-center gap-1" title="Debris field present">
-            <img src="/icons/zone/3_color.png" alt="Debris Field" className="w-4 h-4 object-contain" />
-            <span className="text-xs text-gray-300">{debrisMetal} M / {debrisCrystal} C</span>
-        </div>
+        <img src="/icons/zone/3_color.png" alt="Debris Field" className="w-4 h-4 object-contain" />
     );
 
-    return element;
+    return HelperElements.renderWithTooltip(debrisTooltipLines, debrisIcon);
 }
 
 function renderPlanetGrid(context: GalaxyViewContext, selectedGalaxy: number, selectedSystem: number, playerData: CoreType.PlayerData): ReactElement
@@ -281,26 +297,41 @@ function renderBody(props: PlanetViewProps, originPlanetData: CoreType.PlanetDat
 
 export function PlanetView(props: PlanetViewProps): ReactElement
 {
+    const selectedGalaxyState: [number, (value: number) => void] = useState<number>(1);
+    const selectedSystemState: [number, (value: number) => void] = useState<number>(1);
+    const sendFeedbackState: [SpyFeedback | null, (value: SpyFeedback | null) => void] = useState<SpyFeedback | null>(null);
+    const selectedPlanetId: number = props.clientDataStateResult.psController[0].selectedPlanetId;
+
+    useEffect((): void =>
+    {
+        try
+        {
+            const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
+            selectedGalaxyState[1](planetDataPredicted.planetRow.galaxy);
+            selectedSystemState[1](planetDataPredicted.planetRow.system);
+            sendFeedbackState[1](null);
+        }
+        catch (error: unknown)
+        {
+            console.error("⚠️:", error);
+        }
+    }, [selectedPlanetId]);
+
+    const handleGalaxyChange = (e: ChangeEvent<HTMLSelectElement>): void =>
+    {
+        const parsedValue: number = Number.parseInt(e.target.value, 10);
+        selectedGalaxyState[1](Math.min(Math.max(parsedValue, 1), StaticData.GALAXY_COUNT));
+    };
+
+    const handleSystemChange = (e: ChangeEvent<HTMLSelectElement>): void =>
+    {
+        const parsedValue: number = Number.parseInt(e.target.value, 10);
+        selectedSystemState[1](Math.min(Math.max(parsedValue, 1), StaticData.SYSTEM_COUNT));
+    };
+
     try
     {
         const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-
-        const selectedGalaxyState: [number, (value: number) => void] = useState<number>(planetDataPredicted.planetRow.galaxy);
-        const selectedSystemState: [number, (value: number) => void] = useState<number>(planetDataPredicted.planetRow.system);
-        const sendFeedbackState: [SpyFeedback | null, (value: SpyFeedback | null) => void] = useState<SpyFeedback | null>(null);
-
-        const handleGalaxyChange = (e: ChangeEvent<HTMLSelectElement>): void =>
-        {
-            const parsedValue: number = Number.parseInt(e.target.value, 10);
-            selectedGalaxyState[1](Math.min(Math.max(parsedValue, 1), StaticData.GALAXY_COUNT));
-        };
-
-        const handleSystemChange = (e: ChangeEvent<HTMLSelectElement>): void =>
-        {
-            const parsedValue: number = Number.parseInt(e.target.value, 10);
-            selectedSystemState[1](Math.min(Math.max(parsedValue, 1), StaticData.SYSTEM_COUNT));
-        };
-
         return renderBody(props, planetDataPredicted, sendFeedbackState, selectedGalaxyState[0], selectedSystemState[0], handleGalaxyChange, handleSystemChange);
     }
     catch (error: unknown)

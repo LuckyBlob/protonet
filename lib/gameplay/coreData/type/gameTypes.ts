@@ -264,6 +264,7 @@ export type UnitStats =
 	repairChance?: number;
 	participatesInCombat?: boolean;
 	participatesInMoonDestruction?: boolean;
+	participatesInColonization?: boolean;
 	rapidFire?: Map<UnitType, number>;
 	speed?: SpeedStats;
 	space?: number;

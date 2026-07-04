@@ -10,6 +10,7 @@ export const THING_DISPLAY_NAMES: ReadonlyMap<ThingType.Thing, string> = new Map
     [ThingType.Thing.Building, "Building"],
     [ThingType.Thing.Unit, "Unit"],
     [ThingType.Thing.BuildingUpgrade, "BuildingUpgrade"],
+    [ThingType.Thing.BuildingDeconstruction, "BuildingDeconstruction"],
     [ThingType.Thing.UnitConstruction, "UnitConstruction"],
     [ThingType.Thing.FleetMovement, "FleetMovement"],
     [ThingType.Thing.PlanetValue, "PlanetValue"],
@@ -39,6 +40,12 @@ export const THING_DEFINITIONS: ReadonlyMap<ThingType.Thing, ThingType.ThingDefi
         contexts: [CoreType.DataContext.UnitQuantity, CoreType.DataContext.UnitConstruction],
     }],
     [ThingType.Thing.BuildingUpgrade,
+    {
+        specificThingDisplayNames: new Map<ThingType.SpecificThing, string>([...StaticData.BUILDING_STATS].map(
+            ([buildingType, buildingStats]) => [buildingType, buildingStats.displayName])),
+        contexts: [CoreType.DataContext.BuildingLevel],
+    }],
+    [ThingType.Thing.BuildingDeconstruction,
     {
         specificThingDisplayNames: new Map<ThingType.SpecificThing, string>([...StaticData.BUILDING_STATS].map(
             ([buildingType, buildingStats]) => [buildingType, buildingStats.displayName])),
