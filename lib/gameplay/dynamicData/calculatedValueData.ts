@@ -9,8 +9,31 @@ import * as PlayerValueProduction from "@/lib/gameplay/coreData/formula/playerVa
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
+import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 
 const HOMEWORLD_PLANET_COUNT: number = 1;
+
+//#region breakdown types
+export type ValueSourceContribution =
+{
+    source: ThingType.SpecificThingType;
+    ratePerHour: number;
+};
+
+export type ValueBonusContribution =
+{
+    label: string;
+    percent: number;
+    ratePerHourDelta: number;
+};
+
+export type CalculatedValueBreakdown =
+{
+    sourceContributions: ValueSourceContribution[];
+    bonusContributions: ValueBonusContribution[];
+    totalRatePerHour: number;
+};
+//#endregion
 
 //#region shared aggregation primitives
 function getCalculatedValueData<ValueType>(valueDatas: Map<ValueType, CoreType.CalculatedValueData>, valueType: ValueType): CoreType.CalculatedValueData | null
@@ -66,12 +89,107 @@ function addCalculatedValueData<ValueType>(valueDatas: Map<ValueType, CoreType.C
     }
     valueDatas.set(valueType, newValueData);
 }
+
+type CalculatedValueSourceContribution =
+{
+    source: ThingType.SpecificThingType;
+    valueData: CoreType.CalculatedValueData;
+};
+
+function addCalculatedValueSourceContributions<ValueType>(sourceContributionsByType: Map<ValueType, CalculatedValueSourceContribution[]>, source: ThingType.SpecificThingType, values: Map<ValueType, CoreType.CalculatedValueData> | null): void
+{
+    if (values === null)
+    {
+        return;
+    }
+
+    for (const [valueType, valueData] of values)
+    {
+        if (valueData.production === 0 && valueData.consumption === 0)
+        {
+            continue;
+        }
+
+        const existingSourceContributions: CalculatedValueSourceContribution[] = sourceContributionsByType.get(valueType) ?? [];
+        existingSourceContributions.push({ source: source, valueData: valueData });
+        sourceContributionsByType.set(valueType, existingSourceContributions);
+    }
+}
+
+function foldCalculatedValueSourceContributions<ValueType>(sourceContributionsByType: Map<ValueType, CalculatedValueSourceContribution[]>): Map<ValueType, CoreType.CalculatedValueData>
+{
+    const valueDatas: Map<ValueType, CoreType.CalculatedValueData> = new Map<ValueType, CoreType.CalculatedValueData>();
+
+    for (const [valueType, sourceContributions] of sourceContributionsByType)
+    {
+        for (const sourceContribution of sourceContributions)
+        {
+            addCalculatedValueData(valueDatas, valueType, sourceContribution.valueData);
+        }
+    }
+
+    return valueDatas;
+}
+
+function computeValueBreakdown(typeSourceContributions: CalculatedValueSourceContribution[]): CalculatedValueBreakdown
+{
+    const producingSourceContributions: ValueSourceContribution[] = [];
+    const consumingSourceContributions: ValueSourceContribution[] = [];
+
+    for (const typeSourceContribution of typeSourceContributions)
+    {
+        const signedRatePerHour: number = typeSourceContribution.valueData.production - typeSourceContribution.valueData.consumption;
+        if (signedRatePerHour === 0)
+        {
+            continue;
+        }
+
+        const valueSourceContribution: ValueSourceContribution =
+        {
+            source: typeSourceContribution.source,
+            ratePerHour: signedRatePerHour,
+        };
+
+        if (signedRatePerHour > 0)
+        {
+            producingSourceContributions.push(valueSourceContribution);
+        }
+        else
+        {
+            consumingSourceContributions.push(valueSourceContribution);
+        }
+    }
+
+    const sourceContributions: ValueSourceContribution[] = [...producingSourceContributions, ...consumingSourceContributions];
+
+    let totalRatePerHour: number = 0;
+    for (const sourceContribution of sourceContributions)
+    {
+        totalRatePerHour += sourceContribution.ratePerHour;
+    }
+
+    const breakdown: CalculatedValueBreakdown =
+    {
+        sourceContributions: sourceContributions,
+        bonusContributions: [],
+        totalRatePerHour: totalRatePerHour,
+    };
+
+    return breakdown;
+}
 //#endregion
 
 //#region planet values
-export function computeResourceProductionPlanetValueRatio(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, playerData: CoreType.PlayerData): number
+type ResourceProductionThrottleContribution =
 {
-    let totalRatio: number = 1;
+    planetValueType: GameType.PlanetValueType;
+    displayName: string;
+    ratio: number;
+};
+
+function computeResourceProductionThrottleContributions(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, playerData: CoreType.PlayerData): ResourceProductionThrottleContribution[]
+{
+    const throttleContributions: ResourceProductionThrottleContribution[] = [];
 
     for (const [planetValueType, planetValueInfo] of StaticData.PLANET_VALUE_INFOS)
     {
@@ -88,10 +206,81 @@ export function computeResourceProductionPlanetValueRatio(planetData: CoreType.P
         const planetValueData: CoreType.CalculatedValueData | null = computePlanetValueData(planetData, planetValueType, playerData);
         const resourceProductionRatio: number = computeProductionRatioFromPlanetValueData(planetValueData);
 
-        totalRatio *= resourceProductionRatio;
+        const throttleContribution: ResourceProductionThrottleContribution =
+        {
+            planetValueType: planetValueType,
+            displayName: planetValueInfo.displayName,
+            ratio: resourceProductionRatio,
+        };
+
+        throttleContributions.push(throttleContribution);
+    }
+
+    return throttleContributions;
+}
+
+export function computeResourceProductionPlanetValueRatio(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, playerData: CoreType.PlayerData): number
+{
+    const throttleContributions: ResourceProductionThrottleContribution[] = computeResourceProductionThrottleContributions(planetData, resourceType, playerData);
+
+    let totalRatio: number = 1;
+
+    for (const throttleContribution of throttleContributions)
+    {
+        totalRatio *= throttleContribution.ratio;
     }
 
     return totalRatio;
+}
+
+export function computeResourceProductionBonusContributions(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, playerData: CoreType.PlayerData, baseRatePerHour: number): ValueBonusContribution[]
+{
+    const bonusContributions: ValueBonusContribution[] = [];
+
+    const throttleContributions: ResourceProductionThrottleContribution[] = computeResourceProductionThrottleContributions(planetData, resourceType, playerData);
+
+    let throttledRatePerHour: number = baseRatePerHour;
+
+    for (const throttleContribution of throttleContributions)
+    {
+        if (throttleContribution.ratio === 1)
+        {
+            continue;
+        }
+
+        const ratePerHourDelta: number = throttledRatePerHour * (throttleContribution.ratio - 1);
+
+        const bonusContribution: ValueBonusContribution =
+        {
+            label: throttleContribution.displayName,
+            percent: (throttleContribution.ratio - 1) * 100,
+            ratePerHourDelta: ratePerHourDelta,
+        };
+
+        bonusContributions.push(bonusContribution);
+        throttledRatePerHour += ratePerHourDelta;
+    }
+
+    const modifierContributions: ResourceProductionModifierContribution[] = computeResourceProductionModifierContributions(playerData, resourceType);
+
+    for (const modifierContribution of modifierContributions)
+    {
+        if (modifierContribution.percent === 0)
+        {
+            continue;
+        }
+
+        const bonusContribution: ValueBonusContribution =
+        {
+            label: modifierContribution.displayName,
+            percent: modifierContribution.percent,
+            ratePerHourDelta: throttledRatePerHour * (modifierContribution.percent / 100),
+        };
+
+        bonusContributions.push(bonusContribution);
+    }
+
+    return bonusContributions;
 }
 
 function computeProductionRatioFromPlanetValueData(planetValueData: CoreType.CalculatedValueData | null): number
@@ -150,14 +339,54 @@ export function computePlanetValueData(planetData: CoreType.PlanetData, planetVa
     return getCalculatedValueData(planetValueDatas, planetValueType);
 }
 
+export function computePlanetValueNet(planetData: CoreType.PlanetData, planetValueType: GameType.PlanetValueType, playerData: CoreType.PlayerData): number
+{
+    const planetValueData: CoreType.CalculatedValueData | null = computePlanetValueData(planetData, planetValueType, playerData);
+    if (planetValueData === null)
+    {
+        return 0;
+    }
+
+    return planetValueData.production - planetValueData.consumption;
+}
+
+export function computePlanetValueBreakdown(planetData: CoreType.PlanetData, planetValueType: GameType.PlanetValueType, playerData: CoreType.PlayerData): CalculatedValueBreakdown
+{
+    const sourceContributionsByType: Map<GameType.PlanetValueType, CalculatedValueSourceContribution[]> = computePlanetValueSourceContributions(planetData, playerData);
+    const typeSourceContributions: CalculatedValueSourceContribution[] = sourceContributionsByType.get(planetValueType) ?? [];
+
+    return computeValueBreakdown(typeSourceContributions);
+}
+
+function computePlanetValueSourceContributions(planetData: CoreType.PlanetData, playerData: CoreType.PlayerData): Map<GameType.PlanetValueType, CalculatedValueSourceContribution[]>
+{
+    const sourceContributionsByType: Map<GameType.PlanetValueType, CalculatedValueSourceContribution[]> = new Map<GameType.PlanetValueType, CalculatedValueSourceContribution[]>();
+
+    const buildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building);
+    for (const buildingType of buildingTypes)
+    {
+        const buildingPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = PlanetValueProduction.computeBuildingPlanetValueProduction(buildingType, playerData, planetData);
+        addCalculatedValueSourceContributions(sourceContributionsByType, ThingHelpers.building(buildingType), buildingPlanetValues);
+    }
+
+    const unitTypes: GameType.UnitType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Unit);
+    for (const unitType of unitTypes)
+    {
+        const unitPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = PlanetValueProduction.computeUnitPlanetValueProduction(unitType, playerData, planetData);
+        addCalculatedValueSourceContributions(sourceContributionsByType, ThingHelpers.unit(unitType), unitPlanetValues);
+    }
+
+    return sourceContributionsByType;
+}
+
 export function computePlanetValueDatas(planetData: CoreType.PlanetData, playerData: CoreType.PlayerData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
 {
+    const sourceContributionsByType: Map<GameType.PlanetValueType, CalculatedValueSourceContribution[]> = computePlanetValueSourceContributions(planetData, playerData);
+
     const planetValueDataBySource: Map<GameType.PlanetValueType, CoreType.CalculatedValueData>[] =
     [
         computePlanetBaseValues(planetData),
-        computeBuildingPlanetValueDatas(planetData, playerData),
-        computeUnitPlanetValueDatas(planetData, playerData),
-        computeResearchPlanetValueDatas(planetData),
+        foldCalculatedValueSourceContributions(sourceContributionsByType),
     ];
 
     return mergeCalculatedValueDatas(StaticData.PLANET_VALUE_INFOS.keys(), planetValueDataBySource);
@@ -173,52 +402,6 @@ function computePlanetBaseValues(planetData: CoreType.PlanetData): Map<GameType.
     return baseValues;
 }
 
-function computeUnitPlanetValueDatas(planetData: CoreType.PlanetData, playerData: CoreType.PlayerData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
-{
-    const newUnitPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
-
-    const unitTypes: GameType.UnitType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Unit);
-    for (const unitType of unitTypes)
-    {
-        const unitPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> | null = PlanetValueProduction.computeUnitPlanetValueProduction(unitType, playerData, planetData);
-        if (unitPlanetValues === null)
-        {
-            continue;
-        }
-
-        for (const [planetValueType, planetValueAmounts] of unitPlanetValues)
-        {
-            addCalculatedValueData(newUnitPlanetValues, planetValueType, planetValueAmounts);
-        }
-    }
-
-    return newUnitPlanetValues;
-}
-
-function computeResearchPlanetValueDatas(planetData: CoreType.PlanetData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
-{
-    const newResearchPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
-
-    return newResearchPlanetValues;
-}
-
-function computeBuildingPlanetValueDatas(planetData: CoreType.PlanetData, playerData: CoreType.PlayerData): Map<GameType.PlanetValueType, CoreType.CalculatedValueData>
-{
-    const newBuildingPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
-
-    const buildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building)
-    for (const buildingType of buildingTypes)
-    {
-        const buildingPlanetValues: Map<GameType.PlanetValueType, CoreType.CalculatedValueData> = PlanetValueProduction.computeBuildingPlanetValueProduction(buildingType, playerData, planetData) ?? new Map<GameType.PlanetValueType, CoreType.CalculatedValueData>();
-
-        for (const [planetValueType, planetValueAmounts] of buildingPlanetValues)
-        {
-            addCalculatedValueData(newBuildingPlanetValues, planetValueType, planetValueAmounts);
-        }
-    }
-
-    return newBuildingPlanetValues;
-}
 //#endregion
 
 //#region player values
@@ -239,6 +422,14 @@ export function computePlayerValueNet(playerData: CoreType.PlayerData, playerVal
     return playerValueData.production - playerValueData.consumption;
 }
 
+export function computePlayerValueBreakdown(playerData: CoreType.PlayerData, playerValueType: GameType.PlayerValueType): CalculatedValueBreakdown
+{
+    const sourceContributionsByType: Map<GameType.PlayerValueType, CalculatedValueSourceContribution[]> = computePlayerValueSourceContributions(playerData);
+    const typeSourceContributions: CalculatedValueSourceContribution[] = sourceContributionsByType.get(playerValueType) ?? [];
+
+    return computeValueBreakdown(typeSourceContributions);
+}
+
 export function computeMaxOwnedPlanetCount(playerData: CoreType.PlayerData): number
 {
     const colonySlots: number = computePlayerValueNet(playerData, GameType.PlayerValueType.ColonySlots);
@@ -255,9 +446,16 @@ export function computeFreeColonyPlanetSlots(playerData: CoreType.PlayerData): n
     return maxOwnedPlanetCount - ownedPlanetCount;
 }
 
-export function computeResourceProductionModificationPercent(playerData: CoreType.PlayerData, resourceType: GameType.ResourceType): number
+type ResourceProductionModifierContribution =
 {
-    let totalModificationPercent: number = 0;
+    playerValueType: GameType.PlayerValueType;
+    displayName: string;
+    percent: number;
+};
+
+function computeResourceProductionModifierContributions(playerData: CoreType.PlayerData, resourceType: GameType.ResourceType): ResourceProductionModifierContribution[]
+{
+    const modifierContributions: ResourceProductionModifierContribution[] = [];
 
     for (const [playerValueType, playerValueInfo] of StaticData.PLAYER_VALUE_INFOS)
     {
@@ -271,7 +469,28 @@ export function computeResourceProductionModificationPercent(playerData: CoreTyp
             continue;
         }
 
-        totalModificationPercent += computePlayerValueNet(playerData, playerValueType);
+        const modifierContribution: ResourceProductionModifierContribution =
+        {
+            playerValueType: playerValueType,
+            displayName: playerValueInfo.displayName,
+            percent: computePlayerValueNet(playerData, playerValueType),
+        };
+
+        modifierContributions.push(modifierContribution);
+    }
+
+    return modifierContributions;
+}
+
+export function computeResourceProductionModificationPercent(playerData: CoreType.PlayerData, resourceType: GameType.ResourceType): number
+{
+    const modifierContributions: ResourceProductionModifierContribution[] = computeResourceProductionModifierContributions(playerData, resourceType);
+
+    let totalModificationPercent: number = 0;
+
+    for (const modifierContribution of modifierContributions)
+    {
+        totalModificationPercent += modifierContribution.percent;
     }
 
     return totalModificationPercent;
@@ -279,80 +498,36 @@ export function computeResourceProductionModificationPercent(playerData: CoreTyp
 
 export function computePlayerValueDatas(playerData: CoreType.PlayerData): Map<GameType.PlayerValueType, CoreType.CalculatedValueData>
 {
-    const playerValueDataBySource: Map<GameType.PlayerValueType, CoreType.CalculatedValueData>[] =
-    [
-        computeBuildingPlayerValueDatas(playerData),
-        computeUnitPlayerValueDatas(playerData),
-        computeResearchPlayerValueDatas(playerData),
-    ];
+    const sourceContributionsByType: Map<GameType.PlayerValueType, CalculatedValueSourceContribution[]> = computePlayerValueSourceContributions(playerData);
 
-    return mergeCalculatedValueDatas(StaticData.PLAYER_VALUE_INFOS.keys(), playerValueDataBySource);
+    return foldCalculatedValueSourceContributions(sourceContributionsByType);
 }
 
-function computeBuildingPlayerValueDatas(playerData: CoreType.PlayerData): Map<GameType.PlayerValueType, CoreType.CalculatedValueData>
+function computePlayerValueSourceContributions(playerData: CoreType.PlayerData): Map<GameType.PlayerValueType, CalculatedValueSourceContribution[]>
 {
-    const newBuildingPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> = new Map<GameType.PlayerValueType, CoreType.CalculatedValueData>();
+    const sourceContributionsByType: Map<GameType.PlayerValueType, CalculatedValueSourceContribution[]> = new Map<GameType.PlayerValueType, CalculatedValueSourceContribution[]>();
 
     const buildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building);
     for (const buildingType of buildingTypes)
     {
         const buildingPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null = PlayerValueProduction.computeBuildingPlayerValueProduction(buildingType, playerData);
-        if (buildingPlayerValues === null)
-        {
-            continue;
-        }
-
-        for (const [playerValueType, playerValueAmounts] of buildingPlayerValues)
-        {
-            addCalculatedValueData(newBuildingPlayerValues, playerValueType, playerValueAmounts);
-        }
+        addCalculatedValueSourceContributions(sourceContributionsByType, ThingHelpers.building(buildingType), buildingPlayerValues);
     }
-
-    return newBuildingPlayerValues;
-}
-
-function computeUnitPlayerValueDatas(playerData: CoreType.PlayerData): Map<GameType.PlayerValueType, CoreType.CalculatedValueData>
-{
-    const newUnitPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> = new Map<GameType.PlayerValueType, CoreType.CalculatedValueData>();
 
     const unitTypes: GameType.UnitType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Unit);
     for (const unitType of unitTypes)
     {
         const unitPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null = PlayerValueProduction.computeUnitPlayerValueProduction(unitType, playerData);
-        if (unitPlayerValues === null)
-        {
-            continue;
-        }
-
-        for (const [playerValueType, playerValueAmounts] of unitPlayerValues)
-        {
-            addCalculatedValueData(newUnitPlayerValues, playerValueType, playerValueAmounts);
-        }
+        addCalculatedValueSourceContributions(sourceContributionsByType, ThingHelpers.unit(unitType), unitPlayerValues);
     }
-
-    return newUnitPlayerValues;
-}
-
-function computeResearchPlayerValueDatas(playerData: CoreType.PlayerData): Map<GameType.PlayerValueType, CoreType.CalculatedValueData>
-{
-    const newResearchPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> = new Map<GameType.PlayerValueType, CoreType.CalculatedValueData>();
 
     const researchTypes: GameType.ResearchType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Research);
     for (const researchType of researchTypes)
     {
         const researchPlayerValues: Map<GameType.PlayerValueType, CoreType.CalculatedValueData> | null = PlayerValueProduction.computeResearchPlayerValueProduction(researchType, playerData);
-
-        if (researchPlayerValues === null)
-        {
-            continue;
-        }
-
-        for (const [playerValueType, playerValueAmounts] of researchPlayerValues)
-        {
-            addCalculatedValueData(newResearchPlayerValues, playerValueType, playerValueAmounts);
-        }
+        addCalculatedValueSourceContributions(sourceContributionsByType, ThingHelpers.research(researchType), researchPlayerValues);
     }
 
-    return newResearchPlayerValues;
+    return sourceContributionsByType;
 }
 //#endregion

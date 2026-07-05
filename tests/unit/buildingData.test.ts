@@ -4,6 +4,7 @@ import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
+import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 import * as TestDataBuilders from "../helpers/testDataBuilders";
 
 describe("buildingData — level accessors", () =>
@@ -87,5 +88,67 @@ describe("buildingData — production / consumption classification", () =>
         expect(BuildingEnergySetting.getBuildingEnergyPercentage(planetData, GameType.BuildingType.FusionReactor)).toBe(0);
         // The Deuterium producer is not a consumer, so it stays at full power.
         expect(BuildingEnergySetting.getBuildingEnergyPercentage(planetData, GameType.BuildingType.DeuteriumSynthesizer)).toBe(100);
+    });
+});
+
+describe("buildingData — resource production breakdown", () =>
+{
+    it("attributes production to the producing building (Metal Mine L1 = 33/h) and matches the aggregate per-second rate", () =>
+    {
+        const planetData: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map<GameType.BuildingType, number>(
+                [
+                    [GameType.BuildingType.MetalMine, 1],
+                    [GameType.BuildingType.SolarPlant, 1],
+                ]),
+            },
+        });
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+
+        const breakdown: CalculatedValueData.CalculatedValueBreakdown = BuildingData.computeResourceProductionBreakdown(planetData, GameType.ResourceType.Metal, serverData, playerData);
+
+        expect(breakdown.sourceContributions).toHaveLength(1);
+        expect(breakdown.sourceContributions[0].source.specificThingType).toBe(GameType.BuildingType.MetalMine);
+        expect(breakdown.sourceContributions[0].ratePerHour).toBe(33);
+
+        expect(breakdown.bonusContributions).toHaveLength(0);
+        expect(breakdown.totalRatePerHour).toBe(33);
+
+        const ratePerSecond: number = BuildingData.getPlanetProductionRatePerSecond(planetData, GameType.ResourceType.Metal, serverData, playerData);
+        expect(ratePerSecond * 3600).toBeCloseTo(breakdown.totalRatePerHour);
+    });
+
+    it("surfaces the energy-shortage throttle as a negative Energy bonus line whose delta reconstructs the throttled total", () =>
+    {
+        const planetData: CoreType.PlanetData = TestDataBuilders.buildPlanetData(
+        {
+            dynamicPlanetData:
+            {
+                buildingLevels: new Map<GameType.BuildingType, number>(
+                [
+                    [GameType.BuildingType.MetalMine, 5],
+                    [GameType.BuildingType.SolarPlant, 2],
+                ]),
+            },
+        });
+        const serverData: CoreType.ServerData = TestDataBuilders.buildServerData();
+        const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData();
+
+        const breakdown: CalculatedValueData.CalculatedValueBreakdown = BuildingData.computeResourceProductionBreakdown(planetData, GameType.ResourceType.Metal, serverData, playerData);
+
+        expect(breakdown.sourceContributions).toHaveLength(1);
+        const baseMetalRatePerHour: number = breakdown.sourceContributions[0].ratePerHour;
+
+        expect(breakdown.bonusContributions).toHaveLength(1);
+        expect(breakdown.bonusContributions[0].label).toBe("Energy");
+        expect(breakdown.bonusContributions[0].percent).toBeCloseTo(-40);
+        expect(breakdown.bonusContributions[0].ratePerHourDelta).toBeCloseTo(baseMetalRatePerHour * -0.4);
+
+        const summedDeltas: number = breakdown.bonusContributions.reduce((runningTotal: number, bonusContribution: CalculatedValueData.ValueBonusContribution): number => runningTotal + bonusContribution.ratePerHourDelta, 0);
+        expect(baseMetalRatePerHour + summedDeltas).toBeCloseTo(breakdown.totalRatePerHour);
     });
 });

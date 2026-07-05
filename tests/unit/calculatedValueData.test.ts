@@ -227,3 +227,27 @@ describe("calculatedValueData — player values", () =>
         expect(result).toBeNull();
     });
 });
+
+describe("calculatedValueData — planet value breakdown", () =>
+{
+    it("lists energy producers before consumers with signed rates summing to the net (Solar Plant L10 = +518, Metal Mine L1 = -11)", () =>
+    {
+        const planetData: CoreType.PlanetData = buildPlanetWithBuildings(new Map<GameType.BuildingType, number>(
+        [
+            [GameType.BuildingType.MetalMine, 1],
+            [GameType.BuildingType.SolarPlant, 10],
+        ]));
+
+        const breakdown: CalculatedValueData.CalculatedValueBreakdown = CalculatedValueData.computePlanetValueBreakdown(planetData, GameType.PlanetValueType.Energy, TestDataBuilders.buildPlayerData());
+
+        expect(breakdown.sourceContributions).toHaveLength(2);
+
+        expect(breakdown.sourceContributions[0].source.specificThingType).toBe(GameType.BuildingType.SolarPlant);
+        expect(breakdown.sourceContributions[0].ratePerHour).toBe(518);
+        expect(breakdown.sourceContributions[1].source.specificThingType).toBe(GameType.BuildingType.MetalMine);
+        expect(breakdown.sourceContributions[1].ratePerHour).toBe(-11);
+
+        expect(breakdown.bonusContributions).toHaveLength(0);
+        expect(breakdown.totalRatePerHour).toBe(507);
+    });
+});

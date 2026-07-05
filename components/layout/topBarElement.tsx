@@ -1,6 +1,5 @@
 import { ReactElement } from "react";
 
-import * as TimeFormat from "@/lib/helper/timeFormat";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
@@ -12,7 +11,6 @@ import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ResourceData from "@/lib/gameplay/dynamicData/planet/resourceData";
 import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
-import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as CalculatedValueData from "@/lib/gameplay/dynamicData/calculatedValueData";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 
@@ -22,28 +20,74 @@ type TopBarProps =
 	planetSelector: ReactElement;
 };
 
-function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues, remainingMs: number | null): ReactElement
+function formatSourceContributionLine(sourceContribution: CalculatedValueData.ValueSourceContribution): string
+{
+	const sourceName: string = ThingDataHelpers.getSpecificThingName(sourceContribution.source);
+	const sign: string = sourceContribution.ratePerHour < 0 ? "-" : "";
+	const magnitude: number = Math.floor(Math.abs(sourceContribution.ratePerHour));
+
+	return `${sourceName}: ${sign}${magnitude}/h`;
+}
+
+function formatBonusContributionLine(bonusContribution: CalculatedValueData.ValueBonusContribution): string
+{
+	const percentSign: string = bonusContribution.percent < 0 ? "-" : "+";
+	const percentMagnitude: number = Math.round(Math.abs(bonusContribution.percent));
+
+	const deltaSign: string = bonusContribution.ratePerHourDelta < 0 ? "-" : "+";
+	const deltaMagnitude: number = Math.floor(Math.abs(bonusContribution.ratePerHourDelta));
+
+	return `${bonusContribution.label}: ${percentSign}${percentMagnitude}% (${deltaSign}${deltaMagnitude}/h)`;
+}
+
+function appendBreakdownContributionLines(tooltipLines: string[], breakdown: CalculatedValueData.CalculatedValueBreakdown): void
+{
+	for (const sourceContribution of breakdown.sourceContributions)
+	{
+		tooltipLines.push(formatSourceContributionLine(sourceContribution));
+	}
+
+	for (const bonusContribution of breakdown.bonusContributions)
+	{
+		tooltipLines.push(formatBonusContributionLine(bonusContribution));
+	}
+}
+
+function buildResourceTooltipLines(breakdown: CalculatedValueData.CalculatedValueBreakdown): string[]
+{
+	const tooltipLines: string[] = [];
+
+	tooltipLines.push(`Total production per hour: ${Math.floor(breakdown.totalRatePerHour)}/h`);
+	appendBreakdownContributionLines(tooltipLines, breakdown);
+
+	return tooltipLines;
+}
+
+function buildPlanetValueTooltipLines(breakdown: CalculatedValueData.CalculatedValueBreakdown): string[]
+{
+	const tooltipLines: string[] = [];
+
+	appendBreakdownContributionLines(tooltipLines, breakdown);
+
+	return tooltipLines;
+}
+
+function renderResourceCard(resourceDisplayValues: PlanetResourceDisplayValues): ReactElement
 {
 	const resourceName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.resource(resourceDisplayValues.resourceType));
 
-	const buildLineElement: ReactElement | null = (resourceDisplayValues.affectedByCurrentBuild === true && remainingMs !== null)
-		? <div className="text-sm">({TimeFormat.formatRemainingTimeMs(remainingMs)})</div>
-		: null;
-
-	// Red once the resource sits at or above its storage maximum: production has stopped contributing.
 	const isAtOrOverMaximum: boolean = resourceDisplayValues.resource >= resourceDisplayValues.resourceMaximum;
 	const quantityColorClass: string = isAtOrOverMaximum ? "text-red-500" : "text-white";
 
 	const cardElement: ReactElement =
 	(
-		<div key={resourceDisplayValues.resourceType} className="flex flex-col items-center gap-1 border border-gray-400 rounded px-6 py-2">
-			<div className="font-bold">{resourceName} {":"} <span className={quantityColorClass}>{Math.floor(resourceDisplayValues.resource)} / {Math.floor(resourceDisplayValues.resourceMaximum)}</span></div>
-			<div>{Math.floor(resourceDisplayValues.productionRatePerHour)}/h</div>
-			{buildLineElement}
+		<div className="flex flex-col items-center gap-1 border border-gray-400 rounded px-6 py-2">
+			<div className="font-bold">{resourceName}</div>
+			<div className={quantityColorClass}>{Math.floor(resourceDisplayValues.resource)} / {Math.floor(resourceDisplayValues.resourceMaximum)}</div>
 		</div>
 	);
 
-	return cardElement;
+	return HelperElements.renderWithTooltip(resourceDisplayValues.tooltipLines, cardElement, "below");
 }
 
 function renderPlanetValueCard(planetValueDisplayValues: PlanetValueCardDisplayValues): ReactElement
@@ -52,18 +96,18 @@ function renderPlanetValueCard(planetValueDisplayValues: PlanetValueCardDisplayV
 	const productionValue: number = Math.floor(planetValueDisplayValues.production);
 	const consumptionValue: number = Math.floor(planetValueDisplayValues.consumption);
 
-	// White once production covers consumption (ratio >= 1), red while consumption outpaces it.
 	const isProductionCoveringConsumption: boolean = planetValueDisplayValues.production >= planetValueDisplayValues.consumption;
 	const valueColorClass: string = isProductionCoveringConsumption ? "text-white" : "text-red-500";
 
 	const cardElement: ReactElement =
 	(
-		<div key={planetValueDisplayValues.planetValueType} className="flex flex-col items-center gap-1 border border-gray-400 rounded px-6 py-2">
-			<div className="font-bold">{planetValueName}{":"} <span className={valueColorClass}>{productionValue}/{consumptionValue}</span></div>
+		<div className="flex flex-col items-center gap-1 border border-gray-400 rounded px-6 py-2">
+			<div className="font-bold">{planetValueName}</div>
+			<div className={valueColorClass}>{consumptionValue} / {productionValue}</div>
 		</div>
 	);
 
-	return cardElement;
+	return HelperElements.renderWithTooltip(planetValueDisplayValues.tooltipLines, cardElement, "below");
 }
 
 export function TopBarElement(props: TopBarProps): ReactElement
@@ -76,14 +120,28 @@ export function TopBarElement(props: TopBarProps): ReactElement
 
 		const resourceCardElements: ReactElement[] = displayValues.resourceDisplayValues.map((resourceDisplayValues: PlanetResourceDisplayValues): ReactElement =>
 		{
-			return renderResourceCard(resourceDisplayValues, displayValues.remainingBuildingUpgradeMs);
+			const resourceCardElement: ReactElement =
+			(
+				<div key={resourceDisplayValues.resourceType}>
+					{renderResourceCard(resourceDisplayValues)}
+				</div>
+			);
+
+			return resourceCardElement;
 		});
 
 		// Newest planet value type sits closest to the centre, so the cluster grows leftward from the right edge.
 		const orderedPlanetValueDisplayValues: PlanetValueCardDisplayValues[] = [...displayValues.planetValueDisplayValues].reverse();
 		const planetValueCardElements: ReactElement[] = orderedPlanetValueDisplayValues.map((planetValueDisplayValues: PlanetValueCardDisplayValues): ReactElement =>
 		{
-			return renderPlanetValueCard(planetValueDisplayValues);
+			const planetValueCardElement: ReactElement =
+			(
+				<div key={planetValueDisplayValues.planetValueType}>
+					{renderPlanetValueCard(planetValueDisplayValues)}
+				</div>
+			);
+
+			return planetValueCardElement;
 		});
 
 		const topBarElement: ReactElement =
@@ -115,8 +173,7 @@ export type PlanetResourceDisplayValues =
 	resourceType: GameType.ResourceType;
 	resource: number;
 	resourceMaximum: number;
-	productionRatePerHour: number;
-	affectedByCurrentBuild: boolean;
+	tooltipLines: string[];
 };
 
 export type PlanetValueCardDisplayValues =
@@ -124,21 +181,20 @@ export type PlanetValueCardDisplayValues =
 	planetValueType: GameType.PlanetValueType;
 	production: number;
 	consumption: number;
+	tooltipLines: string[];
 };
 
 export type PlanetDisplayValues =
 {
 	resourceDisplayValues: PlanetResourceDisplayValues[];
 	planetValueDisplayValues: PlanetValueCardDisplayValues[];
-	remainingBuildingUpgradeMs: number | null;
 };
 
 export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState.ClientDataStateResult, resourceTypes: GameType.ResourceType[]): PlanetDisplayValues
 {
 	const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(clientDataStateResult.psController[0]);
-	const buildingBeingUpgraded: GameType.BuildingType | null = BuildingUpgradeData.getBuildingTypeCurrentlyUpgrading(planetDataPredicted);
-
 	const playerData: CoreType.PlayerData = clientDataStateResult.psController[0].predictedDBData;
+	const serverData: CoreType.ServerData = clientDataStateResult.sdsController[0];
 
 	const resourceMaximums: Map<GameType.ResourceType, number> = CalculatedValueData.computeResourceMaximums(planetDataPredicted, playerData);
 
@@ -149,21 +205,15 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 		const calculatedNewResourceQuantity: number = ResourceData.getResourceQuantity(planetDataPredicted, resourceType);
 		const resourceMaximum: number = resourceMaximums.get(resourceType) ?? 0;
 
-		const productionRatePerSecond: number = BuildingData.getPlanetProductionRatePerSecond(planetDataPredicted, resourceType, clientDataStateResult.sdsController[0], playerData);
-
-		// Once the resource is at or above its maximum, production no longer accumulates, so show 0/h.
-		const isAtOrOverMaximum: boolean = calculatedNewResourceQuantity >= resourceMaximum;
-		const productionRatePerHour: number = isAtOrOverMaximum ? 0 : productionRatePerSecond * 3600;
-
-		const affectedByCurrentBuild: boolean = (buildingBeingUpgraded !== null) && (BuildingData.doesBuildingProduceResource(buildingBeingUpgraded, resourceType) === true);
+		const productionBreakdown: CalculatedValueData.CalculatedValueBreakdown = BuildingData.computeResourceProductionBreakdown(planetDataPredicted, resourceType, serverData, playerData);
+		const tooltipLines: string[] = buildResourceTooltipLines(productionBreakdown);
 
 		const singleResourceDisplayValues: PlanetResourceDisplayValues =
 		{
 			resourceType: resourceType,
 			resource: calculatedNewResourceQuantity,
 			resourceMaximum: resourceMaximum,
-			productionRatePerHour: productionRatePerHour,
-			affectedByCurrentBuild: affectedByCurrentBuild,
+			tooltipLines: tooltipLines,
 		};
 
 		resourceDisplayValues.push(singleResourceDisplayValues);
@@ -175,7 +225,6 @@ export function getPlanetDisplayValues(clientDataStateResult: UseClientDataState
 	{
 		resourceDisplayValues: resourceDisplayValues,
 		planetValueDisplayValues: planetValueDisplayValues,
-		remainingBuildingUpgradeMs: BuildingUpgradeData.getBuildingUpgradeRemainingMs(planetDataPredicted),
 	};
 
 	return displayValues;
@@ -187,7 +236,6 @@ function getPlanetValueCardDisplayValues(planetDataPredicted: CoreType.PlanetDat
 
 	const planetValueDisplayValues: PlanetValueCardDisplayValues[] = [];
 
-	// Only the planet values flagged for the top bar are shown; the rest are still tracked, just not here.
 	for (const [planetValueType, planetValueInfo] of StaticData.PLANET_VALUE_INFOS)
 	{
 		if (planetValueInfo.showInTopBar === false)
@@ -197,11 +245,15 @@ function getPlanetValueCardDisplayValues(planetDataPredicted: CoreType.PlanetDat
 
 		const planetValueAmounts: CoreType.CalculatedValueData | undefined = planetValueAmountsMap.get(planetValueType);
 
+		const planetValueBreakdown: CalculatedValueData.CalculatedValueBreakdown = CalculatedValueData.computePlanetValueBreakdown(planetDataPredicted, planetValueType, playerData);
+		const tooltipLines: string[] = buildPlanetValueTooltipLines(planetValueBreakdown);
+
 		const singlePlanetValueDisplayValues: PlanetValueCardDisplayValues =
 		{
 			planetValueType: planetValueType,
 			production: planetValueAmounts?.production ?? 0,
 			consumption: planetValueAmounts?.consumption ?? 0,
+			tooltipLines: tooltipLines,
 		};
 
 		planetValueDisplayValues.push(singlePlanetValueDisplayValues);

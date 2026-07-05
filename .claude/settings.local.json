@@ -129,7 +129,8 @@
       "PowerShell($errors = npm run typecheck 2>&1 | Select-String -Pattern \"error TS\"; Write-Output \"total_errors=$\\($errors.Count\\)\"; $errors | Select-Object -First 30)",
       "PowerShell($errors = npm run typecheck 2>&1 | Select-String -Pattern \"error TS\"; Write-Output \"total_errors=$\\($errors.Count\\)\"; $errors | Select-Object -First 20)",
       "PowerShell($errors = npm run typecheck 2>&1 | Select-String -Pattern \"error TS\"; Write-Output \"total_errors=$\\($errors.Count\\)\"; $errors | Select-Object -First 10)",
-      "PowerShell($errors = npm run typecheck 2>&1 | Select-String -Pattern \"error TS\"; Write-Output \"total_errors=$\\($errors.Count\\)\"; $errors | Select-Object -First 15)"
+      "PowerShell($errors = npm run typecheck 2>&1 | Select-String -Pattern \"error TS\"; Write-Output \"total_errors=$\\($errors.Count\\)\"; $errors | Select-Object -First 15)",
+      "mcp__claude-in-chrome__javascript_tool"
     ]
   },
   "hooks": {

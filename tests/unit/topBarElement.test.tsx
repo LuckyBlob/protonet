@@ -124,24 +124,23 @@ describe('topBarElement — no storage building falls back to the level-0 baseli
     });
 });
 
-describe('topBarElement — production rate reflects the cap (regression: still produced while capped)', () =>
+describe('topBarElement — production breakdown is surfaced through the resource tooltip', () =>
 {
-    it('shows the real production rate while under the maximum', () =>
+    it('lists the total production and the producing building on the tooltip', () =>
     {
         const metalDisplayValues: TopBar.PlanetResourceDisplayValues = getMetalDisplayValues(
         {
-            // 2000 Metal, well under the 20000 cap, so the mine's 33/hr shows through.
             buildingLevels: new Map<GameType.BuildingType, number>([[GameType.BuildingType.MetalMine, 1], [GameType.BuildingType.SolarPlant, 1], [GameType.BuildingType.MetalStorage, 1]]),
         });
 
-        expect(metalDisplayValues.productionRatePerHour).toBe(METAL_RATE_PER_HOUR);
+        expect(metalDisplayValues.tooltipLines).toContain(`Total production per hour: ${METAL_RATE_PER_HOUR}/h`);
+        expect(metalDisplayValues.tooltipLines).toContain(`Metal Mine: ${METAL_RATE_PER_HOUR}/h`);
     });
 
-    it('shows 0/hr once the resource is at or over the maximum, even with a producing mine', () =>
+    it('keeps the tooltip production rate independent of the storage cap (the cap shows as the red current / max instead)', () =>
     {
         const metalDisplayValues: TopBar.PlanetResourceDisplayValues = getMetalDisplayValues(
         {
-            // 20000 Metal sits exactly at the level-1 storage cap, so production no longer accumulates.
             resourceQuantity: new Map<GameType.ResourceType, number>
             ([
                 [GameType.ResourceType.Metal, METAL_STORAGE_LEVEL_1_CAP],
@@ -151,25 +150,7 @@ describe('topBarElement — production rate reflects the cap (regression: still 
             buildingLevels: new Map<GameType.BuildingType, number>([[GameType.BuildingType.MetalMine, 1], [GameType.BuildingType.SolarPlant, 1], [GameType.BuildingType.MetalStorage, 1]]),
         });
 
-        expect(metalDisplayValues.productionRatePerHour).toBe(0);
-    });
-
-    it('keeps producing while over the no-storage baseline would have been exceeded but storage was built', () =>
-    {
-        const metalDisplayValues: TopBar.PlanetResourceDisplayValues = getMetalDisplayValues(
-        {
-            // 12000 Metal is over the 10000 no-storage baseline, but a level-1 storage raises the cap to 20000,
-            // so production should still show through. (Catches a cap that ignores the actual storage level.)
-            resourceQuantity: new Map<GameType.ResourceType, number>
-            ([
-                [GameType.ResourceType.Metal, 12000],
-                [GameType.ResourceType.Crystal, 0],
-                [GameType.ResourceType.Deuterium, 0],
-            ]),
-            buildingLevels: new Map<GameType.BuildingType, number>([[GameType.BuildingType.MetalMine, 1], [GameType.BuildingType.SolarPlant, 1], [GameType.BuildingType.MetalStorage, 1]]),
-        });
-
-        expect(metalDisplayValues.productionRatePerHour).toBe(METAL_RATE_PER_HOUR);
+        expect(metalDisplayValues.tooltipLines).toContain(`Total production per hour: ${METAL_RATE_PER_HOUR}/h`);
     });
 });
 

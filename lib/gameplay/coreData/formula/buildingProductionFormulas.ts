@@ -86,8 +86,7 @@ function computeProductionRate_TemperatureScaledProductionBuilding(buildingType:
 
 function computeTemperatureFactor(planetData: CoreType.PlanetData, playerData: CoreType.PlayerData): number
 {
-    const temperatureValueData: CoreType.CalculatedValueData | null = CalculatedValueData.computePlanetValueData(planetData, GameType.PlanetValueType.Temperature, playerData);
-    const temperatureKelvin: number = temperatureValueData === null ? 0 : temperatureValueData.production - temperatureValueData.consumption;
+    const temperatureKelvin: number = CalculatedValueData.computePlanetValueNet(planetData, GameType.PlanetValueType.Temperature, playerData);
 
     return StaticData.DEUTERIUM_TEMPERATURE_BASE + StaticData.DEUTERIUM_TEMPERATURE_COEFF * temperatureKelvin;
 }

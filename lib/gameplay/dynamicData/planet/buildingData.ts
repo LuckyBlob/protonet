@@ -22,19 +22,27 @@ export function getBuildingLevel(planetData: CoreType.PlanetData, buildingType: 
 
 export function getPlanetProductionRatePerSecond(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, serverData: CoreType.ServerData, playerData: CoreType.PlayerData): number
 {
+	const breakdown: CalculatedValueData.CalculatedValueBreakdown = computeResourceProductionBreakdown(planetData, resourceType, serverData, playerData);
+	return breakdown.totalRatePerHour / 3600;
+}
+
+export function computeResourceProductionBreakdown(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, serverData: CoreType.ServerData, playerData: CoreType.PlayerData): CalculatedValueData.CalculatedValueBreakdown
+{
 	const planetZoneInfo: GameType.PlanetZoneInfo = StaticDataHelper.getPlanetZoneInfo(planetData.planetRow.zone as GameType.PlanetZone);
 	if (planetZoneInfo.canProduceResources === false)
 	{
-		return 0;
+		const emptyBreakdown: CalculatedValueData.CalculatedValueBreakdown =
+		{
+			sourceContributions: [],
+			bonusContributions: [],
+			totalRatePerHour: 0,
+		};
+
+		return emptyBreakdown;
 	}
 
-	const productionRatePerHour: number = computeProductionRatePerHourForResource(planetData, resourceType, serverData, playerData);
-	return productionRatePerHour / 3600;
-}
-
-function computeProductionRatePerHourForResource(planetData: CoreType.PlanetData, resourceType: GameType.ResourceType, serverData: CoreType.ServerData, playerData: CoreType.PlayerData): number
-{
-	let totalResourceTypeProductionRatePerHour: number = 0;
+	const sourceContributions: CalculatedValueData.ValueSourceContribution[] = [];
+	let baseProductionRatePerHour: number = 0;
 
 	const buildingTypes: GameType.BuildingType[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Building)
 	for (const buildingType of buildingTypes)
@@ -46,18 +54,36 @@ function computeProductionRatePerHourForResource(planetData: CoreType.PlanetData
 		}
 
 		const resourceTypeProductionRatePerHour: number | undefined = productionRatePerHourMap.get(resourceType);
-		if (resourceTypeProductionRatePerHour === undefined)
+		if (resourceTypeProductionRatePerHour === undefined || resourceTypeProductionRatePerHour === 0)
 		{
 			continue;
 		}
 
-		totalResourceTypeProductionRatePerHour = totalResourceTypeProductionRatePerHour + resourceTypeProductionRatePerHour;
+		const sourceContribution: CalculatedValueData.ValueSourceContribution =
+		{
+			source: ThingHelpers.building(buildingType),
+			ratePerHour: resourceTypeProductionRatePerHour,
+		};
+
+		sourceContributions.push(sourceContribution);
+		baseProductionRatePerHour = baseProductionRatePerHour + resourceTypeProductionRatePerHour;
 	}
 
 	const resourceProductionRatio: number = CalculatedValueData.computeResourceProductionPlanetValueRatio(planetData, resourceType, playerData);
 	const resourceProductionModificationPercent: number = CalculatedValueData.computeResourceProductionModificationPercent(playerData, resourceType);
 
-	return totalResourceTypeProductionRatePerHour * resourceProductionRatio * (1 + resourceProductionModificationPercent / 100);
+	const bonusContributions: CalculatedValueData.ValueBonusContribution[] = CalculatedValueData.computeResourceProductionBonusContributions(planetData, resourceType, playerData, baseProductionRatePerHour);
+
+	const totalRatePerHour: number = baseProductionRatePerHour * resourceProductionRatio * (1 + resourceProductionModificationPercent / 100);
+
+	const breakdown: CalculatedValueData.CalculatedValueBreakdown =
+	{
+		sourceContributions: sourceContributions,
+		bonusContributions: bonusContributions,
+		totalRatePerHour: totalRatePerHour,
+	};
+
+	return breakdown;
 }
 
 export function canAffordResourceCost(planetData: CoreType.PlanetData, costMap: Map<GameType.ResourceType, number>): boolean

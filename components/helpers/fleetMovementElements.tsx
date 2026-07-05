@@ -3,7 +3,6 @@
 import { ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
-import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
@@ -86,25 +85,29 @@ function renderFleetMovementRow(clientDataStateResult: UseClientDataState.Client
 
 export function renderFleetMovementsSection(clientDataStateResult: UseClientDataState.ClientDataStateResult, category: GameType.FleetActionCategory): ReactElement
 {
-    const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(clientDataStateResult.psController[0]);
+    const playerData: CoreType.PlayerData = clientDataStateResult.psController[0].predictedDBData;
 
     const seenFleetIds: Set<number> = new Set<number>();
     const fleetMovements: CoreType.FleetMovement[] = [];
 
-    for (const fleetMovement of planetDataPredicted.dynamicPlanetData.futureFleetArrivals)
+    for (const planetData of playerData.planetDatas)
     {
-        if (seenFleetIds.has(fleetMovement.fleetMovementRow.id) === true)
+        for (const fleetMovement of planetData.dynamicPlanetData.futureFleetArrivals)
         {
-            continue;
-        }
-        seenFleetIds.add(fleetMovement.fleetMovementRow.id);
+            if (seenFleetIds.has(fleetMovement.fleetMovementRow.id) === true)
+            {
+                continue;
+            }
+            seenFleetIds.add(fleetMovement.fleetMovementRow.id);
 
-        if (StaticDataHelper.getFleetActionInfo(fleetMovement.fleetMovementRow.fleet_action_type as GameType.FleetActionType).category !== category)
-        {
-            continue;
-        }
+            const fleetActionInfo: GameType.FleetActionInfo = StaticDataHelper.getFleetActionInfo(fleetMovement.fleetMovementRow.fleet_action_type as GameType.FleetActionType);
+            if (fleetActionInfo.category !== category)
+            {
+                continue;
+            }
 
-        fleetMovements.push(fleetMovement);
+            fleetMovements.push(fleetMovement);
+        }
     }
 
     if (fleetMovements.length === 0)
@@ -118,8 +121,6 @@ export function renderFleetMovementsSection(clientDataStateResult: UseClientData
 
         return emptyElement;
     }
-
-    const playerData: CoreType.PlayerData = clientDataStateResult.psController[0].predictedDBData;
 
     const movementElements: ReactElement[] = fleetMovements.map((fleetMovement: CoreType.FleetMovement): ReactElement =>
     {
