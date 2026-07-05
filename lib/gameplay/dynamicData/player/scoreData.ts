@@ -168,9 +168,9 @@ export function getPublicPlayerScore(publicPlayerDatas: CoreType.PublicPlayerDat
     return publicPlayerData.score;
 }
 
-export function computeIsPlayerInactive(lastUpdated: number, now: number): boolean
+export function computeIsPlayerInactive(lastLoginAt: number, now: number): boolean
 {
-    const millisecondsSinceLastUpdate: number = now - lastUpdated;
-    return millisecondsSinceLastUpdate > PLAYER_INACTIVITY_THRESHOLD_MILLISECONDS;
+    const millisecondsSinceLastLogin: number = now - lastLoginAt;
+    return millisecondsSinceLastLogin > PLAYER_INACTIVITY_THRESHOLD_MILLISECONDS;
 }
 //#endregion

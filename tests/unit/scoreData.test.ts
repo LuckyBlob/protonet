@@ -258,14 +258,14 @@ describe('computeIsPlayerInactive', () =>
 {
     const SEVEN_DAYS_MILLISECONDS: number = 7 * 24 * 60 * 60 * 1000;
 
-    it('is false at exactly the 7-day threshold and true just past it', () =>
+    it('is false at exactly the 7-day threshold since last login and true just past it', () =>
     {
         const now: number = 10_000_000_000;
         expect(ScoreData.computeIsPlayerInactive(now - SEVEN_DAYS_MILLISECONDS, now)).toBe(false);
         expect(ScoreData.computeIsPlayerInactive(now - SEVEN_DAYS_MILLISECONDS - 1, now)).toBe(true);
     });
 
-    it('is false for a recently updated player', () =>
+    it('is false for a recently logged-in player', () =>
     {
         const now: number = 10_000_000_000;
         expect(ScoreData.computeIsPlayerInactive(now, now)).toBe(false);

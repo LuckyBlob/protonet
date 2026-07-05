@@ -20,6 +20,7 @@ export type UserRow =
 	reset_token: string | null;
 	admin_level: number;
 	created_at: number;
+	last_login_at: number;
 };
 
 export type PlayerSettingsRow =

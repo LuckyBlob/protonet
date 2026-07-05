@@ -120,6 +120,8 @@ export async function serverTryPlayerDataRequest(): Promise<NextResponse>
             return NextResponse.json(errorResponse, { status: 404 });
         }
 
+        Auth.updateUserLastLogin(user.id, Date.now());
+
         const serverData: CoreType.ServerData = ServerType.getServerData();
         const playerData: CoreType.PlayerData = ServerProgress.applyPlayerUpdate(player.id, serverData, Date.now());
         serializedPlayerData = Serialization.serializePlayerData(playerData);
@@ -193,6 +195,7 @@ export async function serverTryLoginRequest(request: Request): Promise<NextRespo
         resolvedUsername = user.username;
 
         const session: DBType.SessionRow = Auth.createSession(user.id);
+        Auth.updateUserLastLogin(user.id, Date.now());
         const cookieStore: ReadonlyRequestCookies = await cookies();
         cookieStore.set(Auth.sessionCookieName, session.token,
         {
@@ -280,6 +283,7 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
         );
 
         const session: DBType.SessionRow = Auth.createSession(targetUserId);
+        Auth.updateUserLastLogin(targetUserId, Date.now());
         const cookieStore: ReadonlyRequestCookies = await cookies();
         cookieStore.set(Auth.sessionCookieName, session.token,
         {
@@ -798,9 +802,9 @@ function serverGetUserAdminLevel(userId: number): number
 
 export function serverGetPublicPlayerDatas(): CoreType.PublicPlayerData[]
 {
-    type PublicPlayerDataProjection = { id: number; username: string; invested_value: number; last_updated: number };
+    type PublicPlayerDataProjection = { id: number; username: string; invested_value: number; last_login_at: number };
     const projections: PublicPlayerDataProjection[] = DB.databaseConnection.prepare(
-        "SELECT player.id, users.username, player.invested_value, player.last_updated FROM player JOIN users ON player.user_id = users.id"
+        "SELECT player.id, users.username, player.invested_value, users.last_login_at FROM player JOIN users ON player.user_id = users.id"
     ).all() as PublicPlayerDataProjection[];
 
     const now: number = Date.now();
@@ -811,7 +815,7 @@ export function serverGetPublicPlayerDatas(): CoreType.PublicPlayerData[]
             id: projection.id,
             username: projection.username,
             score: ScoreData.computeScoreFromInvestedValue(projection.invested_value),
-            isPlayerInactive: ScoreData.computeIsPlayerInactive(projection.last_updated, now),
+            isPlayerInactive: ScoreData.computeIsPlayerInactive(projection.last_login_at, now),
         };
 
         return publicPlayerData;
@@ -1104,6 +1108,8 @@ export async function handlePlayerStateActionRequest(logic: (playerId: number, s
             errorResponse.error = "Player not found.";
             return NextResponse.json(errorResponse, { status: 404 });
         }
+
+        Auth.updateUserLastLogin(user.id, Date.now());
 
         const serverData: CoreType.ServerData = ServerType.getServerData();
         const result: PlayerActionResult = logic(player.id, serverData);

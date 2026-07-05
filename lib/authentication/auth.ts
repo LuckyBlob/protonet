@@ -228,9 +228,9 @@ export function createUnverifiedUser(username: string, email: string, passwordHa
 	const createdAt: number = Date.now();
 
 	const insertStatement: Database.Statement = DB.databaseConnection.prepare(
-		"INSERT INTO users (username, password_hash, email, email_verified, created_at) VALUES (?, ?, ?, 0, ?) RETURNING *"
+		"INSERT INTO users (username, password_hash, email, email_verified, created_at, last_login_at) VALUES (?, ?, ?, 0, ?, ?) RETURNING *"
 	);
-	const userRow: DBType.UserRow = insertStatement.get(username, passwordHash, normalizedEmail, createdAt) as DBType.UserRow;
+	const userRow: DBType.UserRow = insertStatement.get(username, passwordHash, normalizedEmail, createdAt, createdAt) as DBType.UserRow;
 	return userRow;
 }
 
@@ -260,4 +260,9 @@ export function updateUserUsername(userId: number, username: string): void
 export function updateUserPassword(userId: number, passwordHash: string): void
 {
 	DB.databaseConnection.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(passwordHash, userId);
+}
+
+export function updateUserLastLogin(userId: number, loginTime: number): void
+{
+	DB.databaseConnection.prepare("UPDATE users SET last_login_at = ? WHERE id = ?").run(loginTime, userId);
 }
