@@ -17,6 +17,7 @@ import * as RequirementType from "@/lib/gameplay/coreData/requirement/requiremen
 import * as HelperElement from "@/components/helpers/helperElements";
 import * as UnitConstructionData from "@/lib/gameplay/dynamicData/planet/unitConstructionData";
 import * as MissileSpaceData from "@/lib/gameplay/dynamicData/planet/missileSpaceData";
+import * as UnitDescription from "@/lib/gameplay/coreData/description/unitDescriptions";
 
 export type ComputeBuildableUnitQuantities = (planetData: CoreType.PlanetData, requestedUnitQuantities: Map<GameType.UnitType, number>) => Map<GameType.UnitType, number>;
 
@@ -137,6 +138,8 @@ function renderUnitCostLines(costParts: string[]): ReactElement
 function renderUnitBuildRow(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, serverData: CoreType.ServerData, unitType: GameType.UnitType, requestedQuantity: number, setRequestedQuantity: (unitType: GameType.UnitType, value: number) => void, renderRowEndAction: RenderRowEndAction | undefined): ReactElement
 {
     const unitName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(unitType));
+    const unitImageElement: ReactElement = HelperElement.renderUnitImage(unitType);
+    const unitDescriptionLines: string[] = UnitDescription.getUnitDescriptionLines(unitType);
     const ownedQuantity: number = UnitData.getUnitQuantity(planetData, unitType);
     const singleDurationSeconds: number = UnitConstructionData.getUnitConstructionDurationSeconds(unitType, planetData, serverData) ?? 0;
     const costParts: string[] = buildSingleUnitCostParts(unitType);
@@ -160,7 +163,7 @@ function renderUnitBuildRow(playerData: CoreType.PlayerData, planetData: CoreTyp
     (
         <div key={unitType} className="flex flex-row items-center border border-gray-400 rounded">
             <div className="flex items-center justify-center px-4 py-3 border-r border-gray-400">
-                {HelperElement.renderUnitImage(unitType)}
+                {HelperElement.renderWithTooltip(unitDescriptionLines, unitImageElement, "below")}
             </div>
 
             <div className="flex flex-col px-4 py-3 border-r border-gray-400 min-w-[200px]">

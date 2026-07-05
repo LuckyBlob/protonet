@@ -17,6 +17,7 @@ import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as BuildingDeconstructionData from "@/lib/gameplay/dynamicData/planet/buildingDeconstructionData";
 import * as BuildingViewHelpers from "@/components/helpers/buildingViewHelpers";
+import * as BuildingDescription from "@/lib/gameplay/coreData/description/buildingDescriptions";
 
 function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType): ReactElement
 {
@@ -99,7 +100,9 @@ function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewPro
 		</div>
 	);
 
-	return BuildingViewHelpers.renderBuildingRowShell(buildingType, imagePath, middleColumn, actionElement);
+	const buildingDescriptionLines: string[] = BuildingDescription.getBuildingDescriptionLines(buildingType);
+
+	return BuildingViewHelpers.renderBuildingRowShell(buildingType, imagePath, middleColumn, actionElement, buildingDescriptionLines);
 }
 
 function renderBuildingDeconstructionViewBody(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData): ReactElement

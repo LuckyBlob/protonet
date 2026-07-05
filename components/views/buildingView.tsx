@@ -18,6 +18,7 @@ import * as BuildingDuration from "@/lib/gameplay/coreData/formula/buildingDurat
 import * as BuildingUpgradeData from "@/lib/gameplay/dynamicData/planet/buildingUpgradeData";
 import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildingEnergySettingData";
 import * as BuildingViewHelpers from "@/components/helpers/buildingViewHelpers";
+import * as BuildingDescription from "@/lib/gameplay/coreData/description/buildingDescriptions";
 
 // Energy throttle dropdown. Only shown for built (level >= 1) buildings that produce or consume
 // energy. Setting it scales the building's energy prod/cons and its resource production.
@@ -153,7 +154,9 @@ function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selecte
 		</div>
 	);
 
-	return BuildingViewHelpers.renderBuildingRowShell(buildingType, imagePath, middleColumn, actionElement);
+	const buildingDescriptionLines: string[] = BuildingDescription.getBuildingDescriptionLines(buildingType);
+
+	return BuildingViewHelpers.renderBuildingRowShell(buildingType, imagePath, middleColumn, actionElement, buildingDescriptionLines);
 }
 
 function renderBuildingViewBody(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData): ReactElement

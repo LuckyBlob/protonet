@@ -13,6 +13,17 @@ const ENGINE_TECH_SPEED_BONUS_PER_LEVEL: ReadonlyMap<GameType.EngineTech, number
 	[GameType.ResearchType.HyperspaceDrive, 0.30],
 ]);
 
+export function getEngineTechSpeedBonusPerLevel(engineTech: GameType.EngineTech): number
+{
+	const speedBonusPerLevel: number | undefined = ENGINE_TECH_SPEED_BONUS_PER_LEVEL.get(engineTech);
+	if (speedBonusPerLevel === undefined)
+	{
+		throw new Error(`⚠️: Engine tech ${engineTech} has no speed bonus per level.`);
+	}
+
+	return speedBonusPerLevel;
+}
+
 export function computeUnitSpeed(playerData: CoreType.PlayerData, unitSpeedDatas: GameType.EngineTechData<number>[] | undefined): number | undefined
 {
 	if (unitSpeedDatas === undefined)
@@ -26,12 +37,7 @@ export function computeUnitSpeed(playerData: CoreType.PlayerData, unitSpeedDatas
 		return undefined;
 	}
 
-	const speedBonusPerLevel: number | undefined = ENGINE_TECH_SPEED_BONUS_PER_LEVEL.get(resolvedEngineTechData.engineTech);
-	if (speedBonusPerLevel === undefined)
-	{
-		throw new Error(`⚠️: Engine tech ${resolvedEngineTechData.engineTech} has no speed bonus per level.`);
-	}
-
+	const speedBonusPerLevel: number = getEngineTechSpeedBonusPerLevel(resolvedEngineTechData.engineTech);
 	const engineResearchLevel: number = ResearchData.getResearchLevel(playerData, resolvedEngineTechData.engineTech);
 	const baseSpeed: number = resolvedEngineTechData.value;
 	return baseSpeed * (1 + speedBonusPerLevel * engineResearchLevel);

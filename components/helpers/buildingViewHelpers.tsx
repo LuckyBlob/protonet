@@ -83,31 +83,36 @@ export function renderFailedRequirementsBox(failedRequirements: RequirementType.
 	return element;
 }
 
-export function renderBuildingRowShell(buildingType: GameType.BuildingType, imagePath: string, middleColumn: ReactElement, actionElement: ReactElement): ReactElement
+export function renderBuildingRowShell(buildingType: GameType.BuildingType, imagePath: string, middleColumn: ReactElement, actionElement: ReactElement, tooltipLines: string[]): ReactElement
 {
+	const buildingImageElement: ReactElement =
+	(
+		<div className="w-16 h-16 flex flex-col items-center justify-center text-center shrink-0">
+			<img
+				src={imagePath}
+				alt=""
+				className="w-16 h-16 object-contain"
+				onError={(e) =>
+				{
+					(e.currentTarget as HTMLImageElement).style.display = "none";
+					const fallback: HTMLElement | null = (e.currentTarget.nextElementSibling as HTMLElement | null);
+
+					if (fallback !== null)
+					{
+						fallback.style.display = "flex";
+					}
+				}}
+			/>
+			<div className="hidden flex-col items-center justify-center text-[10px] gap-1">
+				<span>[No Image]</span>
+			</div>
+		</div>
+	);
+
 	const rowElement: ReactElement =
 	(
 		<div key={buildingType} className="border border-gray-400 rounded p-2 flex flex-row items-center gap-4">
-			<div className="w-16 h-16 flex flex-col items-center justify-center text-center shrink-0">
-				<img
-					src={imagePath}
-					alt=""
-					className="w-16 h-16 object-contain"
-					onError={(e) =>
-					{
-						(e.currentTarget as HTMLImageElement).style.display = "none";
-						const fallback: HTMLElement | null = (e.currentTarget.nextElementSibling as HTMLElement | null);
-
-						if (fallback !== null)
-						{
-							fallback.style.display = "flex";
-						}
-					}}
-				/>
-				<div className="hidden flex-col items-center justify-center text-[10px] gap-1">
-					<span>[No Image]</span>
-				</div>
-			</div>
+			{HelperElements.renderWithTooltip(tooltipLines, buildingImageElement, "below", "shrink-0")}
 
 			{renderRowDivider()}
 

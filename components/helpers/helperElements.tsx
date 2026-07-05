@@ -139,7 +139,7 @@ export function buildCostParts(costMap: Map<GameType.ResourceType, number>): str
 }
 
 // The tooltip lives on a wrapper because CSS :hover works over a disabled child, unlike a native title.
-export function renderWithTooltip(tooltipLines: string[], child: ReactElement, position: "above" | "below" = "above"): ReactElement
+export function renderWithTooltip(tooltipLines: string[], child: ReactElement, position: "above" | "below" = "above", wrapperClassName: string = ""): ReactElement
 {
 	if (tooltipLines.length === 0)
 	{
@@ -150,7 +150,7 @@ export function renderWithTooltip(tooltipLines: string[], child: ReactElement, p
 
 	const element: ReactElement =
 	(
-		<div className="group relative">
+		<div className={`group relative ${wrapperClassName}`}>
 			{child}
 			<div className={`hidden group-hover:block absolute z-20 ${positionClass} left-1/2 -translate-x-1/2 w-max max-w-xs whitespace-normal break-words px-2 py-1 bg-gray-800 text-white text-xs rounded shadow-lg text-left pointer-events-none`}>
 				{tooltipLines.map((line: string, index: number): ReactElement =>

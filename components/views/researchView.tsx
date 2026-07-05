@@ -19,6 +19,7 @@ import * as BuildingData from "@/lib/gameplay/dynamicData/planet/buildingData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 import * as ResearchCost from "@/lib/gameplay/coreData/formula/researchCostFormulas";
 import * as ResearchDuration from "@/lib/gameplay/coreData/formula/researchDurationFormulas";
+import * as ResearchDescription from "@/lib/gameplay/coreData/description/researchDescriptions";
 
 type ResearchViewProps =
 {
@@ -120,29 +121,36 @@ function renderResearchRow(props: ResearchViewProps, selectedPlanetDataPredicted
 			</button>
 		);
 
+	const researchImageElement: ReactElement =
+	(
+		<div className="w-16 h-16 flex flex-col items-center justify-center text-center shrink-0">
+			<img
+				src={imagePath}
+				alt=""
+				className="w-16 h-16 object-contain"
+				onError={(e) =>
+				{
+					(e.currentTarget as HTMLImageElement).style.display = "none";
+					const fallback: HTMLElement | null = (e.currentTarget.nextElementSibling as HTMLElement | null);
+
+					if (fallback !== null)
+					{
+						fallback.style.display = "flex";
+					}
+				}}
+			/>
+			<div className="hidden flex-col items-center justify-center text-[10px] gap-1">
+				<span>[No Image]</span>
+			</div>
+		</div>
+	);
+
+	const researchDescriptionLines: string[] = ResearchDescription.getResearchDescriptionLines(researchType);
+
 	const rowElement: ReactElement =
 	(
 		<div key={researchType} className="border border-gray-400 rounded p-2 flex flex-row items-center gap-4">
-			<div className="w-16 h-16 flex flex-col items-center justify-center text-center shrink-0">
-				<img
-					src={imagePath}
-					alt=""
-					className="w-16 h-16 object-contain"
-					onError={(e) =>
-					{
-						(e.currentTarget as HTMLImageElement).style.display = "none";
-						const fallback: HTMLElement | null = (e.currentTarget.nextElementSibling as HTMLElement | null);
-
-						if (fallback !== null)
-						{
-							fallback.style.display = "flex";
-						}
-					}}
-				/>
-				<div className="hidden flex-col items-center justify-center text-[10px] gap-1">
-					<span>[No Image]</span>
-				</div>
-			</div>
+			{HelperElements.renderWithTooltip(researchDescriptionLines, researchImageElement, "below", "shrink-0")}
 
 			{renderRowDivider()}
 

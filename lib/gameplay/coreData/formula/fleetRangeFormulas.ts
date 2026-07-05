@@ -1,6 +1,6 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 
-const MISSILE_RANGE_SYSTEMS_PER_IMPULSE_LEVEL: number = 5;
+export const MISSILE_RANGE_SYSTEMS_PER_IMPULSE_LEVEL: number = 5;
 const MISSILE_RANGE_SYSTEMS_OFFSET: number = -1;
 
 export function computeMissileRangeSystems(impulseDriveLevel: number): number

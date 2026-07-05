@@ -2,7 +2,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
 
-const COMBAT_RESEARCH_BONUS_PER_LEVEL: number = 0.10;
+export const COMBAT_RESEARCH_BONUS_PER_LEVEL: number = 0.10;
 
 function computeCombatStatWithResearch(playerData: CoreType.PlayerData, baseValue: number, researchType: GameType.ResearchType): number
 {
