@@ -120,7 +120,7 @@ export function buildPlayerData(overrides?: { playerRow?: Partial<DBType.PlayerR
         dynamicPlayerData: overrides?.dynamicPlayerData ?? buildDynamicPlayerData(),
         planetDatas: overrides?.planetDatas ?? [buildPlanetData()],
         publicPlanetDatas: [],
-        publicPlayerRows: [],
+        publicPlayerDatas: [],
     };
 
     return playerData;
@@ -378,17 +378,18 @@ export function buildFleetMovement(overrides?: FleetMovementOverrides): CoreType
     return fleetMovement;
 }
 
-export function buildPublicPlayerRow(overrides?: Partial<DBType.PublicPlayerRow>): DBType.PublicPlayerRow
+export function buildPublicPlayerData(overrides?: Partial<CoreType.PublicPlayerData>): CoreType.PublicPlayerData
 {
-    const row: DBType.PublicPlayerRow =
+    const publicPlayerData: CoreType.PublicPlayerData =
     {
         id: 1,
         username: "Player1",
         score: 0,
+        isPlayerInactive: false,
         ...overrides,
     };
 
-    return row;
+    return publicPlayerData;
 }
 
 export function buildPublicPlanetData(overrides?: Partial<CoreType.PublicPlanetData>): CoreType.PublicPlanetData

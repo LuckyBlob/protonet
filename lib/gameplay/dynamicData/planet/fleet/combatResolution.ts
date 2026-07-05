@@ -234,14 +234,14 @@ function resolveWreckField(targetPlayerData: CoreType.PlayerData, targetAddress:
     return wreckUnitQuantities;
 }
 
-export function buildBattleSummaryLines(publicPlayerRows: DBType.PublicPlayerRow[], fleetRow: DBType.FleetMovementRow, aftermath: BattleAftermath): string[]
+export function buildBattleSummaryLines(publicPlayerDatas: CoreType.PublicPlayerData[], fleetRow: DBType.FleetMovementRow, aftermath: BattleAftermath): string[]
 {
     const reportLines: string[] = [];
 
     if (aftermath.numRounds > 1)
     {
-        const attackerName: string = StaticDataHelper.getPlayerName(publicPlayerRows, fleetRow.player_origin_id);
-        const defenderName: string = StaticDataHelper.getPlayerName(publicPlayerRows, fleetRow.player_target_id);
+        const attackerName: string = StaticDataHelper.getPlayerName(publicPlayerDatas, fleetRow.player_origin_id);
+        const defenderName: string = StaticDataHelper.getPlayerName(publicPlayerDatas, fleetRow.player_target_id);
         reportLines.push(`${attackerName} vs ${defenderName} over ${aftermath.numRounds} rounds.`);
     }
 

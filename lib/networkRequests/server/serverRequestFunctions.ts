@@ -796,26 +796,28 @@ function serverGetUserAdminLevel(userId: number): number
     return userRow?.admin_level ?? 1;
 }
 
-export function serverGetPublicPlayerRows(): DBType.PublicPlayerRow[]
+export function serverGetPublicPlayerDatas(): CoreType.PublicPlayerData[]
 {
-    type PublicPlayerRowProjection = { id: number; username: string; invested_value: number };
-    const projections: PublicPlayerRowProjection[] = DB.databaseConnection.prepare(
-        "SELECT player.id, users.username, player.invested_value FROM player JOIN users ON player.user_id = users.id"
-    ).all() as PublicPlayerRowProjection[];
+    type PublicPlayerDataProjection = { id: number; username: string; invested_value: number; last_updated: number };
+    const projections: PublicPlayerDataProjection[] = DB.databaseConnection.prepare(
+        "SELECT player.id, users.username, player.invested_value, player.last_updated FROM player JOIN users ON player.user_id = users.id"
+    ).all() as PublicPlayerDataProjection[];
 
-    const publicPlayerRows: DBType.PublicPlayerRow[] = projections.map((projection: PublicPlayerRowProjection): DBType.PublicPlayerRow =>
+    const now: number = Date.now();
+    const publicPlayerDatas: CoreType.PublicPlayerData[] = projections.map((projection: PublicPlayerDataProjection): CoreType.PublicPlayerData =>
     {
-        const publicPlayerRow: DBType.PublicPlayerRow =
+        const publicPlayerData: CoreType.PublicPlayerData =
         {
             id: projection.id,
             username: projection.username,
             score: ScoreData.computeScoreFromInvestedValue(projection.invested_value),
+            isPlayerInactive: ScoreData.computeIsPlayerInactive(projection.last_updated, now),
         };
 
-        return publicPlayerRow;
+        return publicPlayerData;
     });
 
-    return publicPlayerRows;
+    return publicPlayerDatas;
 }
 
 export function serverGetPlayerData(playerId: number): CoreType.PlayerData
@@ -830,7 +832,7 @@ export function serverGetPlayerData(playerId: number): CoreType.PlayerData
         planetDatas: serverGetPlanetDatas(playerId),
 
         publicPlanetDatas: serverFindAllPlanetsPublic(),
-        publicPlayerRows: serverGetPublicPlayerRows(),
+        publicPlayerDatas: serverGetPublicPlayerDatas(),
     };
     return playerData;
 }
@@ -840,10 +842,10 @@ export function serverUpdatePlayerScore(playerData: CoreType.PlayerData): void
     const investedValue: number = ScoreData.computePlayerInvestedValue(playerData);
     playerData.playerRow = serverUpdatePlayerColumns(playerData.playerRow.id, { invested_value: investedValue });
 
-    const selfPublicPlayerRow: DBType.PublicPlayerRow | undefined = playerData.publicPlayerRows.find((row: DBType.PublicPlayerRow): boolean => row.id === playerData.playerRow.id);
-    if (selfPublicPlayerRow !== undefined)
+    const selfPublicPlayerData: CoreType.PublicPlayerData | undefined = playerData.publicPlayerDatas.find((publicPlayerData: CoreType.PublicPlayerData): boolean => publicPlayerData.id === playerData.playerRow.id);
+    if (selfPublicPlayerData !== undefined)
     {
-        selfPublicPlayerRow.score = ScoreData.computeScoreFromInvestedValue(investedValue);
+        selfPublicPlayerData.score = ScoreData.computeScoreFromInvestedValue(investedValue);
     }
 }
 
@@ -1901,7 +1903,7 @@ function buildScanFleetLine(playerData: CoreType.PlayerData, fleetMovementRow: D
     const targetIsScannedPlanet: boolean = isPlanetZoneAtCoords(fleetMovementRow.planet_target_zone, fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot, scannedGalaxy, scannedSystem, scannedSlot);
     const currentDestinationIsScanned: boolean = isReturnTrip === true ? originIsScannedPlanet : targetIsScannedPlanet;
 
-    const ownerName: string = StaticDataHelper.getPlayerName(playerData.publicPlayerRows, fleetMovementRow.player_origin_id);
+    const ownerName: string = StaticDataHelper.getPlayerName(playerData.publicPlayerDatas, fleetMovementRow.player_origin_id);
     const originAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_origin_galaxy, fleetMovementRow.planet_origin_system, fleetMovementRow.planet_origin_slot, fleetMovementRow.planet_origin_zone as GameType.PlanetZone);
     const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetMovementRow.planet_target_galaxy, fleetMovementRow.planet_target_system, fleetMovementRow.planet_target_slot, fleetMovementRow.planet_target_zone as GameType.PlanetZone);
     const actionName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.fleetAction(fleetMovementRow.fleet_action_type as GameType.FleetActionType));
@@ -2428,10 +2430,20 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
         zone: requestData.targetPlanetZone,
     }
 
+    if (StaticDataHelper.isAddressWithinUniverse(targetAddress) === false)
+    {
+        return { success: false, failureReason: "Fleet target is outside the universe.", playerStateResult: playerData };
+    }
+
     const targetPlanetData: CoreType.PlanetData | null = getPlanetDataByCoords(targetAddress.galaxy, targetAddress.system, targetAddress.slot, targetAddress.zone);
     const originAddress: GameType.PlanetAddress = CoreType.getPlanetAddress(originPlanetData);
 
     const fleetActionInfo: GameType.FleetActionInfo = StaticDataHelper.getFleetActionInfo(requestData.fleetAction);
+
+    if (unitQuantities.size === 0)
+    {
+        return { success: false, failureReason: "A fleet must contain at least one unit.", playerStateResult: playerData };
+    }
 
     for (const [unitType, unitQuantity] of unitQuantities)
     {

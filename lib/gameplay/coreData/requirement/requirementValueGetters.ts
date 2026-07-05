@@ -466,14 +466,19 @@ function canTargetPlayerByScore(): RequirementType.RequirementValueGetter
             return 1;
         }
 
-        const targetScore: number = ScoreData.getPublicPlayerScore(context.playerData.publicPlayerRows, targetOwnerPlayerId);
-        if (targetScore >= SCORE_TARGET_PROTECTION_THRESHOLD)
+        const targetPublicPlayerData: CoreType.PublicPlayerData = CoreType.getPublicPlayerDataForId(context.playerData.publicPlayerDatas, targetOwnerPlayerId);
+        if (targetPublicPlayerData.isPlayerInactive === true)
         {
             return 1;
         }
 
-        const attackerScore: number = ScoreData.getPublicPlayerScore(context.playerData.publicPlayerRows, context.playerData.playerRow.id);
-        return attackerScore < targetScore * MAX_ATTACKER_TO_TARGET_SCORE_RATIO ? 1 : 0;
+        if (targetPublicPlayerData.score >= SCORE_TARGET_PROTECTION_THRESHOLD)
+        {
+            return 1;
+        }
+
+        const attackerScore: number = ScoreData.getPublicPlayerScore(context.playerData.publicPlayerDatas, context.playerData.playerRow.id);
+        return attackerScore < targetPublicPlayerData.score * MAX_ATTACKER_TO_TARGET_SCORE_RATIO ? 1 : 0;
     };
 }
 export const CAN_TARGET_PLAYER_BY_SCORE: RequirementType.RequirementCondition =

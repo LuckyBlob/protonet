@@ -152,7 +152,7 @@ export function renderWithTooltip(tooltipLines: string[], child: ReactElement, p
 	(
 		<div className="group relative">
 			{child}
-			<div className={`hidden group-hover:block absolute z-20 ${positionClass} left-1/2 -translate-x-1/2 w-max max-w-xs px-2 py-1 bg-gray-800 text-white text-xs rounded shadow-lg text-left pointer-events-none`}>
+			<div className={`hidden group-hover:block absolute z-20 ${positionClass} left-1/2 -translate-x-1/2 w-max max-w-xs whitespace-normal break-words px-2 py-1 bg-gray-800 text-white text-xs rounded shadow-lg text-left pointer-events-none`}>
 				{tooltipLines.map((line: string, index: number): ReactElement =>
 				{
 					return <div key={index}>{line}</div>;

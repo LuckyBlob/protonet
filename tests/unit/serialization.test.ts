@@ -208,9 +208,9 @@ describe('serializePlayerData / deserializePlayerData', () =>
         expect(restoredConstruction.unitConstructionUnitRows[0]!.unit_quantity).toBe(5);
     });
 
-    it('round-trips publicPlanetDatas and publicPlayerRows', () =>
+    it('round-trips publicPlanetDatas and publicPlayerDatas', () =>
     {
-        const playerRow = TestDataBuilders.buildPublicPlayerRow({ id: 42, username: "Foo" });
+        const playerRow = TestDataBuilders.buildPublicPlayerData({ id: 42, username: "Foo" });
         const debrisPublicPlanetData = TestDataBuilders.buildPublicPlanetData({
             id: 99,
             owner_player_id: 42,
@@ -223,7 +223,7 @@ describe('serializePlayerData / deserializePlayerData', () =>
         const original: CoreType.PlayerData =
         {
             ...TestDataBuilders.buildPlayerData(),
-            publicPlayerRows: [playerRow],
+            publicPlayerDatas: [playerRow],
             publicPlanetDatas: [debrisPublicPlanetData],
         };
 
@@ -231,8 +231,8 @@ describe('serializePlayerData / deserializePlayerData', () =>
         const wire: string = JSON.stringify(serialized);
         const restored: CoreType.PlayerData = Serialization.deserializePlayerData(JSON.parse(wire) as Serialization.SerializedPlayerData);
 
-        expect(restored.publicPlayerRows).toHaveLength(1);
-        expect(restored.publicPlayerRows[0]!.username).toBe("Foo");
+        expect(restored.publicPlayerDatas).toHaveLength(1);
+        expect(restored.publicPlayerDatas[0]!.username).toBe("Foo");
         expect(restored.publicPlanetDatas).toHaveLength(1);
         expect(restored.publicPlanetDatas[0]!.id).toBe(99);
         // Debris resource quantities survive the Map (de)serialization round-trip.

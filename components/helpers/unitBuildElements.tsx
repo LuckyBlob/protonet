@@ -67,17 +67,18 @@ function renderBuildQuantityInput(playerData: CoreType.PlayerData, planetData: C
     {
         const requirements: string[] = Requirement.getRequirementDescriptions(failedUnitRequirements, requirementContext);
 
-        const element: ReactElement =
+        const disabledQuantityInput: ReactElement =
         (
-            <div>
-                {requirements.map((requirement: string) =>
-                {
-                    return <div key={requirement}>{requirement}</div>;
-                })}
-            </div>
+            <input
+                type="number"
+                value={0}
+                readOnly
+                disabled
+                className="border border-gray-400 px-2 py-1 rounded bg-white text-black w-24 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            />
         );
 
-        return element;
+        return HelperElement.renderWithTooltip(requirements, disabledQuantityInput);
     }
 
     const remainingBuildableCount: number | null = Requirement.getRemainingBuildableUnitCount(requirementContext, unitType);
@@ -111,12 +112,35 @@ function renderBuildQuantityInput(playerData: CoreType.PlayerData, planetData: C
     return element;
 }
 
+function renderUnitCostLines(costParts: string[]): ReactElement
+{
+    const costPartElements: ReactElement[] = [];
+
+    for (const costPart of costParts)
+    {
+        costPartElements.push(
+            <div key={costPart} className="pl-4">{costPart}</div>
+        );
+    }
+
+    const element: ReactElement =
+    (
+        <div className="text-xs">
+            <div>Cost:</div>
+            {costPartElements}
+        </div>
+    );
+
+    return element;
+}
+
 function renderUnitBuildRow(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, serverData: CoreType.ServerData, unitType: GameType.UnitType, requestedQuantity: number, setRequestedQuantity: (unitType: GameType.UnitType, value: number) => void, renderRowEndAction: RenderRowEndAction | undefined): ReactElement
 {
     const unitName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(unitType));
     const ownedQuantity: number = UnitData.getUnitQuantity(planetData, unitType);
     const singleDurationSeconds: number = UnitConstructionData.getUnitConstructionDurationSeconds(unitType, planetData, serverData) ?? 0;
     const costParts: string[] = buildSingleUnitCostParts(unitType);
+    const costElement: ReactElement = renderUnitCostLines(costParts);
     const missileSpaceCost: number = MissileSpaceData.getUnitMissileSpaceCost(unitType);
 
     const spaceLine: ReactElement | null = missileSpaceCost > 0
@@ -142,7 +166,7 @@ function renderUnitBuildRow(playerData: CoreType.PlayerData, planetData: CoreTyp
             <div className="flex flex-col px-4 py-3 border-r border-gray-400 min-w-[200px]">
                 <div className="font-bold">{unitName}</div>
                 <div className="text-xs">Time: {TimeFormat.formatRemainingTimeMs(singleDurationSeconds * 1000)}</div>
-                <div className="text-xs">Cost: {costParts.join(" / ")}</div>
+                {costElement}
                 {spaceLine}
             </div>
 

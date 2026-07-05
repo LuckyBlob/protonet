@@ -86,7 +86,7 @@ function setup(probeCount: number, seed: number, options: SetupOptions = {}): Se
         dynamicPlayerData: originDynamicPlayerData,
         planetDatas: [originPlanet],
     });
-    originPlayer.publicPlayerRows = [TestDataBuilders.buildPublicPlayerRow({ id: TARGET_PLAYER_ID, username: "Victim" })];
+    originPlayer.publicPlayerDatas = [TestDataBuilders.buildPublicPlayerData({ id: TARGET_PLAYER_ID, username: "Victim" })];
 
     const targetDynamicPlayerData: CoreType.DynamicPlayerData = TestDataBuilders.buildDynamicPlayerData(
     {
@@ -98,7 +98,7 @@ function setup(probeCount: number, seed: number, options: SetupOptions = {}): Se
         dynamicPlayerData: targetDynamicPlayerData,
         planetDatas: [targetPlanet],
     });
-    targetPlayer.publicPlayerRows = [TestDataBuilders.buildPublicPlayerRow({ id: TARGET_PLAYER_ID, username: "Victim" })];
+    targetPlayer.publicPlayerDatas = [TestDataBuilders.buildPublicPlayerData({ id: TARGET_PLAYER_ID, username: "Victim" })];
 
     return { fleet, originPlanet, targetPlanet, originPlayer, targetPlayer };
 }

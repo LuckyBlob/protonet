@@ -4,7 +4,6 @@ import { ReactElement } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as DBType from "@/lib/db/dbTypes";
 import * as HelperElements from "@/components/helpers/helperElements";
 
 type StatsViewProps =
@@ -15,10 +14,10 @@ type StatsViewProps =
 const TOP_PLAYER_COUNT: number = 10;
 
 //#region pure helpers
-function buildRankedPlayerRows(publicPlayerRows: DBType.PublicPlayerRow[]): DBType.PublicPlayerRow[]
+function buildRankedPlayerRows(publicPlayerDatas: CoreType.PublicPlayerData[]): CoreType.PublicPlayerData[]
 {
-	const rankedPlayerRows: DBType.PublicPlayerRow[] = [...publicPlayerRows];
-	rankedPlayerRows.sort((firstRow: DBType.PublicPlayerRow, secondRow: DBType.PublicPlayerRow): number =>
+	const rankedPlayerRows: CoreType.PublicPlayerData[] = [...publicPlayerDatas];
+	rankedPlayerRows.sort((firstRow: CoreType.PublicPlayerData, secondRow: CoreType.PublicPlayerData): number =>
 	{
 		if (secondRow.score !== firstRow.score)
 		{
@@ -31,9 +30,9 @@ function buildRankedPlayerRows(publicPlayerRows: DBType.PublicPlayerRow[]): DBTy
 	return rankedPlayerRows;
 }
 
-function findPlayerRank(rankedPlayerRows: DBType.PublicPlayerRow[], playerId: number): number
+function findPlayerRank(rankedPlayerRows: CoreType.PublicPlayerData[], playerId: number): number
 {
-	const index: number = rankedPlayerRows.findIndex((row: DBType.PublicPlayerRow): boolean => row.id === playerId);
+	const index: number = rankedPlayerRows.findIndex((row: CoreType.PublicPlayerData): boolean => row.id === playerId);
 	if (index === -1)
 	{
 		return -1;
@@ -58,7 +57,7 @@ function renderLeaderboardHeader(): ReactElement
 	return headerElement;
 }
 
-function renderPlayerRow(rank: number, publicPlayerRow: DBType.PublicPlayerRow, isSelf: boolean): ReactElement
+function renderPlayerRow(rank: number, publicPlayerData: CoreType.PublicPlayerData, isSelf: boolean): ReactElement
 {
 	const rowClassName: string = isSelf === true
 		? "flex justify-between px-3 py-1 rounded border border-blue-400 bg-blue-600 text-white font-semibold"
@@ -66,38 +65,38 @@ function renderPlayerRow(rank: number, publicPlayerRow: DBType.PublicPlayerRow, 
 
 	const rowElement: ReactElement =
 	(
-		<div key={publicPlayerRow.id} className={rowClassName}>
+		<div key={publicPlayerData.id} className={rowClassName}>
 			<span className="w-8 text-right">{rank}</span>
-			<span className="flex-1 px-3 truncate">{publicPlayerRow.username}</span>
-			<span className="w-24 text-right">{publicPlayerRow.score.toLocaleString()}</span>
+			<span className="flex-1 px-3 truncate">{publicPlayerData.username}</span>
+			<span className="w-24 text-right">{publicPlayerData.score.toLocaleString()}</span>
 		</div>
 	);
 
 	return rowElement;
 }
 
-function renderOutsideTopSelfRows(selfPlayerRank: number, selfPublicPlayerRow: DBType.PublicPlayerRow): ReactElement
+function renderOutsideTopSelfRows(selfPlayerRank: number, selfPublicPlayerData: CoreType.PublicPlayerData): ReactElement
 {
 	const outsideTopSelfElement: ReactElement =
 	(
 		<div className="flex flex-col gap-1">
 			<div className="text-center text-gray-400">…</div>
-			{renderPlayerRow(selfPlayerRank, selfPublicPlayerRow, true)}
+			{renderPlayerRow(selfPlayerRank, selfPublicPlayerData, true)}
 		</div>
 	);
 
 	return outsideTopSelfElement;
 }
 
-function renderStatsViewBody(rankedPlayerRows: DBType.PublicPlayerRow[], selfPlayerId: number): ReactElement
+function renderStatsViewBody(rankedPlayerRows: CoreType.PublicPlayerData[], selfPlayerId: number): ReactElement
 {
-	const topPlayerRows: DBType.PublicPlayerRow[] = rankedPlayerRows.slice(0, TOP_PLAYER_COUNT);
+	const topPlayerRows: CoreType.PublicPlayerData[] = rankedPlayerRows.slice(0, TOP_PLAYER_COUNT);
 	const selfPlayerRank: number = findPlayerRank(rankedPlayerRows, selfPlayerId);
 	const isSelfOutsideTopPlayers: boolean = selfPlayerRank > TOP_PLAYER_COUNT;
 
-	const topRowElements: ReactElement[] = topPlayerRows.map((publicPlayerRow: DBType.PublicPlayerRow, index: number): ReactElement =>
+	const topRowElements: ReactElement[] = topPlayerRows.map((publicPlayerData: CoreType.PublicPlayerData, index: number): ReactElement =>
 	{
-		return renderPlayerRow(index + 1, publicPlayerRow, publicPlayerRow.id === selfPlayerId);
+		return renderPlayerRow(index + 1, publicPlayerData, publicPlayerData.id === selfPlayerId);
 	});
 
 	const statsViewElement: ReactElement =
@@ -123,7 +122,7 @@ export function StatsView(props: StatsViewProps): ReactElement
 	try
 	{
 		const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
-		const rankedPlayerRows: DBType.PublicPlayerRow[] = buildRankedPlayerRows(playerData.publicPlayerRows);
+		const rankedPlayerRows: CoreType.PublicPlayerData[] = buildRankedPlayerRows(playerData.publicPlayerDatas);
 		const selfPlayerId: number = playerData.playerRow.id;
 
 		return renderStatsViewBody(rankedPlayerRows, selfPlayerId);

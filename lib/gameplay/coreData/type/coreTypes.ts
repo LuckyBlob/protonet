@@ -25,7 +25,7 @@ export type PlayerData =
 	dynamicPlayerData: DynamicPlayerData;
 	planetDatas: PlanetData[];
 	publicPlanetDatas: PublicPlanetData[];
-	publicPlayerRows: DBType.PublicPlayerRow[];
+	publicPlayerDatas: PublicPlayerData[];
 };
 
 export type DynamicPlayerData =
@@ -88,6 +88,14 @@ export type PublicPlanetData =
 	name: string | null;
 	owner_player_id: number;
 	dynamicPlanetData: DynamicPlanetData;
+};
+
+export type PublicPlayerData =
+{
+	id: number;
+	username: string;
+	score: number;
+	isPlayerInactive: boolean;
 };
 
 export const PlanetDataContext =
@@ -342,6 +350,21 @@ export function getPublicPlanetDataForAddress(publicPlanetDatas: PublicPlanetDat
     });
 
     return matchingPublicPlanetData ?? null;
+}
+
+export function getPublicPlayerDataForId(publicPlayerDatas: PublicPlayerData[], playerId: number): PublicPlayerData
+{
+    const matchingPublicPlayerData: PublicPlayerData | undefined = publicPlayerDatas.find((publicPlayerData: PublicPlayerData): boolean =>
+    {
+        return publicPlayerData.id === playerId;
+    });
+
+    if (matchingPublicPlayerData === undefined)
+    {
+        throw new Error(`No public player data for playerId ${playerId}.`);
+    }
+
+    return matchingPublicPlayerData;
 }
 
 export function getFleetTargetAddress(fleetMovementRow: DBType.FleetMovementRow): GameType.PlanetAddress

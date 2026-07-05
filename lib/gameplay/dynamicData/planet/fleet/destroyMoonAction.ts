@@ -105,9 +105,9 @@ function destroyMoonZone(targetPlayerData: CoreType.PlayerData, aimedMoon: CoreT
     ServerPlanetManagement.deleteZone(moonZoneId);
 }
 
-function buildDestroyMoonReportBody(publicPlayerRows: DBType.PublicPlayerRow[], fleetRow: DBType.FleetMovementRow, battleAftermath: CombatResolution.BattleAftermath, moonDestructionOutcome: MoonDestructionOutcome, attackerFleetDestroyed: boolean): string
+function buildDestroyMoonReportBody(publicPlayerDatas: CoreType.PublicPlayerData[], fleetRow: DBType.FleetMovementRow, battleAftermath: CombatResolution.BattleAftermath, moonDestructionOutcome: MoonDestructionOutcome, attackerFleetDestroyed: boolean): string
 {
-    const reportLines: string[] = CombatResolution.buildBattleSummaryLines(publicPlayerRows, fleetRow, battleAftermath);
+    const reportLines: string[] = CombatResolution.buildBattleSummaryLines(publicPlayerDatas, fleetRow, battleAftermath);
 
     if (moonDestructionOutcome.rolled === true)
     {
@@ -139,10 +139,10 @@ function addDestroyMoonReportMessages(targetPlayerData: CoreType.PlayerData, fle
     const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
     const originAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_origin_galaxy, fleetRow.planet_origin_system, fleetRow.planet_origin_slot, fleetRow.planet_origin_zone as GameType.PlanetZone);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
-    const reportBody: string = buildDestroyMoonReportBody(targetPlayerData.publicPlayerRows, fleetRow, battleAftermath, moonDestructionOutcome, attackerFleetDestroyed);
+    const reportBody: string = buildDestroyMoonReportBody(targetPlayerData.publicPlayerDatas, fleetRow, battleAftermath, moonDestructionOutcome, attackerFleetDestroyed);
 
-    const attackerPlayerName: string = StaticDataHelper.getPlayerName(targetPlayerData.publicPlayerRows, fleetRow.player_origin_id);
-    const defenderPlayerName: string = StaticDataHelper.getPlayerName(targetPlayerData.publicPlayerRows, fleetRow.player_target_id);
+    const attackerPlayerName: string = StaticDataHelper.getPlayerName(targetPlayerData.publicPlayerDatas, fleetRow.player_origin_id);
+    const defenderPlayerName: string = StaticDataHelper.getPlayerName(targetPlayerData.publicPlayerDatas, fleetRow.player_target_id);
 
     fleetMovement.originMessageRow =
     {

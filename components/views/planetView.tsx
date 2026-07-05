@@ -4,7 +4,6 @@ import { ReactElement, ChangeEvent, useState, useEffect } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
-import * as DBType from "@/lib/db/dbTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as HelperElements from "@/components/helpers/helperElements";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
@@ -44,10 +43,10 @@ type PlanetViewProps =
 
 //#region rendering helpers
 
-function getPlayerUsername(ownerId: number, publicPlayerRows: DBType.PublicPlayerRow[]): string
+function getPlayerUsername(ownerId: number, publicPlayerDatas: CoreType.PublicPlayerData[]): string
 {
-    const publicPlayerRow: DBType.PublicPlayerRow | undefined = publicPlayerRows.find(
-        (row: DBType.PublicPlayerRow): boolean => row.id === ownerId
+    const publicPlayerRow: CoreType.PublicPlayerData | undefined = publicPlayerDatas.find(
+        (row: CoreType.PublicPlayerData): boolean => row.id === ownerId
     );
 
     return publicPlayerRow?.username ?? `Player #${ownerId}`;
@@ -150,7 +149,7 @@ function renderEspionageIndicator(context: GalaxyViewContext, planetPublicPlanet
     return HelperElements.renderWithTooltip(failureReasons, spyIcon);
 }
 
-function renderPlanetRow(context: GalaxyViewContext, slot: number, selectedGalaxy: number, selectedSystem: number, publicPlanetDatas: CoreType.PublicPlanetData[], publicPlayerRows: DBType.PublicPlayerRow[]): ReactElement
+function renderPlanetRow(context: GalaxyViewContext, slot: number, selectedGalaxy: number, selectedSystem: number, publicPlanetDatas: CoreType.PublicPlanetData[], publicPlayerDatas: CoreType.PublicPlayerData[]): ReactElement
 {
     const planetPublicPlanetData: CoreType.PublicPlanetData | null = CoreType.getPublicPlanetDataForAddress(publicPlanetDatas, { galaxy: selectedGalaxy, system: selectedSystem, slot: slot, zone: GameType.PlanetZone.Planet });
     const moonPublicPlanetData: CoreType.PublicPlanetData | null = CoreType.getPublicPlanetDataForAddress(publicPlanetDatas, { galaxy: selectedGalaxy, system: selectedSystem, slot: slot, zone: GameType.PlanetZone.Moon });
@@ -160,7 +159,7 @@ function renderPlanetRow(context: GalaxyViewContext, slot: number, selectedGalax
 
     const ownershipText: string = (planetPublicPlanetData === null)
         ? "Unowned"
-        : `Owned by: ${getPlayerUsername(planetPublicPlanetData.owner_player_id, publicPlayerRows)}`;
+        : `Owned by: ${getPlayerUsername(planetPublicPlanetData.owner_player_id, publicPlayerDatas)}`;
 
     const planetName: string = planetPublicPlanetData !== null ? StaticDataHelper.getPlanetDisplayName(planetPublicPlanetData) : "";
 
@@ -219,7 +218,7 @@ function renderPlanetGrid(context: GalaxyViewContext, selectedGalaxy: number, se
 
     const rowElements: ReactElement[] = slotNumbers.map((slot: number): ReactElement =>
     {
-        return renderPlanetRow(context, slot, selectedGalaxy, selectedSystem, playerData.publicPlanetDatas, playerData.publicPlayerRows);
+        return renderPlanetRow(context, slot, selectedGalaxy, selectedSystem, playerData.publicPlanetDatas, playerData.publicPlayerDatas);
     });
 
     const element: ReactElement =

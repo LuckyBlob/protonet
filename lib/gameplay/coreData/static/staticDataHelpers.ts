@@ -1,7 +1,6 @@
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
-import * as DBType from "@/lib/db/dbTypes";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 
@@ -285,6 +284,15 @@ export function isSameAddress(origin: GameType.PlanetAddress, target: GameType.P
     return (origin.galaxy === target.galaxy) && (origin.system === target.system) && (origin.slot === target.slot) && (origin.zone === target.zone);
 }
 
+export function isAddressWithinUniverse(address: GameType.PlanetAddress): boolean
+{
+    const galaxyIsValid: boolean = (address.galaxy >= 1) && (address.galaxy <= StaticData.GALAXY_COUNT);
+    const systemIsValid: boolean = (address.system >= 1) && (address.system <= StaticData.SYSTEM_COUNT);
+    const slotIsValid: boolean = (address.slot >= 1) && (address.slot <= StaticData.SLOT_COUNT);
+
+    return galaxyIsValid && systemIsValid && slotIsValid;
+}
+
 export function isBuildableOnZone(buildableZones: GameType.PlanetZone[], zone: GameType.PlanetZone): boolean
 {
     return buildableZones.includes(zone);
@@ -344,12 +352,12 @@ export function rollTemperatureForSlot(slot: number): number
 	return range.min + Math.floor(Math.random() * (span + 1));
 }
 
-export function getPlayerName(publicPlayerRows: DBType.PublicPlayerRow[], playerId: number | null): string
+export function getPlayerName(publicPlayerDatas: CoreType.PublicPlayerData[], playerId: number | null): string
 {
     if (playerId === null)
     {
         return "Unknown";
     }
-    const matchingRow: DBType.PublicPlayerRow | undefined = publicPlayerRows.find((row: DBType.PublicPlayerRow): boolean => row.id === playerId);
-    return matchingRow?.username ?? "Unknown";
+    const matchingPublicPlayerData: CoreType.PublicPlayerData | undefined = publicPlayerDatas.find((publicPlayerData: CoreType.PublicPlayerData): boolean => publicPlayerData.id === playerId);
+    return matchingPublicPlayerData?.username ?? "Unknown";
 }

@@ -153,7 +153,7 @@ function buildShipsUnderRepairQuantities(targetPlanetData: CoreType.PlanetData):
 function addEspionageReportMessage(originPlayerData: CoreType.PlayerData, targetPlayerData: CoreType.PlayerData, targetPlanetData: CoreType.PlanetData, fleetMovement: CoreType.FleetMovement, revealedInfoBlocks: Set<Espionage.EspionageInfoBlock>): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const targetPlayerName: string = StaticDataHelper.getPlayerName(originPlayerData.publicPlayerRows, fleetRow.player_target_id);
+    const targetPlayerName: string = StaticDataHelper.getPlayerName(originPlayerData.publicPlayerDatas, fleetRow.player_target_id);
     const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
     const reportBody: string = buildEspionageReportBody(targetPlayerData, targetPlanetData, revealedInfoBlocks);
@@ -178,7 +178,7 @@ function addCounterEspionageMessage(targetPlayerData: CoreType.PlayerData, fleet
         return;
     }
 
-    const originPlayerName: string = StaticDataHelper.getPlayerName(targetPlayerData.publicPlayerRows, fleetRow.player_origin_id);
+    const originPlayerName: string = StaticDataHelper.getPlayerName(targetPlayerData.publicPlayerDatas, fleetRow.player_origin_id);
     const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
     const originAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_origin_galaxy, fleetRow.planet_origin_system, fleetRow.planet_origin_slot, fleetRow.planet_origin_zone as GameType.PlanetZone);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;

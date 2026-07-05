@@ -1,11 +1,11 @@
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as DBType from "@/lib/db/dbTypes";
 import * as BuildingCost from "@/lib/gameplay/coreData/formula/buildingCostFormulas";
 import * as ResearchCost from "@/lib/gameplay/coreData/formula/researchCostFormulas";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 const INVESTED_VALUE_PER_SCORE_POINT: number = 1000;
+const PLAYER_INACTIVITY_THRESHOLD_MILLISECONDS: number = 7 * 24 * 60 * 60 * 1000;
 
 //#region leaf cost helpers
 function sumResourceQuantities(resourceQuantities: Map<GameType.ResourceType, number>): number
@@ -162,14 +162,15 @@ export function computeScoreFromInvestedValue(investedValue: number): number
     return Math.floor(investedValue / INVESTED_VALUE_PER_SCORE_POINT);
 }
 
-export function getPublicPlayerScore(publicPlayerRows: DBType.PublicPlayerRow[], playerId: number): number
+export function getPublicPlayerScore(publicPlayerDatas: CoreType.PublicPlayerData[], playerId: number): number
 {
-    const publicPlayerRow: DBType.PublicPlayerRow | undefined = publicPlayerRows.find((row: DBType.PublicPlayerRow): boolean => row.id === playerId);
-    if (publicPlayerRow === undefined)
-    {
-        throw new Error(`No public player row for playerId ${playerId} when reading score.`);
-    }
+    const publicPlayerData: CoreType.PublicPlayerData = CoreType.getPublicPlayerDataForId(publicPlayerDatas, playerId);
+    return publicPlayerData.score;
+}
 
-    return publicPlayerRow.score;
+export function computeIsPlayerInactive(lastUpdated: number, now: number): boolean
+{
+    const millisecondsSinceLastUpdate: number = now - lastUpdated;
+    return millisecondsSinceLastUpdate > PLAYER_INACTIVITY_THRESHOLD_MILLISECONDS;
 }
 //#endregion

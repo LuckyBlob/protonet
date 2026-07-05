@@ -234,7 +234,7 @@ function addMissileReportMessages(originPlayerData: CoreType.PlayerData, targetP
     const receivedAt: number = getMissileReportReceivedAt(fleetMovement);
     const reportBody: string = buildMissileReportBody(combatResult);
 
-    const targetPlayerName: string = StaticDataHelper.getPlayerName(originPlayerData.publicPlayerRows, fleetRow.player_target_id);
+    const targetPlayerName: string = StaticDataHelper.getPlayerName(originPlayerData.publicPlayerDatas, fleetRow.player_target_id);
     fleetMovement.originMessageRow =
     {
         id: -1,
@@ -248,7 +248,7 @@ function addMissileReportMessages(originPlayerData: CoreType.PlayerData, targetP
 
     if (fleetRow.player_target_id !== null)
     {
-        const originPlayerName: string = StaticDataHelper.getPlayerName(targetPlayerData.publicPlayerRows, fleetRow.player_origin_id);
+        const originPlayerName: string = StaticDataHelper.getPlayerName(targetPlayerData.publicPlayerDatas, fleetRow.player_origin_id);
         fleetMovement.targetMessageRow =
         {
             id: -1,

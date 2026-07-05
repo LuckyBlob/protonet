@@ -74,13 +74,6 @@ export type PlanetRow =
 	jump_gate_ready_at: number;
 };
 
-export type PublicPlayerRow =
-{
-	id: number;
-	username: string;
-	score: number;
-};
-
 export type PlanetUnitRow =
 {
     planet_id: number;

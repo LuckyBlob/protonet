@@ -54,7 +54,7 @@ export function serializePlayerData(playerData: CoreType.PlayerData): Serialized
 		dynamicPlayerData: serializedDynamicPlayerData,
 		planetDatas: serializedPlanetDatas,
 		publicPlanetDatas: serializedPublicPlanetDatas,
-		publicPlayerRows: playerData.publicPlayerRows,
+		publicPlayerDatas: playerData.publicPlayerDatas,
 	};
 
 	return serialized;
@@ -82,7 +82,7 @@ export function deserializePlayerData(serialized: SerializedPlayerData): CoreTyp
 
 		planetDatas: planetDatas,
 		publicPlanetDatas: publicPlanetDatas,
-		publicPlayerRows: serialized.publicPlayerRows,
+		publicPlayerDatas: serialized.publicPlayerDatas,
 	};
 
 	return playerData;
@@ -246,7 +246,7 @@ export type SerializedPlayerData =
 	dynamicPlayerData: SerializedDynamicPlayerData;
 	planetDatas: SerializedPlanetData[];
 	publicPlanetDatas: SerializedPublicPlanetData[];
-	publicPlayerRows: DBType.PublicPlayerRow[];
+	publicPlayerDatas: CoreType.PublicPlayerData[];
 };
 
 function deserializePlanetData(serialized: SerializedPlanetData): CoreType.PlanetData

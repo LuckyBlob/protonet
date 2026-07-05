@@ -25,29 +25,9 @@ type ResearchViewProps =
 	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
-// Image changes every IMAGE_TIER_LEVEL_STEP levels, capped at MAX_IMAGE_TIER so
-// missing high-level art falls back to the last available image. Tune freely.
-// Expected files: public/researches/researchType_{researchType}/{tier}.png
-const IMAGE_TIER_LEVEL_STEP: number = 5;
-const MAX_IMAGE_TIER: number = 5;
-
-function getResearchImageTier(level: number): number
+function getResearchImagePath(researchType: number): string
 {
-	const rawTier: number = Math.floor(level / IMAGE_TIER_LEVEL_STEP);
-
-	if (rawTier > MAX_IMAGE_TIER)
-	{
-		return MAX_IMAGE_TIER;
-	}
-
-	return rawTier;
-}
-
-function getResearchImagePath(researchType: number, level: number): string
-{
-	const tier: number = getResearchImageTier(level);
-
-	return `/researches/researchType_${researchType}/${tier}.png`;
+	return `/research/${researchType}.png`;
 }
 
 function renderCostLine(nextCostMap: Map<GameType.ResourceType, number>): ReactElement
@@ -82,7 +62,7 @@ function renderResearchRow(props: ResearchViewProps, selectedPlanetDataPredicted
 		);
 	}
 
-	const imagePath: string = getResearchImagePath(researchType, currentLevel);
+	const imagePath: string = getResearchImagePath(researchType);
 
 	const isThisResearching: boolean = ResearchData.isResearchTypeCurrentlyResearching(playerData, researchType);
 	const requirementContext: RequirementType.RequirementContext =

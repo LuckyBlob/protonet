@@ -27,9 +27,9 @@ export function resolveTransportAction(originPlayerData: CoreType.PlayerData, ta
 function addTransportActionMessages(targetPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement, deliveredResourceQuantities: Map<GameType.ResourceType, number>): void
 {
     const fleetRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
-    const publicPlayerRows: DBType.PublicPlayerRow[] = targetPlayerData.publicPlayerRows;
-    const originPlayerName: string = StaticDataHelper.getPlayerName(publicPlayerRows, fleetRow.player_origin_id);
-    const targetPlayerName: string = StaticDataHelper.getPlayerName(publicPlayerRows, fleetRow.player_target_id);
+    const publicPlayerDatas: CoreType.PublicPlayerData[] = targetPlayerData.publicPlayerDatas;
+    const originPlayerName: string = StaticDataHelper.getPlayerName(publicPlayerDatas, fleetRow.player_origin_id);
+    const targetPlayerName: string = StaticDataHelper.getPlayerName(publicPlayerDatas, fleetRow.player_target_id);
     const targetAddress: string = StaticDataHelper.formatPlanetAddress(fleetRow.planet_target_galaxy, fleetRow.planet_target_system, fleetRow.planet_target_slot, fleetRow.planet_target_zone as GameType.PlanetZone);
     const receivedAt: number = fleetRow.started_at! + fleetRow.duration_at_start_time!;
     const deliveredResourcesList: string = FleetData.buildResourceQuantitiesList(deliveredResourceQuantities);

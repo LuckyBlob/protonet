@@ -181,13 +181,13 @@ describe('canTargetPlayerByScore', () =>
     const ATTACKER_ID: number = 1;
     const TARGET_ID: number = 2;
 
-    function buildContext(attackerScore: number, targetScore: number, zoneAssociatedPlanetOwnerPlayerId: number | null | undefined): RequirementType.RequirementContext
+    function buildContext(attackerScore: number, targetScore: number, zoneAssociatedPlanetOwnerPlayerId: number | null | undefined, targetIsInactive: boolean = false): RequirementType.RequirementContext
     {
         const playerData: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: ATTACKER_ID } });
-        playerData.publicPlayerRows =
+        playerData.publicPlayerDatas =
         [
-            TestDataBuilders.buildPublicPlayerRow({ id: ATTACKER_ID, score: attackerScore }),
-            TestDataBuilders.buildPublicPlayerRow({ id: TARGET_ID, score: targetScore }),
+            TestDataBuilders.buildPublicPlayerData({ id: ATTACKER_ID, score: attackerScore }),
+            TestDataBuilders.buildPublicPlayerData({ id: TARGET_ID, score: targetScore, isPlayerInactive: targetIsInactive }),
         ];
 
         return {
@@ -222,6 +222,14 @@ describe('canTargetPlayerByScore', () =>
         expect(getter(buildContext(0, 0, TARGET_ID))).toBe(0);
     });
 
+    it('is unrestricted when the target player is inactive, regardless of the score ratio', () =>
+    {
+        const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE.valueGetter);
+        expect(getter(buildContext(600, 100, TARGET_ID))).toBe(0);
+        expect(getter(buildContext(600, 100, TARGET_ID, true))).toBe(1);
+        expect(getter(buildContext(0, 0, TARGET_ID, true))).toBe(1);
+    });
+
     it('is unrestricted against own or unowned targets', () =>
     {
         const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE.valueGetter);
@@ -243,5 +251,24 @@ describe('canTargetPlayerByScore', () =>
     {
         const getter: (context: RequirementType.RequirementContext) => number = TestDataBuilders.bindGetter(RequirementValueGetters.CAN_TARGET_PLAYER_BY_SCORE.valueGetter);
         expect(() => getter(buildContext(100, 100, undefined))).toThrow();
+    });
+});
+
+describe('computeIsPlayerInactive', () =>
+{
+    const SEVEN_DAYS_MILLISECONDS: number = 7 * 24 * 60 * 60 * 1000;
+
+    it('is false at exactly the 7-day threshold and true just past it', () =>
+    {
+        const now: number = 10_000_000_000;
+        expect(ScoreData.computeIsPlayerInactive(now - SEVEN_DAYS_MILLISECONDS, now)).toBe(false);
+        expect(ScoreData.computeIsPlayerInactive(now - SEVEN_DAYS_MILLISECONDS - 1, now)).toBe(true);
+    });
+
+    it('is false for a recently updated player', () =>
+    {
+        const now: number = 10_000_000_000;
+        expect(ScoreData.computeIsPlayerInactive(now, now)).toBe(false);
+        expect(ScoreData.computeIsPlayerInactive(now - 1000, now)).toBe(false);
     });
 });

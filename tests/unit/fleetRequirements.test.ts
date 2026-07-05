@@ -98,10 +98,10 @@ describe('Transport fleet requirements', () =>
     {
         const player: CoreType.PlayerData = buildSender();
         // Strong attacker (100000) vs a weak owned target (1): the 5x score gate blocks Station/Collect but not Transport.
-        player.publicPlayerRows =
+        player.publicPlayerDatas =
         [
-            TestDataBuilders.buildPublicPlayerRow({ id: SELF_ID, score: 100_000 }),
-            TestDataBuilders.buildPublicPlayerRow({ id: TARGET_OWNER_ID, score: 1 }),
+            TestDataBuilders.buildPublicPlayerData({ id: SELF_ID, score: 100_000 }),
+            TestDataBuilders.buildPublicPlayerData({ id: TARGET_OWNER_ID, score: 1 }),
         ];
 
         const transportFailed: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements({ playerData: player, planetId: 1, unitQuantities: ONE_TRANSPORT, transportedResourceQuantities: SOME_RESOURCES, targetPlanetAddress: TARGET, zoneAssociatedPlanetOwnerPlayerId: TARGET_OWNER_ID, targetZoneExists: true }, GameType.FleetActionType.Transport);

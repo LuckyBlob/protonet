@@ -75,10 +75,10 @@ describe('Espionage fleet requirements', () =>
     {
         const planet: CoreType.PlanetData = TestDataBuilders.buildPlanetData({ planetRow: { id: 1 } });
         const player: CoreType.PlayerData = TestDataBuilders.buildPlayerData({ playerRow: { id: 1 }, planetDatas: [planet] });
-        player.publicPlayerRows =
+        player.publicPlayerDatas =
         [
-            TestDataBuilders.buildPublicPlayerRow({ id: 1, score: 0 }),
-            TestDataBuilders.buildPublicPlayerRow({ id: targetOwnerId, score: 1_000_000 }),
+            TestDataBuilders.buildPublicPlayerData({ id: 1, score: 0 }),
+            TestDataBuilders.buildPublicPlayerData({ id: targetOwnerId, score: 1_000_000 }),
         ];
         return player;
     }
