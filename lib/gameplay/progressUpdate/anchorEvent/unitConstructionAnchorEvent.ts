@@ -27,7 +27,7 @@ export function findNextAnchorEvent(playerData: CoreType.PlayerData, serverData:
 
         if (item.unitConstructionRow.duration_at_start_time === null)
         {
-            throw new Error(`UNREACHABLE: ...`);
+            throw new Error(`UNREACHABLE: find next unit construction anchor event start time.`);
         }
 
         return item.unitConstructionRow.started_at + item.unitConstructionRow.duration_at_start_time;

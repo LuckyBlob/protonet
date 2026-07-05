@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ReactElement } from "react";
 
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 
 export default function ResetPasswordPage()
@@ -37,14 +38,7 @@ export default function ResetPasswordPage()
 		}
 		catch (error: unknown)
 		{
-			if (error instanceof Error)
-			{
-				setError(error.message);
-			}
-			else
-			{
-				setError("An unexpected error occurred");
-			}
+			setError(ErrorHelp.getErrorMessage(error));
 		}
 	};
 

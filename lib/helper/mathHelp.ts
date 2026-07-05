@@ -156,7 +156,7 @@ function modifyQuantity<K>(op: string, type: K, quantity: number, get: (type: K)
             break;
         }
         default:
-            throw new Error(`⚠️: quantity modification operator unknown: ${op}`);
+            throw new Error(`UNREACHABLE: quantity modification operator unknown: ${op}`);
     }
 
     if (newValue < 0)

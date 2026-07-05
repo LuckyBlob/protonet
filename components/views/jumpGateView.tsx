@@ -2,6 +2,7 @@
 
 import { useState, useEffect, ChangeEvent, ReactElement } from "react";
 
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
@@ -21,7 +22,6 @@ type JumpGateViewProps =
 };
 
 type DestinationFieldState = [number | null, (value: number | null) => void];
-type StatusFieldState = [string | null, (value: string | null) => void];
 
 function getJumpableDestinationMoons(playerData: CoreType.PlayerData, sourceMoonId: number): CoreType.PlanetData[]
 {
@@ -83,7 +83,7 @@ function renderUnitRow(unitType: GameType.UnitType, ownedQuantity: number, reque
     return element;
 }
 
-function renderJumpGateBody(props: JumpGateViewProps, sourceMoonData: CoreType.PlanetData, quantitiesState: HelperElements.RequestedQuantitiesState<GameType.UnitType>, destinationMoonIdState: DestinationFieldState, statusMessageState: StatusFieldState): ReactElement
+function renderJumpGateBody(props: JumpGateViewProps, sourceMoonData: CoreType.PlanetData, quantitiesState: HelperElements.RequestedQuantitiesState<GameType.UnitType>, destinationMoonIdState: DestinationFieldState, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
     const psController: CoreType.PSController = props.clientDataStateResult.psController;
     const playerData: CoreType.PlayerData = psController[0].predictedDBData;
@@ -102,7 +102,6 @@ function renderJumpGateBody(props: JumpGateViewProps, sourceMoonData: CoreType.P
     const ownedUnitTypes: GameType.UnitType[] = getOwnedUnitTypes(sourceMoonData);
     const hasRequestedUnits: boolean = quantitiesState.requestedQuantities.size > 0;
     const canJump: boolean = isSourceOnCooldown === false && isDestinationOnCooldown === false && selectedDestination !== undefined && hasRequestedUnits === true;
-    const statusMessage: string | null = statusMessageState[0];
 
     const handleDestinationChange = (event: ChangeEvent<HTMLSelectElement>): void =>
     {
@@ -116,16 +115,16 @@ function renderJumpGateBody(props: JumpGateViewProps, sourceMoonData: CoreType.P
             return;
         }
 
-        statusMessageState[1]("Jumping...");
-        const errorMessage: string | null = await ClientRequestFunctions.clientTryJumpGateRequest(psController, sourceMoonData.planetRow.id, selectedDestinationId, quantitiesState.requestedQuantities);
-        if (errorMessage === null)
+        try
         {
+            await ClientRequestFunctions.clientTryJumpGateRequest(psController, sourceMoonData.planetRow.id, selectedDestinationId, quantitiesState.requestedQuantities);
             quantitiesState.resetRequestedQuantities();
-            statusMessageState[1]("Jump complete.");
-            return;
+            feedbackController.showSuccess("Jump complete.");
         }
-
-        statusMessageState[1](errorMessage);
+        catch (error: unknown)
+        {
+            feedbackController.showError(ErrorHelp.getErrorMessage(error));
+        }
     };
 
     const cooldownNotice: ReactElement | null = isSourceOnCooldown === true
@@ -138,10 +137,6 @@ function renderJumpGateBody(props: JumpGateViewProps, sourceMoonData: CoreType.P
 
     const noDestinationNotice: ReactElement | null = destinationMoons.length === 0
         ? <div className="text-sm text-gray-300">No other moon with a Jump Gate to jump to.</div>
-        : null;
-
-    const statusNotice: ReactElement | null = statusMessage !== null
-        ? <div className="text-sm">{statusMessage}</div>
         : null;
 
     const unitRows: ReactElement[] = ownedUnitTypes.map((unitType: GameType.UnitType): ReactElement =>
@@ -219,7 +214,7 @@ function renderJumpGateBody(props: JumpGateViewProps, sourceMoonData: CoreType.P
 
             {HelperElements.renderWithTooltip(jumpDisabledReasons, jumpButton)}
 
-            {statusNotice}
+            {HelperElements.renderActionFeedback(feedbackController)}
         </div>
     );
 
@@ -230,20 +225,20 @@ export function JumpGateView(props: JumpGateViewProps): ReactElement
 {
     const quantitiesState: HelperElements.RequestedQuantitiesState<GameType.UnitType> = HelperElements.useRequestedQuantities<GameType.UnitType>();
     const destinationMoonIdState: DestinationFieldState = useState<number | null>(null);
-    const statusMessageState: StatusFieldState = useState<string | null>(null);
+    const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
     const selectedPlanetId: number = props.clientDataStateResult.psController[0].selectedPlanetId;
 
     useEffect((): void =>
     {
         quantitiesState.resetRequestedQuantities();
         destinationMoonIdState[1](null);
-        statusMessageState[1](null);
+        feedbackController.clearFeedback();
     }, [selectedPlanetId]);
 
     try
     {
         const sourceMoonData: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-        return renderJumpGateBody(props, sourceMoonData, quantitiesState, destinationMoonIdState, statusMessageState);
+        return renderJumpGateBody(props, sourceMoonData, quantitiesState, destinationMoonIdState, feedbackController);
     }
     catch (error: unknown)
     {

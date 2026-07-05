@@ -16,15 +16,9 @@ import * as FleetData from "@/lib/gameplay/dynamicData/planet/fleet/fleetData";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 
 const NO_TRANSPORTED_RESOURCES: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
-
-// One-line outcome of a galaxy-view spy click: the message to show and whether it was a failure.
-type SpyFeedback =
-{
-    message: string;
-    isError: boolean;
-};
 
 // Everything a galaxy-view row needs to evaluate and launch a one-probe spy mission against its target.
 type GalaxyViewContext =
@@ -33,7 +27,7 @@ type GalaxyViewContext =
     originPlanetData: CoreType.PlanetData;
     serverData: CoreType.ServerData;
     psController: CoreType.PSController;
-    setSendFeedback: (value: SpyFeedback | null) => void;
+    feedbackController: HelperElements.ActionFeedbackController;
 };
 
 type PlanetViewProps =
@@ -121,16 +115,17 @@ function renderEspionageIndicator(context: GalaxyViewContext, planetPublicPlanet
             return;
         }
 
-        const errorMessage: string | null = await ClientRequestFunctions.clientTrySendFleetRequest(context.psController, context.originPlanetData.planetRow.id, targetPlanetAddress, GameType.FleetActionType.Espionage, probeQuantities, NO_TRANSPORTED_RESOURCES);
-
-        if (errorMessage === null)
+        try
         {
-            const targetAddressLabel: string = StaticDataHelper.formatPlanetAddress(targetPlanetAddress.galaxy, targetPlanetAddress.system, targetPlanetAddress.slot, targetPlanetAddress.zone);
-            context.setSendFeedback({ message: `${probesToSend} espionage probe(s) sent to ${targetAddressLabel}.`, isError: false });
-            return;
-        }
+            await ClientRequestFunctions.clientTrySendFleetRequest(context.psController, context.originPlanetData.planetRow.id, targetPlanetAddress, GameType.FleetActionType.Espionage, probeQuantities, NO_TRANSPORTED_RESOURCES);
 
-        context.setSendFeedback({ message: errorMessage, isError: true });
+            const targetAddressLabel: string = StaticDataHelper.formatPlanetAddress(targetPlanetAddress.galaxy, targetPlanetAddress.system, targetPlanetAddress.slot, targetPlanetAddress.zone);
+            context.feedbackController.showSuccess(`${probesToSend} espionage probe(s) sent to ${targetAddressLabel}.`);
+        }
+        catch (error: unknown)
+        {
+            context.feedbackController.showError(ErrorHelp.getErrorMessage(error));
+        }
     };
 
     const cursorClass: string = canSpy === true ? "cursor-pointer" : "cursor-default";
@@ -231,7 +226,7 @@ function renderPlanetGrid(context: GalaxyViewContext, selectedGalaxy: number, se
     return element;
 }
 
-function renderBody(props: PlanetViewProps, originPlanetData: CoreType.PlanetData, sendFeedbackState: [SpyFeedback | null, (value: SpyFeedback | null) => void], selectedGalaxy: number, selectedSystem: number, handleGalaxyChange: (e: ChangeEvent<HTMLSelectElement>) => void, handleSystemChange: (e: ChangeEvent<HTMLSelectElement>) => void): ReactElement
+function renderBody(props: PlanetViewProps, originPlanetData: CoreType.PlanetData, feedbackController: HelperElements.ActionFeedbackController, selectedGalaxy: number, selectedSystem: number, handleGalaxyChange: (e: ChangeEvent<HTMLSelectElement>) => void, handleSystemChange: (e: ChangeEvent<HTMLSelectElement>) => void): ReactElement
 {
     const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 
@@ -241,14 +236,8 @@ function renderBody(props: PlanetViewProps, originPlanetData: CoreType.PlanetDat
         originPlanetData: originPlanetData,
         serverData: props.clientDataStateResult.sdsController[0],
         psController: props.clientDataStateResult.psController,
-        setSendFeedback: sendFeedbackState[1],
+        feedbackController: feedbackController,
     };
-
-    const sendFeedback: SpyFeedback | null = sendFeedbackState[0];
-    const feedbackColorClass: string = (sendFeedback !== null && sendFeedback.isError === true) ? "text-red-400" : "text-green-400";
-    const feedbackElement: ReactElement | null = (sendFeedback !== null)
-        ? <div className={`text-sm font-normal ${feedbackColorClass}`}>{sendFeedback.message}</div>
-        : null;
 
     const galaxyNumbers: number[] = Array.from({ length: StaticData.GALAXY_COUNT }, (_: unknown, index: number): number => index + 1);
     const systemNumbers: number[] = Array.from({ length: StaticData.SYSTEM_COUNT }, (_: unknown, index: number): number => index + 1);
@@ -285,7 +274,7 @@ function renderBody(props: PlanetViewProps, originPlanetData: CoreType.PlanetDat
                 </select>
             </div>
             {renderPlanetGrid(context, selectedGalaxy, selectedSystem, playerData)}
-            {feedbackElement}
+            {HelperElements.renderActionFeedback(feedbackController)}
         </div>
     );
 
@@ -298,7 +287,7 @@ export function PlanetView(props: PlanetViewProps): ReactElement
 {
     const selectedGalaxyState: [number, (value: number) => void] = useState<number>(1);
     const selectedSystemState: [number, (value: number) => void] = useState<number>(1);
-    const sendFeedbackState: [SpyFeedback | null, (value: SpyFeedback | null) => void] = useState<SpyFeedback | null>(null);
+    const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
     const selectedPlanetId: number = props.clientDataStateResult.psController[0].selectedPlanetId;
 
     useEffect((): void =>
@@ -308,7 +297,7 @@ export function PlanetView(props: PlanetViewProps): ReactElement
             const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
             selectedGalaxyState[1](planetDataPredicted.planetRow.galaxy);
             selectedSystemState[1](planetDataPredicted.planetRow.system);
-            sendFeedbackState[1](null);
+            feedbackController.clearFeedback();
         }
         catch (error: unknown)
         {
@@ -331,7 +320,7 @@ export function PlanetView(props: PlanetViewProps): ReactElement
     try
     {
         const planetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-        return renderBody(props, planetDataPredicted, sendFeedbackState, selectedGalaxyState[0], selectedSystemState[0], handleGalaxyChange, handleSystemChange);
+        return renderBody(props, planetDataPredicted, feedbackController, selectedGalaxyState[0], selectedSystemState[0], handleGalaxyChange, handleSystemChange);
     }
     catch (error: unknown)
     {

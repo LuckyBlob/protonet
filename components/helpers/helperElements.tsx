@@ -88,6 +88,77 @@ export function useRequestedQuantities<K extends number>(): RequestedQuantitiesS
 	};
 }
 
+export type ActionFeedback =
+{
+	message: string;
+	isError: boolean;
+};
+
+export type ActionFeedbackController =
+{
+	feedback: ActionFeedback | null;
+	showError: (message: string) => void;
+	showSuccess: (message: string) => void;
+	clearFeedback: () => void;
+};
+
+export function useActionFeedback(): ActionFeedbackController
+{
+	const [feedback, setFeedback] = useState<ActionFeedback | null>(null);
+
+	const showError = (message: string): void =>
+	{
+		const nextFeedback: ActionFeedback =
+		{
+			message: message,
+			isError: true,
+		};
+
+		setFeedback(nextFeedback);
+	};
+
+	const showSuccess = (message: string): void =>
+	{
+		const nextFeedback: ActionFeedback =
+		{
+			message: message,
+			isError: false,
+		};
+
+		setFeedback(nextFeedback);
+	};
+
+	const clearFeedback = (): void =>
+	{
+		setFeedback(null);
+	};
+
+	return {
+		feedback,
+		showError,
+		showSuccess,
+		clearFeedback,
+	};
+}
+
+export function renderActionFeedback(controller: ActionFeedbackController): ReactElement
+{
+	const feedback: ActionFeedback | null = controller.feedback;
+
+	if (feedback === null)
+	{
+		return <EmptyElement />;
+	}
+
+	const feedbackClassName: string = feedback.isError === true ? "text-sm text-red-400" : "text-sm text-green-400";
+	const element: ReactElement =
+	(
+		<div className={feedbackClassName}>{feedback.message}</div>
+	);
+
+	return element;
+}
+
 export function renderQuantityInput<K extends number>(type: K, min: number, max: number | null, requestedQuantity: number, planetData: CoreType.PlanetData, setRequestedQuantity: (type: K, value: number) => void): ReactElement
 {
 	const handleQuantityChange = (e: ChangeEvent<HTMLInputElement>): void =>

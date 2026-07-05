@@ -45,6 +45,7 @@ import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
 import * as TimeFormat from "@/lib/helper/timeFormat";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 //#region Types
 
 type PlayerActionResult =
@@ -84,7 +85,7 @@ export async function serverTryUserInfoRequest(): Promise<NextResponse>
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
@@ -128,7 +129,7 @@ export async function serverTryPlayerDataRequest(): Promise<NextResponse>
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
@@ -154,7 +155,7 @@ export async function serverTryServerConfigRequest(): Promise<NextResponse>
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
@@ -208,7 +209,7 @@ export async function serverTryLoginRequest(request: Request): Promise<NextRespo
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
@@ -296,7 +297,7 @@ export async function serverTryRegisterRequest(request: Request): Promise<NextRe
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
@@ -339,7 +340,7 @@ export async function serverTryVerifyEmailRequest(request: Request): Promise<Nex
             }
             catch (error: unknown)
             {
-                errorResponse.error = error instanceof Error ? error.message : String(error);
+                errorResponse.error = ErrorHelp.getErrorMessage(error);
                 return NextResponse.json(errorResponse, { status: 400 });
             }
         }
@@ -349,7 +350,7 @@ export async function serverTryVerifyEmailRequest(request: Request): Promise<Nex
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
@@ -394,7 +395,7 @@ export async function serverTryResendVerificationRequest(): Promise<NextResponse
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
@@ -459,7 +460,7 @@ export async function serverTryResetPasswordRequest(request: Request): Promise<N
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
@@ -531,7 +532,7 @@ export async function serverTryChangeEmailRequest(request: Request): Promise<Nex
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 }
@@ -593,7 +594,7 @@ export async function serverTryChangeUsernameRequest(request: Request): Promise<
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 }
@@ -636,7 +637,7 @@ export async function serverTryDeleteUserRequest(request: Request): Promise<Next
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
@@ -666,7 +667,7 @@ export async function serverTryLogoutRequest(): Promise<NextResponse>
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
@@ -713,7 +714,7 @@ export async function serverTryRefreshServerRequest(): Promise<NextResponse>
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
@@ -1123,7 +1124,7 @@ export async function handlePlayerStateActionRequest(logic: (playerId: number, s
     }
     catch (error: unknown)
     {
-        errorResponse.error = error instanceof Error ? error.message : String(error);
+        errorResponse.error = ErrorHelp.getErrorMessage(error);
         return NextResponse.json(errorResponse, { status: 500 });
     }
 
@@ -1238,7 +1239,7 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
         }
         catch (error: unknown)
         {
-            const errorMessage: string = error instanceof Error ? error.message : String(error);
+            const errorMessage: string = ErrorHelp.getErrorMessage(error);
             return { success: false, failureReason: `Failed to substract planet resources for building upgrade.`, playerStateResult: playerData };
         }
     }
@@ -1277,7 +1278,7 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
     const index: number | null = BuildingUpgradeData.getNextBuildingUpgradeBuildingRowIndex(playerData, relevantPlanetData, newBuildingUpgrade, serverData);
     if (index === null)
     {
-        throw new Error("Failed to get first building upgrade building row.");
+        throw new Error(`Failed to get first building upgrade building row for planetId ${relevantPlanetData.planetRow.id}.`);
     }
     // swap the first upgrade building row to start building to ensure it's in first place.
     [newBuildingUpgrade.buildingUpgradeBuildingRows[0], newBuildingUpgrade.buildingUpgradeBuildingRows[index]] = [newBuildingUpgrade.buildingUpgradeBuildingRows[index], newBuildingUpgrade.buildingUpgradeBuildingRows[0]];
@@ -1290,7 +1291,7 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
         const firstUpgradeTimeSeconds: number | null = BuildingUpgradeData.getBuildingUpgradeDurationSeconds(playerData, firstBuildingUpgradeBuildingRow.building_type as GameType.BuildingType, relevantPlanetData, serverData);
         if (firstUpgradeTimeSeconds === null)
         {
-            throw new Error("First firstBuildingUpgradeBuildingRow cant be null.");
+            throw new Error(`First building upgrade building row duration is null for planetId ${relevantPlanetData.planetRow.id}.`);
         }
 
         newBuildingUpgrade.buildingUpgradeRow.duration_at_start_time = firstUpgradeTimeSeconds * 1000;
@@ -1596,7 +1597,7 @@ export function tryUpgradeResearchLogic(playerId: number, serverData: CoreType.S
     const index: number | null = ResearchData.getNextCurrentlyResearchingResearchRowIndex(playerData, relevantPlanetData.planetRow.id, newCurrentlyResearching, serverData);
     if (index === null)
     {
-        throw new Error("Failed to get first currently researching research row.");
+        throw new Error(`Failed to get first currently researching research row for planetId ${relevantPlanetData.planetRow.id}.`);
     }
     // swap the first research row to start researching to ensure it's in first place.
     [newCurrentlyResearching.currentlyResearchingResearchRows[0], newCurrentlyResearching.currentlyResearchingResearchRows[index]] = [newCurrentlyResearching.currentlyResearchingResearchRows[index], newCurrentlyResearching.currentlyResearchingResearchRows[0]];
@@ -1609,7 +1610,7 @@ export function tryUpgradeResearchLogic(playerId: number, serverData: CoreType.S
         const firstResearchTimeSeconds: number | null = ResearchData.getResearchDurationSeconds(playerData, firstCurrentlyResearchingResearchRow.research_type as GameType.ResearchType, relevantPlanetData.planetRow.id, serverData);
         if (firstResearchTimeSeconds === null)
         {
-            throw new Error("First firstCurrentlyResearchingResearchRow cant be null.");
+            throw new Error(`First currently researching research row duration is null for planetId ${relevantPlanetData.planetRow.id}.`);
         }
 
         newCurrentlyResearching.currentlyResearchingRow.duration_at_start_time = firstResearchTimeSeconds * 1000;
@@ -1794,7 +1795,7 @@ function addUnitConstruction(planetData: CoreType.PlanetData, playerId: number, 
         const firstConstructionTimeSeconds: number | null = UnitConstructionData.getUnitConstructionDurationSeconds(firstConstructionUnitRow.unit_type as GameType.UnitType, planetData, serverData);
         if (firstConstructionTimeSeconds === null)
         {
-            throw new Error("First firstConstructionTime cant be null.");
+            throw new Error(`First unit construction row duration is null for planetId ${planetData.planetRow.id}.`);
         }
 
         newUnitConstruction.unitConstructionRow.duration_at_start_time = firstConstructionTimeSeconds * 1000;
@@ -2270,7 +2271,7 @@ export function tryDeleteMessageLogic(playerId: number, serverData: CoreType.Ser
     }
     catch (error: unknown)
     {
-        const errorMessage: string = error instanceof Error ? error.message : String(error);
+        const errorMessage: string = ErrorHelp.getErrorMessage(error);
         return { success: false, failureReason: `Failed to delete messageRowId ${requestData.messageRowId}: ${errorMessage}`, playerStateResult: playerData };
     }
 
@@ -2313,7 +2314,7 @@ export function tryMarkMessageReadLogic(playerId: number, serverData: CoreType.S
     }
     catch (error: unknown)
     {
-        const errorMessage: string = error instanceof Error ? error.message : String(error);
+        const errorMessage: string = ErrorHelp.getErrorMessage(error);
         return { success: false, failureReason: `Failed to mark messageRowId ${requestData.messageRowId} as read: ${errorMessage}`, playerStateResult: playerData };
     }
 
@@ -2509,7 +2510,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
     }
     catch (error: unknown)
     {
-        const errorMessage: string = error instanceof Error ? error.message : String(error);
+        const errorMessage: string = ErrorHelp.getErrorMessage(error);
         return { success: false, failureReason: `Fleet send calculation problems: ${errorMessage}`, playerStateResult: playerData };
     }
 
@@ -2584,7 +2585,7 @@ export function trySendFleetLogic(playerId: number, serverData: CoreType.ServerD
             }
             catch (error: unknown)
             {
-                const errorMessage: string = error instanceof Error ? error.message : String(error);
+                const errorMessage: string = ErrorHelp.getErrorMessage(error);
                 return { success: false, failureReason: `Failed to substract planet resources for fleet`, playerStateResult: playerData };
             }
         }

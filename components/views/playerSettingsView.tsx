@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { ReactElement } from "react";
 
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
@@ -20,26 +20,27 @@ type PlayerSettingsViewProps =
 	cuController: UseCurrentUser.CUController;
 };
 
-type AccountFeedback =
-{
-	message: string;
-	isError: boolean;
-};
-
-type AccountFeedbackController = [AccountFeedback | null, (value: AccountFeedback | null) => void];
-
 //#region rendering helpers
 
-function renderGameSection(props: PlayerSettingsViewProps): ReactElement
+function renderGameSection(props: PlayerSettingsViewProps, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
 	const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 	const currentProbesPerSend: number = PlayerSettings.getProbesPerSend(playerData);
 
-	const handleSaveProbesPerSend = (value: string): void =>
+	const handleSaveProbesPerSend = async (value: string): Promise<void> =>
 	{
 		const parsedValue: number = Number.parseInt(value, 10);
 		const probesPerSend: number = Number.isNaN(parsedValue) === true ? 1 : parsedValue;
-		ClientRequestFunctions.clientTryUpdatePlayerSettingsRequest(props.clientDataStateResult.psController, probesPerSend);
+
+		try
+		{
+			await ClientRequestFunctions.clientTryUpdatePlayerSettingsRequest(props.clientDataStateResult.psController, probesPerSend);
+			feedbackController.showSuccess("Settings saved.");
+		}
+		catch (error: unknown)
+		{
+			feedbackController.showError(ErrorHelp.getErrorMessage(error));
+		}
 	};
 
 	const element: ReactElement =
@@ -62,14 +63,11 @@ function renderGameSection(props: PlayerSettingsViewProps): ReactElement
 	return element;
 }
 
-function renderAccountSection(props: PlayerSettingsViewProps, router: ReturnType<typeof useRouter>, feedbackController: AccountFeedbackController): ReactElement
+function renderAccountSection(props: PlayerSettingsViewProps, router: ReturnType<typeof useRouter>, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
 	const user: DBType.UserRow | null = props.cuController[0].user;
 	const currentEmail: string = user?.email ?? "";
 	const currentUsername: string = user?.username ?? "";
-
-	const feedback: AccountFeedback | null = feedbackController[0];
-	const setFeedback: (value: AccountFeedback | null) => void = feedbackController[1];
 
 	const applyUpdatedUser = (updatedUser: DBType.UserRow | null): void =>
 	{
@@ -92,11 +90,11 @@ function renderAccountSection(props: PlayerSettingsViewProps, router: ReturnType
 		{
 			const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ChangeEmail> = await ClientRequestFunctions.clientTryChangeEmailRequest(value);
 			applyUpdatedUser(response.userRow);
-			setFeedback({ message: "Email updated.", isError: false });
+			feedbackController.showSuccess("Email updated.");
 		}
 		catch (error: unknown)
 		{
-			setFeedback({ message: error instanceof Error ? error.message : "Could not change email.", isError: true });
+			feedbackController.showError(ErrorHelp.getErrorMessage(error));
 		}
 	};
 
@@ -106,17 +104,13 @@ function renderAccountSection(props: PlayerSettingsViewProps, router: ReturnType
 		{
 			const response: APIEndPoint.ResponseForAction<typeof APIEndPoint.ActionRequest.ChangeUsername> = await ClientRequestFunctions.clientTryChangeUsernameRequest(value);
 			applyUpdatedUser(response.userRow);
-			setFeedback({ message: "Username updated.", isError: false });
+			feedbackController.showSuccess("Username updated.");
 		}
 		catch (error: unknown)
 		{
-			setFeedback({ message: error instanceof Error ? error.message : "Could not change username.", isError: true });
+			feedbackController.showError(ErrorHelp.getErrorMessage(error));
 		}
 	};
-
-	const feedbackElement: ReactElement | null = feedback === null
-		? null
-		: <div className={`text-sm ${feedback.isError === true ? "text-red-500" : "text-green-500"}`}>{feedback.message}</div>;
 
 	const element: ReactElement =
 	(
@@ -140,15 +134,15 @@ function renderAccountSection(props: PlayerSettingsViewProps, router: ReturnType
 				inputType="text"
 				onSave={handleSaveUsername}
 			/>
-			{feedbackElement}
-			{renderDeleteAccountButton(router)}
+			{HelperElements.renderActionFeedback(feedbackController)}
+			{renderDeleteAccountButton(router, feedbackController)}
 		</section>
 	);
 
 	return element;
 }
 
-function renderDeleteAccountButton(router: ReturnType<typeof useRouter>): ReactElement
+function renderDeleteAccountButton(router: ReturnType<typeof useRouter>, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
 	const handleDeleteAccount = async (): Promise<void> =>
 	{
@@ -159,7 +153,7 @@ function renderDeleteAccountButton(router: ReturnType<typeof useRouter>): ReactE
 		}
 		catch (error: unknown)
 		{
-			console.error("⚠️:", error);
+			feedbackController.showError(ErrorHelp.getErrorMessage(error));
 		}
 	};
 
@@ -182,14 +176,14 @@ function renderDeleteAccountButton(router: ReturnType<typeof useRouter>): ReactE
 export function PlayerSettingsView(props: PlayerSettingsViewProps): ReactElement
 {
 	const router: ReturnType<typeof useRouter> = useRouter();
-	const feedbackController: AccountFeedbackController = useState<AccountFeedback | null>(null);
+	const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
 
 	try
 	{
 		const playerSettingsViewElement: ReactElement =
 		(
 			<div className="flex flex-col items-center gap-8 pt-4">
-				{renderGameSection(props)}
+				{renderGameSection(props, feedbackController)}
 				{renderAccountSection(props, router, feedbackController)}
 			</div>
 		);

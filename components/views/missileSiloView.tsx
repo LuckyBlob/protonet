@@ -3,13 +3,14 @@
 import { useEffect, ReactElement } from "react";
 
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
-import * as HelperElement from "@/components/helpers/helperElements";
+import * as HelperElements from "@/components/helpers/helperElements";
 import * as UnitConstructionData from "@/lib/gameplay/dynamicData/planet/unitConstructionData";
 import * as MissileSpaceData from "@/lib/gameplay/dynamicData/planet/missileSpaceData";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
@@ -39,13 +40,13 @@ function renderCapacityReadout(planetData: CoreType.PlanetData, playerData: Core
     return element;
 }
 
-function renderDestroyButton(props: MissileSiloViewProps, unitType: GameType.UnitType, requestedQuantity: number, planetData: CoreType.PlanetData, setRequestedQuantity: (unitType: GameType.UnitType, value: number) => void): ReactElement
+function renderDestroyButton(props: MissileSiloViewProps, unitType: GameType.UnitType, requestedQuantity: number, planetData: CoreType.PlanetData, setRequestedQuantity: (unitType: GameType.UnitType, value: number) => void, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
     const ownedQuantity: number = UnitData.getUnitQuantity(planetData, unitType);
     const destroyableQuantity: number = Math.min(requestedQuantity, ownedQuantity);
     const isUsable: boolean = destroyableQuantity > 0;
 
-    const handleDestroy = (): void =>
+    const handleDestroy = async (): Promise<void> =>
     {
         if (destroyableQuantity <= 0)
         {
@@ -53,7 +54,15 @@ function renderDestroyButton(props: MissileSiloViewProps, unitType: GameType.Uni
         }
 
         setRequestedQuantity(unitType, destroyableQuantity);
-        ClientRequestFunctions.clientTryDestroyMissilesRequest(props.clientDataStateResult.psController, planetData.planetRow.id, new Map<GameType.UnitType, number>([[unitType, destroyableQuantity]]));
+
+        try
+        {
+            await ClientRequestFunctions.clientTryDestroyMissilesRequest(props.clientDataStateResult.psController, planetData.planetRow.id, new Map<GameType.UnitType, number>([[unitType, destroyableQuantity]]));
+        }
+        catch (error: unknown)
+        {
+            feedbackController.showError(ErrorHelp.getErrorMessage(error));
+        }
     };
 
     const usableClassName: string = "px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500";
@@ -72,11 +81,11 @@ function renderDestroyButton(props: MissileSiloViewProps, unitType: GameType.Uni
         </button>
     );
 
-    return HelperElement.renderWithTooltip(destroyDisabledReasons, destroyButton);
+    return HelperElements.renderWithTooltip(destroyDisabledReasons, destroyButton);
 }
 //#endregion
 
-function renderMissileSiloBody(props: MissileSiloViewProps, planetDataPredicted: CoreType.PlanetData, quantitiesState: HelperElement.RequestedQuantitiesState<GameType.UnitType>): ReactElement
+function renderMissileSiloBody(props: MissileSiloViewProps, planetDataPredicted: CoreType.PlanetData, quantitiesState: HelperElements.RequestedQuantitiesState<GameType.UnitType>, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
     const serverData: CoreType.ServerData = props.clientDataStateResult.sdsController[0];
     const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
@@ -98,13 +107,13 @@ function renderMissileSiloBody(props: MissileSiloViewProps, planetDataPredicted:
     const renderDestroyAction: UnitBuildElements.RenderRowEndAction =
         (unitType: GameType.UnitType, requestedQuantity: number, planetData: CoreType.PlanetData): ReactElement =>
         {
-            return renderDestroyButton(props, unitType, requestedQuantity, planetData, quantitiesState.setRequestedQuantity);
+            return renderDestroyButton(props, unitType, requestedQuantity, planetData, quantitiesState.setRequestedQuantity, feedbackController);
         };
 
     const requestedBuildMap: Map<GameType.UnitType, number> = UnitBuildElements.buildRequestedUnitQuantitiesMap(missileUnitTypes, quantitiesState.requestedQuantities);
     const hasRequestedData: boolean = requestedBuildMap.size > 0;
 
-    const onBuildAll: () => void = UnitBuildElements.createBuildUnitsHandler(props.clientDataStateResult, planetDataPredicted, requestedBuildMap, quantitiesState.resetRequestedQuantities);
+    const onBuildAll: () => Promise<void> = UnitBuildElements.createBuildUnitsHandler(props.clientDataStateResult, planetDataPredicted, requestedBuildMap, quantitiesState.resetRequestedQuantities, feedbackController);
 
     const previewContent: ReactElement | null = UnitBuildElements.renderBuildPreviewContent(planetDataPredicted, serverData, requestedBuildMap, computeBuildableMissileQuantities, MISSILE_INSUFFICIENT_TEXT);
     const buildButton: ReactElement | null = UnitBuildElements.renderBuildButton(planetDataPredicted, requestedBuildMap, hasRequestedData, onBuildAll, computeBuildableMissileQuantities, MISSILE_INSUFFICIENT_TEXT);
@@ -114,6 +123,7 @@ function renderMissileSiloBody(props: MissileSiloViewProps, planetDataPredicted:
     const element: ReactElement =
     (
         <div className="w-full flex flex-col items-center gap-4 pt-4">
+            {HelperElements.renderActionFeedback(feedbackController)}
             {renderCapacityReadout(planetDataPredicted, playerData)}
 
             <div className="flex flex-col items-center justify-center gap-4 min-h-[120px]">
@@ -140,7 +150,8 @@ function renderMissileSiloBody(props: MissileSiloViewProps, planetDataPredicted:
 
 export function MissileSiloView(props: MissileSiloViewProps): ReactElement
 {
-    const quantitiesState: HelperElement.RequestedQuantitiesState<GameType.UnitType> = HelperElement.useRequestedQuantities<GameType.UnitType>();
+    const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
+    const quantitiesState: HelperElements.RequestedQuantitiesState<GameType.UnitType> = HelperElements.useRequestedQuantities<GameType.UnitType>();
     const selectedPlanetId: number = props.clientDataStateResult.psController[0].selectedPlanetId;
 
     useEffect((): void =>
@@ -151,11 +162,11 @@ export function MissileSiloView(props: MissileSiloViewProps): ReactElement
     try
     {
         const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-        return renderMissileSiloBody(props, selectedPlanetDataPredicted, quantitiesState);
+        return renderMissileSiloBody(props, selectedPlanetDataPredicted, quantitiesState, feedbackController);
     }
     catch (error: unknown)
     {
         console.error("⚠️:", error);
-        return <HelperElement.EmptyElement />;
+        return <HelperElements.EmptyElement />;
     }
 }

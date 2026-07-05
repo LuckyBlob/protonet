@@ -3,6 +3,7 @@
 import { ChangeEvent, ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
@@ -14,7 +15,7 @@ import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelper
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
 import * as RequirementType from "@/lib/gameplay/coreData/requirement/requirementTypes";
-import * as HelperElement from "@/components/helpers/helperElements";
+import * as HelperElements from "@/components/helpers/helperElements";
 import * as UnitConstructionData from "@/lib/gameplay/dynamicData/planet/unitConstructionData";
 import * as MissileSpaceData from "@/lib/gameplay/dynamicData/planet/missileSpaceData";
 import * as UnitDescription from "@/lib/gameplay/coreData/description/unitDescriptions";
@@ -32,7 +33,7 @@ export function buildSingleUnitCostParts(unitType: GameType.UnitType): string[]
         return [];
     }
 
-    return HelperElement.buildCostParts(singleCostMap);
+    return HelperElements.buildCostParts(singleCostMap);
 }
 
 export function buildRequestedUnitQuantitiesMap(unitTypes: GameType.UnitType[], requestedQuantities: Map<GameType.UnitType, number>): Map<GameType.UnitType, number>
@@ -79,7 +80,7 @@ function renderBuildQuantityInput(playerData: CoreType.PlayerData, planetData: C
             />
         );
 
-        return HelperElement.renderWithTooltip(requirements, disabledQuantityInput);
+        return HelperElements.renderWithTooltip(requirements, disabledQuantityInput);
     }
 
     const remainingBuildableCount: number | null = Requirement.getRemainingBuildableUnitCount(requirementContext, unitType);
@@ -138,7 +139,7 @@ function renderUnitCostLines(costParts: string[]): ReactElement
 function renderUnitBuildRow(playerData: CoreType.PlayerData, planetData: CoreType.PlanetData, serverData: CoreType.ServerData, unitType: GameType.UnitType, requestedQuantity: number, setRequestedQuantity: (unitType: GameType.UnitType, value: number) => void, renderRowEndAction: RenderRowEndAction | undefined): ReactElement
 {
     const unitName: string = ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(unitType));
-    const unitImageElement: ReactElement = HelperElement.renderUnitImage(unitType);
+    const unitImageElement: ReactElement = HelperElements.renderUnitImage(unitType);
     const unitDescriptionLines: string[] = UnitDescription.getUnitDescriptionLines(unitType);
     const ownedQuantity: number = UnitData.getUnitQuantity(planetData, unitType);
     const singleDurationSeconds: number = UnitConstructionData.getUnitConstructionDurationSeconds(unitType, planetData, serverData) ?? 0;
@@ -163,7 +164,7 @@ function renderUnitBuildRow(playerData: CoreType.PlayerData, planetData: CoreTyp
     (
         <div key={unitType} className="flex flex-row items-center border border-gray-400 rounded">
             <div className="flex items-center justify-center px-4 py-3 border-r border-gray-400">
-                {HelperElement.renderWithTooltip(unitDescriptionLines, unitImageElement, "below")}
+                {HelperElements.renderWithTooltip(unitDescriptionLines, unitImageElement, "below")}
             </div>
 
             <div className="flex flex-col px-4 py-3 border-r border-gray-400 min-w-[200px]">
@@ -349,14 +350,22 @@ export function renderBuildButton(planetData: CoreType.PlanetData, requestedMap:
 
     const buildDisabledReasons: string[] = isBuildDisabled === true ? [insufficientText] : [];
 
-    return HelperElement.renderWithTooltip(buildDisabledReasons, buildButton);
+    return HelperElements.renderWithTooltip(buildDisabledReasons, buildButton);
 }
 
-export function createBuildUnitsHandler(clientDataStateResult: UseClientDataState.ClientDataStateResult, planetData: CoreType.PlanetData, requestedQuantities: Map<GameType.UnitType, number>, resetRequestedQuantities: () => void): () => void
+export function createBuildUnitsHandler(clientDataStateResult: UseClientDataState.ClientDataStateResult, planetData: CoreType.PlanetData, requestedQuantities: Map<GameType.UnitType, number>, resetRequestedQuantities: () => void, feedbackController: HelperElements.ActionFeedbackController): () => Promise<void>
 {
-    return () =>
+    return async (): Promise<void> =>
     {
-        ClientRequestFunctions.clientTryBuildUnitsRequest(clientDataStateResult.psController, planetData.planetRow.id, requestedQuantities);
+        try
+        {
+            await ClientRequestFunctions.clientTryBuildUnitsRequest(clientDataStateResult.psController, planetData.planetRow.id, requestedQuantities);
+        }
+        catch (error: unknown)
+        {
+            feedbackController.showError(ErrorHelp.getErrorMessage(error));
+        }
+
         resetRequestedQuantities();
     };
 }

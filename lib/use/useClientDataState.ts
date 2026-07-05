@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 
 export type ClientDataStateResult =
 {
@@ -36,7 +37,7 @@ export function useClientDataState(enabled: boolean): ClientDataStateResult
 			catch (error: unknown)
 			{
 				console.error("⚠️:", error);
-				const errorMessage: string = error instanceof Error ? error.message : String(error);
+				const errorMessage: string = ErrorHelp.getErrorMessage(error);
 				lsController[1]({ isLoading: true, error: errorMessage });
 			}
 		};

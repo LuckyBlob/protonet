@@ -6,7 +6,7 @@ import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
-import * as HelperElement from "@/components/helpers/helperElements";
+import * as HelperElements from "@/components/helpers/helperElements";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as UnitConstructionData from "@/lib/gameplay/dynamicData/planet/unitConstructionData";
 import * as Requirement from "@/lib/gameplay/coreData/requirement/requirements";
@@ -86,7 +86,7 @@ function renderPreviewSlot(previewContent: ReactElement | null, buildButton: Rea
 }
 //#endregion
 
-function renderShipyardBody(props: ShipyardViewProps, planetDataPredicted: CoreType.PlanetData, quantitiesState: HelperElement.RequestedQuantitiesState<GameType.UnitType>): ReactElement
+function renderShipyardBody(props: ShipyardViewProps, planetDataPredicted: CoreType.PlanetData, quantitiesState: HelperElements.RequestedQuantitiesState<GameType.UnitType>, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
     const serverData: CoreType.ServerData = props.clientDataStateResult.sdsController[0];
     const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
@@ -107,20 +107,30 @@ function renderShipyardBody(props: ShipyardViewProps, planetDataPredicted: CoreT
     const requestedMap: Map<GameType.UnitType, number> = UnitBuildElements.buildRequestedUnitQuantitiesMap(buildableUnitTypes, quantitiesState.requestedQuantities);
     const hasRequestedData: boolean = requestedMap.size > 0;
 
-    const onBuildAll: () => void = UnitBuildElements.createBuildUnitsHandler(props.clientDataStateResult, planetDataPredicted, requestedMap, quantitiesState.resetRequestedQuantities);
+    const onBuildAll: () => Promise<void> = UnitBuildElements.createBuildUnitsHandler(props.clientDataStateResult, planetDataPredicted, requestedMap, quantitiesState.resetRequestedQuantities, feedbackController);
 
     const previewContent: ReactElement | null = UnitBuildElements.renderBuildPreviewContent(planetDataPredicted, serverData, requestedMap, computeBuildableShipyardQuantities, SHIPYARD_INSUFFICIENT_TEXT);
     const buildButton: ReactElement | null = UnitBuildElements.renderBuildButton(planetDataPredicted, requestedMap, hasRequestedData, onBuildAll, computeBuildableShipyardQuantities, SHIPYARD_INSUFFICIENT_TEXT);
     const previewSlot: ReactElement = renderPreviewSlot(previewContent, buildButton);
     const buildRowElements: ReactElement = UnitBuildElements.renderUnitBuildSections(playerData, buildableUnitTypes, planetDataPredicted, serverData, quantitiesState.requestedQuantities, quantitiesState.setRequestedQuantity);
     const activeConstructionElements: ReactElement = UnitBuildElements.renderUnitConstructionSection(planetDataPredicted, serverData, GameType.UnitConstructionQueueType.Shipyard, "No unit construction in progress.");
+    const shipyardLayout: ReactElement = renderShipyardLayout(previewSlot, buildRowElements, activeConstructionElements);
 
-    return renderShipyardLayout(previewSlot, buildRowElements, activeConstructionElements);
+    const element: ReactElement =
+    (
+        <div className="w-full flex flex-col items-center gap-4">
+            {HelperElements.renderActionFeedback(feedbackController)}
+            {shipyardLayout}
+        </div>
+    );
+
+    return element;
 }
 
 export function ShipyardView(props: ShipyardViewProps): ReactElement
 {
-    const quantitiesState: HelperElement.RequestedQuantitiesState<GameType.UnitType> = HelperElement.useRequestedQuantities<GameType.UnitType>();
+    const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
+    const quantitiesState: HelperElements.RequestedQuantitiesState<GameType.UnitType> = HelperElements.useRequestedQuantities<GameType.UnitType>();
     const selectedPlanetId: number = props.clientDataStateResult.psController[0].selectedPlanetId;
 
     useEffect((): void =>
@@ -131,11 +141,11 @@ export function ShipyardView(props: ShipyardViewProps): ReactElement
     try
     {
         const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-        return renderShipyardBody(props, selectedPlanetDataPredicted, quantitiesState);
+        return renderShipyardBody(props, selectedPlanetDataPredicted, quantitiesState, feedbackController);
     }
     catch (error: unknown)
     {
         console.error("⚠️:", error);
-        return <HelperElement.EmptyElement />;
+        return <HelperElements.EmptyElement />;
     }
 }

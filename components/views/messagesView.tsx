@@ -3,6 +3,7 @@
 import { ReactElement, MouseEvent, useEffect, useRef, useState } from "react";
 
 import * as UseClientDataState from "@/lib/use/useClientDataState";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as DBType from "@/lib/db/dbTypes";
 import * as MessageData from "@/lib/gameplay/dynamicData/player/messageData";
@@ -24,6 +25,7 @@ type MessagesViewData =
     deletedMessageRowIdsState: DeletedMessageRowIdsState;
     psController: CoreType.PSController;
     pendingReselectionRef: { current: CoreType.MessagePreview | null };
+    feedbackController: HelperElements.ActionFeedbackController;
 };
 
 const MESSAGE_ROW_HEIGHT_PX: number = 48;
@@ -227,11 +229,14 @@ function renderMessageListSection(data: MessagesViewData): ReactElement
             data.pendingReselectionRef.current = messagePreview;
             const runMarkRead = async (): Promise<void> =>
             {
-                const errorMessage: string | null = await ClientRequestFunctions.clientTryMarkMessageReadRequest(data.psController, -1, messagePreview);
-                if (errorMessage !== null)
+                try
                 {
-                    console.error("⚠️:", `Mark predicted message read failed: ${errorMessage}`);
+                    await ClientRequestFunctions.clientTryMarkMessageReadRequest(data.psController, -1, messagePreview);
+                }
+                catch (error: unknown)
+                {
                     data.pendingReselectionRef.current = null;
+                    data.feedbackController.showError(ErrorHelp.getErrorMessage(error));
                 }
             };
             runMarkRead();
@@ -245,10 +250,13 @@ function renderMessageListSection(data: MessagesViewData): ReactElement
 
         const runMarkRead = async (): Promise<void> =>
         {
-            const errorMessage: string | null = await ClientRequestFunctions.clientTryMarkMessageReadRequest(data.psController, messageRowId, null);
-            if (errorMessage !== null)
+            try
             {
-                console.error("⚠️:", `Mark message read failed for messageRowId ${messageRowId}: ${errorMessage}`);
+                await ClientRequestFunctions.clientTryMarkMessageReadRequest(data.psController, messageRowId, null);
+            }
+            catch (error: unknown)
+            {
+                data.feedbackController.showError(ErrorHelp.getErrorMessage(error));
             }
         };
         runMarkRead();
@@ -274,17 +282,20 @@ function renderMessageListSection(data: MessagesViewData): ReactElement
         const predictedPreview: CoreType.MessagePreview | null = messageRowId === -1 ? messagePreview : null;
         const runDelete = async (): Promise<void> =>
         {
-            const errorMessage: string | null = await ClientRequestFunctions.clientTryDeleteMessageRequest(data.psController, messageRowId, predictedPreview);
-            if (errorMessage !== null)
+            try
             {
-                console.error("⚠️:", `Delete message ${messageRowId} failed: ${errorMessage}`);
-
+                await ClientRequestFunctions.clientTryDeleteMessageRequest(data.psController, messageRowId, predictedPreview);
+            }
+            catch (error: unknown)
+            {
                 if (messageRowId !== -1)
                 {
                     const revertedDeleted: Set<number> = new Set<number>(data.deletedMessageRowIdsState[0]);
                     revertedDeleted.delete(messageRowId);
                     data.deletedMessageRowIdsState[1](revertedDeleted);
                 }
+
+                data.feedbackController.showError(ErrorHelp.getErrorMessage(error));
             }
         };
         runDelete();
@@ -364,7 +375,8 @@ function renderMessagesViewLayout(data: MessagesViewData): ReactElement
 {
     const element: ReactElement =
     (
-        <div className="w-full flex flex-row justify-start pt-4 pl-8">
+        <div className="w-full flex flex-col justify-start pt-4 pl-8">
+            {HelperElements.renderActionFeedback(data.feedbackController)}
             <div
                 className="flex flex-row items-start shrink-0"
                 style={{ width: `${LAYOUT_WIDTH_PX}px` }}
@@ -401,6 +413,7 @@ export function MessagesView(props: MessagesViewProps): ReactElement
     const selectedMessageRowIdState: SelectedMessageRowIdState = useState<number | null>(null);
     const deletedMessageRowIdsState: DeletedMessageRowIdsState = useState<Set<number>>(new Set<number>());
     const pendingReselectionRef: { current: CoreType.MessagePreview | null } = useRef<CoreType.MessagePreview | null>(null);
+    const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
 
     const allMessageDatas: CoreType.MessageData[] = psController[0].predictedDBData.dynamicPlayerData.messageDatas;
 
@@ -419,6 +432,7 @@ export function MessagesView(props: MessagesViewProps): ReactElement
             deletedMessageRowIdsState: deletedMessageRowIdsState,
             psController: psController,
             pendingReselectionRef: pendingReselectionRef,
+            feedbackController: feedbackController,
         }
 
         return renderMessagesViewLayout(messagesViewData);

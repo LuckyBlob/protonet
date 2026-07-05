@@ -173,6 +173,7 @@ function getSelectedPlanetBuildingLevel(clientDataStateResult: UseClientDataStat
 	}
 	catch (error: unknown)
 	{
+		console.error("⚠️:", error);
 		return 0;
 	}
 }
@@ -186,6 +187,7 @@ function getSelectedPlanetCategoryUnitQuantity(clientDataStateResult: UseClientD
 	}
 	catch (error: unknown)
 	{
+		console.error("⚠️:", error);
 		return 0;
 	}
 }

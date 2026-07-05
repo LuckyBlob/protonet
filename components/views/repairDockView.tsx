@@ -10,6 +10,7 @@ import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as PendingRepairData from "@/lib/gameplay/dynamicData/planet/pendingRepairData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as TimeFormat from "@/lib/helper/timeFormat";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as HelperElements from "@/components/helpers/helperElements";
 
 type RepairDockViewProps =
@@ -34,7 +35,7 @@ function buildRepairUnitSummary(pendingRepair: CoreType.PendingRepair): string
     return summaryParts.join(", ");
 }
 
-function renderPendingRepairRow(props: RepairDockViewProps, planetData: CoreType.PlanetData, pendingRepair: CoreType.PendingRepair, now: number): ReactElement
+function renderPendingRepairRow(props: RepairDockViewProps, planetData: CoreType.PlanetData, pendingRepair: CoreType.PendingRepair, now: number, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
     const psController: CoreType.PSController = props.clientDataStateResult.psController;
     const pendingRepairId: number = pendingRepair.pendingRepairRow.id;
@@ -43,12 +44,26 @@ function renderPendingRepairRow(props: RepairDockViewProps, planetData: CoreType
 
     const handleStartRepair = async (): Promise<void> =>
     {
-        await ClientRequestFunctions.clientTryStartRepairRequest(psController, planetData.planetRow.id, pendingRepairId);
+        try
+        {
+            await ClientRequestFunctions.clientTryStartRepairRequest(psController, planetData.planetRow.id, pendingRepairId);
+        }
+        catch (error: unknown)
+        {
+            feedbackController.showError(ErrorHelp.getErrorMessage(error));
+        }
     };
 
     const handleCollectRepair = async (): Promise<void> =>
     {
-        await ClientRequestFunctions.clientTryCollectRepairRequest(psController, planetData.planetRow.id, pendingRepairId);
+        try
+        {
+            await ClientRequestFunctions.clientTryCollectRepairRequest(psController, planetData.planetRow.id, pendingRepairId);
+        }
+        catch (error: unknown)
+        {
+            feedbackController.showError(ErrorHelp.getErrorMessage(error));
+        }
     };
 
     const handleBurnWreckField = async (): Promise<void> =>
@@ -59,7 +74,14 @@ function renderPendingRepairRow(props: RepairDockViewProps, planetData: CoreType
             return;
         }
 
-        await ClientRequestFunctions.clientTryBurnWreckFieldRequest(psController, planetData.planetRow.id, pendingRepairId);
+        try
+        {
+            await ClientRequestFunctions.clientTryBurnWreckFieldRequest(psController, planetData.planetRow.id, pendingRepairId);
+        }
+        catch (error: unknown)
+        {
+            feedbackController.showError(ErrorHelp.getErrorMessage(error));
+        }
     };
 
     const canBurnWreckField: boolean = PendingRepairData.canBurnWreckField(planetData, now);
@@ -145,7 +167,7 @@ function renderPendingRepairRow(props: RepairDockViewProps, planetData: CoreType
     return element;
 }
 
-function renderRepairDockBody(props: RepairDockViewProps, planetData: CoreType.PlanetData): ReactElement
+function renderRepairDockBody(props: RepairDockViewProps, planetData: CoreType.PlanetData, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
     const repairDockLevel: number = PendingRepairData.getRepairDockLevel(planetData);
     const now: number = Date.now();
@@ -156,7 +178,7 @@ function renderRepairDockBody(props: RepairDockViewProps, planetData: CoreType.P
         const rowElement: ReactElement =
         (
             <div key={pendingRepair.pendingRepairRow.id} className="w-full">
-                {renderPendingRepairRow(props, planetData, pendingRepair, now)}
+                {renderPendingRepairRow(props, planetData, pendingRepair, now, feedbackController)}
             </div>
         );
 
@@ -172,6 +194,7 @@ function renderRepairDockBody(props: RepairDockViewProps, planetData: CoreType.P
         <div className="w-full flex flex-col items-center gap-4 pt-4 text-white">
             <div className="text-lg font-bold">Repair Dock (level {repairDockLevel})</div>
             <div className="text-sm">Repair wrecked ships recovered from battles over this planet or its moon.</div>
+            {HelperElements.renderActionFeedback(feedbackController)}
             <div className="w-full max-w-2xl flex flex-col gap-2">
                 {repairRows}
                 {emptyNotice}
@@ -184,10 +207,12 @@ function renderRepairDockBody(props: RepairDockViewProps, planetData: CoreType.P
 
 export function RepairDockView(props: RepairDockViewProps): ReactElement
 {
+    const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
+
     try
     {
         const planetData: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-        return renderRepairDockBody(props, planetData);
+        return renderRepairDockBody(props, planetData, feedbackController);
     }
     catch (error: unknown)
     {

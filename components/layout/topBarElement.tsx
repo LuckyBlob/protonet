@@ -164,7 +164,7 @@ export function TopBarElement(props: TopBarProps): ReactElement
 	catch (error: unknown)
 	{
 		console.error("⚠️:", error);
-		return <HelperElements.EmptyElement></HelperElements.EmptyElement>;
+		return <HelperElements.EmptyElement />;
 	}
 }
 

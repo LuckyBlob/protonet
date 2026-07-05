@@ -3,6 +3,7 @@
 import { ReactElement, ChangeEvent, useState, useEffect } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ThingType from "@/lib/gameplay/coreData/thing/thingTypes";
@@ -42,7 +43,7 @@ type FleetViewData =
     requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ResourceType>;
     fleetActionState: [GameType.FleetActionType | null, (value: GameType.FleetActionType | null) => void];
     speedPercentageState: [number, (value: number) => void];
-    sendErrorState: [string | null, (value: string | null) => void];
+    feedbackController: HelperElements.ActionFeedbackController;
 }
 
 //#region rendering helpers
@@ -533,7 +534,7 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
         setSelectedAction(Number.parseInt(rawValue, 10) as GameType.FleetActionType);
     };
 
-    const setSendError: (value: string | null) => void = data.sendErrorState[1];
+    const feedbackController: HelperElements.ActionFeedbackController = data.feedbackController;
     const handleSendFleet = async (): Promise<void> =>
     {
         if (selectedAction === null)
@@ -541,22 +542,24 @@ function renderFleetActionChoice(props: FleetViewProps, data: FleetViewData): Re
             return;
         }
 
-        const errorMessage: string | null = await ClientRequestFunctions.clientTrySendFleetRequest(
-            props.clientDataStateResult.psController,
-            data.planetData.planetRow.id,
-            targetPlanetAddress,
-            selectedAction,
-            data.requestedUnitQuantitiesState.requestedQuantities,
-            data.requestedResourceQuantitiesState.requestedQuantities,
-            speedPercentage);
-
-        setSendError(errorMessage);
+        try
+        {
+            await ClientRequestFunctions.clientTrySendFleetRequest(
+                props.clientDataStateResult.psController,
+                data.planetData.planetRow.id,
+                targetPlanetAddress,
+                selectedAction,
+                data.requestedUnitQuantitiesState.requestedQuantities,
+                data.requestedResourceQuantitiesState.requestedQuantities,
+                speedPercentage);
+        }
+        catch (error: unknown)
+        {
+            feedbackController.showError(ErrorHelp.getErrorMessage(error));
+        }
     };
 
-    const sendError: string | null = data.sendErrorState[0];
-    const errorElement: ReactElement | null = (sendError !== null)
-        ? <div className="text-sm font-normal text-red-400 whitespace-nowrap">{sendError}</div>
-        : null;
+    const errorElement: ReactElement = HelperElements.renderActionFeedback(feedbackController);
 
     const optionElements: ReactElement[] = shipActionIds.map((actionId: GameType.FleetActionType): ReactElement =>
     {
@@ -628,7 +631,7 @@ function renderFleetViewLayout(props: FleetViewProps, data: FleetViewData): Reac
                 <div className="w-px bg-gray-400 h-80 my-0" />
 
                 <div className="flex flex-col items-center gap-2 px-6">
-                    {FleetMovementElements.renderFleetMovementsSection(props.clientDataStateResult, GameType.FleetActionCategory.Ship)}
+                    {FleetMovementElements.renderFleetMovementsSection(props.clientDataStateResult, GameType.FleetActionCategory.Ship, data.feedbackController)}
                 </div>
             </div>
         </div>
@@ -648,7 +651,7 @@ export function FleetView(props: FleetViewProps): ReactElement
     const requestedResourceQuantitiesState: HelperElement.RequestedQuantitiesState<GameType.ResourceType> = HelperElement.useRequestedQuantities<GameType.ResourceType>();
     const fleetActionState: [GameType.FleetActionType | null, (value: GameType.FleetActionType | null) => void] = useState<GameType.FleetActionType | null>(null);
     const speedPercentageState: [number, (value: number) => void] = useState<number>(100);
-    const sendErrorState: [string | null, (value: string | null) => void] = useState<string | null>(null);
+    const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
 
     useEffect((): void =>
     {
@@ -660,7 +663,6 @@ export function FleetView(props: FleetViewProps): ReactElement
         zoneIdState[1](GameType.PlanetZone.Planet);
         fleetActionState[1](null);
         speedPercentageState[1](100);
-        sendErrorState[1](null);
     }, [selectedPlanetId]);
 
     try
@@ -685,7 +687,7 @@ export function FleetView(props: FleetViewProps): ReactElement
             requestedResourceQuantitiesState: requestedResourceQuantitiesState,
             fleetActionState: fleetActionState,
             speedPercentageState: speedPercentageState,
-            sendErrorState: sendErrorState,
+            feedbackController: feedbackController,
         }
         return renderFleetViewLayout(props, fleetViewData);
     }

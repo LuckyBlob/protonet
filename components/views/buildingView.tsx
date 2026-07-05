@@ -3,6 +3,7 @@
 import { ChangeEvent, ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
@@ -22,7 +23,7 @@ import * as BuildingDescription from "@/lib/gameplay/coreData/description/buildi
 
 // Energy throttle dropdown. Only shown for built (level >= 1) buildings that produce or consume
 // energy. Setting it scales the building's energy prod/cons and its resource production.
-function renderEnergySettingDropdown(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType, currentLevel: number): ReactElement | null
+function renderEnergySettingDropdown(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType, currentLevel: number, feedbackController: HelperElements.ActionFeedbackController): ReactElement | null
 {
 	if (currentLevel < 1)
 	{
@@ -43,10 +44,18 @@ function renderEnergySettingDropdown(props: BuildingViewHelpers.BuildingViewProp
 		percentageOptions.push(percentage);
 	}
 
-	const handleEnergyPercentageChange = (event: ChangeEvent<HTMLSelectElement>): void =>
+	const handleEnergyPercentageChange = async (event: ChangeEvent<HTMLSelectElement>): Promise<void> =>
 	{
 		const newEnergyPercentage: number = Number(event.target.value);
-		ClientRequestFunctions.clientTrySetBuildingEnergySettingRequest(props.clientDataStateResult.psController, planetId, buildingType, newEnergyPercentage);
+
+		try
+		{
+			await ClientRequestFunctions.clientTrySetBuildingEnergySettingRequest(props.clientDataStateResult.psController, planetId, buildingType, newEnergyPercentage);
+		}
+		catch (error: unknown)
+		{
+			feedbackController.showError(ErrorHelp.getErrorMessage(error));
+		}
 	};
 
 	const dropdownElement: ReactElement =
@@ -69,7 +78,7 @@ function renderEnergySettingDropdown(props: BuildingViewHelpers.BuildingViewProp
 	return dropdownElement;
 }
 
-function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType): ReactElement
+function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
 	const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 	const planetId: number = selectedPlanetDataPredicted.planetRow.id;
@@ -103,14 +112,28 @@ function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selecte
 	const remainingMs: number = BuildingUpgradeData.getBuildingUpgradeRemainingMs(selectedPlanetDataPredicted) ?? 0;
 	const canAfford: boolean = BuildingData.canAffordUpgrade(selectedPlanetDataPredicted, buildingType);
 
-	const handleBuyUpgrade: () => void = () =>
+	const handleBuyUpgrade = async (): Promise<void> =>
 	{
-		ClientRequestFunctions.clientTryUpgradeBuildingRequest(props.clientDataStateResult.psController, planetId, buildingType);
+		try
+		{
+			await ClientRequestFunctions.clientTryUpgradeBuildingRequest(props.clientDataStateResult.psController, planetId, buildingType);
+		}
+		catch (error: unknown)
+		{
+			feedbackController.showError(ErrorHelp.getErrorMessage(error));
+		}
 	};
 
-	const handleCancelUpgrade: () => void = () =>
+	const handleCancelUpgrade = async (): Promise<void> =>
 	{
-		ClientRequestFunctions.clientTryCancelBuildingUpgradeRequest(props.clientDataStateResult.psController, planetId);
+		try
+		{
+			await ClientRequestFunctions.clientTryCancelBuildingUpgradeRequest(props.clientDataStateResult.psController, planetId);
+		}
+		catch (error: unknown)
+		{
+			feedbackController.showError(ErrorHelp.getErrorMessage(error));
+		}
 	};
 
 	const levelLine: ReactElement = isThisBuildingUpgrading === true
@@ -150,7 +173,7 @@ function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selecte
 		<div className="flex flex-col justify-center min-w-48">
 			<div className="font-bold">{displayName}</div>
 			{levelLine}
-			{renderEnergySettingDropdown(props, selectedPlanetDataPredicted, buildingType, currentLevel)}
+			{renderEnergySettingDropdown(props, selectedPlanetDataPredicted, buildingType, currentLevel, feedbackController)}
 		</div>
 	);
 
@@ -159,19 +182,20 @@ function renderBuildingRow(props: BuildingViewHelpers.BuildingViewProps, selecte
 	return BuildingViewHelpers.renderBuildingRowShell(buildingType, imagePath, middleColumn, actionElement, buildingDescriptionLines);
 }
 
-function renderBuildingViewBody(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData): ReactElement
+function renderBuildingViewBody(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
 	const selectedZone: GameType.PlanetZone = selectedPlanetDataPredicted.planetRow.zone as GameType.PlanetZone;
 	const buildableBuildingTypes: GameType.BuildingType[] = BuildingViewHelpers.getBuildableBuildingTypes(selectedZone);
 
 	const rowElements: ReactElement[] = buildableBuildingTypes.map((buildingType: GameType.BuildingType): ReactElement =>
 	{
-		return renderBuildingRow(props, selectedPlanetDataPredicted, buildingType);
+		return renderBuildingRow(props, selectedPlanetDataPredicted, buildingType, feedbackController);
 	});
 
 	const buildingViewElement: ReactElement =
 	(
 		<div className="flex flex-col gap-2 p-4">
+			{HelperElements.renderActionFeedback(feedbackController)}
 			{rowElements}
 		</div>
 	);
@@ -181,14 +205,16 @@ function renderBuildingViewBody(props: BuildingViewHelpers.BuildingViewProps, se
 
 export function BuildingView(props: BuildingViewHelpers.BuildingViewProps): ReactElement
 {
+	const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
+
 	try
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-		return renderBuildingViewBody(props, selectedPlanetDataPredicted);
+		return renderBuildingViewBody(props, selectedPlanetDataPredicted, feedbackController);
 	}
 	catch (error: unknown)
 	{
 		console.error("⚠️:", error);
-		return <HelperElements.EmptyElement></HelperElements.EmptyElement>;
+		return <HelperElements.EmptyElement />;
 	}
 }

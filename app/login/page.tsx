@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ReactElement } from "react";
 
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as APIEndPoint from "@/app/api/apiEndPoints";
 
@@ -35,14 +36,7 @@ export default function LoginPage()
 		}
 		catch (error: unknown)
 		{
-			if (error instanceof Error)
-			{
-				setError(error.message);
-			}
-			else
-			{
-				setError("An unexpected error occurred");
-			}
+			setError(ErrorHelp.getErrorMessage(error));
 			return;
 		}
 	};

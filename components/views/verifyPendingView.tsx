@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { ReactElement } from "react";
 
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
+import * as HelperElements from "@/components/helpers/helperElements";
 import * as UseCurrentUser from "@/lib/use/useCurrentUser";
 
 type VerifyPendingViewProps =
@@ -15,9 +16,7 @@ type VerifyPendingViewProps =
 export function VerifyPendingView(props: VerifyPendingViewProps): ReactElement
 {
 	const router: ReturnType<typeof useRouter> = useRouter();
-
-	const infoState: [string | null, (value: string | null) => void] = useState<string | null>(null);
-	const setInfo: (value: string | null) => void = infoState[1];
+	const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
 
 	const email: string = props.cuController[0].user?.email ?? "your email";
 
@@ -26,11 +25,11 @@ export function VerifyPendingView(props: VerifyPendingViewProps): ReactElement
 		try
 		{
 			await ClientRequestFunctions.clientTryResendVerificationRequest();
-			setInfo("Verification email sent. Check your inbox.");
+			feedbackController.showSuccess("Verification email sent. Check your inbox.");
 		}
 		catch (error: unknown)
 		{
-			setInfo(error instanceof Error ? error.message : "Could not send the verification email.");
+			feedbackController.showError(ErrorHelp.getErrorMessage(error));
 		}
 	};
 
@@ -40,10 +39,6 @@ export function VerifyPendingView(props: VerifyPendingViewProps): ReactElement
 		router.push("/login");
 	};
 
-	const infoElement: ReactElement | null = infoState[0] !== null
-		? <div className="text-green-500">{infoState[0]}</div>
-		: null;
-
 	const verifyPendingElement: ReactElement =
 	(
 		<main className="p-8 flex flex-col gap-4 max-w-md mx-auto">
@@ -52,7 +47,7 @@ export function VerifyPendingView(props: VerifyPendingViewProps): ReactElement
 				We sent a verification link to <span className="font-semibold">{email}</span>. Click it to activate your
 				account and start playing.
 			</p>
-			{infoElement}
+			{HelperElements.renderActionFeedback(feedbackController)}
 			<button
 				onClick={handleResend}
 				className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 self-start"

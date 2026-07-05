@@ -2,6 +2,7 @@
 
 import { useState, useEffect, ChangeEvent, ReactElement } from "react";
 
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
@@ -19,14 +20,13 @@ type SensorPhalanxViewProps =
 };
 
 type NumberFieldState = [number, (value: number) => void];
-type StatusFieldState = [string | null, (value: string | null) => void];
 
 function clampNumber(value: number, minimum: number, maximum: number): number
 {
     return Math.min(Math.max(value, minimum), maximum);
 }
 
-function renderSensorPhalanxBody(props: SensorPhalanxViewProps, moonData: CoreType.PlanetData, targetSystemState: NumberFieldState, targetSlotState: NumberFieldState, statusMessageState: StatusFieldState): ReactElement
+function renderSensorPhalanxBody(props: SensorPhalanxViewProps, moonData: CoreType.PlanetData, targetSystemState: NumberFieldState, targetSlotState: NumberFieldState, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
     const psController: CoreType.PSController = props.clientDataStateResult.psController;
     const sensorPhalanxLevel: number = BuildingData.getBuildingLevel(moonData, GameType.BuildingType.SensorPhalanx);
@@ -42,7 +42,6 @@ function renderSensorPhalanxBody(props: SensorPhalanxViewProps, moonData: CoreTy
     const systemDistance: number = Math.abs(moonSystem - targetSystem);
     const isInRange: boolean = systemDistance <= scanRangeSystems;
     const canScan: boolean = canAffordScan === true && isInRange === true;
-    const statusMessage: string | null = statusMessageState[0];
 
     const handleSystemChange = (event: ChangeEvent<HTMLInputElement>): void =>
     {
@@ -56,17 +55,19 @@ function renderSensorPhalanxBody(props: SensorPhalanxViewProps, moonData: CoreTy
 
     const handleScan = async (): Promise<void> =>
     {
-        statusMessageState[1]("Scanning...");
-        const errorMessage: string | null = await ClientRequestFunctions.clientTryScanRequest(psController, moonData.planetRow.id, moonGalaxy, targetSystem, targetSlot);
-        statusMessageState[1](errorMessage === null ? "Scan complete. See Messages for the report." : errorMessage);
+        try
+        {
+            await ClientRequestFunctions.clientTryScanRequest(psController, moonData.planetRow.id, moonGalaxy, targetSystem, targetSlot);
+            feedbackController.showSuccess("Scan complete. See Messages for the report.");
+        }
+        catch (error: unknown)
+        {
+            feedbackController.showError(ErrorHelp.getErrorMessage(error));
+        }
     };
 
     const outOfRangeNotice: ReactElement | null = isInRange === false
         ? <div className="text-sm text-red-400">Target is out of scan range.</div>
-        : null;
-
-    const statusNotice: ReactElement | null = statusMessage !== null
-        ? <div className="text-sm">{statusMessage}</div>
         : null;
 
     const scanDisabledReasons: string[] = [];
@@ -113,7 +114,7 @@ function renderSensorPhalanxBody(props: SensorPhalanxViewProps, moonData: CoreTy
 
             {HelperElements.renderWithTooltip(scanDisabledReasons, scanButton)}
 
-            {statusNotice}
+            {HelperElements.renderActionFeedback(feedbackController)}
         </div>
     );
 
@@ -124,7 +125,7 @@ export function SensorPhalanxView(props: SensorPhalanxViewProps): ReactElement
 {
     const targetSystemState: NumberFieldState = useState<number>(1);
     const targetSlotState: NumberFieldState = useState<number>(1);
-    const statusMessageState: StatusFieldState = useState<string | null>(null);
+    const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
     const selectedPlanetId: number = props.clientDataStateResult.psController[0].selectedPlanetId;
 
     useEffect((): void =>
@@ -134,7 +135,7 @@ export function SensorPhalanxView(props: SensorPhalanxViewProps): ReactElement
             const moonData: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
             targetSystemState[1](moonData.planetRow.system);
             targetSlotState[1](moonData.planetRow.slot);
-            statusMessageState[1](null);
+            feedbackController.clearFeedback();
         }
         catch (error: unknown)
         {
@@ -145,7 +146,7 @@ export function SensorPhalanxView(props: SensorPhalanxViewProps): ReactElement
     try
     {
         const moonData: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-        return renderSensorPhalanxBody(props, moonData, targetSystemState, targetSlotState, statusMessageState);
+        return renderSensorPhalanxBody(props, moonData, targetSystemState, targetSlotState, feedbackController);
     }
     catch (error: unknown)
     {

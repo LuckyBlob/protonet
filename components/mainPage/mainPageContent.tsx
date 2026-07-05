@@ -71,7 +71,14 @@ export async function handleLogout(router: ReturnType<typeof useRouter>): Promis
 
 export async function handleRefreshServerData(clientDataStateResult: UseClientDataState.ClientDataStateResult): Promise<void>
 {
-    await ClientRequestFunctions.clientTryRefreshServerRequest(clientDataStateResult);
+    try
+    {
+        await ClientRequestFunctions.clientTryRefreshServerRequest(clientDataStateResult);
+    }
+    catch (error: unknown)
+    {
+        console.error("⚠️:", error);
+    }
 };
 
 export function shouldShowLoading(cuController: UseCurrentUser.CUController, clientDataStateResult: UseClientDataState.ClientDataStateResult): boolean

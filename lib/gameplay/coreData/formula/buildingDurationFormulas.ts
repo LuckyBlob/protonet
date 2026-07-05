@@ -18,7 +18,7 @@ export function computeUpgradeDurationSeconds(currentUpgradeLevel: number, build
     }
     catch (error: unknown)
     {
-		console.error("⚠️ Failed:", error); 
+		console.error("⚠️:", error);
         return null;
     }
 }

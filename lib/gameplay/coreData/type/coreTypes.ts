@@ -289,7 +289,7 @@ export function getPlanetDataForId(planetDatas: PlanetData[], planetId: number):
         const planetData: PlanetData | undefined = planetDatas[matchingPlanetIndex];
         if (planetData === undefined)
         {
-            throw new Error("Cant find matchin full planet data for planet id.")
+            throw new Error(`Cant find matching full planet data for planetId ${planetId}.`)
         }
 
         return planetData;

@@ -28,6 +28,7 @@ import { dirname, join } from "path";
 import { tmpdir } from "os";
 
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 
 //#region constants
 
@@ -101,7 +102,7 @@ function removeDatabaseFiles(databaseFilePath: string): void
             }
             catch (error: unknown)
             {
-                console.error("⚠️:", `Could not remove temp DB file ${candidatePath}: ${error instanceof Error ? error.message : String(error)}`);
+                console.error("⚠️:", `Could not remove temp DB file ${candidatePath}: ${ErrorHelp.getErrorMessage(error)}`);
             }
         }
     }
@@ -128,7 +129,7 @@ function cleanupTempArtifacts(): void
         }
         catch (error: unknown)
         {
-            console.error("⚠️:", `Could not remove temp backup file ${backupFilePath}: ${error instanceof Error ? error.message : String(error)}`);
+            console.error("⚠️:", `Could not remove temp backup file ${backupFilePath}: ${ErrorHelp.getErrorMessage(error)}`);
         }
     }
 }
@@ -659,7 +660,7 @@ function tryLoadPlayer(serverProgress: typeof import("@/lib/gameplay/progressUpd
     }
     catch (error: unknown)
     {
-        const message: string = error instanceof Error ? error.message : String(error);
+        const message: string = ErrorHelp.getErrorMessage(error);
         loadFailures.push({ playerId: playerId, isSynthetic: isSynthetic, phase: phase, message: message });
     }
 }

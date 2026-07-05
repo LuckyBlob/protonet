@@ -62,12 +62,12 @@ export function sortUnitConstructionUnitRowByConstructionTime(planetData: CoreTy
         const unitConstructionTime1: number | null = getUnitConstructionDurationSeconds(row1.unit_type as GameType.UnitType, planetData, serverData);
         if (unitConstructionTime1 === null)
         {
-            throw new Error("No unit construction duration data!");
+            throw new Error(`No unit construction duration data for unit type ${row1.unit_type}!`);
         }
         const unitConstructionTime2: number | null = getUnitConstructionDurationSeconds(row2.unit_type as GameType.UnitType, planetData, serverData);
         if (unitConstructionTime2 === null)
         {
-            throw new Error("No unit construction duration data!");
+            throw new Error(`No unit construction duration data for unit type ${row2.unit_type}!`);
         }
 
         return unitConstructionTime1 - unitConstructionTime2;

@@ -2,13 +2,14 @@
 
 import { useEffect, useState, ChangeEvent, ReactElement } from "react";
 
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as UnitData from "@/lib/gameplay/dynamicData/planet/unitData";
 import * as ResearchData from "@/lib/gameplay/dynamicData/player/researchData";
-import * as HelperElement from "@/components/helpers/helperElements";
+import * as HelperElements from "@/components/helpers/helperElements";
 import * as FleetMovementElements from "@/components/helpers/fleetMovementElements";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
@@ -41,7 +42,7 @@ type MissileLaunchData =
     slotState: [number, (value: number) => void];
     zoneState: [GameType.PlanetZone, (value: GameType.PlanetZone) => void];
     unitFocusState: [GameType.UnitType | null, (value: GameType.UnitType | null) => void];
-    launchErrorState: [string | null, (value: string | null) => void];
+    feedbackController: HelperElements.ActionFeedbackController;
 };
 
 function getTargetAddress(galaxy: number, system: number, slot: number, zone: GameType.PlanetZone): GameType.PlanetAddress
@@ -216,26 +217,30 @@ function renderLaunchControls(props: MissileFleetViewProps, data: MissileLaunchD
     const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedFleetMovementRequirements(requirementContext, GameType.FleetActionType.MissileLaunch);
     const isLaunchDisabled: boolean = (cappedRequestedQuantity === 0) || (failedRequirements.length > 0);
 
+    const feedbackController: HelperElements.ActionFeedbackController = data.feedbackController;
     const handleLaunch = async (): Promise<void> =>
     {
         const unitQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>([[LAUNCHABLE_MISSILE_TYPE, cappedRequestedQuantity]]);
-        const errorMessage: string | null = await ClientRequestFunctions.clientTrySendFleetRequest(
-            props.clientDataStateResult.psController,
-            data.originPlanetData.planetRow.id,
-            data.targetAddress,
-            GameType.FleetActionType.MissileLaunch,
-            unitQuantities,
-            new Map<GameType.ResourceType, number>(),
-            undefined,
-            data.unitFocusState[0]);
 
-        data.launchErrorState[1](errorMessage);
+        try
+        {
+            await ClientRequestFunctions.clientTrySendFleetRequest(
+                props.clientDataStateResult.psController,
+                data.originPlanetData.planetRow.id,
+                data.targetAddress,
+                GameType.FleetActionType.MissileLaunch,
+                unitQuantities,
+                new Map<GameType.ResourceType, number>(),
+                undefined,
+                data.unitFocusState[0]);
+        }
+        catch (error: unknown)
+        {
+            feedbackController.showError(ErrorHelp.getErrorMessage(error));
+        }
     };
 
-    const launchError: string | null = data.launchErrorState[0];
-    const errorElement: ReactElement | null = launchError !== null
-        ? <div className="text-sm text-red-400 whitespace-nowrap">{launchError}</div>
-        : null;
+    const errorElement: ReactElement = HelperElements.renderActionFeedback(feedbackController);
 
     const buttonClass: string = isLaunchDisabled === true
         ? "bg-gray-700 text-gray-400 cursor-not-allowed"
@@ -261,9 +266,9 @@ function renderLaunchControls(props: MissileFleetViewProps, data: MissileLaunchD
         <div className="flex flex-col items-center gap-2">
             <label className="flex flex-col items-center text-xs text-gray-300 gap-1">
                 Missiles to launch ({ownedQuantity} owned)
-                {HelperElement.renderQuantityInput(LAUNCHABLE_MISSILE_TYPE, 0, ownedQuantity, cappedRequestedQuantity, data.originPlanetData, data.setRequestedQuantity)}
+                {HelperElements.renderQuantityInput(LAUNCHABLE_MISSILE_TYPE, 0, ownedQuantity, cappedRequestedQuantity, data.originPlanetData, data.setRequestedQuantity)}
             </label>
-            {HelperElement.renderWithTooltip(launchDisabledReasons, launchButton)}
+            {HelperElements.renderWithTooltip(launchDisabledReasons, launchButton)}
             {errorElement}
         </div>
     );
@@ -279,7 +284,7 @@ function renderMissileFleetBody(props: MissileFleetViewProps, data: MissileLaunc
             <div className="flex flex-row items-start justify-center">
                 <div className="flex flex-col items-center gap-6 px-6">
                     <div className="flex flex-col items-center gap-1">
-                        {HelperElement.renderUnitImage(LAUNCHABLE_MISSILE_TYPE)}
+                        {HelperElements.renderUnitImage(LAUNCHABLE_MISSILE_TYPE)}
                         <div className="font-bold text-base">{ThingDataHelpers.getSpecificThingName(ThingHelpers.unit(LAUNCHABLE_MISSILE_TYPE))}</div>
                     </div>
 
@@ -292,7 +297,7 @@ function renderMissileFleetBody(props: MissileFleetViewProps, data: MissileLaunc
                 <div className="w-px bg-gray-400 h-80 my-0" />
 
                 <div className="flex flex-col items-center gap-2 px-6">
-                    {FleetMovementElements.renderFleetMovementsSection(props.clientDataStateResult, GameType.FleetActionCategory.Missile)}
+                    {FleetMovementElements.renderFleetMovementsSection(props.clientDataStateResult, GameType.FleetActionCategory.Missile, data.feedbackController)}
                 </div>
             </div>
         </div>
@@ -303,19 +308,18 @@ function renderMissileFleetBody(props: MissileFleetViewProps, data: MissileLaunc
 
 export function MissileFleetView(props: MissileFleetViewProps): ReactElement
 {
-    const quantitiesState: HelperElement.RequestedQuantitiesState<GameType.UnitType> = HelperElement.useRequestedQuantities<GameType.UnitType>();
+    const quantitiesState: HelperElements.RequestedQuantitiesState<GameType.UnitType> = HelperElements.useRequestedQuantities<GameType.UnitType>();
     const galaxyState: [number, (value: number) => void] = useState<number>(1);
     const systemState: [number, (value: number) => void] = useState<number>(1);
     const slotState: [number, (value: number) => void] = useState<number>(1);
     const zoneState: [GameType.PlanetZone, (value: GameType.PlanetZone) => void] = useState<GameType.PlanetZone>(GameType.PlanetZone.Planet);
     const unitFocusState: [GameType.UnitType | null, (value: GameType.UnitType | null) => void] = useState<GameType.UnitType | null>(null);
-    const launchErrorState: [string | null, (value: string | null) => void] = useState<string | null>(null);
+    const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
     const selectedPlanetId: number = props.clientDataStateResult.psController[0].selectedPlanetId;
 
     useEffect((): void =>
     {
         quantitiesState.resetRequestedQuantities();
-        launchErrorState[1](null);
     }, [selectedPlanetId]);
 
     try
@@ -337,7 +341,7 @@ export function MissileFleetView(props: MissileFleetViewProps): ReactElement
             slotState: slotState,
             zoneState: zoneState,
             unitFocusState: unitFocusState,
-            launchErrorState: launchErrorState,
+            feedbackController: feedbackController,
         };
 
         return renderMissileFleetBody(props, data);
@@ -345,6 +349,6 @@ export function MissileFleetView(props: MissileFleetViewProps): ReactElement
     catch (error: unknown)
     {
         console.error("⚠️:", error);
-        return <HelperElement.EmptyElement />;
+        return <HelperElements.EmptyElement />;
     }
 }

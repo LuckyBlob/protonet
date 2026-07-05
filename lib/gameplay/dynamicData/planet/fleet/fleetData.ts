@@ -162,9 +162,9 @@ function addMissingTargetFleetActionMessage(originPlayerData: CoreType.PlayerDat
 export function setFleetReturnTrip(target: CoreType.PlanetData | null, fleetMovement: CoreType.FleetMovement): void
 {
 	fleetMovement.fleetMovementRow.is_return_trip = 1;
-	if (fleetMovement.fleetMovementRow.started_at === null || fleetMovement.fleetMovementRow.duration_at_start_time == null)
+	if (fleetMovement.fleetMovementRow.started_at === null || fleetMovement.fleetMovementRow.duration_at_start_time === null)
 	{
-		throw new Error("Fleet data has invalid started_at or duration_at_start_time for return trip.");
+		throw new Error(`Fleet data has invalid started_at or duration_at_start_time for return trip for fleetId ${fleetMovement.fleetMovementRow.id}.`);
 	}
 
 	fleetMovement.fleetMovementRow.started_at = fleetMovement.fleetMovementRow.started_at + fleetMovement.fleetMovementRow.duration_at_start_time;
@@ -184,7 +184,7 @@ export function resolveFleetMovementReturnTrip(originPlayerData: CoreType.Player
 
 	if (originPlanetData === undefined)
 	{
-		throw new Error("Resolving return trip but origin full planet data is null.");
+		throw new Error(`Resolving return trip but origin full planet data is null for fleetId ${fleetMovement.fleetMovementRow.id}.`);
 	}
 
 	const unitQuantities: Map<GameType.UnitType, number> = buildUnitQuantitiesFromRows(fleetMovement.fleetMovementUnitRows);

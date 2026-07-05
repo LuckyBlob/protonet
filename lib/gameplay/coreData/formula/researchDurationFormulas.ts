@@ -30,7 +30,7 @@ export function computeResearchDurationSeconds(currentResearchLevel: number, res
     }
     catch (error: unknown)
     {
-		console.error("⚠️ Failed:", error);
+		console.error("⚠️:", error);
         return null;
     }
 }

@@ -3,6 +3,7 @@
 import { ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
@@ -19,7 +20,7 @@ import * as BuildingDeconstructionData from "@/lib/gameplay/dynamicData/planet/b
 import * as BuildingViewHelpers from "@/components/helpers/buildingViewHelpers";
 import * as BuildingDescription from "@/lib/gameplay/coreData/description/buildingDescriptions";
 
-function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType): ReactElement
+function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
 	const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 	const planetId: number = selectedPlanetDataPredicted.planetRow.id;
@@ -44,14 +45,28 @@ function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewPro
 	const failedRequirements: RequirementType.Requirement[] = Requirement.getFailedBuildingDeconstructionRequirements(requirementContext, buildingType);
 	const failedRequirementsBox: ReactElement | null = BuildingViewHelpers.renderFailedRequirementsBox(failedRequirements, requirementContext);
 
-	const handleDeconstruct: () => void = () =>
+	const handleDeconstruct = async (): Promise<void> =>
 	{
-		ClientRequestFunctions.clientTryDeconstructBuildingRequest(props.clientDataStateResult.psController, planetId, buildingType);
+		try
+		{
+			await ClientRequestFunctions.clientTryDeconstructBuildingRequest(props.clientDataStateResult.psController, planetId, buildingType);
+		}
+		catch (error: unknown)
+		{
+			feedbackController.showError(ErrorHelp.getErrorMessage(error));
+		}
 	};
 
-	const handleCancelDeconstruct: () => void = () =>
+	const handleCancelDeconstruct = async (): Promise<void> =>
 	{
-		ClientRequestFunctions.clientTryCancelBuildingDeconstructionRequest(props.clientDataStateResult.psController, planetId);
+		try
+		{
+			await ClientRequestFunctions.clientTryCancelBuildingDeconstructionRequest(props.clientDataStateResult.psController, planetId);
+		}
+		catch (error: unknown)
+		{
+			feedbackController.showError(ErrorHelp.getErrorMessage(error));
+		}
 	};
 
 	const levelLine: ReactElement = isThisBuildingDeconstructing === true
@@ -105,7 +120,7 @@ function renderBuildingDeconstructRow(props: BuildingViewHelpers.BuildingViewPro
 	return BuildingViewHelpers.renderBuildingRowShell(buildingType, imagePath, middleColumn, actionElement, buildingDescriptionLines);
 }
 
-function renderBuildingDeconstructionViewBody(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData): ReactElement
+function renderBuildingDeconstructionViewBody(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
 	const selectedZone: GameType.PlanetZone = selectedPlanetDataPredicted.planetRow.zone as GameType.PlanetZone;
 
@@ -116,7 +131,7 @@ function renderBuildingDeconstructionViewBody(props: BuildingViewHelpers.Buildin
 
 	const rowElements: ReactElement[] = deconstructableBuildingTypes.map((buildingType: GameType.BuildingType): ReactElement =>
 	{
-		return renderBuildingDeconstructRow(props, selectedPlanetDataPredicted, buildingType);
+		return renderBuildingDeconstructRow(props, selectedPlanetDataPredicted, buildingType, feedbackController);
 	});
 
 	const emptyElement: ReactElement | null = (rowElements.length === 0)
@@ -126,6 +141,7 @@ function renderBuildingDeconstructionViewBody(props: BuildingViewHelpers.Buildin
 	const buildingDeconstructionViewElement: ReactElement =
 	(
 		<div className="flex flex-col gap-2 p-4">
+			{HelperElements.renderActionFeedback(feedbackController)}
 			{rowElements}
 			{emptyElement}
 		</div>
@@ -136,14 +152,16 @@ function renderBuildingDeconstructionViewBody(props: BuildingViewHelpers.Buildin
 
 export function BuildingDeconstructionView(props: BuildingViewHelpers.BuildingViewProps): ReactElement
 {
+	const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
+
 	try
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-		return renderBuildingDeconstructionViewBody(props, selectedPlanetDataPredicted);
+		return renderBuildingDeconstructionViewBody(props, selectedPlanetDataPredicted, feedbackController);
 	}
 	catch (error: unknown)
 	{
 		console.error("⚠️:", error);
-		return <HelperElements.EmptyElement></HelperElements.EmptyElement>;
+		return <HelperElements.EmptyElement />;
 	}
 }

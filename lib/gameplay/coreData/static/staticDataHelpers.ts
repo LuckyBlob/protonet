@@ -239,7 +239,7 @@ export function getAllSpecificThings(thingType: ThingType.Thing): ThingType.Spec
         }
     }
 
-    throw new Error(`getAllSpecificThings not supported for Thing ${thingType}`);
+    throw new Error(`UNREACHABLE: getAllSpecificThings not supported for Thing ${thingType}`);
 }
 
 export function rollSizeForSlot(slot: number): number

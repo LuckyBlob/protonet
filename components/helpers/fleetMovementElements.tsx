@@ -3,6 +3,8 @@
 import { ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
+import * as HelperElements from "@/components/helpers/helperElements";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ThingHelpers from "@/lib/gameplay/coreData/thing/thingHelpers";
 import * as ThingDataHelpers from "@/lib/gameplay/coreData/thing/thingDataHelpers";
@@ -25,7 +27,7 @@ function renderZoneMarker(zone: GameType.PlanetZone): ReactElement | null
     return <img src={`/icons/zone/${zone}_color.png`} alt={zoneInfo.displayName} title={zoneInfo.displayName} className="w-4 h-4 object-contain inline-block align-text-bottom" />;
 }
 
-function renderFleetMovementRow(clientDataStateResult: UseClientDataState.ClientDataStateResult, fleetMovement: CoreType.FleetMovement, playerData: CoreType.PlayerData): ReactElement
+function renderFleetMovementRow(clientDataStateResult: UseClientDataState.ClientDataStateResult, fleetMovement: CoreType.FleetMovement, playerData: CoreType.PlayerData, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
     const fleetMovementRow: DBType.FleetMovementRow = fleetMovement.fleetMovementRow;
     const originZone: GameType.PlanetZone = fleetMovementRow.planet_origin_zone as GameType.PlanetZone;
@@ -46,9 +48,16 @@ function renderFleetMovementRow(clientDataStateResult: UseClientDataState.Client
     const fleetActionInfo: GameType.FleetActionInfo = StaticDataHelper.getFleetActionInfo(fleetMovementRow.fleet_action_type as GameType.FleetActionType);
     const isOwnOutboundInFlight: boolean = (isReturnTrip === false) && (isUnknownResult === false) && (remainingMs > 0) && (fleetMovementRow.player_origin_id === playerData.playerRow.id) && (fleetActionInfo.canBeRecalled !== false);
 
-    const handleRecall = (): void =>
+    const handleRecall = async (): Promise<void> =>
     {
-        ClientRequestFunctions.clientTryRecallFleetRequest(clientDataStateResult.psController, fleetMovementRow.id);
+        try
+        {
+            await ClientRequestFunctions.clientTryRecallFleetRequest(clientDataStateResult.psController, fleetMovementRow.id);
+        }
+        catch (error: unknown)
+        {
+            feedbackController.showError(ErrorHelp.getErrorMessage(error));
+        }
     };
 
     const recallElement: ReactElement | null = isOwnOutboundInFlight === true
@@ -83,7 +92,7 @@ function renderFleetMovementRow(clientDataStateResult: UseClientDataState.Client
     return element;
 }
 
-export function renderFleetMovementsSection(clientDataStateResult: UseClientDataState.ClientDataStateResult, category: GameType.FleetActionCategory): ReactElement
+export function renderFleetMovementsSection(clientDataStateResult: UseClientDataState.ClientDataStateResult, category: GameType.FleetActionCategory, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
     const playerData: CoreType.PlayerData = clientDataStateResult.psController[0].predictedDBData;
 
@@ -124,7 +133,7 @@ export function renderFleetMovementsSection(clientDataStateResult: UseClientData
 
     const movementElements: ReactElement[] = fleetMovements.map((fleetMovement: CoreType.FleetMovement): ReactElement =>
     {
-        return renderFleetMovementRow(clientDataStateResult, fleetMovement, playerData);
+        return renderFleetMovementRow(clientDataStateResult, fleetMovement, playerData, feedbackController);
     });
 
     const element: ReactElement =

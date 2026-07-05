@@ -116,7 +116,7 @@ export async function requestServerAction<K extends keyof APIEndPoint.ActionResp
             error: `Unknown ${actionRequest.name} error.`,
         }
 
-		console.error("⚠️:", error); 
+		console.error("⚠️:", error);
         return responseFailure as APIEndPoint.ActionResponseMap[K];
     }
 }

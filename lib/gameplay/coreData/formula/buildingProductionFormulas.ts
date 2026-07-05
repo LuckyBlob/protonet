@@ -27,7 +27,7 @@ export function computeProductionRatePerHour(buildingType: GameType.BuildingType
     }
     catch (error: unknown)
     {
-        console.error("⚠️ Failed:", error);
+        console.error("⚠️:", error);
         return null;
     }
 }

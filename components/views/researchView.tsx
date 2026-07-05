@@ -3,6 +3,7 @@
 import { ReactElement } from "react";
 
 import * as TimeFormat from "@/lib/helper/timeFormat";
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as SelectedPlanet from "@/lib/localStorage/selectedPlanet";
 import * as UseClientDataState from "@/lib/use/useClientDataState";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
@@ -43,7 +44,7 @@ function renderRowDivider(): ReactElement
 	return <div className="self-stretch border-l border-gray-400" />;
 }
 
-function renderResearchRow(props: ResearchViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, researchType: GameType.ResearchType): ReactElement
+function renderResearchRow(props: ResearchViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, researchType: GameType.ResearchType, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
 	const playerData: CoreType.PlayerData = props.clientDataStateResult.psController[0].predictedDBData;
 	const planetId: number = selectedPlanetDataPredicted.planetRow.id;
@@ -78,9 +79,16 @@ function renderResearchRow(props: ResearchViewProps, selectedPlanetDataPredicted
 	const remainingMs: number = ResearchData.getCurrentlyResearchingRemainingMs(playerData) ?? 0;
 	const canAfford: boolean = ResearchData.canAffordResearch(playerData, selectedPlanetDataPredicted, researchType);
 
-	const handleBuyResearch: () => void = () =>
+	const handleBuyResearch = async (): Promise<void> =>
 	{
-		ClientRequestFunctions.clientTryUpgradeResearchRequest(props.clientDataStateResult.psController, planetId, researchType);
+		try
+		{
+			await ClientRequestFunctions.clientTryUpgradeResearchRequest(props.clientDataStateResult.psController, planetId, researchType);
+		}
+		catch (error: unknown)
+		{
+			feedbackController.showError(ErrorHelp.getErrorMessage(error));
+		}
 	};
 
 	const levelLine: ReactElement = isThisResearching === true
@@ -170,7 +178,7 @@ function renderResearchRow(props: ResearchViewProps, selectedPlanetDataPredicted
 	return rowElement;
 }
 
-function renderResearchViewBody(props: ResearchViewProps, selectedPlanetDataPredicted: CoreType.PlanetData): ReactElement
+function renderResearchViewBody(props: ResearchViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, feedbackController: HelperElements.ActionFeedbackController): ReactElement
 {
 	const researchLabLevel: number = BuildingData.getBuildingLevel(selectedPlanetDataPredicted, GameType.BuildingType.ResearchLab);
 	if (researchLabLevel < 1)
@@ -187,12 +195,13 @@ function renderResearchViewBody(props: ResearchViewProps, selectedPlanetDataPred
 
 	const rowElements: ReactElement[] = StaticDataHelper.getAllSpecificThings(ThingType.Thing.Research).map((researchType: GameType.ResearchType): ReactElement =>
 	{
-		return renderResearchRow(props, selectedPlanetDataPredicted, researchType);
+		return renderResearchRow(props, selectedPlanetDataPredicted, researchType, feedbackController);
 	});
 
 	const researchViewElement: ReactElement =
 	(
 		<div className="flex flex-col gap-2 p-4">
+			{HelperElements.renderActionFeedback(feedbackController)}
 			{rowElements}
 		</div>
 	);
@@ -202,14 +211,16 @@ function renderResearchViewBody(props: ResearchViewProps, selectedPlanetDataPred
 
 export function ResearchView(props: ResearchViewProps): ReactElement
 {
+	const feedbackController: HelperElements.ActionFeedbackController = HelperElements.useActionFeedback();
+
 	try
 	{
 		const selectedPlanetDataPredicted: CoreType.PlanetData = SelectedPlanet.getSelectedPlanetDataPredicted(props.clientDataStateResult.psController[0]);
-		return renderResearchViewBody(props, selectedPlanetDataPredicted);
+		return renderResearchViewBody(props, selectedPlanetDataPredicted, feedbackController);
 	}
 	catch (error: unknown)
 	{
 		console.error("⚠️:", error);
-		return <HelperElements.EmptyElement></HelperElements.EmptyElement>;
+		return <HelperElements.EmptyElement />;
 	}
 }

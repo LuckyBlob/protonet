@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ReactElement } from "react";
 
+import * as ErrorHelp from "@/lib/helper/errorHelp";
 import * as ClientRequestFunctions from "@/lib/networkRequests/client/clientRequestFunctions";
 
 const VerifyStatus =
@@ -38,7 +39,7 @@ export default function VerifyPage()
 			}
 			catch (error: unknown)
 			{
-				setError(error instanceof Error ? error.message : "An unexpected error occurred");
+				setError(ErrorHelp.getErrorMessage(error));
 				setStatus(VerifyStatus.Failure);
 			}
 		};
