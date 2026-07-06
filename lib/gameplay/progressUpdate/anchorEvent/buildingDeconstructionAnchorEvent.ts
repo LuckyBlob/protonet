@@ -86,16 +86,13 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
 
     const currentBuildingDeconstructionBuildingRow: DBType.BuildingDeconstructionBuildingRow = finishedDeconstruction.buildingDeconstructionBuildingRows[currentBuildingRowIndex];
 
-    // Apply the change
     const deconstructedBuildingType: GameType.BuildingType = currentBuildingDeconstructionBuildingRow.building_type as GameType.BuildingType;
     const oldBuildingLevel: number = BuildingData.getBuildingLevel(planetData, deconstructedBuildingType);
     const newBuildingLevel: number = Math.max(0, oldBuildingLevel - 1);
     BuildingData.setBuildingLevel(planetData, deconstructedBuildingType, newBuildingLevel);
 
-    // Row is done, remove it
     finishedDeconstruction.buildingDeconstructionBuildingRows.splice(currentBuildingRowIndex, 1);
 
-    // Does that mean the whole deconstruction is done?
     if (finishedDeconstruction.buildingDeconstructionBuildingRows.length === 0)
     {
         const finishedIndex: number = planetData.dynamicPlanetData.buildingDeconstructions.indexOf(finishedDeconstruction);

@@ -694,7 +694,6 @@ export async function serverTryRefreshServerRequest(): Promise<NextResponse>
         return NextResponse.json(errorResponse, { status: 401 });
     }
 
-    // must be power admin (0) for this action
     if (user.admin_level !== 0)
     {
         errorResponse.error = "Forbidden.";
@@ -733,8 +732,6 @@ export async function serverTryRefreshServerRequest(): Promise<NextResponse>
 
 //#region DB functions
 
-// Marks a message as read. UPDATE ... RETURNING does the flip and returns the row in
-// one round-trip, scoped by player_id so a request for another player's id matches no row.
 export function serverMarkMessageReadById(messageRowId: number, playerId: number): DBType.MessageRow | null
 {
     const messageRow: DBType.MessageRow | undefined = DB.databaseConnection.prepare(
@@ -1280,11 +1277,9 @@ export function tryUpgradeBuildingLogic(playerId: number, serverData: CoreType.S
     {
         throw new Error(`Failed to get first building upgrade building row for planetId ${relevantPlanetData.planetRow.id}.`);
     }
-    // swap the first upgrade building row to start building to ensure it's in first place.
     [newBuildingUpgrade.buildingUpgradeBuildingRows[0], newBuildingUpgrade.buildingUpgradeBuildingRows[index]] = [newBuildingUpgrade.buildingUpgradeBuildingRows[index], newBuildingUpgrade.buildingUpgradeBuildingRows[0]];
     const firstBuildingUpgradeBuildingRow: DBType.BuildingUpgradeBuildingRow = newBuildingUpgrade.buildingUpgradeBuildingRows[0];
 
-    // No constructions? Means we can start this one right away.
     if (relevantPlanetData.dynamicPlanetData.buildingUpgrades.length === 0)
     {
         newBuildingUpgrade.buildingUpgradeRow.started_at = now;
@@ -1599,11 +1594,9 @@ export function tryUpgradeResearchLogic(playerId: number, serverData: CoreType.S
     {
         throw new Error(`Failed to get first currently researching research row for planetId ${relevantPlanetData.planetRow.id}.`);
     }
-    // swap the first research row to start researching to ensure it's in first place.
     [newCurrentlyResearching.currentlyResearchingResearchRows[0], newCurrentlyResearching.currentlyResearchingResearchRows[index]] = [newCurrentlyResearching.currentlyResearchingResearchRows[index], newCurrentlyResearching.currentlyResearchingResearchRows[0]];
     const firstCurrentlyResearchingResearchRow: DBType.CurrentlyResearchingResearchRow = newCurrentlyResearching.currentlyResearchingResearchRows[0];
 
-    // No research in progress? Means we can start this one right away.
     if (playerData.dynamicPlayerData.currentlyResearchings.length === 0)
     {
         newCurrentlyResearching.currentlyResearchingRow.started_at = now;
@@ -1785,7 +1778,6 @@ function addUnitConstruction(planetData: CoreType.PlanetData, playerId: number, 
         unitConstructionUnitRows: newUnitConstructionUnitRows,
     };
 
-    //Sort the construction unit rows to start building shortest first.
     UnitConstructionData.sortUnitConstructionUnitRowByConstructionTime(planetData, newUnitConstruction, serverData);
     const firstConstructionUnitRow: DBType.UnitConstructionUnitRow = newUnitConstruction.unitConstructionUnitRows[0];
 
@@ -2344,8 +2336,6 @@ export function tryAbandonPlanetLogic(playerId: number, serverData: CoreType.Ser
         return { success: false, failureReason: "Wrong planet to abandon.", playerStateResult: playerData };
     }
 
-    // Only abandoning a planet (which also takes its moon/debris) is gated by the one-planet floor.
-    // Abandoning a moon/debris leaves the planet count untouched, so it is always allowed.
     const isPlanetZone: boolean = relevantPlanetData.planetRow.zone === GameType.PlanetZone.Planet;
     const ownedPlanetCount: number = CoreType.getOwnedPlanets(playerData.planetDatas).length;
     if (isPlanetZone === true && ownedPlanetCount === 1)

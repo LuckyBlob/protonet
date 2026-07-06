@@ -30,7 +30,6 @@ type ResolvedUnitFuelData =
 	baseFuelConsumption: Map<GameType.ResourceType, number>;
 };
 
-// Speed percentage of max speed
 function computeFuelConsumption_Base(playerData: CoreType.PlayerData, unitQuantities: Map<GameType.UnitType, number>, distance: number, speed: number, serverData: CoreType.ServerData | null): Map<GameType.ResourceType, number>
 {
 	const resolvedUnitFuelDatas: ResolvedUnitFuelData[] = [];

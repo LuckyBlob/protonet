@@ -133,9 +133,6 @@ export function addFleetMessagesToPlayerData(playerData: CoreType.PlayerData, fl
     }
 }
 
-// Generic missing-target bounce: a fleet action whose target no longer exists at the destination
-// turns around and returns home. Shared by the resolvers (Station/Collect) whose action requires an
-// existing target.
 export function bounceFleetForMissingTarget(originPlayerData: CoreType.PlayerData, fleetMovement: CoreType.FleetMovement): void
 {
 	addMissingTargetFleetActionMessage(originPlayerData, fleetMovement);
@@ -395,7 +392,6 @@ export function buildResourceQuantitiesList(resourceQuantities: Map<GameType.Res
 	return buildResourcesListFromFleetMovement(resourceRows);
 }
 
-// Fleet rows carry unit/resource types as plain DB numbers, narrowed to their enum at this boundary.
 export function buildUnitQuantitiesFromRows(fleetMovementUnitRows: DBType.FleetMovementUnitRow[]): Map<GameType.UnitType, number>
 {
 	const unitQuantities: Map<GameType.UnitType, number> = new Map<GameType.UnitType, number>();

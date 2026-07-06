@@ -6,7 +6,6 @@ import * as StaticData from "@/lib/gameplay/coreData/static/staticData";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 
 const BASE_DIVIDER: number = 2500;
-// Each Nanite Factory level cumulatively divides construction time by this factor (halving by default).
 const NANITE_FACTORY_DURATION_DIVIDER_PER_LEVEL: number = 2;
 
 export function computeUpgradeDurationSeconds(currentUpgradeLevel: number, buildingType: GameType.BuildingType, playerData: CoreType.PlayerData, planetId: number, serverData: CoreType.ServerData | null): number | null

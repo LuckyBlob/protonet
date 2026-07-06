@@ -13,7 +13,6 @@ const UNIT_CONSTRUCTION_GENERIC_DATA: SimpleUnitConstructionDurationData =
     divider: 2500,
 };
 
-// Each Nanite Factory level cumulatively divides construction time by this factor (halving by default).
 const NANITE_FACTORY_DURATION_DIVIDER_PER_LEVEL: number = 2;
 
 export function computeConstructionDurationSeconds(unitType: GameType.UnitType, currentShipyardLevel: number, naniteFactoryLevel: number, serverData: CoreType.ServerData | null): number | null

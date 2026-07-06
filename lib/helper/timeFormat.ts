@@ -1,4 +1,3 @@
-// lib/timeFormat.ts
 export function formatRemainingTimeMs(remainingMs: number): string
 {
 	if (remainingMs <= 0)

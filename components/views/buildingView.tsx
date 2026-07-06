@@ -21,8 +21,6 @@ import * as BuildingEnergySetting from "@/lib/gameplay/dynamicData/planet/buildi
 import * as BuildingViewHelpers from "@/components/helpers/buildingViewHelpers";
 import * as BuildingDescription from "@/lib/gameplay/coreData/description/buildingDescriptions";
 
-// Energy throttle dropdown. Only shown for built (level >= 1) buildings that produce or consume
-// energy. Setting it scales the building's energy prod/cons and its resource production.
 function renderEnergySettingDropdown(props: BuildingViewHelpers.BuildingViewProps, selectedPlanetDataPredicted: CoreType.PlanetData, buildingType: GameType.BuildingType, currentLevel: number, feedbackController: HelperElements.ActionFeedbackController): ReactElement | null
 {
 	if (currentLevel < 1)

@@ -47,7 +47,6 @@ function computeBuildingUpgradeCost_SimpleExponential(currentUpgradeLevel: numbe
 {
 	if (buildingStats.costStats === undefined)
 	{
-		// All buildings must cost SOMETHING
 		throw new Error(`⚠️: Building stats has no cost stats.`);
 	}
 

@@ -1,7 +1,3 @@
-// Calculated value data: planet values (energy, storage) and player values (fleet slots).
-// Planet and player values share the same data shape and aggregation logic and differ only in their
-// sources (buildings/units/research) and the value-type domain they range over, so they live together
-// here with the merge + accumulate primitives parameterized over the value-type key.
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as PlanetValueProduction from "@/lib/gameplay/coreData/formula/planetValueProductionFormulas";

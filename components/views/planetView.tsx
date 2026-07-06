@@ -20,7 +20,6 @@ import * as ErrorHelp from "@/lib/helper/errorHelp";
 
 const NO_TRANSPORTED_RESOURCES: Map<GameType.ResourceType, number> = new Map<GameType.ResourceType, number>();
 
-// Everything a galaxy-view row needs to evaluate and launch a one-probe spy mission against its target.
 type GalaxyViewContext =
 {
     playerData: CoreType.PlayerData;

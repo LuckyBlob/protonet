@@ -105,15 +105,12 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
 
     const currentCurrentlyResearchingResearchRow: DBType.CurrentlyResearchingResearchRow = finishedResearching.currentlyResearchingResearchRows[currentResearchRowIndex];
 
-    // Apply the change
     const researchedResearchType: GameType.ResearchType = currentCurrentlyResearchingResearchRow.research_type as GameType.ResearchType;
     const oldResearchLevel: number = ResearchData.getResearchLevel(playerData, researchedResearchType);
     ResearchData.setResearchLevel(playerData, researchedResearchType, oldResearchLevel + 1);
 
-    // Row is done, remove it
     finishedResearching.currentlyResearchingResearchRows.splice(currentResearchRowIndex, 1);
 
-    // Does that mean the whole research is done?
     if (finishedResearching.currentlyResearchingResearchRows.length === 0)
     {
         const finishedIndex: number = playerData.dynamicPlayerData.currentlyResearchings.indexOf(finishedResearching);

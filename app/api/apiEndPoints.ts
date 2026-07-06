@@ -144,7 +144,6 @@ type validEndpoint =
     name: string,
 }
 
-// no clue whats going on here, but allows to do : const registerResponse: ResponseForAction<typeof ActionRequest.Register>
 type ActionRequestKey = keyof typeof ActionRequest;
 type FindActionKeyByValueObject<TObject> =
 {
@@ -154,7 +153,6 @@ type FindActionKeyByValueObject<TObject> =
 export type ResponseForAction<T extends typeof ActionRequest[ActionRequestKey]> = ActionResponseMap[FindActionKeyByValueObject<T>];
 export type RequestForAction<T extends typeof ActionRequest[ActionRequestKey]> = ActionRequestMap[FindActionKeyByValueObject<T>];
 
-// no clue whats going on here, but allows to do : const clientRequest: ResponseForData<typeof DataRequest.UserInfo>
 type DataRequestKey = keyof typeof DataRequest;
 type FindDataKeyByValueObject<TObject> =
 {

@@ -38,7 +38,6 @@ export function getFailedFleetMovementRequirements(requirementContext: Requireme
     return getFailedRequirements(requirementContext, requirements);
 }
 
-// Derives the quantity cap from the unit's own self-referential count requirement, so the binary gate and the "max out" cap stay driven by one piece of data. Returns null when the unit has no such cap.
 export function getRemainingBuildableUnitCount(requirementContext: RequirementType.RequirementContext, unitType: GameType.UnitType): number | null
 {
     const requirements: RequirementType.Requirement[] = getRequirements({ thingType: ThingType.Thing.UnitConstruction, specificThingType: unitType });

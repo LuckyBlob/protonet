@@ -15,7 +15,6 @@ export function resolveCollectAction(originPlayerData: CoreType.PlayerData, targ
         return;
     }
 
-	// They caught you!
     if (UnitData.hasUnits(targetPlanetData))
     {
         addCollectActionFailureMessage(targetPlayerData, fleetMovement);

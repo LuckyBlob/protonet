@@ -302,7 +302,6 @@ export const GET_TARGET_PLANET_ZONE: RequirementType.RequirementCondition =
         const requiredZone: GameType.PlanetZone = requirement.value as GameType.PlanetZone;
         return `Target must be a ${StaticDataHelper.getPlanetZoneInfo(requiredZone).displayName.toLowerCase()}.`;
     },
-    //failureDescription: "Target zone requirement not met.",
 }
 
 function isTargetPlanetZoneSpyable(): RequirementType.RequirementValueGetter

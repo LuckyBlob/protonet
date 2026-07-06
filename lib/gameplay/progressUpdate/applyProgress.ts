@@ -165,7 +165,6 @@ function clampResourcesToPossibleMaximums(playerData: CoreType.PlayerData, plane
 
         if (potentialResourceQuantity >= resourceMaximum)
         {
-            // If we'd go over, cap it.
             potentialResourceQuantities.set(resourceType, resourceMaximum);
             continue;
         }

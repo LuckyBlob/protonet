@@ -15,8 +15,6 @@ export type BuildingViewProps =
 	clientDataStateResult: UseClientDataState.ClientDataStateResult;
 };
 
-// Image changes every IMAGE_TIER_LEVEL_STEP levels, capped at MAX_IMAGE_TIER so
-// missing high-level art falls back to the last available image. Tune freely.
 // Expected files: public/buildings/buildingType_{buildingType}/{tier}.png
 const IMAGE_TIER_LEVEL_STEP: number = 5;
 const MAX_IMAGE_TIER: number = 5;

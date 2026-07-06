@@ -64,7 +64,6 @@ export function getDynamicPlayerSettingsData(playerId: number): DBType.PlayerSet
 
 export function getDynamicMessageData(playerId: number): CoreType.MessageData[]
 {
-    // Bodies travel with playerData so the client never needs a separate body fetch.
     const messageRows: DBType.MessageRow[] = DB.databaseConnection.prepare(
         "SELECT id, player_id, received_at, type, is_read, title, body FROM message WHERE player_id = ? ORDER BY received_at DESC"
     ).all(playerId) as DBType.MessageRow[];
@@ -146,13 +145,11 @@ function updateMessages(playerId: number, dynamicPlayerData: CoreType.DynamicPla
             const messageRow: DBType.MessageRow | null = messageData.messageRow;
             if (messageRow === null)
             {
-                // Existing message not loaded client-side. Already persisted, nothing to do.
                 continue;
             }
 
             if (messageRow.id !== -1)
             {
-                // Already persisted (id assigned by a previous INSERT). Nothing to do.
                 continue;
             }
 
@@ -240,7 +237,6 @@ function updateCurrentlyResearchings(playerId: number, dynamicPlayerData: CoreTy
 
                 if (oldResearchRowId !== -1)
                 {
-                    // if we were pointing to the old research row id, update to the new one
                     if (currentlyResearchingRow.current_currently_researching_research_row_id === oldResearchRowId)
                     {
                         currentlyResearchingRow.current_currently_researching_research_row_id = currentlyResearchingResearchRow.id;
@@ -351,7 +347,6 @@ export function getDynamicPlanetData(planetId: number): CoreType.DynamicPlanetDa
 
 export function getDynamicPlanetBuildingEnergySettingData(planetId: number): Map<GameType.BuildingType, number>
 {
-    // The energy throttle lives on the planet_building row alongside building_level.
     const buildingRows: DBType.PlanetBuildingRow[] = DB.databaseConnection.prepare(
         "SELECT * FROM planet_building WHERE planet_id = ?"
     ).all(planetId) as DBType.PlanetBuildingRow[];
@@ -601,9 +596,6 @@ function updateBuildingLevels(planetId: number, playerId: number, dynamicPlanetD
         const insertStatement: Database.Statement = DB.databaseConnection.prepare(
             "INSERT INTO planet_building (planet_id, player_id, building_type, building_level, energy_percentage) VALUES (?, ?, ?, ?, ?)"
         );
-        // The energy throttle shares the planet_building row with building_level. Both maps are
-        // rebuilt from the in-memory state, so a building absent from buildingEnergySettings is
-        // written at full power (100%).
         for (const [buildingType, buildingLevel] of dynamicPlanetData.buildingLevels)
         {
             const energyPercentage: number = dynamicPlanetData.buildingEnergySettings.get(buildingType) ?? 100;
@@ -647,7 +639,6 @@ function updateUnitConstructions(planetId: number, playerId: number, dynamicPlan
             return;
         }
 
-        // Read and get all the new IDs.
         for (const unitConstruction of dynamicPlanetData.unitConstructions)
         {
             const unitConstructionRow: DBType.UnitConstructionRow = unitConstruction.unitConstructionRow;
@@ -677,7 +668,6 @@ function updateUnitConstructions(planetId: number, playerId: number, dynamicPlan
 
                 if (oldUnitRowId !== -1)
                 {
-                    // if we were pointing to the old unit row id, update to the new one
                     if (unitConstructionRow.current_unit_construction_unit_row_id === oldUnitRowId)
                     {
                         unitConstructionRow.current_unit_construction_unit_row_id = unitConstructionUnitRow.id;
@@ -752,7 +742,6 @@ function updateBuildingUpgrades(planetId: number, playerId: number, dynamicPlane
 
                 if (oldBuildingRowId !== -1)
                 {
-                    // if we were pointing to the old building row id, update to the new one
                     if (buildingUpgradeRow.current_building_upgrade_building_row_id === oldBuildingRowId)
                     {
                         buildingUpgradeRow.current_building_upgrade_building_row_id = buildingUpgradeBuildingRow.id;
@@ -879,7 +868,6 @@ function updateBuildingDeconstructions(planetId: number, playerId: number, dynam
 
                 if (oldBuildingRowId !== -1)
                 {
-                    // if we were pointing to the old building row id, update to the new one
                     if (buildingDeconstructionRow.current_building_deconstruction_building_row_id === oldBuildingRowId)
                     {
                         buildingDeconstructionRow.current_building_deconstruction_building_row_id = buildingDeconstructionBuildingRow.id;

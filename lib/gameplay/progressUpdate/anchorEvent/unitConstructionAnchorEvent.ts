@@ -82,20 +82,17 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
     const currentUnitConstructionUnitRow: DBType.UnitConstructionUnitRow = finishedUnitConstruction.unitConstructionUnitRows[nextUnitConstructionUnitRowIndex];
     const completedQueueType: GameType.UnitConstructionQueueType | undefined = UnitConstructionData.getUnitConstructionQueueType(finishedUnitConstruction);
 
-    // Apply the change
     UnitData.addPlanetUnit(planetData, currentUnitConstructionUnitRow.unit_type as GameType.UnitType, 1);
     currentUnitConstructionUnitRow.unit_quantity -= 1;
 
     let nextUnitConstruction: CoreType.UnitConstruction | null = finishedUnitConstruction;
     let nextUnitConstructionUnitRow: DBType.UnitConstructionUnitRow | null = currentUnitConstructionUnitRow;
-    // Is that row done?
+
     if (currentUnitConstructionUnitRow.unit_quantity === 0)
     {
-        //remove it!
         finishedUnitConstruction.unitConstructionUnitRows.splice(nextUnitConstructionUnitRowIndex, 1);
         nextUnitConstructionUnitRow = null;
 
-        //Does that mean the whole construction is done?
         if (finishedUnitConstruction.unitConstructionUnitRows.length === 0)
         {
             const finishedIndex: number = planetData.dynamicPlanetData.unitConstructions.indexOf(finishedUnitConstruction);
@@ -104,7 +101,6 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
                 throw new Error(`Must have unit construction when ending anchor event.`);
             }
 
-            //remove it!
             planetData.dynamicPlanetData.unitConstructions.splice(finishedIndex, 1);
             nextUnitConstruction = null;
         }
@@ -117,7 +113,6 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
 
     if (nextUnitConstruction === null)
     {
-        // we dont have another
         return;
     }
     

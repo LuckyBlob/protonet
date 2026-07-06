@@ -87,10 +87,8 @@ function writeFleetActionToDB(originPlayerData: FleetData.FleetPlayerData, targe
             }
 
             ServerDynamicData.serverUpdatePlayerDataContext(targetPlayerData.playerData.playerRow.id, CoreType.DataContext.Messages, targetPlayerData.playerData.dynamicPlayerData);
-            // Target never updates the fleet movement DB data, owner of that is origin only
         }
 
-        // The unit is returning or stationed, we have to update that
         if (fleetMovement.fleetMovementRow.is_return_trip)
         {
             ServerDynamicData.serverUpdatePlanetDataContext(originPlayerData.planetData.planetRow.id, originPlayerData.playerData.playerRow.id, CoreType.DataContext.UnitQuantity, originPlayerData.planetData.dynamicPlanetData);

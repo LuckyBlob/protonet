@@ -23,7 +23,6 @@ function computeResearchUpgradeCost_SimpleExponential(currentResearchLevel: numb
 {
 	if (researchInfo.costStats === undefined)
 	{
-		// All researches must cost SOMETHING
 		throw new Error(`⚠️: Research info has no cost stats.`);
 	}
 

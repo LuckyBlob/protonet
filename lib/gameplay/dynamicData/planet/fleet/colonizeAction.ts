@@ -1,5 +1,3 @@
-// This should be server only!
-
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as StaticDataHelper from "@/lib/gameplay/coreData/static/staticDataHelpers";
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
@@ -20,7 +18,6 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData, fle
         throw new Error(`⚠️: Failed to resolve colonize action because origin planet was null.`);
     }
 
-    // Too many planets (moons don't count toward the colony cap)
     if (CoreType.getOwnedPlanets(originPlayerData.planetDatas).length >= CalculatedValueData.computeMaxOwnedPlanetCount(originPlayerData))
     {
         addTooManyPlanetsFailureMessage(fleetMovement);
@@ -37,7 +34,6 @@ export function resolveColonizeAction(originPlayerData: CoreType.PlayerData, fle
         zone: fleetMovement.fleetMovementRow.planet_target_zone as GameType.PlanetZone,
     };
 
-    // if that address is now owned → return trip + failure message, like the too-many-planets branch
     if (addressIsTaken(targetAddress))
     {
         addColonizeFailedTargetTakenMessage(fleetMovement);

@@ -86,15 +86,12 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
 
     const currentBuildingUpgradeBuildingRow: DBType.BuildingUpgradeBuildingRow = finishedUpgrade.buildingUpgradeBuildingRows[currentBuildingRowIndex];
 
-    // Apply the change
     const upgradedBuildingType: GameType.BuildingType = currentBuildingUpgradeBuildingRow.building_type as GameType.BuildingType;
     const oldBuildingLevel: number = BuildingData.getBuildingLevel(planetData, upgradedBuildingType);
     BuildingData.setBuildingLevel(planetData, upgradedBuildingType, oldBuildingLevel + 1);
 
-    // Row is done, remove it
     finishedUpgrade.buildingUpgradeBuildingRows.splice(currentBuildingRowIndex, 1);
 
-    // Does that mean the whole upgrade is done?
     if (finishedUpgrade.buildingUpgradeBuildingRows.length === 0)
     {
         const finishedIndex: number = planetData.dynamicPlanetData.buildingUpgrades.indexOf(finishedUpgrade);

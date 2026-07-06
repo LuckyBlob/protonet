@@ -111,7 +111,6 @@ function serializeDynamicPlayerData(dynamicPlayerData: CoreType.DynamicPlayerDat
 
 function deserializeDynamicPlayerData(serialized: SerializedDynamicPlayerData): CoreType.DynamicPlayerData
 {
-	// The wire carries plain numbers; cast the rebuilt map to its enum-keyed in-memory type.
 	const dynamicPlayerData: CoreType.DynamicPlayerData =
 	{
 		researchLevels: new Map<number, number>(serialized.researchLevels) as Map<GameType.ResearchType, number>,

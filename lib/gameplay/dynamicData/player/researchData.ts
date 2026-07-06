@@ -1,6 +1,3 @@
-// Player-level mirror of the planet-level buildingData / buildingUpgradeData accessors.
-// Research lives on the player, so the level accessors pass playerData (and a null planetData)
-// through the now-generic Thing helpers, exactly as buildingData passes planetData (and a null playerData).
 import * as CoreType from "@/lib/gameplay/coreData/type/coreTypes";
 import * as GameType from "@/lib/gameplay/coreData/type/gameTypes";
 import * as DBType from "@/lib/db/dbTypes";

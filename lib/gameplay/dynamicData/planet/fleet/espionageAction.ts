@@ -36,8 +36,6 @@ export function resolveEspionageAction(originPlayerData: CoreType.PlayerData, ta
 
     addEspionageReportMessage(originPlayerData, targetPlayerData, targetPlanetData, fleetMovement, revealedInfoBlocks);
 
-    // Detected probes are shot down (they do not return home, so their units are simply lost), and the
-    // defender learns who spied them. Either way the report has already reached the attacker.
     if (probesDetected === true)
     {
         addCounterEspionageMessage(targetPlayerData, fleetMovement);
@@ -84,7 +82,6 @@ function buildBlockOrRedacted(revealedInfoBlocks: Set<Espionage.EspionageInfoBlo
     return buildContent();
 }
 
-// Quantity-style blocks (resources, fleet) list "<amount> <name>", skipping anything the planet has none of.
 function buildQuantityList<K extends number>(quantities: Map<K, number>, toSpecificThing: (specificThing: K) => ThingType.SpecificThingType): string
 {
     const parts: string[] = [];
@@ -107,7 +104,6 @@ function buildQuantityList<K extends number>(quantities: Map<K, number>, toSpeci
     return parts.join(", ");
 }
 
-// Level-style blocks (buildings, research) list "<name> <level>", skipping anything at level 0.
 function buildLevelList<K extends number>(levels: Map<K, number>, toSpecificThing: (specificThing: K) => ThingType.SpecificThingType): string
 {
     const parts: string[] = [];

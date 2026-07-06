@@ -27,8 +27,6 @@ export function AbandonPlanetButton(props: AbandonPlanetButtonProps): ReactEleme
 	const planetZoneInfo: GameType.PlanetZoneInfo = StaticDataHelper.getPlanetZoneInfo(selectedZone);
 	const zoneName: string = planetZoneInfo.displayName;
 
-	// Only abandoning a planet (which also takes its moon/debris) is gated by the one-planet floor;
-	// abandoning a moon/debris leaves the planet count untouched, so it stays enabled.
 	const isPlanetZone: boolean = selectedZone === GameType.PlanetZone.Planet;
 	const ownedPlanetCount: number = CoreType.getOwnedPlanets(playerData.planetDatas).length;
 	const isDisabled: boolean = isPlanetZone === true && ownedPlanetCount <= 1;

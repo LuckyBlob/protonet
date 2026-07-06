@@ -209,7 +209,6 @@ function resolveFleetArrivalAnchorEventToDB(playerData: CoreType.PlayerData, ser
 
 function resolveCurrentlyResearchingAnchorEventToDB(playerData: CoreType.PlayerData, serverData: CoreType.ServerData, anchorEvent: AnchorEvent.AnchorEvent): void
 {
-    // Research is player-level: the level-up and the queue removal both live on the player, no planet involved.
     const transaction: Database.Transaction = DB.databaseConnection.transaction(() =>
     {
         ServerDynamicData.serverUpdatePlayerDataContext(playerData.playerRow.id, CoreType.DataContext.ResearchLevels, playerData.dynamicPlayerData);

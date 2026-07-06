@@ -21,7 +21,6 @@ export function findNextAnchorEvent(playerData: CoreType.PlayerData, serverData:
     {
         if (item.resolutionState === CoreType.FleetMovementResolution.ResolveResultUnknown)
         {
-            // pending until resolved
             return null;
         }
 
@@ -94,14 +93,12 @@ export function resolveAnchorEvent(playerData: CoreType.PlayerData, serverData: 
         throw new Error(`⚠️: Resolving fleet event with no duration at start time.`); 
     }
 
-    // this code takes care of the "client" part AKA the data in the structures
     if (resolvedData.event.fleetMovement.fleetMovementRow.is_return_trip === 1)
     {
         FleetData.resolveFleetMovementReturnTrip(playerData, resolvedData.event.fleetMovement, resolvedData.data, serverData);
     }
     else
     {
-        // if resolving our fleet hitting some player target that wasnt updated (we were!)
         if (resolvedData.event.fleetMovement.fleetMovementRow.player_target_id !== playerData.playerRow.id)
         {
             if (resolvedData.event.fleetMovement.fleetMovementRow.player_target_id !== null)

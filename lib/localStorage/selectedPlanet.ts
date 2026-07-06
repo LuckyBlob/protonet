@@ -75,7 +75,6 @@ function getRelevantSelectedPlanetId(planetDatas: CoreType.PlanetData[], candida
 		throw new Error(`Player has no planets!`);
 	}
 
-    // Default to a real planet rather than a moon/debris row when there's no valid stored choice.
     const ownedPlanets: CoreType.PlanetData[] = CoreType.getOwnedPlanets(planetDatas);
     const selectableZones: CoreType.PlanetData[] = StaticDataHelper.getSelectableZones(planetDatas);
     const defaultPlanetData: CoreType.PlanetData = ownedPlanets.length > 0

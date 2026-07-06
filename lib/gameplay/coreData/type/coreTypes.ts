@@ -243,7 +243,6 @@ export function getVariableFromContext<T extends DataContext>(data: DynamicPlane
         throw new Error(`UNREACHABLE: Mismatch DynamicPlanetData: fill DataContext and DataContextToVariableNameMap.`);
     }
 
-    // This will now compile cleanly because TargetPropertyName<T> is guaranteed to be a valid key
     return data[propertyKey] as DynamicPlanetData[TargetPropertyName<T>];
 }
 
