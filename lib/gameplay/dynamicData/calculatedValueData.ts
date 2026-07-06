@@ -422,14 +422,6 @@ export function computePlayerValueNet(playerData: CoreType.PlayerData, playerVal
     return playerValueData.production - playerValueData.consumption;
 }
 
-export function computePlayerValueBreakdown(playerData: CoreType.PlayerData, playerValueType: GameType.PlayerValueType): CalculatedValueBreakdown
-{
-    const sourceContributionsByType: Map<GameType.PlayerValueType, CalculatedValueSourceContribution[]> = computePlayerValueSourceContributions(playerData);
-    const typeSourceContributions: CalculatedValueSourceContribution[] = sourceContributionsByType.get(playerValueType) ?? [];
-
-    return computeValueBreakdown(typeSourceContributions);
-}
-
 export function computeMaxOwnedPlanetCount(playerData: CoreType.PlayerData): number
 {
     const colonySlots: number = computePlayerValueNet(playerData, GameType.PlayerValueType.ColonySlots);
