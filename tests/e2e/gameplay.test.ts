@@ -445,6 +445,7 @@ test.describe("Units", () =>
 
         const selectedAddress: string = await E2EHelper.selectedPlanetAddress(page);
         const selectedPlanet: E2EHelper.PlanetRow = planets.find((planet: E2EHelper.PlanetRow): boolean => E2EHelper.planetAddress(planet,) === selectedAddress)!;
+        await expect.poll((): number => E2EHelper.getUnitConstructionCount(selectedPlanet.id, db)).toBeGreaterThan(0);
         const constructionId: number = E2EHelper.getConstructionId(selectedPlanet.id, db);
 
         // Finish only the first of the two units → owned 1, construction still has 1 left.

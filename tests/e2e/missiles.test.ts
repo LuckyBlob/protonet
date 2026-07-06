@@ -162,11 +162,11 @@ test.describe("Shipyard category split", () =>
 
         await expect(page.getByText("Defenses", { exact: true })).toBeVisible();
         await expect(page.getByText("Satellites", { exact: true })).toBeVisible();
-        await expect(page.getByText("Rocket Launcher")).toBeVisible();
-        await expect(page.getByText("Solar Satellite")).toBeVisible();
+        await expect(page.getByText("Rocket Launcher", { exact: true })).toBeVisible();
+        await expect(page.getByText("Solar Satellite", { exact: true })).toBeVisible();
         // Missiles are NOT buildable in the shipyard.
-        await expect(page.getByText("Interplanetary Missile")).toHaveCount(0);
-        await expect(page.getByText("Interceptor Missile")).toHaveCount(0);
+        await expect(page.getByText("Interplanetary Missile", { exact: true })).toHaveCount(0);
+        await expect(page.getByText("Interceptor Missile", { exact: true })).toHaveCount(0);
     });
 });
 
@@ -188,12 +188,12 @@ test.describe("Fleets split", () =>
 
         // Ships view lists the owned ship but excludes the owned missile.
         await page.getByRole("button", { name: "Ships", exact: true }).click();
-        await expect(page.getByText("Small Transport")).toBeVisible();
-        await expect(page.getByText("Interplanetary Missile")).toHaveCount(0);
+        await expect(page.getByText("Small Transport", { exact: true })).toBeVisible();
+        await expect(page.getByText("Interplanetary Missile", { exact: true })).toHaveCount(0);
 
         // Missiles launch view lists the owned missile and the launch panel.
         await page.getByRole("button", { name: "Missiles", exact: true }).click();
-        await expect(page.getByText("Interplanetary Missile")).toBeVisible();
+        await expect(page.getByText("Interplanetary Missile", { exact: true })).toBeVisible();
         await expect(page.getByRole("button", { name: "Launch missiles" })).toBeVisible();
     });
 });

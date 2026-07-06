@@ -70,7 +70,7 @@ test.describe("Shield Dome build cap (UI)", () =>
         await E2EHelper.buildUnits(page, "Small Shield Dome", 5);
 
         await expect(page.getByText("Small Shield Dome x 1").first()).toBeVisible();
-        expect(E2EHelper.getQueuedUnitQuantity(seed.planet.id, GameType.UnitType.SmallShieldDome, db)).toBe(1);
+        await expect.poll((): number => E2EHelper.getQueuedUnitQuantity(seed.planet.id, GameType.UnitType.SmallShieldDome, db)).toBe(1);
     });
 
     test("an already-owned shield dome shows the one-per-planet gate instead of a build input", async ({ page }) =>
@@ -83,7 +83,7 @@ test.describe("Shield Dome build cap (UI)", () =>
         await E2EHelper.reloadGame(page);
         await E2EHelper.goToView(page, "Shipyard");
 
-        await expect(page.getByText("Small Shield Dome < 1 (current: 1)")).toBeVisible();
+        await expect(page.getByText("Small Shield Dome < 1 (current: 1)")).toBeAttached();
     });
 
     test("small and large shield domes are limited independently (one of each)", async ({ page }) =>
@@ -99,7 +99,7 @@ test.describe("Shield Dome build cap (UI)", () =>
         await E2EHelper.buildUnits(page, "Large Shield Dome", 1);
 
         await expect(page.getByText("Large Shield Dome x 1").first()).toBeVisible();
-        expect(E2EHelper.getQueuedUnitQuantity(seed.planet.id, GameType.UnitType.LargeShieldDome, db)).toBe(1);
+        await expect.poll((): number => E2EHelper.getQueuedUnitQuantity(seed.planet.id, GameType.UnitType.LargeShieldDome, db)).toBe(1);
         expect(E2EHelper.getUnitQuantityDb(seed.planet.id, GameType.UnitType.SmallShieldDome, db)).toBe(1);
         expect(E2EHelper.getQueuedUnitQuantity(seed.planet.id, GameType.UnitType.SmallShieldDome, db)).toBe(0);
     });

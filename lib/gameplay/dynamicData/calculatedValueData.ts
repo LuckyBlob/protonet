@@ -101,11 +101,6 @@ function addCalculatedValueSourceContributions<ValueType>(sourceContributionsByT
 
     for (const [valueType, valueData] of values)
     {
-        if (valueData.production === 0 && valueData.consumption === 0)
-        {
-            continue;
-        }
-
         const existingSourceContributions: CalculatedValueSourceContribution[] = sourceContributionsByType.get(valueType) ?? [];
         existingSourceContributions.push({ source: source, valueData: valueData });
         sourceContributionsByType.set(valueType, existingSourceContributions);

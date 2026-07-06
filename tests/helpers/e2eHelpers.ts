@@ -113,6 +113,18 @@ export async function register(page: Page, username: string, password: string): 
     registeredTestUsers.push({ username: username, password: password });
 }
 
+export async function registerUnverified(page: Page, username: string, password: string): Promise<void>
+{
+    const email: string = emailForUsername(username);
+
+    await page.goto('/register')
+    await page.getByPlaceholder('Username (3+ chars)').fill(username)
+    await page.getByPlaceholder('Email').fill(email)
+    await page.getByPlaceholder('Password (6+ chars)').fill(password)
+    await page.getByRole('button', { name: 'Register' }).click()
+    await expect(page.getByText('Verify your account')).toBeVisible()
+}
+
 export async function deleteAccount(page: Page): Promise<void>
 {
     await goToView(page, "Player Settings")
@@ -372,6 +384,15 @@ export function getBuildingLevelDb(planetId: number, buildingType: number, db: D
     return row?.building_level ?? 0;
 }
 
+export function getBuildingEnergyPercentageDb(planetId: number, buildingType: number, db: Database.Database): number
+{
+    const row: { energy_percentage: number } | undefined = db.prepare(
+        "SELECT energy_percentage FROM planet_building WHERE planet_id = ? AND building_type = ?"
+    ).get(planetId, buildingType) as { energy_percentage: number } | undefined;
+
+    return row?.energy_percentage ?? 100;
+}
+
 export function getUpgradeId(planetId: number, db: Database.Database): number
 {
     const row: { id: number } = db.prepare(
@@ -421,6 +442,35 @@ export function getPlayerInvestedValue(playerId: number, db: Database.Database):
     ).get(playerId) as { invested_value: number } | undefined;
 
     return row?.invested_value ?? 0;
+}
+
+export function getSessionCountForUsername(username: string, db: Database.Database): number
+{
+    const row: { c: number } = db.prepare(
+        "SELECT COUNT(*) AS c FROM sessions JOIN users ON sessions.user_id = users.id WHERE users.username = ?"
+    ).get(username) as { c: number };
+    return row.c;
+}
+
+export function getVerifyTokenOrNull(email: string, db: Database.Database): string | null
+{
+    const row: { verify_token: string | null } | undefined = db.prepare(
+        "SELECT verify_token FROM users WHERE email = ?"
+    ).get(email) as { verify_token: string | null } | undefined;
+    return row?.verify_token ?? null;
+}
+
+export function getResetTokenOrNull(email: string, db: Database.Database): string | null
+{
+    const row: { reset_token: string | null } | undefined = db.prepare(
+        "SELECT reset_token FROM users WHERE email = ?"
+    ).get(email) as { reset_token: string | null } | undefined;
+    return row?.reset_token ?? null;
+}
+
+export function deleteUserRowByUsername(username: string, db: Database.Database): void
+{
+    db.prepare("DELETE FROM users WHERE username = ?").run(username);
 }
 
 export function getConstructionId(planetId: number, db: Database.Database): number
@@ -759,48 +809,55 @@ export function researchButton(page: Page, researchName: string): Locator
     return researchRow(page, researchName).getByRole("button", { name: /Research/ });
 }
 
-// The top bar renders one card per resource: a "<name> : <amount>" line above a "<amount>/h"
-// production line. Scope by the name line so each resource's card resolves to a single element.
+function topBar(page: Page): Locator
+{
+    return page.locator('div[class*="bg-black/50"]');
+}
+
 export function resourceCard(page: Page, resourceName: string): Locator
 {
-    return page.locator("div.border").filter({ hasText: `${resourceName} :` });
+    return topBar(page).locator("div.border").filter({ has: page.getByText(resourceName, { exact: true }) });
 }
 
-// Assert a resource card shows the expected stockpile and hourly production. Both are matched as
-// substrings of the one card, so the "0/h" of one resource can't collide with the "30/h" of another.
+function resourceCardWithTooltip(page: Page, resourceName: string): Locator
+{
+    return topBar(page).locator("div.group").filter({ has: page.getByText(resourceName, { exact: true }) });
+}
+
 export async function expectResourceCard(page: Page, resourceName: string, quantity: number, productionPerHour: number): Promise<void>
 {
-    const card: Locator = resourceCard(page, resourceName);
-    await expect(card).toContainText(`${resourceName} : ${quantity}`);
-    await expect(card).toContainText(`${productionPerHour}/h`);
+    await expect(resourceCard(page, resourceName)).toContainText(`${quantity} /`);
+    await expect(resourceCardWithTooltip(page, resourceName)).toContainText(`Total production per hour: ${productionPerHour}/h`);
 }
 
-// Assert just the hourly production line of a resource card, independent of the current stockpile, so
-// energy-throttled rates can be checked without pinning the (time-dependent) resource amount.
 export async function expectResourceProductionPerHour(page: Page, resourceName: string, productionPerHour: number): Promise<void>
 {
-    await expect(resourceCard(page, resourceName).getByText(`${productionPerHour}/h`, { exact: true })).toBeVisible();
+    await expect(resourceCardWithTooltip(page, resourceName)).toContainText(`Total production per hour: ${productionPerHour}/h`);
 }
 
-// The top bar renders one planet-value card per type as "<name>: <production>/<consumption>". The name
-// has no space before the colon ("Energy:"), unlike resource cards ("Metal :"), so the two never collide.
+export async function expectResourceCurrentOverMax(page: Page, resourceName: string, current: number, maximum: number, color: "white" | "red"): Promise<void>
+{
+    const card: Locator = resourceCard(page, resourceName);
+    await expect(card).toContainText(`${current} / ${maximum}`);
+    const expectedClass: string = color === "red" ? "text-red-500" : "text-white";
+    await expect(card.locator("div").nth(1)).toHaveClass(expectedClass);
+}
+
 export function planetValueCard(page: Page, planetValueName: string): Locator
 {
-    return page.locator("div.border").filter({ hasText: `${planetValueName}:` });
+    return topBar(page).locator("div.border").filter({ has: page.getByText(planetValueName, { exact: true }) });
 }
 
-// Assert a planet-value card's production/consumption pair. Consumption is always shown positive even
-// though it's stored negative.
+// The redesigned card face prints this pair consumption-first, but callers pass (production, consumption).
 export async function expectPlanetValueCard(page: Page, planetValueName: string, production: number, consumption: number): Promise<void>
 {
-    await expect(planetValueCard(page, planetValueName)).toContainText(`${planetValueName}: ${production}/${consumption}`);
+    await expect(planetValueCard(page, planetValueName)).toContainText(`${consumption} / ${production}`);
 }
 
-// Assert how the planet-value pair is coloured: "white" once the ratio reaches 1, "red" below it.
 export async function expectPlanetValueColor(page: Page, planetValueName: string, color: "white" | "red"): Promise<void>
 {
     const expectedClass: string = color === "red" ? "text-red-500" : "text-white";
-    await expect(planetValueCard(page, planetValueName).locator("span")).toHaveClass(expectedClass);
+    await expect(planetValueCard(page, planetValueName).locator("div").nth(1)).toHaveClass(expectedClass);
 }
 
 export function buildUpgradeButton(page: Page, buildingName: string): Locator
@@ -813,7 +870,7 @@ export function buildUpgradeButton(page: Page, buildingName: string): Locator
 export function unitRowQuantityInput(page: Page, unitName: string): Locator
 {
     return page.locator("div.border")
-        .filter({ hasText: unitName })
+        .filter({ has: page.getByText(unitName, { exact: true }) })
         .filter({ has: page.locator("input[type=\"number\"]") })
         .locator("input[type=\"number\"]")
         .first();
